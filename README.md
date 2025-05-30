@@ -92,15 +92,19 @@ screenshots/            # Application screenshots
 The application uses a simple database schema in Supabase:
 
 ```sql
-CREATE TABLE events (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  title TEXT NOT NULL,
-  venue TEXT NOT NULL,
-  date DATE NOT NULL,
-  time TEXT,
-  url TEXT,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
+create table public."Events" (
+  id uuid not null default gen_random_uuid (),
+  created_at timestamp with time zone not null default now(),
+  title text not null,
+  date date not null,
+  time time without time zone null,
+  venue text not null,
+  category text not null,
+  url text not null,
+  image text null,
+  description text null,
+  constraint Events_pkey primary key (id)
+) TABLESPACE pg_default;
 ```
 
 ## Contributing
@@ -111,11 +115,4 @@ CREATE TABLE events (
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-## License
 
-This project is open source and available under the [MIT License](LICENSE).
-
-## Acknowledgments
-
-- Thanks to all Brooklyn venues for their vibrant cultural programming
-- Built by Elliot Harris and contributors
