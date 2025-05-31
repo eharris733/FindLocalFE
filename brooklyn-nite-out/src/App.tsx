@@ -1,6 +1,6 @@
 // src/App.tsx
 
-import React from 'react';
+// import React from 'react';
 import { useEvents } from './hooks/useEvents';
 import ListView from './components/ListView';
 import CalendarView from './components/CalendarView';
