@@ -1,7 +1,7 @@
 // src/components/ToggleView.tsx
 
 import React from 'react';
-import { ToggleButtonGroup, ToggleButton, Typography, Box } from '@mui/material'; // Import Box and Typography
+import { ToggleButtonGroup, ToggleButton, Box } from '@mui/material'; // Import Box and Typography
 import ViewListIcon from '@mui/icons-material/ViewList'; // Icon for List view
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday'; // Icon for Calendar view
 
@@ -12,7 +12,7 @@ interface ToggleViewProps {
 
 const ToggleView: React.FC<ToggleViewProps> = ({ currentView, onViewChange }) => {
   const handleChange = (
-    event: React.MouseEvent<HTMLElement>,
+    _newEvent: React.MouseEvent<HTMLElement>,
     newView: 'list' | 'calendar' | null, // newView can be null if nothing is selected
   ) => {
     if (newView !== null) { // Only update if a button is actually selected

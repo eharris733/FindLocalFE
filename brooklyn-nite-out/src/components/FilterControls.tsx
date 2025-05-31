@@ -2,9 +2,9 @@
 
 import React from 'react';
 import type { EventFilters, FilterAction } from '../types/events.d';
-import { Box, TextField, MenuItem, Button, Stack, Typography } from '@mui/material';
+import { Box, TextField, MenuItem, Button, Stack } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns'; // Import adapter
+// import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns'; // Import adapter
 import SearchIcon from '@mui/icons-material/Search';
 import ClearAllIcon from '@mui/icons-material/ClearAll';
 
