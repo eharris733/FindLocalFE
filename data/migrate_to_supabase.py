@@ -1,32 +1,37 @@
 import json
 import os
-import requests
 from dotenv import load_dotenv
+from supabase import create_client, Client
 
-load_dotenv("../brooklyn-nite-out/.env")
+load_dotenv("brooklyn-nite-out/.env")  # Adjust path as needed
 
-SUPABASE_URL = os.getenv("VITE_SUPABASE_URL")
-SUPABASE_KEY = os.getenv("VITE_SUPABASE_ANON_KEY")
+url: str = os.environ.get("VITE_SUPABASE_URL")
+key: str = os.environ.get("VITE_SUPERBASE_SERVICE_ROLE_KEY")
+supabase: Client = create_client(url, key)
+
 
 def upload_events():
-    with open("merged_events.json", "r") as f:
+    with open("data/merged_events.json", "r") as f:
         events = json.load(f)
-    
-    headers = {
-        "apikey": SUPABASE_KEY,
-        "Authorization": f"Bearer {SUPABASE_KEY}",
-        "Content-Type": "application/json",
-        "Prefer": "return=minimal"
-    }
-    
-    url = f"{SUPABASE_URL}/rest/v1/events"
-    
+
     for event in events:
-        response = requests.post(url, headers=headers, json=event)
-        if response.status_code != 201:
-            print(f"Error uploading event {event['title']}: {response.text}")
-        else:
-            print(f"Uploaded: {event['title']}")
+        try:
+            # Attempt to update the event, and if it doesn't exist, insert it.
+            response = (
+                supabase.table("Events")
+                .upsert(event)  # Use the upsert method to insert or update
+                .execute()
+                .raise_when_api_error(True)
+            )
+
+
+            print(f"Uploaded/Updated: {event.get('title', 'Unknown')}")
+
+        except Exception as e:
+            print(f"error on: {event.get('title', 'Unknown')}")
+            print(f"{str(e)}")
+            
+
 
 if __name__ == "__main__":
     upload_events()

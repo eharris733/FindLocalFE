@@ -25,6 +25,7 @@ driver = webdriver.Chrome(service=service, options=options)
 
 # Target URL
 url = 'https://tockify.com/sunnysmusic/pinboard'
+display_url = 'https://www.sunnysredhook.com/calendar2/'
 
 driver.get(url)
 
@@ -75,7 +76,7 @@ for card in pincards:
         'preview_image': image_url,
         'venue': 'Sunny\'s Music',
         'category': 'Music',
-        'url': url,
+        'url': display_url,
         'id': title + ' ' + date_part  # Unique ID based on title and date
     })
 
