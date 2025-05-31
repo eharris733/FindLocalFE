@@ -1,14 +1,47 @@
 [
   {
-    "title": "Binoculars",
-    "date": "Tue May 27th",
+    "title": "Sam Brown and Ross Martin",
+    "date": "Fri May 30th",
     "time": "8:00pm - 10:00pm",
-    "description": "Welcome to Chloë and K8A’s picnic blanket under the shade of a black walnut tree where they’ve brought a fiddle, guitar, lap steel, and a ...",
-    "preview_image": "https://d3flpus5evl89n.cloudfront.net/678fdc1117f2920873d72980/679fc52779b81d4d3840a7dc/scaled_640.jpg",
+    "description": "Sam Brown is a lifelong singer, songwriter, everything else writer, comedian, and actor in New Jersey/New York. She released her debut ...",
+    "preview_image": "https://d3flpus5evl89n.cloudfront.net/678fdc1117f2920873d72980/682b7a6bdf95bd7eeaa6a709/scaled_640.jpg",
     "venue": "Sunny's Music",
     "category": "Music",
-    "url": "https://tockify.com/sunnysmusic/pinboard",
-    "id": "Binoculars Tue May 27th"
+    "url": "https://www.sunnysredhook.com/calendar2/",
+    "id": "Sam Brown and Ross Martin Fri May 30th"
+  },
+  {
+    "title": "Matthew Avedon",
+    "date": "Tue Jun 3rd",
+    "time": "8:00pm - 10:00pm",
+    "description": "Guitarist Matt Avedon and friends. A Sunny's favorite!",
+    "preview_image": "https://d3flpus5evl89n.cloudfront.net/678fdc1117f2920873d72980/6793f8ba79b81d4d383a5677/scaled_640.jpg",
+    "venue": "Sunny's Music",
+    "category": "Music",
+    "url": "https://www.sunnysredhook.com/calendar2/",
+    "id": "Matthew Avedon Tue Jun 3rd"
+  },
+  {
+    "title": "Tone's Bluegrass Jam",
+    "date": "Sun Jun 29th",
+    "time": "3:00pm - 6:00pm",
+    "description": "Tone's legendary bluegrass jam moves from Saturday nights to Sunday afternoons for the summer. All welcome!",
+    "preview_image": "https://d3flpus5evl89n.cloudfront.net/678fdc1117f2920873d72980/678feb1817f2920873d73924/scaled_640.jpg",
+    "venue": "Sunny's Music",
+    "category": "Music",
+    "url": "https://www.sunnysredhook.com/calendar2/",
+    "id": "Tone's Bluegrass Jam Sun Jun 29th"
+  },
+  {
+    "title": "Arnt Arntzen Band",
+    "date": "Sat May 31st",
+    "time": "9:00pm - 11:00pm",
+    "description": "Arnt Arntzen has been involved with music from a young age, mostly learning from his immediate and extended family. He has a degree in ...",
+    "preview_image": "https://d3flpus5evl89n.cloudfront.net/678fdc1117f2920873d72980/683622a19b02b60215ced1c3/scaled_640.jpg",
+    "venue": "Sunny's Music",
+    "category": "Music",
+    "url": "https://www.sunnysredhook.com/calendar2/",
+    "id": "Arnt Arntzen Band Sat May 31st"
   },
   {
     "title": "Smokey's Roundup",
@@ -18,40 +51,84 @@
     "preview_image": "https://d3flpus5evl89n.cloudfront.net/678fdc1117f2920873d72980/67913f02c455e14abc31d51c/scaled_384.jpg",
     "venue": "Sunny's Music",
     "category": "Music",
-    "url": "https://tockify.com/sunnysmusic/pinboard",
+    "url": "https://www.sunnysredhook.com/calendar2/",
     "id": "Smokey's Roundup Wed Jun 4th"
   },
   {
-    "title": "Smokey's Roundup",
-    "date": "Wed May 28th",
-    "time": "8:00pm - 11:00pm",
-    "description": "Guitarist Smokey Hormel and his red-hot band play Western Swing in Brooklyn every week – celebrating the songs of Bob Wills, Milton Brown, ...",
-    "preview_image": "https://d3flpus5evl89n.cloudfront.net/678fdc1117f2920873d72980/67913f02c455e14abc31d51c/scaled_384.jpg",
+    "title": "Tone's Bluegrass Jam",
+    "date": "Sun Jul 6th",
+    "time": "3:00pm - 6:00pm",
+    "description": "Tone's legendary bluegrass jam moves from Saturday nights to Sunday afternoons for the summer. All welcome!",
+    "preview_image": "https://d3flpus5evl89n.cloudfront.net/678fdc1117f2920873d72980/678feb1817f2920873d73924/scaled_640.jpg",
     "venue": "Sunny's Music",
     "category": "Music",
-    "url": "https://tockify.com/sunnysmusic/pinboard",
-    "id": "Smokey's Roundup Wed May 28th"
+    "url": "https://www.sunnysredhook.com/calendar2/",
+    "id": "Tone's Bluegrass Jam Sun Jul 6th"
   },
   {
-    "title": "Diana Daniels Album Release",
-    "date": "Thu May 29th",
-    "time": "8:00pm - 10:00pm",
-    "description": "Diana Daniels is a singer, songwriter, and multi-instrumentalist based in Brooklyn. She grew up in the San Francisco Bay Area with the ...",
-    "preview_image": "https://d3flpus5evl89n.cloudfront.net/678fdc1117f2920873d72980/682b6987df95bd7eeaa6883b/scaled_640.jpg",
+    "title": "Tone's Bluegrass Jam",
+    "date": "Sun Jun 1st",
+    "time": "3:00pm - 6:00pm",
+    "description": "Tone's legendary bluegrass jam moves from Saturday nights to Sunday afternoons for the summer. All welcome!",
+    "preview_image": "https://d3flpus5evl89n.cloudfront.net/678fdc1117f2920873d72980/678feb1817f2920873d73924/scaled_640.jpg",
     "venue": "Sunny's Music",
     "category": "Music",
-    "url": "https://tockify.com/sunnysmusic/pinboard",
-    "id": "Diana Daniels Album Release Thu May 29th"
+    "url": "https://www.sunnysredhook.com/calendar2/",
+    "id": "Tone's Bluegrass Jam Sun Jun 1st"
   },
   {
-    "title": "Sam Brown and Ross Martin",
-    "date": "Fri May 30th",
+    "title": "Hilary Hawke",
+    "date": "Thu Jun 5th",
     "time": "8:00pm - 10:00pm",
-    "description": "Sam Brown is a lifelong singer, songwriter, everything else writer, comedian, and actor in New Jersey/New York. She released her debut ...",
-    "preview_image": "https://d3flpus5evl89n.cloudfront.net/678fdc1117f2920873d72980/682b7a6bdf95bd7eeaa6a709/scaled_640.jpg",
+    "description": "Hilary Hawke is completely engaging on stage with a warmth and energy that pulls an audience into the show. With 20 years of performing ...",
+    "preview_image": "https://d3flpus5evl89n.cloudfront.net/678fdc1117f2920873d72980/6813991558400f51dff0f822/scaled_640.jpg",
     "venue": "Sunny's Music",
     "category": "Music",
-    "url": "https://tockify.com/sunnysmusic/pinboard",
-    "id": "Sam Brown and Ross Martin Fri May 30th"
+    "url": "https://www.sunnysredhook.com/calendar2/",
+    "id": "Hilary Hawke Thu Jun 5th"
+  },
+  {
+    "title": "Tone's Bluegrass Jam",
+    "date": "Sun Jun 15th",
+    "time": "3:00pm - 6:00pm",
+    "description": "Tone's legendary bluegrass jam moves from Saturday nights to Sunday afternoons for the summer. All welcome!",
+    "preview_image": "https://d3flpus5evl89n.cloudfront.net/678fdc1117f2920873d72980/678feb1817f2920873d73924/scaled_640.jpg",
+    "venue": "Sunny's Music",
+    "category": "Music",
+    "url": "https://www.sunnysredhook.com/calendar2/",
+    "id": "Tone's Bluegrass Jam Sun Jun 15th"
+  },
+  {
+    "title": "Ken and Friends",
+    "date": "Sun Jun 1st",
+    "time": "8:00pm - 10:00pm",
+    "description": "",
+    "preview_image": "https://d3flpus5evl89n.cloudfront.net/678fdc1117f2920873d72980/6790d894c455e14abc315d5d/scaled_512.jpg",
+    "venue": "Sunny's Music",
+    "category": "Music",
+    "url": "https://www.sunnysredhook.com/calendar2/",
+    "id": "Ken and Friends Sun Jun 1st"
+  },
+  {
+    "title": "Tone's Bluegrass Jam",
+    "date": "Sun Jun 8th",
+    "time": "3:00pm - 6:00pm",
+    "description": "Tone's legendary bluegrass jam moves from Saturday nights to Sunday afternoons for the summer. All welcome!",
+    "preview_image": "https://d3flpus5evl89n.cloudfront.net/678fdc1117f2920873d72980/678feb1817f2920873d73924/scaled_640.jpg",
+    "venue": "Sunny's Music",
+    "category": "Music",
+    "url": "https://www.sunnysredhook.com/calendar2/",
+    "id": "Tone's Bluegrass Jam Sun Jun 8th"
+  },
+  {
+    "title": "Tone's Bluegrass Jam",
+    "date": "Sun Jun 22nd",
+    "time": "3:00pm - 6:00pm",
+    "description": "Tone's legendary bluegrass jam moves from Saturday nights to Sunday afternoons for the summer. All welcome!",
+    "preview_image": "https://d3flpus5evl89n.cloudfront.net/678fdc1117f2920873d72980/678feb1817f2920873d73924/scaled_640.jpg",
+    "venue": "Sunny's Music",
+    "category": "Music",
+    "url": "https://www.sunnysredhook.com/calendar2/",
+    "id": "Tone's Bluegrass Jam Sun Jun 22nd"
   }
 ]

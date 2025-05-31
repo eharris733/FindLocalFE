@@ -1,7 +1,7 @@
 // src/hooks/useEvents.ts (No changes from previous iteration)
 import { useState, useEffect, useMemo, useReducer } from 'react';
 import type { Event, ViewType, EventFilters, FilterAction } from '../types/events.d';
-import { fetchEvents } from '../api/events';
+import { getEvents } from '../api/events';
 import { startOfDay,  isBefore} from 'date-fns'; // date-fns remains useful for logic
 
 // Initial state for filters
@@ -51,12 +51,12 @@ export const useEvents = (): UseEventsResult => {
   const [filters, dispatchFilters] = useReducer(filterReducer, initialFilterState);
 
   useEffect(() => {
-    const getEvents = async () => {
+    const fetchEvents = async () => {
       setLoading(true);
       setError(null);
       try {
-        const data = await fetchEvents();
-        setEvents(data);
+        const data = await getEvents();
+        setEvents(data || []); 
       } catch (err) {
         setError("Failed to load events. Please try again.");
         console.error(err);
@@ -64,7 +64,7 @@ export const useEvents = (): UseEventsResult => {
         setLoading(false);
       }
     };
-    getEvents();
+    fetchEvents();
   }, []);
 
   const { availableCategories, availableLocations } = useMemo(() => {
