@@ -1,15 +1,15 @@
 CSS,Venue_Name,URL,Start_URL,clean_html,data_tags_only,Has_Schema,Successful_schema_gen,Notes
 article,Cmon Everybody,https://www.cmoneverybody.com/events,https://www.cmoneverybody.com/events,Y,Y,Y,N,
-article,Friends and Lovers,https://www.fnlbk.com/upcoming,https://www.fnlbk.com/upcoming,N,N,Y,N,issue of strange css auto-get selectors
+article,Friends and Lovers,https://www.fnlbk.com/upcoming,https://www.fnlbk.com/upcoming,N,N,Y,Y,issue of strange css auto-get selectors
 div.pincard,Sunnys Bar,https://www.sunnysredhook.com/calendar2/,"https://tockify.com/sunnysmusic/pinboard
 ",N,N,Y,Y,
 div.event-card,Jalopy Theater,https://jalopytheatre.netlify.app/performances,https://jalopytheatre.netlify.app/performances,N,N,Y,Y,
 section#card-list,Barbes,https://www.barbesbrooklyn.com/events,https://viewcyembed.com/barbes/000000/FFFCFC/850505,N,N,Y,Y,
 fluid-columns-repeater,Mathilde,https://www.mathildebrooklyn.com/events-1,https://www.mathildebrooklyn.com/events-1,Y,Y,Y,N,"issue of strange css auto-get selectors, still kind of worked, didn’t get the images"
 ,Young Ethels,https://www.youngethels.com/events,,N,N,N,N,"Is just an image fml, (also all events are in the past so rip)"
-,Mama Tried,https://mamatriedbk.com/calendar,,N,N,N,,
-,Brooklyn Steel,https://www.bowerypresents.com/venues/brooklyn-steel,,N,N,N,,
-,National Sawdust,https://www.nationalsawdust.org/performances,,N,N,N,,
+div.eventlist,Mama Tried,https://mamatriedbk.com/calendar,https://mamatriedbk.com/upcoming-events,N,N,Y,Y,
+div#showsList,Brooklyn Steel,https://www.bowerypresents.com/venues/brooklyn-steel,https://www.bowerypresents.com/shows/brooklyn-steel,N,N,N,,
+div.collection-list-wrapper-25,National Sawdust,https://www.nationalsawdust.org/performances,https://www.nationalsawdust.org/performances,N,N,N,,
 ,Skinny Dennis,https://www.skinnydennisbar.com/calendar ,,N,N,N,,site is down right now for some reason but Brooklyn's best and most active Honky Tonk...
 ,Radegast,https://radegasthall.com/events-2/live-music/,,N,N,N,,
 ,Pete's Candy Store,https://www.petescandystore.com/calendar/,,N,N,N,,
