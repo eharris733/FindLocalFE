@@ -1,44 +1,44 @@
 {
   "name": "Event Details Extraction",
-  "baseSelector": "div.crawl4ai-result article.sections",
+  "baseSelector": "div.event-container",
   "fields": [
     {
       "name": "image",
-      "selector": "div.sqs-block-content img",
+      "selector": "img.event-image",
       "type": "attribute",
       "attribute": "src"
     },
     {
       "name": "eventDate",
-      "selector": "div.sqs-block-content p",
+      "selector": "div.event-date",
       "type": "text"
     },
     {
       "name": "startTime",
-      "selector": "div.sqs-block-content p",
+      "selector": "div.event-time",
       "type": "text",
       "regex": {
-        "pattern": "(\\d{1,2}:[0-5]\\d [ap]m)",
-        "group": 0
+        "pattern": "(\\d{1,2}:\\d{2} [ap]m)",
+        "group": 1
       }
     },
     {
       "name": "endTime",
-      "selector": "div.sqs-block-content p",
+      "selector": "div.event-time",
       "type": "text",
       "regex": {
-        "pattern": "- (\\d{1,2}:[0-5]\\d [ap]m)",
+        "pattern": "- (\\d{1,2}:\\d{2} [ap]m)",
         "group": 1
       }
     },
     {
       "name": "title",
-      "selector": "div.sqs-block-content h1, div.sqs-block-content h2",
+      "selector": "h3.event-title",
       "type": "text"
     },
     {
       "name": "description",
-      "selector": "div.sqs-block-content p",
+      "selector": "div.event-description",
       "type": "text"
     }
   ]
