@@ -1,0 +1,45 @@
+{
+  "name": "Event Listings",
+  "baseSelector": "section.legacy-card",
+  "fields": [
+    {
+      "name": "image",
+      "selector": "a > img",
+      "type": "attribute",
+      "attribute": "src"
+    },
+    {
+      "name": "eventDate",
+      "selector": "p.legacy-date > span:first-child",
+      "type": "text"
+    },
+    {
+      "name": "startTime",
+      "selector": "p.legacy-date > span",
+      "type": "text",
+      "regex": {
+        "pattern": "(\\d{1,2}:[0-5]\\d\\s?[AP]M)",
+        "group": 1
+      }
+    },
+    {
+      "name": "endTime",
+      "selector": "p.legacy-date > span",
+      "type": "text",
+      "regex": {
+        "pattern": "(\\d{1,2}:[0-5]\\d\\s?[AP]M)$",
+        "group": 1
+      }
+    },
+    {
+      "name": "title",
+      "selector": "div.info > a > h1",
+      "type": "text"
+    },
+    {
+      "name": "description",
+      "selector": "div.legacy.details > div.title-description > p.description",
+      "type": "text"
+    }
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "name": "Event Listings",
+  "baseSelector": "div.crawl4ai-result > fluid-columns-repeater > div.comp-m3qkd5tg1",
+  "fields": [
+    {
+      "name": "image",
+      "selector": "div.comp-m3qkd5tn > div[data-testid='linkElement'] > wow-image > img",
+      "type": "attribute",
+      "attribute": "src"
+    },
+    {
+      "name": "eventDate",
+      "selector": "div.comp-m3qkd5tu > h5.wixui-rich-text__text",
+      "type": "text"
+    },
+    {
+      "name": "startTime",
+      "selector": "div.comp-m3qkd5tu > h5.wixui-rich-text__text",
+      "type": "text",
+      "regex": {
+        "pattern": "(\\d{1,2}:\\d{2} [ap]m)",
+        "group": 0
+      }
+    },
+    {
+      "name": "endTime",
+      "selector": "div.comp-m3qkd5tu > h5.wixui-rich-text__text",
+      "type": "text",
+      "regex": {
+        "pattern": "(\\d{1,2}:\\d{2} [ap]m)(?= - )",
+        "group": 0
+      }
+    },
+    {
+      "name": "title",
+      "selector": "div.comp-m3qkd5tu > h5.wixui-rich-text__text",
+      "type": "text"
+    },
+    {
+      "name": "description",
+      "selector": "div.comp-m3qkd5tu > h5.wixui-rich-text__text",
+      "type": "text"
+    }
+  ]
+}

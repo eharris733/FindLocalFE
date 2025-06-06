@@ -4,3 +4,5 @@
 # Python
 __pycache__/
 brooklyn-nite-out/.env
+crawlers/.env
+crawlers/__pycache__/
