@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 from prompts.generate_jsoncss_prompt import generate_jsoncss_extraction_prompt
 
 # Load environment variables
-load_dotenv(os.path.expanduser("brooklyn-nite-out/.env"))
+load_dotenv(os.path.expanduser("frontend/.env"))
 # Check for OpenAI API Key
 api_key = os.getenv("OPENAI_API_KEY")
 if not api_key:
