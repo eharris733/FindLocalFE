@@ -1,0 +1,46 @@
+{
+  "name": "Event Details Extraction",
+  "baseSelector": "div.show-item",
+  "fields": [
+    {
+      "name": "image",
+      "selector": "div.show-poster.show-item-img img",
+      "type": "attribute",
+      "attribute": "src"
+    },
+    {
+      "name": "eventDate",
+      "selector": "ul.info-list li p.list-date",
+      "type": "text"
+    },
+    {
+      "name": "startTime",
+      "selector": "ul.info-list li p.list-date",
+      "type": "text",
+      "regex": {
+        "pattern": "Show: (\\d{1,2}:\\d{2} [APM]{2})",
+        "group": 1
+      }
+    },
+    {
+      "name": "endTime",
+      "selector": "ul.info-list li p.list-date",
+      "type": "text",
+      "regex": {
+        "pattern": "Doors (\\d{1,2}:\\d{2} [APM]{2})",
+        "group": 1
+      }
+    },
+    {
+      "name": "title",
+      "selector": "div.info-title h3 span[itemprop='name']",
+      "type": "text"
+    },
+    {
+      "name": "description",
+      "selector": "div.info-title h3 meta[itemprop='description']",
+      "type": "attribute",
+      "attribute": "content"
+    }
+  ]
+}

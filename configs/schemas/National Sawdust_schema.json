@@ -1,0 +1,40 @@
+{
+  "name": "Event Listing",
+  "baseSelector": "div.collection-item-_cms_350px.w-dyn-item",
+  "fields": [
+    {
+      "name": "image",
+      "selector": "div.image-block-copy",
+      "type": "attribute",
+      "attribute": "style",
+      "regex": "url\\(\"(https://[^\"]+)\"\\)"
+    },
+    {
+      "name": "eventDate",
+      "selector": "h4.category-title-date.modified.white",
+      "type": "text"
+    },
+    {
+      "name": "startTime",
+      "selector": "h4.category-title-date.modified.white",
+      "type": "text",
+      "regex": ".*?\\s(\\d{1,2}:[0-9]{2}\\s[APM]{2})"
+    },
+    {
+      "name": "endTime",
+      "selector": "h4.category-title-date.modified.white",
+      "type": "text",
+      "regex": ".*?\\s(\\d{1,2}:[0-9]{2}\\s[APM]{2})$"
+    },
+    {
+      "name": "title",
+      "selector": "h4.article-title-filter-list.white",
+      "type": "text"
+    },
+    {
+      "name": "description",
+      "selector": "p.cms_description",
+      "type": "text"
+    }
+  ]
+}
