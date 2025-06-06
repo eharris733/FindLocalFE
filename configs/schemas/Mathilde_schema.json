@@ -1,21 +1,21 @@
 {
   "name": "Event Listings",
-  "baseSelector": "div.crawl4ai-result > fluid-columns-repeater > div.comp-m3qkd5tg1",
+  "baseSelector": "div[data-testid='inline-content']",
   "fields": [
     {
       "name": "image",
-      "selector": "div.comp-m3qkd5tn > div[data-testid='linkElement'] > wow-image > img",
+      "selector": "div[data-testid='linkElement'] > wow-image > img",
       "type": "attribute",
       "attribute": "src"
     },
     {
       "name": "eventDate",
-      "selector": "div.comp-m3qkd5tu > h5.wixui-rich-text__text",
+      "selector": "div[data-testid='richTextElement'] > h5 > span:nth-child(1)",
       "type": "text"
     },
     {
       "name": "startTime",
-      "selector": "div.comp-m3qkd5tu > h5.wixui-rich-text__text",
+      "selector": "div[data-testid='richTextElement'] > h5 > span:nth-child(1)",
       "type": "text",
       "regex": {
         "pattern": "(\\d{1,2}:\\d{2} [ap]m)",
@@ -24,21 +24,21 @@
     },
     {
       "name": "endTime",
-      "selector": "div.comp-m3qkd5tu > h5.wixui-rich-text__text",
+      "selector": "div[data-testid='richTextElement'] > h5 > span:nth-child(1)",
       "type": "text",
       "regex": {
-        "pattern": "(\\d{1,2}:\\d{2} [ap]m)(?= - )",
-        "group": 0
+        "pattern": "- (\\d{1,2}:\\d{2} [ap]m)",
+        "group": 1
       }
     },
     {
       "name": "title",
-      "selector": "div.comp-m3qkd5tu > h5.wixui-rich-text__text",
+      "selector": "div[data-testid='richTextElement'] > h5 > span:nth-child(1)",
       "type": "text"
     },
     {
       "name": "description",
-      "selector": "div.comp-m3qkd5tu > h5.wixui-rich-text__text",
+      "selector": "div[data-testid='richTextElement'] > h5 > span:nth-child(n+2)",
       "type": "text"
     }
   ]
