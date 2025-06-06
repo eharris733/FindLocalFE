@@ -1,6 +1,6 @@
 // src/hooks/useEvents.ts (No changes from previous iteration)
 import { useState, useEffect, useMemo, useReducer } from 'react';
-import type { Event, ViewType, EventFilters, FilterAction } from '../types/events.d';
+import type { Event, ViewType, EventFilters, FilterAction } from '../types/events';
 import { getEvents } from '../api/events';
 import { startOfDay,  isBefore} from 'date-fns'; // date-fns remains useful for logic
 

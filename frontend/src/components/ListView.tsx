@@ -3,7 +3,7 @@
 
 import { Typography, Grid } from '@mui/material';
 import React from 'react';
-import type { Event } from '../types/events.d';
+import type { Event } from '../types/events';
 import EventCard from './EventCard';
 
 

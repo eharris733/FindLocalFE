@@ -1,5 +1,5 @@
 // src/api/events.ts
-import type { Event } from '../types/events.d';
+import type { Event } from '../types/events';
 import { supabase } from '../supabase';
 
 // ...existing code...

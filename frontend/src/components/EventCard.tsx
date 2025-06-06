@@ -1,7 +1,7 @@
 // src/components/EventCard.tsx
 
 import React from 'react';
-import type { Event } from '../types/events.d'; // Ensure this path is correct
+import type { Event } from '../types/events'; // Ensure this path is correct
 import { format } from 'date-fns';
 import { Card, CardContent, CardMedia, Typography, Box, Chip, CardActionArea } from '@mui/material';
 

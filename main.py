@@ -1,3 +1,6 @@
+### This file sets up a FastAPI application with CORS enabled and serves event data from a JSON file. The current app doesn't use a backend so this is just a placeholder.
+
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import json

@@ -11,7 +11,7 @@ import { enUS } from 'date-fns/locale/en-US';
 
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 
-import type { Event } from '../types/events.d';
+import type { Event } from '../types/events';
 import { Box, Typography, Chip } from '@mui/material';
 
 const locales = {

@@ -1,0 +1,22 @@
+{
+  "scraping_timestamp": 853432.521571628,
+  "total_venues": 2,
+  "successful_venues": 0,
+  "failed_venues": 0,
+  "venues_with_no_events": 2,
+  "total_events_extracted": 0,
+  "venue_results": [
+    {
+      "venue_id": "sunnys_music",
+      "venue_name": "Sunny's Music",
+      "status": "no_events",
+      "events_count": 0
+    },
+    {
+      "venue_id": "jalopy_theatre",
+      "venue_name": "Jalopy Theatre",
+      "status": "no_events",
+      "events_count": 0
+    }
+  ]
+}
