@@ -28,7 +28,7 @@ def load_scraper_config(path):
         df = pd.read_csv(path)
         return df
     except FileNotFoundError:
-        print("Error: The file 'scraper_config/Brooklyn_Music_Venues' was not found.")
+        print(f"Error: The file {DEFAULT_SCRAPER_CONFIG_PATH} was not found.")
         return None
     except pd.errors.EmptyDataError:
         print("Error: The file is empty.")
