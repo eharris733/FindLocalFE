@@ -1,0 +1,37 @@
+{
+  "name": "Event Listings",
+  "baseSelector": "div.EventParts__EventBlock-sc-f240e854-10",
+  "fields": [
+    {
+      "name": "image",
+      "selector": "div.EventCard__EventMediaWrapper-sc-46028247-2 img",
+      "type": "attribute",
+      "attribute": "src"
+    },
+    {
+      "name": "eventDate",
+      "selector": "span.EventParts__EventDate-sc-f240e854-1",
+      "type": "text"
+    },
+    {
+      "name": "startTime",
+      "selector": "span.EventParts__EventDate-sc-f240e854-1",
+      "type": "text"
+    },
+    {
+      "name": "endTime",
+      "selector": "span.EventParts__EventDate-sc-f240e854-1",
+      "type": "text"
+    },
+    {
+      "name": "title",
+      "selector": "a.EventParts__EventName-sc-f240e854-0",
+      "type": "text"
+    },
+    {
+      "name": "description",
+      "selector": "div.EventCard__FullWidth-sc-46028247-1",
+      "type": "text"
+    }
+  ]
+}
