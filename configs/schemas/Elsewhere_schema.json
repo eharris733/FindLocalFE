@@ -1,0 +1,38 @@
+{
+  "name": "Event Listings",
+  "baseSelector": "article.listing-compact_listing-compact__i4Wzd",
+  "fields": [
+    {
+      "name": "image",
+      "selector": "meta[itemprop='image']",
+      "type": "attribute",
+      "attribute": "content"
+    },
+    {
+      "name": "eventDate",
+      "selector": "time[itemprop='startDate']",
+      "type": "text"
+    },
+    {
+      "name": "startTime",
+      "selector": "time.listing-compact_listing-compact__time__S3QmN",
+      "type": "text"
+    },
+    {
+      "name": "endTime",
+      "selector": "meta[itemprop='endDate']",
+      "type": "text"
+    },
+    {
+      "name": "title",
+      "selector": "h2.font-t3-title > a[itemprop='url'] > span[itemprop='name']",
+      "type": "text"
+    },
+    {
+      "name": "description",
+      "selector": "meta[itemprop='description']",
+      "type": "attribute",
+      "attribute": "content"
+    }
+  ]
+}

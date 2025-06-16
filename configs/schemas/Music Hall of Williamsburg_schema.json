@@ -33,7 +33,7 @@
     },
     {
       "name": "title",
-      "selector": "h3.event-title",
+      "selector": "h2.event-title",
       "type": "text"
     },
     {

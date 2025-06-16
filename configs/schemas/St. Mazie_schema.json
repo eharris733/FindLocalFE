@@ -1,0 +1,45 @@
+{
+  "name": "Event Schedule",
+  "baseSelector": "div.stm-schedule-item",
+  "fields": [
+    {
+      "name": "image",
+      "selector": "div.stm-schedule-item-cta a.stm-more-info",
+      "type": "attribute",
+      "attribute": "href"
+    },
+    {
+      "name": "eventDate",
+      "selector": "div.stm-schedule-item-date",
+      "type": "text"
+    },
+    {
+      "name": "startTime",
+      "selector": "div.stm-schedule-item-time",
+      "type": "text",
+      "regex": {
+        "pattern": "^(.*?)(?: - )",
+        "group": 1
+      }
+    },
+    {
+      "name": "endTime",
+      "selector": "div.stm-schedule-item-time",
+      "type": "text",
+      "regex": {
+        "pattern": "- (.*)$",
+        "group": 1
+      }
+    },
+    {
+      "name": "title",
+      "selector": "div.stm-schedule-item-content",
+      "type": "text"
+    },
+    {
+      "name": "description",
+      "selector": "div.stm-schedule-item-content",
+      "type": "text"
+    }
+  ]
+}

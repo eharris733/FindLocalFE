@@ -1,0 +1,42 @@
+{
+  "name": "Event Listing",
+  "baseSelector": "div.seetickets-list-event-container",
+  "fields": [
+    {
+      "name": "image",
+      "selector": "div.seetickets-list-view-event-image-container img",
+      "type": "attribute",
+      "attribute": "data-lazy-src"
+    },
+    {
+      "name": "eventDate",
+      "selector": "div.event-info-block p.fs-18.bold.mt-1r.date",
+      "type": "text"
+    },
+    {
+      "name": "startTime",
+      "selector": "div.event-info-block p.fs-12.doortime-showtime span.see-showtime",
+      "type": "text"
+    },
+    {
+      "name": "endTime",
+      "selector": "div.event-info-block p.fs-12.doortime-showtime span.see-showtime",
+      "type": "text",
+      "regex": {
+        "pattern": ".* / (.*)",
+        "group": 1
+      }
+    },
+    {
+      "name": "title",
+      "selector": "div.event-info-block p.fs-18.bold.mb-12.title a",
+      "type": "text"
+    },
+    {
+      "name": "description",
+      "selector": "div.event-info-block p.fs-12.subtitle",
+      "type": "text",
+      "default": "N/A"
+    }
+  ]
+}

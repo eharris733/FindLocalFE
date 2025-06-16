@@ -18,8 +18,8 @@
       "selector": "div.event-time",
       "type": "text",
       "regex": {
-        "pattern": "(\\d{1,2}:\\d{2} [ap]m)",
-        "group": 0
+        "pattern": "(.*?)(?: - )(.*)",
+        "group": 1
       }
     },
     {
@@ -27,8 +27,8 @@
       "selector": "div.event-time",
       "type": "text",
       "regex": {
-        "pattern": "- (\\d{1,2}:\\d{2} [ap]m)",
-        "group": 1
+        "pattern": "(.*?)(?: - )(.*)",
+        "group": 2
       }
     },
     {
