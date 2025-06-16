@@ -1,44 +1,40 @@
 {
   "name": "Event Details Extraction",
-  "baseSelector": "div.event-container",
+  "baseSelector": "div.sc-65dfe515-3.fNMGhp",
   "fields": [
     {
       "name": "image",
-      "selector": "img.event-image",
+      "selector": "div.sc-65dfe515-1.ueLMi img",
       "type": "attribute",
       "attribute": "src"
     },
     {
       "name": "eventDate",
-      "selector": "div.event-date",
+      "selector": "div.sc-65dfe515-0.jgdIQd .event-date",
       "type": "text"
     },
     {
       "name": "startTime",
-      "selector": "div.event-time",
-      "type": "text",
-      "regex": {
-        "pattern": "(\\d{1,2}:\\d{2} [ap]m)",
-        "group": 0
-      }
+      "selector": "div.sc-65dfe515-0.jgdIQd .event-time",
+      "type": "text"
     },
     {
       "name": "endTime",
-      "selector": "div.event-time",
+      "selector": "div.sc-65dfe515-0.jgdIQd .event-time",
       "type": "text",
       "regex": {
-        "pattern": "- (\\d{1,2}:\\d{2} [ap]m)",
+        "pattern": ".* - (.*)",
         "group": 1
       }
     },
     {
       "name": "title",
-      "selector": "h3.event-title",
+      "selector": "div.sc-65dfe515-1.ueLMi .event-title",
       "type": "text"
     },
     {
       "name": "description",
-      "selector": "div.event-description",
+      "selector": "div.sc-65dfe515-1.ueLMi .event-description",
       "type": "text"
     }
   ]

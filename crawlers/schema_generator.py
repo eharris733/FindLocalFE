@@ -4,7 +4,7 @@ import sys
 from crawl4ai import AsyncWebCrawler, CacheMode, CrawlerRunConfig, JsonCssExtractionStrategy
 import pandas as pd
 import os
-from prompts.generate_jsoncss_prompt import generate_jsoncss_extraction_prompt
+from prompts.generate_jsoncss_events_prompt import generate_jsoncss_extraction_prompt
 from config import (
     SCHEMAS_FOLDER, 
     SCHEMA_FILE_SUFFIX, 

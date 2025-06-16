@@ -1,0 +1,45 @@
+{
+  "name": "Event Listings",
+  "baseSelector": "div.search-event",
+  "fields": [
+    {
+      "name": "image",
+      "selector": "div.img-holder img",
+      "type": "attribute",
+      "attribute": "src"
+    },
+    {
+      "name": "eventDate",
+      "selector": "div.event-date",
+      "type": "text"
+    },
+    {
+      "name": "startTime",
+      "selector": "div.event-date",
+      "type": "text",
+      "regex": {
+        "pattern": "^(.*?)(\\d{1,2}:[0-9]{2} [ap]m)(?: - (\\d{1,2}:[0-9]{2} [ap]m))?$",
+        "group": 2
+      }
+    },
+    {
+      "name": "endTime",
+      "selector": "div.event-date",
+      "type": "text",
+      "regex": {
+        "pattern": "^(.*?)(\\d{1,2}:[0-9]{2} [ap]m)(?: - (\\d{1,2}:[0-9]{2} [ap]m))?$",
+        "group": 3
+      }
+    },
+    {
+      "name": "title",
+      "selector": "div.event-info > div.event-name",
+      "type": "text"
+    },
+    {
+      "name": "description",
+      "selector": "div.get-tickets-overlay p.hover-name",
+      "type": "text"
+    }
+  ]
+}

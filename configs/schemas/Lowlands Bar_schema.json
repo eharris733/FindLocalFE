@@ -1,0 +1,37 @@
+{
+  "name": "Event List Extraction",
+  "baseSelector": "article.eventlist-event",
+  "fields": [
+    {
+      "name": "image",
+      "selector": "a.eventlist-column-thumbnail img",
+      "type": "attribute",
+      "attribute": "src"
+    },
+    {
+      "name": "eventDate",
+      "selector": "time.event-date",
+      "type": "text"
+    },
+    {
+      "name": "startTime",
+      "selector": "time.event-time-localized-start",
+      "type": "text"
+    },
+    {
+      "name": "endTime",
+      "selector": "time.event-time-localized-end",
+      "type": "text"
+    },
+    {
+      "name": "title",
+      "selector": "h1.eventlist-title a",
+      "type": "text"
+    },
+    {
+      "name": "description",
+      "selector": "div.eventlist-excerpt",
+      "type": "text"
+    }
+  ]
+}

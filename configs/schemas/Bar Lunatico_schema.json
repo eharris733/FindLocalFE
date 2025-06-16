@@ -1,0 +1,46 @@
+{
+  "name": "Event Schedule",
+  "baseSelector": "div.summary-item",
+  "fields": [
+    {
+      "name": "image",
+      "selector": "div.summary-thumbnail img.summary-thumbnail-image",
+      "type": "attribute",
+      "attribute": "data-image"
+    },
+    {
+      "name": "eventDate",
+      "selector": "time.summary-metadata-item.summary-metadata-item--date",
+      "type": "text"
+    },
+    {
+      "name": "startTime",
+      "selector": "time.summary-metadata-item.summary-metadata-item--event-time span.event-time-localized",
+      "type": "text",
+      "regex": {
+        "pattern": "^(.*?)(?: \u2013 |$)",
+        "group": 1
+      }
+    },
+    {
+      "name": "endTime",
+      "selector": "time.summary-metadata-item.summary-metadata-item--event-time span.event-time-localized",
+      "type": "text",
+      "regex": {
+        "pattern": "\u2013 (.*)$",
+        "group": 1
+      }
+    },
+    {
+      "name": "title",
+      "selector": "div.summary-title a.summary-title-link",
+      "type": "text"
+    },
+    {
+      "name": "description",
+      "selector": "div.summary-excerpt p",
+      "type": "text",
+      "default": "N/A"
+    }
+  ]
+}

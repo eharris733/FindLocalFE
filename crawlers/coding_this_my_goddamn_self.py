@@ -5,7 +5,7 @@ import pandas as pd
 from openai import OpenAI
 import os
 from dotenv import load_dotenv
-from prompts.generate_jsoncss_prompt import generate_jsoncss_extraction_prompt
+from crawlers.prompts.generate_jsoncss_events_prompt import generate_jsoncss_extraction_prompt
 
 # File path constants
 ENV_FILE_PATH = "frontend/.env"

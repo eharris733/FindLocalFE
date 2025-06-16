@@ -1,0 +1,45 @@
+{
+  "name": "Event Gallery Extraction",
+  "baseSelector": "div.gallery-grid-item",
+  "fields": [
+    {
+      "name": "image",
+      "selector": "img[data-src]",
+      "type": "attribute",
+      "attribute": "data-src"
+    },
+    {
+      "name": "eventDate",
+      "selector": "figcaption .gallery-caption-content",
+      "type": "text"
+    },
+    {
+      "name": "startTime",
+      "selector": "figcaption .gallery-caption-content",
+      "type": "text",
+      "regex": {
+        "pattern": "(\\d{1,2}:[0-5]\\d [ap]m)",
+        "group": 1
+      }
+    },
+    {
+      "name": "endTime",
+      "selector": "figcaption .gallery-caption-content",
+      "type": "text",
+      "regex": {
+        "pattern": "(\\d{1,2}:[0-5]\\d [ap]m)(?!.*\\d{1,2}:[0-5]\\d [ap]m)",
+        "group": 1
+      }
+    },
+    {
+      "name": "title",
+      "selector": "figcaption .gallery-caption-content",
+      "type": "text"
+    },
+    {
+      "name": "description",
+      "selector": "figcaption .gallery-caption-content",
+      "type": "text"
+    }
+  ]
+}
