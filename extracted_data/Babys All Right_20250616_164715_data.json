@@ -1,0 +1,126 @@
+{
+  "venue_name": "Babys All Right",
+  "extraction_timestamp": "20250616_164715",
+  "data": [
+    {
+      "image": "https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiYTQwYWQ3ZTctNmEzZS00ZTk0LWI4YTQtNWY2ZWMwYmI3MDk3IiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==",
+      "eventDate": "Monday, Jun 16",
+      "startTime": "Monday, Jun 16",
+      "endTime": "Monday, Jun 16",
+      "title": "Riese",
+      "description": "Riese"
+    },
+    {
+      "image": "https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiMzYxYjYxYjUtZTM4MS00ODRjLTlhODQtODc2YjViZWYyNTNmIiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==",
+      "eventDate": "Tuesday, Jun 17",
+      "startTime": "Tuesday, Jun 17",
+      "endTime": "Tuesday, Jun 17",
+      "title": "Sydney Rose",
+      "description": "Sydney Rose"
+    },
+    {
+      "image": "https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiZjZlZmYxNDctZjlhYy00OWUyLTkwZGMtMTBkNmI5OThhZTVjIiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==",
+      "eventDate": "Tuesday, Jun 17",
+      "startTime": "Tuesday, Jun 17",
+      "endTime": "Tuesday, Jun 17",
+      "title": "Sally Boy",
+      "description": "Sally Boy"
+    },
+    {
+      "image": "https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiYTM5OTg4YzgtZDc3OC00OWI3LWI5YzctMzQ3ZmYwMzM4ZGQzIiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==",
+      "eventDate": "Wednesday, Jun 18",
+      "startTime": "Wednesday, Jun 18",
+      "endTime": "Wednesday, Jun 18",
+      "title": "Niko Brim and Kai Ca$h",
+      "description": "Niko Brim and Kai Ca$h"
+    },
+    {
+      "image": "https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiZmZiMzkzNTctYmU1My00MGMyLWJlZWYtNGMzZTNhNmFmODY1IiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjozNjUsImhlaWdodCI6MzY1fX19",
+      "eventDate": "Thursday, Jun 19",
+      "startTime": "Thursday, Jun 19",
+      "endTime": "Thursday, Jun 19",
+      "title": "Yuno",
+      "description": "Yuno"
+    },
+    {
+      "image": "https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiM2MwNmVmN2ItM2IyYi00MzFlLTgxOTAtOWVmNGU5ZDhmMGYzIiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjozNjUsImhlaWdodCI6MzY1fX19",
+      "eventDate": "Friday, Jun 20",
+      "startTime": "Friday, Jun 20",
+      "endTime": "Friday, Jun 20",
+      "title": "Chicha Libre",
+      "description": "Chicha Libre"
+    },
+    {
+      "image": "https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiZWM0MzM3MmEtYmM4MS00YjVjLTk2NjctNDg4ZGQzYjE2MzlkIiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==",
+      "eventDate": "Friday, Jun 20",
+      "startTime": "Friday, Jun 20",
+      "endTime": "Friday, Jun 20",
+      "title": "Nuevayorkinos",
+      "description": "Nuevayorkinos"
+    },
+    {
+      "image": "https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiMjgwMTBhYjctMGVjYS00NGE4LTk1ZDUtYTcwMThmMGEzYWIyIiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjozNjUsImhlaWdodCI6MzY1fX19",
+      "eventDate": "Saturday, Jun 21",
+      "startTime": "Saturday, Jun 21",
+      "endTime": "Saturday, Jun 21",
+      "title": "JUICE",
+      "description": "JUICE"
+    },
+    {
+      "image": "https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiNWU3MzRjZjYtM2JlOC00YWQzLTk2ZTktMjU4YzE3MTA0YTIwIiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjozNjUsImhlaWdodCI6MzY1fX19",
+      "eventDate": "Sunday, Jun 22",
+      "startTime": "Sunday, Jun 22",
+      "endTime": "Sunday, Jun 22",
+      "title": "John Gallagher, Jr.",
+      "description": "John Gallagher, Jr."
+    },
+    {
+      "image": "https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiZmZmNDMxMzQtN2MwNy00Mjk1LWFhYmUtYWQzZGVjMmU0Mzc0IiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjozNjUsImhlaWdodCI6MzY1fX19",
+      "eventDate": "Monday, Jun 23",
+      "startTime": "Monday, Jun 23",
+      "endTime": "Monday, Jun 23",
+      "title": "Porch Light",
+      "description": "Porch Light"
+    },
+    {
+      "image": "https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiNmY0OTBlNjQtNDcxMi00MGZjLTg5M2MtYTQyODY2YWYyMmI0IiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==",
+      "eventDate": "Monday, Jun 23",
+      "startTime": "Monday, Jun 23",
+      "endTime": "Monday, Jun 23",
+      "title": "Nai Palm (of Hiatus Kaiyote)",
+      "description": "Nai Palm (of Hiatus Kaiyote)"
+    },
+    {
+      "image": "https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiOGFiMzJiYTctMTlmZS00OGU4LWJmNTctMjAxZDRhMzc5ODdkIiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjozNjUsImhlaWdodCI6MzY1fX19",
+      "eventDate": "Tuesday, Jun 24",
+      "startTime": "Tuesday, Jun 24",
+      "endTime": "Tuesday, Jun 24",
+      "title": "Q",
+      "description": "Q"
+    },
+    {
+      "image": "https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiMDZkOGM3NTUtZDYyMS00YjU2LWE5NTktYTc2YzAyMjBjYjlmIiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==",
+      "eventDate": "Thursday, Jun 26",
+      "startTime": "Thursday, Jun 26",
+      "endTime": "Thursday, Jun 26",
+      "title": "Weird Scene",
+      "description": "Weird Scene"
+    },
+    {
+      "image": "https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiMjU0MjllYWUtOGRkYS00Mzg2LWFlN2EtN2M2YzAzNmNlYmJlIiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjozNjUsImhlaWdodCI6MzY1fX19",
+      "eventDate": "Friday, Jun 27",
+      "startTime": "Friday, Jun 27",
+      "endTime": "Friday, Jun 27",
+      "title": "Julie Doiron",
+      "description": "Julie Doiron"
+    },
+    {
+      "image": "https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiODhhOTk4MGItMjdjMi00N2I4LTg2N2EtZTBkYTFjMGRmMTI2IiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==",
+      "eventDate": "Friday, Jun 27",
+      "startTime": "Friday, Jun 27",
+      "endTime": "Friday, Jun 27",
+      "title": "All Your Friends: The Indie Party",
+      "description": "All Your Friends: The Indie Party"
+    }
+  ]
+}

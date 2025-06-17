@@ -1,45 +1,47 @@
 {
-  "name": "Event Details Extraction",
-  "baseSelector": "div.event-container",
+  "name": "Event Listing",
+  "baseSelector": "div.eventItem",
   "fields": [
     {
       "name": "image",
-      "selector": "img.event-image",
+      "selector": "div.thumb > a > img",
       "type": "attribute",
       "attribute": "src"
     },
     {
       "name": "eventDate",
-      "selector": "div.event-date",
-      "type": "text"
+      "selector": "div.date[aria-label]",
+      "type": "attribute",
+      "attribute": "aria-label"
     },
     {
       "name": "startTime",
-      "selector": "div.event-time",
+      "selector": "div.time",
       "type": "text",
       "regex": {
-        "pattern": "(.*?)(?: - )(.*)",
+        "pattern": "Show: (\\d{1,2}:\\d{2} [APM]{2})",
         "group": 1
       }
     },
     {
       "name": "endTime",
-      "selector": "div.event-time",
+      "selector": "div.time",
       "type": "text",
       "regex": {
-        "pattern": "(.*?)(?: - )(.*)",
-        "group": 2
+        "pattern": "Show: \\d{1,2}:\\d{2} [APM]{2}.*?/(\\s*\\d{1,2}:\\d{2} [APM]{2})",
+        "group": 1
       }
     },
     {
       "name": "title",
-      "selector": "h3.event-title",
+      "selector": "h3.title > a",
       "type": "text"
     },
     {
       "name": "description",
-      "selector": "div.event-description",
-      "type": "text"
+      "selector": "h4.tagline",
+      "type": "text",
+      "default": "N/A"
     }
   ]
 }

@@ -1,0 +1,940 @@
+{
+  "venue_name": "Pete's Candy Store",
+  "extraction_timestamp": "20250616_161720",
+  "data": [
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/dJaj1YrD8zv42z3BlQwMeQ/90u3O1OGKN_2ZGJtpY2y-iqGQONUSQaf005zVPiq_6mobXUCG_5yXHXA_7vAukz0lIOV1CxewLwELUzZVZWvCkZjTxPMDu4SmmjX0ygrfXhL7QAZ7A6u4QRnQjg4cCPhm6mvXGP-az1Rat2qLdhXHQ/tSnAmVxP2pViSllZHY5weglKDHjet8Q0JOR8T2TwRtg",
+      "startTime": "6:30pm",
+      "title": "Play Date at Pete's",
+      "description": "Every third Monday at Play Date at Pete's, hear readings of brand new plays from some of New York's most exciting emerging playwrights and actors. Hosted by Alle Mims and Andy Boyd, this series has existed since 2015, when it was founded by Willie Johnson. Come hear some new plays and meet the future stars of tomorrow while they're still working day jobs!"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/8gDdPAvVayolxwx8uL_gaQ/02d3WvGZimzdWz6J1vNS8QQygmZsxAgebzF2OO5_e55A5ZQQHqFeIZ4B9mW8Qxr5lWwdi9klsr8RFShwU4bnOO8yO-of7yPUSDp14VBDrGyLs766ol3lxOryuDPY2g9dkol5suyOGunXZ2j82rHe6Q/NLuCFudZGLaOmPZKTTtm-kJW9-HuKVcioYyrH8mhs-8",
+      "startTime": "8:30pm",
+      "title": "Justin Garcia"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/D-2t_McMcfroJFkTIferAA/iRoVOoejV0m2Qk1ErA6z9wPqp_HBcd0WOjSTC_eLblr4LbFPCV_d00jRLZibz1dFd-A0xzJPuex5KH0W8zWRzTvNlYpsGo45dnjqFjhPemT6HeBBK14OLa6HWpbieDcyg_vj94JVwvEb1tFhcabkmT2TWNWJ2J9KoLFhdBf-6jI/SC2wTDKh1E3-uda4mUKS9FZTHS6bTWpf-XeEq_KBpSE",
+      "startTime": "9:30pm",
+      "title": "Estos Gritos"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/X8hNxzblas8o9SUKLTFhKQ/-qsn4rxf4OZ60yZvr9Floss468YsxASWpc9C0iK3BhXHjf5dbAzpqy7VXjcbYjUaUtfgVSr5MSHrlqP5SwvL_1DzOUeLOPC6O_0sGp6nHayuhXLU5w5wHUAzrFhtMBFHiaSV7wizmNiRtFZ6rbGhwg/eQNB9TOKLdBI-sTqRHh-d7X1aDRWxGyD50u92KKLuIM",
+      "startTime": "10:30pm",
+      "title": "Podge Lane"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/7TJn3DRONAX32omOX5PaHA/L80UtnF3X_dRYNVUPwDwEfoky_7L0WKhkAnHiGaazO9ROiMPD3LC_P0mGDnNl9drpHo7a5kYVhf9xF2uaxCHJMProyqBH5_aZihMDGxbF8-fExSq1JRgct_8S6K0d1UJbTTy9V0nqwypz31ch2uVQg/fpklZzQbhsem4-xhdqJ7xhqex4GD9Fb4Pb4ewg9-XuU",
+      "startTime": "5:00pm",
+      "title": "Silent Writing Happy Hour",
+      "description": "Taking inspiration from the infinite canon of literature past and present, we present weekly short readings, inspiring 30-minute exercises, offering writers the space and direction to write silently and hone their skills. Writers may share their writing, as the spirit and time dictates. The last portion of the evening is devoted to self-directed work on whatever project you have that merits such."
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/4BC61oWojSVBfibE4NADFA/yd2uji8YSEmS8zfS1dPFmULs91KKbAClL_ic_Dt74LsF7W5-Yr5DqjQ-fEUbSIe090VIMWuI_GE4Uofhl0_75IJHJyjd3R3XsLmarGcxdq0bitrstSZDGD1a0uPfYYc1LsXg3WD4D9rYz7WP_zD7gA/reHHJio_kRgKwcjkeOr_3MzpOY4-uh6_bNt2Vv_liVA",
+      "startTime": "7:00pm",
+      "title": "Astronomy on Tap",
+      "description": "Join us for Astro on Tap NYC #157 – Pride! Looking at queer space(s) and a new research telescope. Hosted by MC Tycho Brewhaha aka Brian Levine, our events are fun and informative so you can learn stuff and have fun while you drink. Each event features engaging talks by professional scientists, educators, and other astronomy-related enthusiasts, plenty of Q&A time, and trivia with prizes. It’s out of this world!"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/R9wYCJL_Q5i2h7iy89dpMA/gRFpWrITLumUOzwx5JK6JQh85fBFqtNQF5Yt9U3nDOrtZNVdiijtdDZwjOc1QE1pVkQRNBDRs435pIiG5OvKat2E823fAqGm-8YpfbSYh1zL7pZ4wbVveoPmoT-X_hkg2C1u13tbuBVTbg75ebhnRg/nODspJvc5nu9j_bex_9H3HvlUVgCjAmj8O1J-omdQpg",
+      "startTime": "8:30pm",
+      "title": "The Wild Thorns"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/6kqI6OX5VVm1f-ujkGqdAw/T-jbWteA13AR2QD-LJ5ZGYGUN2npVWTMaf-AjZUKOdDBjhXUgsp8Tx8ebKNFNSjC7rf72SGRlt32PxNV244f4X40gArY2yDDH7qlNP4mwcPt5hdHvOgCtzA8j1Kwoe__fM8JkmDTBsrzvP57iKY3mRugnxWXNggQe_0TAKnPwJw/giQQdrqaU0nDUBJVyRE2P-JzBESd7IJ7tMWS7KQUIzw",
+      "startTime": "9:30pm",
+      "title": "Will Stratton"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/qR7O431VxYUfbVYKf0QAQQ/vLB4mxwayIpwi5Csv7_O7lLcVaNwffzH1m1-GsRSTfnJ99Y7y4SYhOyREkjZ9_lhyYdAP-ibG3-o8jVAZKKkysuQF5CxMeEf7pnYRWA250Aq_QOT6Q_J8hKUyI0UnRUa9TFDWgoDiidbJnsn6uv5mQCHfosGjLu_i-toSYnHyWo/xcrbxsnQ6sLPi0SkAeIsMknH7IQLo7cgCecgpFNsD_0",
+      "startTime": "10:30pm",
+      "title": "Lily Too"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/i3nn0t4r3UDegD5ahGbG4w/jtzaOmn_FlRknrxYpOimh_1JbeoYwyWbR2tvj4scqv5cO_w9U9tqCxfayLYMmRmfU9Qa0h7Jx-j7byP1WFqRck9_SGXOJ-Zea05FrjeLsOpnW8libgEOeFFJmscC-6dfrK1kKOnVIp1x3zzq_F3zXNjJMia4sBXAoxSdn9atzECAQqmu9ho2H0TUvmtThRZKYWaQ4zy8DsXF5TKiYtySYeWsCFvUQ3mI9Nv7ACPqp7tLaafyvLvVyEleuBkKmGtcXGZU2-eC1CAzYC4l1CaKXtkYEQsbIwyyrSTVMahfRxU/WJupIQ1BuMoEpOakXT0wUgoVtzk8LiCHyGfx9hw0Bzs",
+      "startTime": "7:30pm",
+      "title": "Trivia",
+      "description": "NYC's finest trivia beckons. Got the brains? Bring your friends and wrack your noodles with six rounds of clever, fun, HARD trivia. The most experienced trivia hosts in the city will test your mental mettle in areas of General Knowledge, Music, Top Tens, and Visual Identification. First Prize is a $75 bar tab, Second Prize is a $40 bar tab and Third Prize is a $15 bar tab. But the real prize (besides bragging rights for those who place, and a berth in the twice yearly finals) is the time honored social scene of the Quizz-Off crowd. Give it a try smart guy! And come early for a good table."
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/hlqgsPLdmdiYw6Uqjc2QdQ/DOS6uwYOL-0ostYxkUlyycIj_1RA-rDv0Kb_DnSAJSIvwNT7PJqj7ZJ0ted5ptu7Lv4TOHCuto7VcQ8oKtppM9Dk3N3psW7kaliEzuZmLgCBCeS3RPBS_zzwulCoe12lLrz-EW0z29vcq0wVsyfsHwj0n-u_XqsiINHMS85tyi0/czT2gzvyGUHhxEUeJxsU88Rkbz9tYX7cBcCsKOueMLI",
+      "startTime": "10:00pm",
+      "title": "Funhouse Comedy",
+      "description": "Comedians Gabe Pacheco and Sameer Naseem host this legendary weekly stand up comedy show featuring the best comedians from NYC and beyond!"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/-Rg3d6wNDbTFhUMuh52GVQ/GMdNHIka7STMMj3l8ft7MhD_kQe9D5elpYpWvq-iJN6NH0ofqY9yG5TsilySSHvHL5GG5_cvcDF37tptMJPQ2qL1-A-BZz8CATxMmmDHe45UIwseLAgPFmb-ZK2de6X66rfISrXxSZ_XUlRwSK4Ung/nly7xO6kH7YxT80BkSsWdqJ96YRtKWiymTq3QfoDBZ0",
+      "startTime": "10:00am",
+      "title": "work from petes (book on fluxo)",
+      "description": "\"Work from home\" but from Pete's instead. Coffee and wifi will be provided."
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/QRBDuUqwYA8718qpDxeOdA/hxNITq0LXd2B1qNtGbciCBlI3l02jei6897k2KzFtGEqfZ9jdhLBjYE8qQQEL3uIxnb72y-X9whFMM5IfbvCDgN3DhJIsQYOrF9HKQhxJsJLST2C3IIdXm5PRWKmY2zWaN5YL1wJuyZ3i_oPVyTCkpsgNeNm4AgfI44WZLZbelA/nW3p9CgN33VVq7iTLWeeF715CwdvKuyAZbTqmueaO_A",
+      "startTime": "6:30pm",
+      "title": "Triva Finals!",
+      "description": "With a $500 cash prize on the line, who will take home the money and the title of Pete's World Series of Trivia Champion?"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/l5SHWsQkIhGj6T0yES_ldQ/JrU4YQJW9EeA8KBGrP0c56mla0pOzPJ92kHCufX9_YAvG_24Z-ddiWI_cx3nCgNzJYEHSC90-hvy147LMzK-rdS5K4k8CdC3A3WgNM_NjpqdD96TqqIV3gK4qxIInGPCYBnSVeqaA3KKFxLRh17G-Q/SkoLdIL8B_NkrxhsPg-sqhaI3pCC-LmaANI4iBueZEo",
+      "startTime": "10:00pm",
+      "title": "Noah LaPook"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/-KzEC9PnehskB-dc85X_6Q/rM7ri778_mAMhVlXWS01EjuegHBcIut3LtZhIGR_k4PWzrycftBxExtctMFG0K5ZYzuCF0kzfQbfwfxZs14gcbXdJQ2llA3VkDqr9feNUzYxtVmVik3kU75ckaSthFnsmXAk6KZE6-_mYhSQcL9Nx30bti1ZdYHqJ6jGoP_SDcZYSyPU7kPTDXLvkqn3OHwo/cxJqC1GiSlNZWFQ5K7SQ9rHdmRTyMUZx0geyQ0yPXNM",
+      "startTime": "11:00pm",
+      "title": "Alana Silver"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/EHmzFUbqcx69XqjkTulFHQ/aMWvOpcEygv0zcaXOQLL6sKmt7coTzjirMl3fS5-DQCHkvcGyasOtboDqxJkS3S_MmXDetZ5wXw3tYCvynHtz_A24sFPBnvVQVeB8LCMMj0EZqEz0LBWPBaL8WHQd5DWzui2yJ7RRW_XmJOeOUv-Jg/A7RJtk74mUQjKs05bJvo7kvlBFMCjivasvXiHlFJBDw",
+      "startTime": "5:00pm",
+      "title": "Numbskull",
+      "description": "Welcome to Numbskull! An open mic for stand-up, characters, clown, and the like. Grab a drink at the bar and put your name in the bucket. Every Friday at Pete’s @ 5 PM."
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/dG9c0-b7Ym1gOEjdyuMX0A/KghGXFwCnfn-LPFRLjbtL5QoPFbRriaFWp8bvVhu3kyb2YK0Cistg3l-OFscypW6g7mjoQX6NfxUOfFYXGQdyBzW_iOOex36ZNXcenjmmKwBID7_FarkgBVdcWqQL9yELua533qHaHt-Mhz6fhahcg/WZTWr-o6IPB769poTaqXv1lMg3nt_LaO_CIQqV4Ggz4",
+      "startTime": "7:00pm",
+      "title": "Kweendom",
+      "description": "Don't miss the show TimeOUT called \"consistently dope\" and Thrillist described as \"extremely gay.\" Featuring an always fresh lineup of only LGBTQ performers, Kweendom is one of NYC's most beloved comedy showcases. Catch stand-up, storytelling, characters, music and more from up-and-coming artists, as well as faces from TV and streaming. Always free, with donations accepted for a designated LGBTQ-foused organization each show. Come for the laughs, stay for the fresh faces in your Grindr grid. (Bring Kweendom home with you in the new collection of essays, Welcome to Kweendom, available now!)"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/BkPapfyyO-ZMko0xgQ_WPw/E-Bz1sayETRwF6GdY3uFulDGnjuuSqJsai9VJnx7Lj6PSLeaTGZ91_CIT222lZRwtJER9Z4MHzeXvNx4R2INq0Z2zS56txKX8e_8LDjjeK2I-McIxk2xO7t4dBqJaAF5tlotsHI2Xp9AUGpQRzZ20DwLbHndQ7p-AUEXxVmiryDyHYXJlPY-QqewN7Hae6Bn/4GAriKZB_HS-MvX9QeCFUeENQysADS7i3Eo9Er0B0s8",
+      "startTime": "9:00pm",
+      "title": "Sweetooth Comedy",
+      "description": "Laugh a little cry a little. Lucky audience members will leave with special cash prizes. Hosted by Desmond Deluxe & Ramy Shafi."
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/Q3RoOFXj2eI_wsf_1zbFGg/pxKqUrl6Z2WEMa6HrDHYl9SMfxICo-BxaIHSGWR_vIqC8O3XQf2l7ZF_AJKQvDNklFr3gUPNE1jmSGfaU9E3KN0xwLqLM4xj1Mdgq3EtvtRtklx2YY6jbF0n8ZqRiWz4TKxKA8UWOZeaRu2mEFSfocPh5iyPTcokQKG0u6Nig8M/Mmo2SjJkVU6vtIMSOnnFQxko0VZn1JNwk5deb15xD38",
+      "startTime": "10:30pm",
+      "title": "The Scrabs"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/T62mHIznvtBYbgNalSCOWw/5sn9nT4KwR-OhtTYVp4xcAk5BUwD_h4g-R1oZvNp5kvisA0PTR3JuFNQ3kzCwbo4fNLG9snELBeYADlAM3_6Gp2D6gVQREuih9RICfCnFp_3msUSBD1lcD2Bp0hspilxkrAwxGPCv22gESL8m648Xw/rPZ55wZg9XLh3bd1x8XWCMj7nsSZ7U2u9acCXC8_UP8",
+      "startTime": "3:30pm",
+      "title": "Loose Lips Mic",
+      "description": "Loose Lips is a comedy open mic for the most iconic standup, characters and storytelling in NYC! Hosted by Fallon Boles & Vassileia Kazee. More info at @looselipscomedy on Instagram 👄💋💄"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/NmnPVOXe2XS8HzElW83rlQ/lx8f22RyT8sA3y8MHz7pedYq0SvfiUmhT1mShMW80ugyE74mSdh0unjZznkrKVL9sUBZfzKkSx8CCnZA4f10NXQpJS5o_EZ4nlNBGrmLWJclMYLvCWbN1DP0FliErMEJtey4Jt4X4_milRx7iAWf6w/inQ9ezNAfSLsmRuoX_O_ff-KmeIBwFN4ZIKpX4tGuB4",
+      "startTime": "4:00pm",
+      "title": "NANA Pop Up Kitchen",
+      "description": "A Delicious Nachos & Doughnuts Pop Up!"
+    },
+    {
+      "image": "/static/78361f47f84cf5ce6b59b257094a75c0/30cdc/rand28.png",
+      "startTime": "7:00pm",
+      "title": "Marzipan Band"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/wtTS9amGCWyX_uVWkujaOg/tpsdK5jPvgZVSezR_KDztEf7E7p1QBwOxcqKF_-EMrpL26urSQNTllpMEPy_UfefkxfZOA2lDIqFZ_qvvP44sRXKkl4Yn6KpvlmYrP0N_vX204ZFQST_Wj5SGXVoCuffg4oowtuXWeC9P-rTuyJOLw/C991wM1LjKoJ2rhC6083P2sDIXXErEFH95Vf9SpSZMM",
+      "startTime": "8:00pm",
+      "title": "Odd Fauna"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/5qDUDXtYHl_bERGjx7eRiA/xWpLzPlPWZRZamURShULTDukF7wfE0pK3GM7iTN0al6WzGkioZ8PJsqogAYD-Zz4VJV9FeyMOBWr85aYHoh0DhGvfJAZ0ubey_83LXjE07oSLfsHd1lR5WMC-DOxdPBK-ZBFuSNi8Cg9tGPiWKB_CW2nVBsHMt6W5B8jD4wShC8/j2d1K-spqD78Xg32p2si1xnyT27hh8P6st1BpfrjVtA",
+      "startTime": "9:00pm",
+      "title": "Vandiver"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/Qz_62DixBoY9M82kmYYQ6A/soecJeaRvZDlO0m8qqiRRJQEV2WYHzm0Hcin--t1ODLavAoHfSjeBrAZiPSr3sRylbziGbOnkWPHKiOnEXQiCsZcPdQFaxRLVCtn58NBo6FAA2edWkD63gffWV7BcMRAWIbw580eKLWKk4c0aVP9LA/GDBwutjrfKfQPlUpmI_w6vfGj45UWfZy0se3z7iGzNM",
+      "startTime": "10:00pm",
+      "title": "Krewe Quartet w/ Special Guest Katie Norchi"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/k3c1t5ZWVV8uD2dERTjmpg/v7s_1CL8KNHKsaDngZwaXoUEuWkOriqSI9mFPHcLl4IqaML3vwkDK2ZpYEkrRaLirvq2k3p8PaY8MzDu0m10GHXc7XqM7rCHOqXwEvxOD_PF8L6ofuoELxSud3ZpWVr7v6lQ5-yOBzauiEBNfNITYQ/NrLyyMHD1bK7SRj9evyZ_59t9onY1Cq9pw44LyiR0Rk",
+      "startTime": "11:00pm",
+      "title": "Canned Jamz"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/JxhM3LzUzjkmO43Cx5RTdw/AsUrPBcEVoI8Z4zy3Q1yrdNP7aPst0oBk5x7Hiik0x4djkxRr22ILAR01yCLn1J2f9LqBBNoKUgxPUGUTpv1KhHdLjq1KBRW2jyxjTuhRLaVo3hFk_4xM2QY4pmO58d0IL-z18VRJoes-kOLG_d9pg/QU-30Az69dhQfbfkpkeykXKWs5ilnoMQj7AtJnr86r0",
+      "startTime": "3:00pm",
+      "title": "Kiki Mic",
+      "description": "The Kiki Mic is a comedy open mic for characters, standup, and storytelling hosted by Sydney Kaehler and Shenba Vairavan, every Sunday at 3:00PM at Pete’s Candy Store. Sign up using the form in @thekikimic IG bio, everybody gets 3 minutes! Come to laugh, cry, gossip, rage, hang, etc… like, are you coming to the ki or not?!"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/U-SAwxP61XPlwfeJRrVgVw/RlbkjKTtv2aNA0LNBFnxAPvE4V3tRA-YHavtBmWV1kUuB6YR2OUeTOqCtjEcJ-lDJD-mnk0GPHZCIAgVk2kst65uaUh8xcmnWs0mghGvXJNk5WC3v877Pq2nw2eraqX3FOKmtsaKbalUbHa0BytKfHh5FoJyxb-lRAuXGfr_EHFEYa0jSWUCRPmmVPft_MNwDAsVubKegwA-hZSJvy3AiQWnLOTMhqX1Z-sfM72oZEdDy5QyZsS66KfxeIZozovJcK6re0jnAFumAtnW-E3D3vn-kX5eC1i8TxoBJ7F_rDY/0NvXWcZ1J5DcXAPhVOYL5geui0BYR58719LVT4qrkb0",
+      "startTime": "5:00pm",
+      "title": "Open Mic",
+      "description": "The Open Mic at Pete's has been running for almost 25 years and has provided a springboard for many a New York performer, now booking gigs around the city and beyond. Join host Bruce Martin in Pete's intimate music room for a lively night of performances. Sign up is at 3 pm and music starts at 5pm. One drink minimum to perform."
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/QWTiVar9BeFVk298-AA9yg/f5AuFVXHOMkbIcjVcWFW8kGJ3078cNGnHw1tnVOfGQuM9u9My2_QPzXe0xxz_qd9dj668i6yDB_38X6Uwe6PWQEGp9KF3VZfcLpvT-ST63kz5YsGQey5CIbWGfk4jjfqAKu1FQf1SXuYLeuBNGBZFw/xedb9WQUWAs11wIvVo5wqWxTq2oxfzYU2VB72kXTQvo",
+      "startTime": "8:30pm",
+      "title": "Yeily Saints"
+    },
+    {
+      "image": "/static/da5161ae6cfeb88d7ab91fef5337e326/30cdc/rand8.png",
+      "startTime": "9:30pm",
+      "title": "TJ"
+    },
+    {
+      "image": "/static/42c97bc5de110e7ab68704c766c2fcb6/facc2/rand1.png",
+      "startTime": "10:30pm",
+      "title": "Alejandra Sofia and Julieta Iris"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/rSN_WBd4Uq65lkJoRw38zg/l88QK7WLzeX_Ht2JVFD4BiQR2EfJLqEgL4B9QJvXe1khZCYgqN9lKY62lfVASm_qUEmnCKG64PbeVf7i5otB0bN54jjluaytuS-o-bgdHhHgdyHZbxlpEkVB7fQVEi9FNMceutzO74YMCuVq0J58LQ/IOZwM3Tu3fs6i_Ovu9BbQqdPZNvDHicq99Klu8YMBDE",
+      "startTime": "6:30pm",
+      "title": "Out of the Wings",
+      "description": "Free open mic on the fourth Monday of every month! Hosted by Murmuration Theatre Company (@murmurationtheatreco). We share a collection of ~5m monologues and dialogues from our library of new plays; volunteers can hop up onstage and perform! No prep required — we're looking for impromptu, low-stakes, and fun. Sign up here or in-person: https://forms.gle/K6sp1Fg4tES5EBjn6"
+    },
+    {
+      "image": "/static/80bd20b9e516a5c26782cf4688aae451/30cdc/rand20.png",
+      "startTime": "8:30pm",
+      "title": "Oh Vinnie"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/8try42zR5mUjp0pMwp8yFQ/LSgPDFfKLQUJBb-aro6K4rEDu-hh6C0SCPqluADDGn8aHh-Hz_tfhBLhXyeNmKsjXUqwqsn1hLCwZJUSuk4xG41VlViwIgbKR95_bWPnUEcyiAEib9RGXHhII7PsNZpaBPCC5vCfD8BkZRvBHgJFvA/fZLr2jRHLkklXG7HPT19d_rblAq8ksdl56-Lv5VDwss",
+      "startTime": "9:30pm",
+      "title": "Maya Shaw"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/lHMx4utjD8vFnQklDePfiQ/56HMZAB0Md8JfiScSnIrSxglHz5Wx-V4UUdHKIxEMGdl_W_79dXimKjJ8h_b1gvFkDIUe4ZGqqSM0nsfuXB5RVxRMlFDoxmJB3XJpv4T4Enjj7fFazXLidn1pP_zopTS98WaLNjXH2FModKEtkPT6g/mR5RFAYMbFCnD_OtzZ-RNk0N1i3O7YjXuEiv4YlX8Bs",
+      "startTime": "10:30pm",
+      "title": "Anna Hauss"
+    },
+    {
+      "image": "/static/da5161ae6cfeb88d7ab91fef5337e326/30cdc/rand8.png",
+      "startTime": "5:00pm",
+      "title": "MIND PALACE POETRY THE WORKSHOP I",
+      "description": ""
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/JMyZOqFMW9lbisLIyD3yAQ/5QkiobMULQTOYYjERVITtM45NlBYHK_YwgNjCJSyTq0aXanSYd025V9q2ZmXxx5ytoDpqlZAq7AA_yUJbE5cd8K8LnVzFWqO1BENgKQQIc0403lJvXNXoXBamM3UIO7f9WzlTXvAz06HgvQtokExPA/ZShL3vM5SQ6Lj5uxo4B0TFGn8wZupw3YiZbWSM7Jics",
+      "startTime": "7:00pm",
+      "title": "We Love a Theme: A Storytelling Show",
+      "description": "Bailey Swilley presents We ❤️ a Theme: A Storytelling Show. This month's theme? OOOH, THAT'S SALTY... Join guest host Bryan Berlin for funny, heart-warming, and cringe tales from performers Stuart Ginsberg, Sarah Finucane, Anoush Froundjian and Michele Carlo."
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/sfwu6GeCT7sGJtxmOykuHw/aO6K7b9cSlXPevLzzZ9a4xJg17vY5zWU4HrYGL40zKCJ9fG-HahNcFlEt-CEy1z8yFgV8soPw4taIZh6MH6vQPWV3H52a0t3qMQaoGwA9f63p5xI6KSm12PNgam_-fvhA6Cl9V4BCVa1aMqg2p22Cg/5AUhsotlC6KV6jAPyylcIcACXStaD8wZmLZYITdo0_0",
+      "startTime": "8:30pm",
+      "title": "Mona June"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/N7o7u5nR8asIKpCKgfTlWA/DUGw3vSjLjYT22GOxcSGG5rGgfSFGJFx4uOMccUlPsrYEC4Rt91cYGp5pqvA0Ki4w3b3FzQlcyLELkHdvn4fa2HBrTTDUOzxZ3v_t97MPEKjVpjaFd39dzorrq1rtHhBsAaksWhF8VnsUq_Loe8O-Q/BaFMY_nvJr9DPmbr-TM053FEGHVG_oZr6xQ8-iHJKTU",
+      "startTime": "9:30pm",
+      "title": "Jon Geihsler"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/n_hqrPhRFygI1ChmwzZZCA/5lY2B4dxjf-W2rLHsvpdpYPToogQ081dkQfIFAMPb0wE8Sk4ycreJqB8FaKplxYsd9BnFI25-5vW11sOTZ5LC_dMi5TCmghAk87NMHZM_e_xqnaxbrMMhzOnR_cDANrWH-QZ3f0gpVFrCRE-4fRHrA/Qd6ZVmx43u8DKcsrFo1iR8aTY8IHfHtwtr4yvoMSOgY",
+      "startTime": "10:30pm",
+      "title": "The Record Players NYC"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/-Rg3d6wNDbTFhUMuh52GVQ/GMdNHIka7STMMj3l8ft7MhD_kQe9D5elpYpWvq-iJN6NH0ofqY9yG5TsilySSHvHL5GG5_cvcDF37tptMJPQ2qL1-A-BZz8CATxMmmDHe45UIwseLAgPFmb-ZK2de6X66rfISrXxSZ_XUlRwSK4Ung/nly7xO6kH7YxT80BkSsWdqJ96YRtKWiymTq3QfoDBZ0",
+      "startTime": "10:00am",
+      "title": "work from petes (book on fluxo)",
+      "description": "\"Work from home\" but from Pete's instead. Coffee and wifi will be provided."
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/_61Y_k3JY6EFWjFCXKX0BQ/WqS3hgJJEDaoE2BBqb6hB6waBcGgL-zBvtrrZ7fmdjF43N-onEMyGiGL6un0u9_UxPeZbNW6gIaoT0GUI0Sajeg_T31nvE6rdCgxg2LKZEJ5DyTEiIuC5_awdWUjUHfyGaUJchfVLig52KLyc-LbISZCF5ioDCMx9b36Bvo3HEZfePJO6hsgFQJIcVw1HbN5/Zf0bdxE8ILxZdLRId0SrVoFf78oEETVJ-NyEwsbZDa8",
+      "startTime": "5:00pm",
+      "title": "Climate Cafe: Songs of Connection",
+      "description": "Join us for a community conversation about climate grief. Together we will explore our fears, anxieties, hopes, and yearnings for a world in ecological crisis. Through a series of guided discussion questions, reflections, music, and good old fashioned hanging out at a great bar, we will experience what it means to have our grief witnessed, held, and transformed into healing medicine. Each Climate Cafe will feature a musical performance by a guest artist. Come share, listen, heal, and make new friends. All are welcome. Register at the link."
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/i3nn0t4r3UDegD5ahGbG4w/jtzaOmn_FlRknrxYpOimh_1JbeoYwyWbR2tvj4scqv5cO_w9U9tqCxfayLYMmRmfU9Qa0h7Jx-j7byP1WFqRck9_SGXOJ-Zea05FrjeLsOpnW8libgEOeFFJmscC-6dfrK1kKOnVIp1x3zzq_F3zXNjJMia4sBXAoxSdn9atzECAQqmu9ho2H0TUvmtThRZKYWaQ4zy8DsXF5TKiYtySYeWsCFvUQ3mI9Nv7ACPqp7tLaafyvLvVyEleuBkKmGtcXGZU2-eC1CAzYC4l1CaKXtkYEQsbIwyyrSTVMahfRxU/WJupIQ1BuMoEpOakXT0wUgoVtzk8LiCHyGfx9hw0Bzs",
+      "startTime": "7:30pm",
+      "title": "Trivia",
+      "description": "NYC's finest trivia beckons. Got the brains? Bring your friends and wrack your noodles with six rounds of clever, fun, HARD trivia. The most experienced trivia hosts in the city will test your mental mettle in areas of General Knowledge, Music, Top Tens, and Visual Identification. First Prize is a $75 bar tab, Second Prize is a $40 bar tab and Third Prize is a $15 bar tab. But the real prize (besides bragging rights for those who place, and a berth in the twice yearly finals) is the time honored social scene of the Quizz-Off crowd. Give it a try smart guy! And come early for a good table."
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/hlqgsPLdmdiYw6Uqjc2QdQ/DOS6uwYOL-0ostYxkUlyycIj_1RA-rDv0Kb_DnSAJSIvwNT7PJqj7ZJ0ted5ptu7Lv4TOHCuto7VcQ8oKtppM9Dk3N3psW7kaliEzuZmLgCBCeS3RPBS_zzwulCoe12lLrz-EW0z29vcq0wVsyfsHwj0n-u_XqsiINHMS85tyi0/czT2gzvyGUHhxEUeJxsU88Rkbz9tYX7cBcCsKOueMLI",
+      "startTime": "10:00pm",
+      "title": "Funhouse Comedy",
+      "description": "Comedians Gabe Pacheco and Sameer Naseem host this legendary weekly stand up comedy show featuring the best comedians from NYC and beyond!"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/-Rg3d6wNDbTFhUMuh52GVQ/GMdNHIka7STMMj3l8ft7MhD_kQe9D5elpYpWvq-iJN6NH0ofqY9yG5TsilySSHvHL5GG5_cvcDF37tptMJPQ2qL1-A-BZz8CATxMmmDHe45UIwseLAgPFmb-ZK2de6X66rfISrXxSZ_XUlRwSK4Ung/nly7xO6kH7YxT80BkSsWdqJ96YRtKWiymTq3QfoDBZ0",
+      "startTime": "10:00am",
+      "title": "work from petes (book on fluxo)",
+      "description": "\"Work from home\" but from Pete's instead. Coffee and wifi will be provided."
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/_bg5OvhOCe6AQNlqXBrZ4A/la7jVA67Lkr3eAWNQf2g4TlWEITumlXWZxNhxr1dH8JrOEt8-AR5qQGvH3psmkZ5zFE2atAROf-z6l5-px790inqPJ9zm0s2vS5wOI4K5uBbq9qf7eRl3oVGIcXghdRpsw-PD8lkhOobXqr8vAE_1JEQRKGudf4vtzhanprjjE8/pZeztZF_Ll2vU1rbR1glK0fCiGixWWabqF1lGEafIpk",
+      "startTime": "5:00pm",
+      "title": "Small Batch Improv Jam",
+      "description": "A Two-prov Three-prov comedy jam. Put your name in the hat to participate in two person and three person improvised scenes!\n5:15 sign ups, 5:30 playtime. Free with a $5 minimum purchase at the bar."
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/RHdQk6-Xbqc5N6SLcqo-9w/cMZXUseRC92W7lxnD8_PgAx13437Q4u8swOt4q9w_TJfQXhF2xT_RJDoJRAU6PHbxRs6nMBpdWqH2bjgHJD1uRzwQlxkYefBhFr7H56FtSal1Ktm7j3AtUMuTQ_LwI6k8li8uIUOaxiCGmvHvZBZcw/qTegEpT5sjQuo9lsJkFypC8qZJTlHwtYR5pBqTXXoXE",
+      "startTime": "7:00pm",
+      "title": "Secret Pete's",
+      "description": "Join us for this month's installment of Secret Pete's, a poetry open mic. Writers are invited to share poetry, flash fiction, essays, songs, and more during 3-5 min slots on the fourth Thursday of the month. This month's theme is \"Coming out.\" Sign up at the mic or reserve a slot in advance by DMing @secretpetes on Instagram."
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/HiGGzcHChKzLoNfIK5Ziuw/5ijbRkVVqu3WI3kCYLkuOk8V-UlWsqKt03dx_dSD4dXgez5E2mn5LFBwMqI8Kkb1sdoZp5x_Luw1ll6-CHJE0JkQ0wiFv_sQsLnbI3taySJ0WV6Fvur-Qxxlb3LiDOrMpUFsz1itOfokg5lmE1NBkg/TpG_0mlkPSdehYHhNHqk2fwJbg4EgXZkznCdCVkBEhE",
+      "startTime": "9:00pm",
+      "title": "Miri Hoffman"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/U_lIPCjrOA_bmZiUVqFG_A/tkdlDGC9dm1sauSW3OmfdEkE4kTbmcfpwmIzaz1i3O9BTImoRCOxTaLXQZOmm4PjCYAqu-EoCMI_86fhNd1lfBRAPIc_SGWSLvdFQyWvpz91Y0c8rN22G2DQmpFIW8XVcuFT7rS5ZeYdRDoJp9baAA/5UBuurxUk33_G6et6DmyVi3vX8vZhcbJ26WYpTFq01M",
+      "startTime": "10:00pm",
+      "title": "canned jamz"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/WT5QhvtAgtvipjQW0KB67w/7p7l-O7I_71OkQ5QiNkxsaX0Ik-iDrhV7qEG3NsUVuGhAV9ZH_5TS39_T2kbaTlAxfM_r8YFEscyH9psw4KYuoBMePJsPNc2SRCgR3uvyW7mK99_FtBOa6t4XRpkeyFdrmgUN6xM7PXzOIRMC4xPrw/S9IODTy1rvdGSqbLNHTPuCAQH2vx8rXOnRflSMM1wSE",
+      "startTime": "11:00pm",
+      "title": "Jon De La O Band"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/EHmzFUbqcx69XqjkTulFHQ/aMWvOpcEygv0zcaXOQLL6sKmt7coTzjirMl3fS5-DQCHkvcGyasOtboDqxJkS3S_MmXDetZ5wXw3tYCvynHtz_A24sFPBnvVQVeB8LCMMj0EZqEz0LBWPBaL8WHQd5DWzui2yJ7RRW_XmJOeOUv-Jg/A7RJtk74mUQjKs05bJvo7kvlBFMCjivasvXiHlFJBDw",
+      "startTime": "5:00pm",
+      "title": "Numbskull",
+      "description": "Welcome to Numbskull! An open mic for stand-up, characters, clown, and the like. Grab a drink at the bar and put your name in the bucket. Every Friday at Pete’s @ 5 PM."
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/T82EETOrENwbMVd_jhxmLQ/Kd7cWm0nG1AWGYFBfw6WRw_o0SyOV1RbjnaqS8IF5vR6OiERwC49ab8_afdxsmyqB0sUDHk89w5hy0g4uCSpcVJwIe5cwxTTY4Re3fPtrDiVGVhy7uhimXBBY6qp2T1Cu0qheLTXQIPwTxrwQPbGCZp0-sEj4PQIgzQpUExd0YM/5N2OW_KUkGjyqEDTz-Ti6SziP0qv1GHvivLvSpdh-RQ",
+      "startTime": "7:00pm",
+      "title": "100%",
+      "description": "100% is a comedy show hosted by Adrian Frimpong and Dan Fox that invites some of NYC's hottest comedians to do a \"tight five\" — their best prepared material — and then a \"loose five\" — a set inspired by audience suggestions, written on the spot.\n\nHappy hour til 7PM\n\nDoors at 7:00PM\n\nShow at 7:15PM"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/_j349QelBHX88fSk_jh5gQ/nJByq0ekY0JyRdDzyd4QVSntAEvao85lDV_7Vtwt7yzVP3C4kk2WFs6PmUqVdBTz6IlLh4MHMGprnjegOA5XC1qvYD7cGQzbF_ZP4p2Rmam-73ZBrkxCnBRDZSZ__ekfTZWsBoZOqw0Dploeu43sSw/0KcKEMLq76jhEALI8pSRhHG2sdLUiE-odGgQJOd_22Q",
+      "startTime": "9:00pm",
+      "title": "The Astroband"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/UT1zyovruYpEtL-GLQg4Vw/1JqSA7YRpAbmyy85iYIe07C5Qdg_v6rGeNe5uddR_E8UcceA_2ZKLYCQzTmS7myqI05iHE3R7O2bHw5Yx8HSGvfG8DRAIH27BsgPIXnlrV8mZd8DbFZI4ftDlDT55Y_gYAARicfdmnmh2qcK6--qNg/8SlbVZBW811hLASCWqd_9kUn8QCHoaUYUQNGqp_QiwE",
+      "startTime": "10:00pm",
+      "title": "Frankie White"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/qvKRg2hJNT5WSZ8oOt9EXQ/mwM1twfQaguFGvFvnFow-KoaqaJkAG6pakARzRosUxbMBOt94k32F4k4LNAWNoTJ1obTIy2ePWIMbcqQnsjAsrb7FEUn2C3qFuA1PlalXbzmj5JBX1XvWsh0Avrm5t2o1EIOGYrr96PIvCF5XipNeQ/AV87fcyXdywDOmWmuXovCEvPRYNwrbQSCvtpb17OSuI",
+      "startTime": "11:00pm",
+      "title": "Ritz"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/T62mHIznvtBYbgNalSCOWw/5sn9nT4KwR-OhtTYVp4xcAk5BUwD_h4g-R1oZvNp5kvisA0PTR3JuFNQ3kzCwbo4fNLG9snELBeYADlAM3_6Gp2D6gVQREuih9RICfCnFp_3msUSBD1lcD2Bp0hspilxkrAwxGPCv22gESL8m648Xw/rPZ55wZg9XLh3bd1x8XWCMj7nsSZ7U2u9acCXC8_UP8",
+      "startTime": "3:30pm",
+      "title": "Loose Lips Mic",
+      "description": "Loose Lips is a comedy open mic for the most iconic standup, characters and storytelling in NYC! Hosted by Fallon Boles & Vassileia Kazee. More info at @looselipscomedy on Instagram 👄💋💄"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/NmnPVOXe2XS8HzElW83rlQ/lx8f22RyT8sA3y8MHz7pedYq0SvfiUmhT1mShMW80ugyE74mSdh0unjZznkrKVL9sUBZfzKkSx8CCnZA4f10NXQpJS5o_EZ4nlNBGrmLWJclMYLvCWbN1DP0FliErMEJtey4Jt4X4_milRx7iAWf6w/inQ9ezNAfSLsmRuoX_O_ff-KmeIBwFN4ZIKpX4tGuB4",
+      "startTime": "4:00pm",
+      "title": "NANA Pop Up Kitchen",
+      "description": "A Delicious Nachos & Doughnuts Pop Up!"
+    },
+    {
+      "image": "/static/50727aebe5af2454fbc30d8b2f839505/f1af1/rand21.png",
+      "startTime": "7:00pm",
+      "title": "Leah Nawy"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/GSHODCEXvK5xYu-jaWLORA/5uaJWU5FycdMgPAGh2YMDLg8D8KHtf1KMqUnWhKsrlPrZJuDoS_ckTJlQ8oZd5-Elusrq2E5BxyNsEU_Kl-4eQ34yqua_0V4Vhml8FK3HgQVw-wsRVHnRjlCF33Uo17-4cCrAWsdsc6IfRDGbQZ4dw/p-IamnO-I_zYX6A-MGAeVnek6nMCLZtZ2rXcxeM1HuU",
+      "startTime": "8:00pm",
+      "title": "Fork Soup"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/JxhM3LzUzjkmO43Cx5RTdw/AsUrPBcEVoI8Z4zy3Q1yrdNP7aPst0oBk5x7Hiik0x4djkxRr22ILAR01yCLn1J2f9LqBBNoKUgxPUGUTpv1KhHdLjq1KBRW2jyxjTuhRLaVo3hFk_4xM2QY4pmO58d0IL-z18VRJoes-kOLG_d9pg/QU-30Az69dhQfbfkpkeykXKWs5ilnoMQj7AtJnr86r0",
+      "startTime": "3:00pm",
+      "title": "Kiki Mic",
+      "description": "The Kiki Mic is a comedy open mic for characters, standup, and storytelling hosted by Sydney Kaehler and Shenba Vairavan, every Sunday at 3:00PM at Pete’s Candy Store. Sign up using the form in @thekikimic IG bio, everybody gets 3 minutes! Come to laugh, cry, gossip, rage, hang, etc… like, are you coming to the ki or not?!"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/U-SAwxP61XPlwfeJRrVgVw/RlbkjKTtv2aNA0LNBFnxAPvE4V3tRA-YHavtBmWV1kUuB6YR2OUeTOqCtjEcJ-lDJD-mnk0GPHZCIAgVk2kst65uaUh8xcmnWs0mghGvXJNk5WC3v877Pq2nw2eraqX3FOKmtsaKbalUbHa0BytKfHh5FoJyxb-lRAuXGfr_EHFEYa0jSWUCRPmmVPft_MNwDAsVubKegwA-hZSJvy3AiQWnLOTMhqX1Z-sfM72oZEdDy5QyZsS66KfxeIZozovJcK6re0jnAFumAtnW-E3D3vn-kX5eC1i8TxoBJ7F_rDY/0NvXWcZ1J5DcXAPhVOYL5geui0BYR58719LVT4qrkb0",
+      "startTime": "5:00pm",
+      "title": "Open Mic",
+      "description": "The Open Mic at Pete's has been running for almost 25 years and has provided a springboard for many a New York performer, now booking gigs around the city and beyond. Join host Bruce Martin in Pete's intimate music room for a lively night of performances. Sign up is at 3 pm and music starts at 5pm. One drink minimum to perform."
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/hdHf8wMd2FZRdGciGFm2dw/hXSN6SG08xLRHEwocYLqC6d2b2FoXT7sq69WDVj-Tlu5-zx9q5RJyNKFHU4-bV3T_H5Nyp6mKL9GyZBV4OnyPbj6zZWvdUW0f72RDlti42ePEEAdOxRbkJkd0IQIDA-_MKyy05F4sdmahUCnfs0AzA/DM6ieDklFL3e9kiDKu1PlVKtf4f3S9HScEVua53vWeE",
+      "startTime": "8:30pm",
+      "title": "Hill View #73"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/rXnNU3tPUL_EVeqB5EYZhw/tB05A4x2wx-FWQp5etRa6eEc0OuoCHu87y7oNI29kNo4MS71DDcawTv_EdO4oXX23VKZu4YCoXNBFkAOvr7tfvMGnck88NqHm_R81OVA8mS8EtDCEtM62fQyHhdnrvJNASm1SttxRPhPzYT_DFSs03R8pUZSe21KLr_E21DMmi-fzruQBDOHWiEEYjqsTsA6/Z0P9T9OQ2y-y-IViO7uQbkaxSv3ONODO7wQYc09U1iM",
+      "startTime": "9:15pm",
+      "title": "Superfan"
+    },
+    {
+      "image": "/static/cf478125c50ae6003e1eab2ff7a41542/30cdc/rand19.png",
+      "startTime": "10:00pm",
+      "title": "Memory Card"
+    },
+    {
+      "image": "/static/bb66cf276d0a7f1b2d65064eb4531223/30cdc/rand18.png",
+      "startTime": "10:45pm",
+      "title": "People I Love"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/Y1ton3ZmztMN0dGyxjJNIg/2QJ7ceduZxQaggKS6aUQRE_-b9h2jOG7i4szAQyySFUNIGGNG3Qh3aFGP-Bhg7VMKOTd3s3JFebDEO7MaVPpUXWJDGMktJWIBKoa435gSrb0pxlJTOFFQfzCRhqx2e8W6XEy1J9U0cQevDbFRtNJlg/aRm4rS5QGroHK85ppLEWdB3xlAusKPWxF0d42gD2Hh0",
+      "startTime": "6:30pm",
+      "title": "Blind Comedy Auction",
+      "description": "It’s a show where local businesses and artists donate items for comedians to auction off for charity! \n\n During the show comedians perform their set and then auction off items to the crowd without being able to say exactly what the item is. They can only do their best to describe it, like charades. The fun part is whatever they manage to auction off the item for, it all gets donated to charity!"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/gkfDZ9a8JWdRxMIApcFJaA/eRai0bSEvU0TnvV2w7e6zZmDptV5ad51TUa3ek-EHibgw6GsBmpOJModi62gKX-DnMxXkxeApCz8aSmao1MDsrrUMmUd6MwGMNqVFpb254rkeF7IwT1WxoDuLpeOChXEQGnD2mntDCDU9OIy3kg8PQ/jT3uJwV_PUmpDCGDxjid9VM5nrO0b7PjBCAR2Eh_BEg",
+      "startTime": "8:30pm",
+      "title": "Heartbreak Open Mic"
+    },
+    {
+      "image": "/static/c7cea8968b9a882b6e77189060fdd9ae/30cdc/rand22.png",
+      "startTime": "5:00pm",
+      "title": "MIND PALACE POETRY THE WORKSHOP I",
+      "description": ""
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/jjViaOKJhZ6ahH1W5KHRpg/RQt2d1plM_N0NXcda7cfueZzz98qAZcjtXa0aoYVxQtuwv_s0Hqhj1oeS_BscQ8PXU4bgj9fI5XA35QRUFtkVQtK1_ETkSaeu2kDnKzmtKBLb4W7vIxSunCmoyZqHg1TBZGJuSlKKIuh5W37QFD8XA/XfOmnDMmxogWD08ULaxQnXDxGUvftnLKpH0Wz4TAVs8",
+      "startTime": "7:00pm",
+      "title": "The Girls Room",
+      "description": ""
+    },
+    {
+      "image": "/static/80bd20b9e516a5c26782cf4688aae451/30cdc/rand20.png",
+      "startTime": "8:45pm",
+      "title": "Highlighter Rabies"
+    },
+    {
+      "image": "/static/50727aebe5af2454fbc30d8b2f839505/f1af1/rand21.png",
+      "startTime": "9:25pm",
+      "title": "Nahte"
+    },
+    {
+      "image": "/static/628c09015a78095047b113c102f75c68/30cdc/rand15.png",
+      "startTime": "10:10pm",
+      "title": "The Shrine"
+    },
+    {
+      "image": "/static/72aa81a3b589d111d8e384f797f3d4cb/30cdc/rand17.png",
+      "startTime": "10:55pm",
+      "title": "Better Help"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/-Rg3d6wNDbTFhUMuh52GVQ/GMdNHIka7STMMj3l8ft7MhD_kQe9D5elpYpWvq-iJN6NH0ofqY9yG5TsilySSHvHL5GG5_cvcDF37tptMJPQ2qL1-A-BZz8CATxMmmDHe45UIwseLAgPFmb-ZK2de6X66rfISrXxSZ_XUlRwSK4Ung/nly7xO6kH7YxT80BkSsWdqJ96YRtKWiymTq3QfoDBZ0",
+      "startTime": "10:00am",
+      "title": "work from petes (book on fluxo)",
+      "description": "\"Work from home\" but from Pete's instead. Coffee and wifi will be provided."
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/i3nn0t4r3UDegD5ahGbG4w/jtzaOmn_FlRknrxYpOimh_1JbeoYwyWbR2tvj4scqv5cO_w9U9tqCxfayLYMmRmfU9Qa0h7Jx-j7byP1WFqRck9_SGXOJ-Zea05FrjeLsOpnW8libgEOeFFJmscC-6dfrK1kKOnVIp1x3zzq_F3zXNjJMia4sBXAoxSdn9atzECAQqmu9ho2H0TUvmtThRZKYWaQ4zy8DsXF5TKiYtySYeWsCFvUQ3mI9Nv7ACPqp7tLaafyvLvVyEleuBkKmGtcXGZU2-eC1CAzYC4l1CaKXtkYEQsbIwyyrSTVMahfRxU/WJupIQ1BuMoEpOakXT0wUgoVtzk8LiCHyGfx9hw0Bzs",
+      "startTime": "7:30pm",
+      "title": "Trivia",
+      "description": "NYC's finest trivia beckons. Got the brains? Bring your friends and wrack your noodles with six rounds of clever, fun, HARD trivia. The most experienced trivia hosts in the city will test your mental mettle in areas of General Knowledge, Music, Top Tens, and Visual Identification. First Prize is a $75 bar tab, Second Prize is a $40 bar tab and Third Prize is a $15 bar tab. But the real prize (besides bragging rights for those who place, and a berth in the twice yearly finals) is the time honored social scene of the Quizz-Off crowd. Give it a try smart guy! And come early for a good table."
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/hlqgsPLdmdiYw6Uqjc2QdQ/DOS6uwYOL-0ostYxkUlyycIj_1RA-rDv0Kb_DnSAJSIvwNT7PJqj7ZJ0ted5ptu7Lv4TOHCuto7VcQ8oKtppM9Dk3N3psW7kaliEzuZmLgCBCeS3RPBS_zzwulCoe12lLrz-EW0z29vcq0wVsyfsHwj0n-u_XqsiINHMS85tyi0/czT2gzvyGUHhxEUeJxsU88Rkbz9tYX7cBcCsKOueMLI",
+      "startTime": "10:00pm",
+      "title": "Funhouse Comedy",
+      "description": "Comedians Gabe Pacheco and Sameer Naseem host this legendary weekly stand up comedy show featuring the best comedians from NYC and beyond!"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/-Rg3d6wNDbTFhUMuh52GVQ/GMdNHIka7STMMj3l8ft7MhD_kQe9D5elpYpWvq-iJN6NH0ofqY9yG5TsilySSHvHL5GG5_cvcDF37tptMJPQ2qL1-A-BZz8CATxMmmDHe45UIwseLAgPFmb-ZK2de6X66rfISrXxSZ_XUlRwSK4Ung/nly7xO6kH7YxT80BkSsWdqJ96YRtKWiymTq3QfoDBZ0",
+      "startTime": "10:00am",
+      "title": "work from petes (book on fluxo)",
+      "description": "\"Work from home\" but from Pete's instead. Coffee and wifi will be provided."
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/_bg5OvhOCe6AQNlqXBrZ4A/la7jVA67Lkr3eAWNQf2g4TlWEITumlXWZxNhxr1dH8JrOEt8-AR5qQGvH3psmkZ5zFE2atAROf-z6l5-px790inqPJ9zm0s2vS5wOI4K5uBbq9qf7eRl3oVGIcXghdRpsw-PD8lkhOobXqr8vAE_1JEQRKGudf4vtzhanprjjE8/pZeztZF_Ll2vU1rbR1glK0fCiGixWWabqF1lGEafIpk",
+      "startTime": "5:00pm",
+      "title": "Small Batch Improv Jam",
+      "description": "A Two-prov Three-prov comedy jam. Put your name in the hat to participate in two person and three person improvised scenes!\n5:15 sign ups, 5:30 playtime. Free with a $5 minimum purchase at the bar."
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/1EF-l9dSVo8W-680_khH2A/zHVtXCod03krh0PDO0SDoMjdJjyBUNbkcsRcjeKfInzhg5ZVvCa7xvo0TgQXLrHz3hBO2rdagScpv8jrDiT0dzvYXd4Hz7c6gL2Kfowi_0Lsl1gDk_oKuu2ranhFEhjtOMPnJ79upEKDAs4l2aq4hw/Mf_PHc2w6Cv3AxLN9LpLwCNuXCSWc8HiXFDuxMoxzRc",
+      "startTime": "9:00pm",
+      "title": "Windier"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/M-JeqcCsPwgtvWVpBr6xRQ/CLi-DhNVvKw-yqD5Z_jzdWJ1K1Z33QAMF9YptBLWnU14N9ODMabjL2LgQy1CTP3DS7iL9lPJTi8qAZRqIjArkVWOxEPzWcj15N8UlUqpUhnOXbAHuQq1SmJXSnaYwCu7Yz7U66YxGc5TuL4yyH83Ww/XajISNMOdWNUnH4Tgjq4EMHlZCh6roJwOh9CT2fekb0",
+      "startTime": "10:00pm",
+      "title": "Tuxis Giant"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/QVT7DBjiJ85yD9MgDfBvHg/VJBh8PnnBBZbGfYsc1en8edE2tOTo01RqnuSJ2HIsPfmBdAEYn1TLd-euWVDacN_2JWxBXpkgjMHDVOUyK3YhDFmqLBVW1hkfIjRUtO5Ukajm4NAkMsp857NGaE9mWOhJCSK3oD1duv5utF5GvFwfA/LzKRYMp6ri_XzNwnv0rijiTy5dfaMK9vsEZ2Kr4elN4",
+      "startTime": "11:00pm",
+      "title": "The Clearwater Swimmers"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/EHmzFUbqcx69XqjkTulFHQ/aMWvOpcEygv0zcaXOQLL6sKmt7coTzjirMl3fS5-DQCHkvcGyasOtboDqxJkS3S_MmXDetZ5wXw3tYCvynHtz_A24sFPBnvVQVeB8LCMMj0EZqEz0LBWPBaL8WHQd5DWzui2yJ7RRW_XmJOeOUv-Jg/A7RJtk74mUQjKs05bJvo7kvlBFMCjivasvXiHlFJBDw",
+      "startTime": "5:00pm",
+      "title": "Numbskull",
+      "description": "Welcome to Numbskull! An open mic for stand-up, characters, clown, and the like. Grab a drink at the bar and put your name in the bucket. Every Friday at Pete’s @ 5 PM."
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/kUK4Hwqiy4zgKcxhgJzULQ/Yo9eIVeVv0bknHxIR3QQYuynHv0h0SH4mFd7u4UJj9CAclEYS2vTPOeO42-YwqTf4RVUaROJo1ZxS4Y_ixELMAQdKPdxgzLATGJdS09MGGNz0z1Eu8K_ggtUUhA5GNrV4Ls8ALgJv1q4fBO7uKKFJA/uN2oEkvPZsSlxMpBIV9K7ITftEhE7fI8tclJznT5mAM",
+      "startTime": "7:00pm",
+      "title": "Dead Pete's Society",
+      "description": "\"We don't read and write poetry because it's cute. We read and write poetry because we are members of the human race.\" If you need a reminder of how human you are, join us for an open mic poetry night on the first Friday of every month. We can sound our barbaric yawps over the rooftops of the world (or just in Pete's back room). All are welcome! Tune in, turn on, and drop dead. FREE.\n\nFirst Friday of every month at 7:30 pm (sign up starts at 7)"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/T62mHIznvtBYbgNalSCOWw/5sn9nT4KwR-OhtTYVp4xcAk5BUwD_h4g-R1oZvNp5kvisA0PTR3JuFNQ3kzCwbo4fNLG9snELBeYADlAM3_6Gp2D6gVQREuih9RICfCnFp_3msUSBD1lcD2Bp0hspilxkrAwxGPCv22gESL8m648Xw/rPZ55wZg9XLh3bd1x8XWCMj7nsSZ7U2u9acCXC8_UP8",
+      "startTime": "3:30pm",
+      "title": "Loose Lips Mic",
+      "description": "Loose Lips is a comedy open mic for the most iconic standup, characters and storytelling in NYC! Hosted by Fallon Boles & Vassileia Kazee. More info at @looselipscomedy on Instagram 👄💋💄"
+    },
+    {
+      "image": "/static/628c09015a78095047b113c102f75c68/30cdc/rand15.png",
+      "startTime": "7:00pm",
+      "title": "Carousel Head"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/vkL0x9gv4TEkk8xMZtdxcQ/sQCW4HiP2kWao1o7NjY1MSJGgFQFmk4Wvfra4htPvTTJ3mlPQkeTpLMyLYOPLxwafUfBQVMDvhaEla95OWq59f-Zpx3WPx8OStCI2IJY5zTMTxgQL81fbtKd0SfX5IsMieGI4TT-rXr7YMQKVHdlTA/wtElSci6cryzmfWHLR5Ugx6Vp3Sap71xsDENayeI4qo",
+      "startTime": "8:00pm",
+      "title": "Kat Marcella"
+    },
+    {
+      "image": "/static/c6ef5ec0727dee22af23df796ec82dd5/30cdc/rand29.png",
+      "startTime": "9:00pm",
+      "title": "Face of Ancient Gallery"
+    },
+    {
+      "image": "/static/5ed89a0fe2177e12ac9e4af640d8cdc9/30cdc/rand11.png",
+      "startTime": "9:45pm",
+      "title": "Sofia Mock"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/3VrrCkpjdsKFJoIVrzgSKA/3fYYhOH_b4wrKH7y3WiGReVnfHd2F80jESa4eYYKsRKhKPzi7uaqEWgBowA89UR4pfLJpBWhJsliMNioxYu7li637V9rFBxh5fz7RPIhEDRpvO-jC8uMS01hQ9Ny8qz04LN6ymkVSmRHSP2kx3KdvA/dOfnW_Hh25K3PqetE2tALS71rHvl8yZ4j8nKX_tp6h4",
+      "startTime": "10:30pm",
+      "title": "Wild Roots"
+    },
+    {
+      "image": "/static/1981898b31ed035be5a211e21fe9cbc8/30cdc/rand16.png",
+      "startTime": "11:15pm",
+      "title": "Ava McCoy"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/JxhM3LzUzjkmO43Cx5RTdw/AsUrPBcEVoI8Z4zy3Q1yrdNP7aPst0oBk5x7Hiik0x4djkxRr22ILAR01yCLn1J2f9LqBBNoKUgxPUGUTpv1KhHdLjq1KBRW2jyxjTuhRLaVo3hFk_4xM2QY4pmO58d0IL-z18VRJoes-kOLG_d9pg/QU-30Az69dhQfbfkpkeykXKWs5ilnoMQj7AtJnr86r0",
+      "startTime": "3:00pm",
+      "title": "Kiki Mic",
+      "description": "The Kiki Mic is a comedy open mic for characters, standup, and storytelling hosted by Sydney Kaehler and Shenba Vairavan, every Sunday at 3:00PM at Pete’s Candy Store. Sign up using the form in @thekikimic IG bio, everybody gets 3 minutes! Come to laugh, cry, gossip, rage, hang, etc… like, are you coming to the ki or not?!"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/U-SAwxP61XPlwfeJRrVgVw/RlbkjKTtv2aNA0LNBFnxAPvE4V3tRA-YHavtBmWV1kUuB6YR2OUeTOqCtjEcJ-lDJD-mnk0GPHZCIAgVk2kst65uaUh8xcmnWs0mghGvXJNk5WC3v877Pq2nw2eraqX3FOKmtsaKbalUbHa0BytKfHh5FoJyxb-lRAuXGfr_EHFEYa0jSWUCRPmmVPft_MNwDAsVubKegwA-hZSJvy3AiQWnLOTMhqX1Z-sfM72oZEdDy5QyZsS66KfxeIZozovJcK6re0jnAFumAtnW-E3D3vn-kX5eC1i8TxoBJ7F_rDY/0NvXWcZ1J5DcXAPhVOYL5geui0BYR58719LVT4qrkb0",
+      "startTime": "5:00pm",
+      "title": "Open Mic",
+      "description": "The Open Mic at Pete's has been running for almost 25 years and has provided a springboard for many a New York performer, now booking gigs around the city and beyond. Join host Bruce Martin in Pete's intimate music room for a lively night of performances. Sign up is at 3 pm and music starts at 5pm. One drink minimum to perform."
+    },
+    {
+      "image": "/static/243a331fd9ba80f434cebbeaa545d2a0/30cdc/rand7.png",
+      "startTime": "10:30pm",
+      "title": "Secret Swirl"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/jb7QLExpkhPAtX_3RcRFZQ/P74FWAqxsK6TcDfw7QJ_4jluSkh4tRomumxhx4Mnbo4VzRTXDEu1xA3n1W1J5aezqUTdIja6sPIwOCieoCiUfEd6bRg-jvcfuYPrjuU-azvsbomnswvhuz221AM3P6OIPF03PEarzDGiXTemMLJX8A/_LAX-1uXTZnQnnMjFSBIHvHcsPY6dMPMdC6R7Tf_91Y",
+      "startTime": "7:00pm",
+      "title": "Biology on Tap",
+      "description": "Join us for your favorite biology-based event on Monday, June 2nd as we celebrate how gay nature is! Science talks, trivia, shenanigans AND a drag performance all in one night? You won't want to miss this Bio on Tap!"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/XuR50cZ-2P8FSeAlOj-3ag/3pE3ET2XcRh3TBbnDOeCGhJMADaC7kjaYvvjxYaHRy1890AK8KfAur3YIWf9-zmO-tJVtIYTaxWON3P3NFl4FYWp4oJ0ekgSPvCx9d-a4L3ohW1tRe0gNK9oVeC-sxv09bxvPr7qYKd4IoSFCXxUv2LI_vjMZFfZa5719qfHH1U/imn8gnp8xT__bRxKrvPWMRzylwTIJmMI7pY-6SJHdQc",
+      "startTime": "8:30pm",
+      "title": "Chestnut: A Live Storytelling Hour",
+      "description": "In the spirit of liberation and celebration what’s a time when you were on top? Prepare a story about your craziest party, a victory you didn’t see coming, or that mountain you finally climbed after 5 years of planning. Think back to that bottle of tequila or a sunny day after a storm. Whether it was a win for the soul or fireworks literally lit up the sky, sometimes we need a reminder to celebrate the big and the small. \n\nIn case you need anymore inspiration I invite you to think back to those milestones: prom, 21st birthday, that wedding your cousin had in the woods, or the 30th birthday party that was more of a rave.\n\nBring a story, a friend, or simply yourselves."
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/lAw2IK5Ob8DKeqmPUCgIkg/9LheqijfT_KOIxz2iERT846N5huOo6FDpfWL18gEIKOUp96H58R3wo0kI66iNyPAbZ6S38nsATYW23UJLoF2IjRPbcPXCLqrSaoYvTES0rMFFHE9HOz701qH1OQ7Vr__Izb9eO0QgbxKn5b34ucm3Q/jUkd5x4SPJUTnLL5W95hGUOyAWqnpIKDSd5DGeagYqE",
+      "startTime": "10:00pm",
+      "title": "BURLEY"
+    },
+    {
+      "image": "/static/42c97bc5de110e7ab68704c766c2fcb6/facc2/rand1.png",
+      "startTime": "5:00pm",
+      "title": "MIND PALACE POETRY THE WORKSHOP II"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/OcgpM71UgqWFyNdMz8eMHQ/-foguz0_uz5WzxX2eAPgApZ-7m1X1SUDrXDd6TTedeT_u3E4YmuS58JSS9S5i9-pm5BQzzp7QsXBZM39psRzQSnZXEd_GfRNH6WmMB4zGik8EsrTeY2rvOFLeicTcx3ng4ZI2J-1wul2DWd_ZJof1g/uQ6VMbP01CbfEbwll4szmS6WZZk_Bv79rha0JBn4Lq0",
+      "startTime": "7:00pm",
+      "title": "The Show Show Show",
+      "description": "The Show Show Show is an evening of improv based on live music! \n\nJoin us for a cozy night of comedy and tunes as The Go Go Gos + a guest team perform improvised scenes taking inspiration from an incredible musical act."
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/ZvMENrAB7DBHEzqBUYZF9A/5QoLsG1EiqK_oEpPfzHrofNE3gZpAbQrxV5D_-o5benAKKY1aW78aNdXRBD3eXaBmHFRinoUpfe_TySt4oXH1WBiaL4YzeUAcHaMgHil-3Ch6kwHCVbZfqNs3wUs9oUkmM0_BGFOoIb7s3nv-GoH3w/iooYN4g6I5yB9WqhU18Dl1zjVSvGWxNXDd3a4lbIU0s",
+      "startTime": "8:30pm",
+      "title": "Rah Rah Rabbit"
+    },
+    {
+      "image": "/static/42c97bc5de110e7ab68704c766c2fcb6/facc2/rand1.png",
+      "startTime": "9:30pm",
+      "title": "BMI Acoustic Lounge"
+    },
+    {
+      "image": "/static/80bd20b9e516a5c26782cf4688aae451/30cdc/rand20.png",
+      "startTime": "10:30pm",
+      "title": "Bill Dank"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/-Rg3d6wNDbTFhUMuh52GVQ/GMdNHIka7STMMj3l8ft7MhD_kQe9D5elpYpWvq-iJN6NH0ofqY9yG5TsilySSHvHL5GG5_cvcDF37tptMJPQ2qL1-A-BZz8CATxMmmDHe45UIwseLAgPFmb-ZK2de6X66rfISrXxSZ_XUlRwSK4Ung/nly7xO6kH7YxT80BkSsWdqJ96YRtKWiymTq3QfoDBZ0",
+      "startTime": "10:00am",
+      "title": "work from petes (book on fluxo)",
+      "description": "\"Work from home\" but from Pete's instead. Coffee and wifi will be provided."
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/i3nn0t4r3UDegD5ahGbG4w/jtzaOmn_FlRknrxYpOimh_1JbeoYwyWbR2tvj4scqv5cO_w9U9tqCxfayLYMmRmfU9Qa0h7Jx-j7byP1WFqRck9_SGXOJ-Zea05FrjeLsOpnW8libgEOeFFJmscC-6dfrK1kKOnVIp1x3zzq_F3zXNjJMia4sBXAoxSdn9atzECAQqmu9ho2H0TUvmtThRZKYWaQ4zy8DsXF5TKiYtySYeWsCFvUQ3mI9Nv7ACPqp7tLaafyvLvVyEleuBkKmGtcXGZU2-eC1CAzYC4l1CaKXtkYEQsbIwyyrSTVMahfRxU/WJupIQ1BuMoEpOakXT0wUgoVtzk8LiCHyGfx9hw0Bzs",
+      "startTime": "7:30pm",
+      "title": "Trivia",
+      "description": "NYC's finest trivia beckons. Got the brains? Bring your friends and wrack your noodles with six rounds of clever, fun, HARD trivia. The most experienced trivia hosts in the city will test your mental mettle in areas of General Knowledge, Music, Top Tens, and Visual Identification. First Prize is a $75 bar tab, Second Prize is a $40 bar tab and Third Prize is a $15 bar tab. But the real prize (besides bragging rights for those who place, and a berth in the twice yearly finals) is the time honored social scene of the Quizz-Off crowd. Give it a try smart guy! And come early for a good table."
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/hlqgsPLdmdiYw6Uqjc2QdQ/DOS6uwYOL-0ostYxkUlyycIj_1RA-rDv0Kb_DnSAJSIvwNT7PJqj7ZJ0ted5ptu7Lv4TOHCuto7VcQ8oKtppM9Dk3N3psW7kaliEzuZmLgCBCeS3RPBS_zzwulCoe12lLrz-EW0z29vcq0wVsyfsHwj0n-u_XqsiINHMS85tyi0/czT2gzvyGUHhxEUeJxsU88Rkbz9tYX7cBcCsKOueMLI",
+      "startTime": "10:00pm",
+      "title": "Funhouse Comedy",
+      "description": "Comedians Gabe Pacheco and Sameer Naseem host this legendary weekly stand up comedy show featuring the best comedians from NYC and beyond!"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/-Rg3d6wNDbTFhUMuh52GVQ/GMdNHIka7STMMj3l8ft7MhD_kQe9D5elpYpWvq-iJN6NH0ofqY9yG5TsilySSHvHL5GG5_cvcDF37tptMJPQ2qL1-A-BZz8CATxMmmDHe45UIwseLAgPFmb-ZK2de6X66rfISrXxSZ_XUlRwSK4Ung/nly7xO6kH7YxT80BkSsWdqJ96YRtKWiymTq3QfoDBZ0",
+      "startTime": "10:00am",
+      "title": "work from petes (book on fluxo)",
+      "description": "\"Work from home\" but from Pete's instead. Coffee and wifi will be provided."
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/_bg5OvhOCe6AQNlqXBrZ4A/la7jVA67Lkr3eAWNQf2g4TlWEITumlXWZxNhxr1dH8JrOEt8-AR5qQGvH3psmkZ5zFE2atAROf-z6l5-px790inqPJ9zm0s2vS5wOI4K5uBbq9qf7eRl3oVGIcXghdRpsw-PD8lkhOobXqr8vAE_1JEQRKGudf4vtzhanprjjE8/pZeztZF_Ll2vU1rbR1glK0fCiGixWWabqF1lGEafIpk",
+      "startTime": "5:00pm",
+      "title": "Small Batch Improv Jam",
+      "description": "A Two-prov Three-prov comedy jam. Put your name in the hat to participate in two person and three person improvised scenes!\n5:15 sign ups, 5:30 playtime. Free with a $5 minimum purchase at the bar."
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/EHmzFUbqcx69XqjkTulFHQ/aMWvOpcEygv0zcaXOQLL6sKmt7coTzjirMl3fS5-DQCHkvcGyasOtboDqxJkS3S_MmXDetZ5wXw3tYCvynHtz_A24sFPBnvVQVeB8LCMMj0EZqEz0LBWPBaL8WHQd5DWzui2yJ7RRW_XmJOeOUv-Jg/A7RJtk74mUQjKs05bJvo7kvlBFMCjivasvXiHlFJBDw",
+      "startTime": "5:00pm",
+      "title": "Numbskull",
+      "description": "Welcome to Numbskull! An open mic for stand-up, characters, clown, and the like. Grab a drink at the bar and put your name in the bucket. Every Friday at Pete’s @ 5 PM."
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/ppFoLpU9cRkJJwV8E5QbVA/TbmgecP-6QaKcXIeobcHOr9fM0jPMfhhNIReEZ9Ceqof86fVft4QBTub3ybeWIXhV2-OtwR--XWvxd-S42iEXfGRhs-RMB5hn-Z4ypE0MUPmyfT_Xo4SV5BrWVOnh5IW4l99HD9IhqZ3Ph8YoHANBGA33wqBg0MYLzJo2USWGFE/qgIqonWPwXZZHACadSgPgINhyDrgcb0iRn_BZTEBS-Q",
+      "startTime": "7:00pm",
+      "title": "Imaginary Elegies at Pete's Candy Store",
+      "description": "Imaginary Elegies, curated by Iris Cushing, is the newest incarnation of Pete’s Poetry Series, which has been presenting the work of great and radical poets of the day, for over 25 years. If you love poetry and care to hear and see inspiring poetry and poets, Imaginary Elegies is here for you. Follow the link to this month’s fabulous line up."
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/T62mHIznvtBYbgNalSCOWw/5sn9nT4KwR-OhtTYVp4xcAk5BUwD_h4g-R1oZvNp5kvisA0PTR3JuFNQ3kzCwbo4fNLG9snELBeYADlAM3_6Gp2D6gVQREuih9RICfCnFp_3msUSBD1lcD2Bp0hspilxkrAwxGPCv22gESL8m648Xw/rPZ55wZg9XLh3bd1x8XWCMj7nsSZ7U2u9acCXC8_UP8",
+      "startTime": "3:30pm",
+      "title": "Loose Lips Mic",
+      "description": "Loose Lips is a comedy open mic for the most iconic standup, characters and storytelling in NYC! Hosted by Fallon Boles & Vassileia Kazee. More info at @looselipscomedy on Instagram 👄💋💄"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/0UgphHOlXt86A3UOxOrTEQ/sAEpBzuDsEW-VEc7ylAeUDwBz4siTl445DJdRFO9adfHT7ksBmzc43xJQv9lkVG-XRoVMcNTn9w0qm4zT_GggzflGOLWysK7gUlCHn63XYdAX6pQdSZjBgGGf-fk_dKdsqVmD95ZeeGVGTgEaQcDNQ/GNPvupGktuwBbevOoIvB4nwwTGbbXdQ0wfB83ExA59w",
+      "startTime": "7:00pm",
+      "title": "New Years Resolution"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/STX6w3xDdz--hN67-zEB1Q/AyvsAvcXrgRCl65C4zCjyQ6b7UkY7I_SBm7jhnCq6JtvRS9wouZNmNimyipHelQe-017Nq5Gxko-452VfFcgCy-32O_H8tG2d0JBfHc-DnrfzkQxj40dJ63TdTpOizJ9vZR0GDm98OmBhUaG50-Org/XtSufZYp9G3A00HIBbjk4ZGSRPBwspoDiKVXG89m_lE",
+      "startTime": "8:00pm",
+      "title": "Side Bangs"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/UWdzq2j1pTomi6ezx_Ufrg/M51MNI8ippCSe5VZn0CVNCkBgmvMrt7LUe_P-Asx8stJgdjQnAArA_GEXdKFo6m0QbXR68AnU2Jyg10ckgWtzor0EC4GkWrLU2wUgNgZ3sy6mUI8sqaaczQm3g9Y66JS6UngnjQqQpzSwFgE8d_xIoIODGg0WVI-v_4zb0sRxpD9V3VOA420w4dQ5EDglsaTmfQ_kQnV9cx3nSzs377Yqg/DbsV0glbrUHAtUPbEugceHNRqL4_pohiYj5Mg1oIqVU",
+      "startTime": "3:00pm",
+      "title": "Poet William May Book Event with Special Guest Host Q&A",
+      "description": "Join us for a special evening with poet William May as he celebrates the release of his debut poetry collection, Blaze Without Burning, published by Finishing Line Press. A fourth-generation native of New York’s Greenwich Village, May brings a lifetime of lived experience and literary insight to his work. The event will feature a moderated Q&A with a special guest host and live reading, offering an intimate look into the themes of strength, transformation, and human connection that shape the collection. Notably, the chapbook’s innovative twin-poem structure invites readers to explore dual perspectives on shared themes, creating a layered emotional experience. This public gathering promises to be a meaningful exchange between author and audience in a venue that beautifully complements May’s deep-rooted connection to the city's creative legacy."
+    },
+    {
+      "image": "/static/7a3d94f739a6974f173a9cff701dc3a1/30cdc/rand10.png",
+      "startTime": "8:30pm",
+      "title": "Jamie Gray"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/tvTjnPUnxbZjDeGJRAnglA/UAz-_e5Umsczgncj-7hXCTYjIzQrwhePEsKc0aoFxemrRA4JAcYPV5O1gWV2Ken0bWSp9E7FElb71q95XkHlj0HXvs9CNIoovyzWhaU5INEZ_R646jkywsEfaAVV8ZXs4mAd1Z3VK04VQpF1JSuEKA/hPQcff37vkd0RgReMhsNGYrnmwIeaYNTSsdPV2rzu_Y",
+      "startTime": "9:30pm",
+      "title": "Alan John Carr"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/Kla1NwgDbe45yHoYKDIqIA/xt8-lDXMfMPGFTvlyi-z9c1dhjRkBzp_K4umMoitIp1QGK13ZmZwN_HePv9cKfDqusfZt2R_OFjcmz4AAgf-v7UUGmRJwboEG_MNr-bk00nLnhI4NlHJcbWZH3nBccxSerZj0Jxi_0N1mrYK6nCF7g/pfRkbeQUjXBs95bTF2hjSMnowDWKX5PciuwgfiUfEfc",
+      "startTime": "10:30pm",
+      "title": "Sameer Joshi"
+    },
+    {
+      "image": "/static/bb66cf276d0a7f1b2d65064eb4531223/30cdc/rand18.png",
+      "startTime": "8:30pm",
+      "title": "Crypsis Trio"
+    },
+    {
+      "image": "/static/b23f50e9057e8752b0b402a36c88b90b/30cdc/rand13.png",
+      "startTime": "9:30pm",
+      "title": "Atomic Pigeons"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/w8RYpY49MYehRYzZBVWqeQ/6Vn8hJA9VJYawJN_dnccuyvBjeot8U0d47XRr73xdMXSo69q3mwo-AW-aMrao0yK880znjr4QJdUE1tBTazY1Cw6yC0LsDKOG6sF8YxDFAHNFYXtK47JhswZk5LSITnuG-VVqpYGq9kjw4xRjzTlHQ/yz5Fkb_teUf6wFrPa_Gxak3WpkvQjbYOk31IyvPGkhI",
+      "startTime": "10:30pm",
+      "title": "Matt Kelley"
+    },
+    {
+      "image": "/static/876da858435dab36c6785a9d2a04750d/ea462/rand27.png",
+      "startTime": "5:00pm",
+      "title": "MIND PALACE POETRY THE WORKSHOP II"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/qGC5p-JicG8xWFBnmfXxZQ/Bx2v9WeCI4f8gHUmwrX1bar-rMv5cjxYhhTdKesIAx1OTcm4fnqQBJYW3wzuhujFsJvza7Q1G_5LSH1wDr8tXghtnu02qxWpTuV1X46bSp-08o-nTc0lqctIBVl687swg281XVMGBcEvOdGgxn2s1A/p8xEfQV7jQg9UVTeEnI40ac3HEwVdLiYM-kPqT3eh6M",
+      "startTime": "8:30pm",
+      "title": "Harmon leon"
+    },
+    {
+      "image": "/static/8101a9102041d6512988fc1541ee753c/30cdc/rand25.png",
+      "startTime": "9:30pm",
+      "title": "The Day Boys"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/_--ZeKasgv7Y5M8berb1Vg/bCL_cj0LSAUsaMTyfps1yobvgfhEarmZvzjSFDpbDtbC6juB6ACLUxOmJ8Ud8kfg15gy2U_RqEpdlyBorusgICWPzAnk0ZROuygG831JcLeCkXuwmPz_POQxNlaUOGJR31NsUbGZl-PA_kiByCfkKg/nFYbNKNucZ8HIPRwqppu3c50cfSvEZM0fTX2iLeuPzw",
+      "startTime": "7:00pm",
+      "title": "HIRE ME",
+      "description": "We are a dynamic and trailblazing show searching for the best of the best from the unemployed comedians in NYC to compete for what any artist wants - a job... that also pays!"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/Ezww2R2ezn2biH4nTlRyaQ/b3bKXCim1efn9e8TbMnzcrdvQHODxAr1ta-ed4bqD7n0ovz-_UluJIroOZmnoMShZoW0Tnnct5Ng952V12KfeCRgPluIJbFXt_xZl2oY9eVmQ5RrxVkiEhg3UFOwQLp62KK7DF8Fk5OCc-4jiY_efg/q9AfsIYecMT-BeCgxjwIUMh1LVyp_43_ykZJM7rznCA",
+      "startTime": "9:00pm",
+      "title": "Karen Dahlstrom"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/HB3Vt5KkP_68UKAp4jSCLw/vn_kFFBloepS6UE8TBh8tCwGYpEwyWXIcSfaiBltmJOBGXhvvOL7kXCVRY5cUlUzeO9_TG9KZNJ6RJivrNE1o2C8cnDrO80EWANlW_ABw97cu0wRBVbHmN-M8o2CQsy01BdUh-A00iDbhZBd5xUHLA/dLdISnCxfpN1-HcKVLtkrqbueYsFqEXVI5HbKifWV60",
+      "startTime": "10:00pm",
+      "title": "Kara McKee"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/kO8GE3ID4KsdXCrWYZeX9Q/hH9rII2peOow6EYeyS2rwWiK9JxHKHk6IsnhR05qkwUUDXxeBivrfK1KJ6tBdYUu_1Q9KrNc9Uw-yf7YBIxhYNtNM0TTA6LZWHEonHgkjWWJulSxsTDd-wr5oeZqeobinzZWoPv2RDYf-g6SLzCB1g/7haqHSG02ks6IDgB7S2K9WuNxy67c3E9MTUnElUrHQw",
+      "startTime": "11:00pm",
+      "title": "CRYS"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/DmlEuKGqXxASb51t9ZyRZQ/qd4JzTeWyGOSsLe7Ksm9ILk2uc8SnhRAqUhSofRpIF5lA6HGrvRUFwYjIDuAEahADoiOUsgBFGpjOXT798Z2tpRJEUdRRHDU7xdl-mo40_qia8mUakLq1JYf7Q9NnwmaPv_iJoJ0ePFDEEtMY_vxxg/MnCKFn3AKfs74i1mKAWhgsWElbpCSZqvoWMdZcZGEtg",
+      "startTime": "7:00pm",
+      "title": "Melissa Mary Ahern"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/CFm8qQ9IURoJSnYf6H4E8Q/QHIYiW_m4v5VMvlMukjsnsqTyXeY3E5Ip2MZtBr2cv93mA7iipXwXHZz8g_Kn9mHzn8EY3cltke4hOkoUfUbuUVFJMS2bgjYkv7hLowpBZt0rzYE8kZIjrSy_mI0xHy25cTe-LVBLGqR0LAbVxl9HQ/1kS__3lVdlayJ-2ZA0p7Yc-JPVVnAiQICIYSxQtTN9U",
+      "startTime": "8:00pm",
+      "title": "John Borra"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/8FZk_KWgc3GNQLcxcG092w/QJ4SSvrhxtA8ovW4Q5R9mfOrF60fluF9QPBt17LQldHBTvyGLdV5oej3ORuqyikdbFkuIbe7xIucuqHxslZlhsb-2KenMCWiatOlS37R5yuEswbw3r4W_4vy_X66J1UwXujCUb6-ZyDwKHs2Q8LgwQ/MF0x_KmoTePBKuy7RGaezwvytZ0UVuGvYcCfkG9oics",
+      "startTime": "9:00pm",
+      "title": "Lorraine Leckie and Her Demons"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/cMozo8SNtcYzX9Srx3djVg/amQ5IFX1RH3xITT9P7xujSgF9arLlPVtg5ztJV-tSZoQRz3YMAK8A1Fub2jycMUBrdmufqsY41_oPFr3oSR0mUIRdSYJA-pzq7jHnQi9_NX6jAIYOrl-Qf3yg3gfvdxKhsg4eWrvXoYn2GJbJxl8LQ/d1JEV-9BC6Xk7AabEk-vlDNyjIWKUYLBlLiZJq6m3Jc",
+      "startTime": "8:30pm",
+      "title": "Vaclav Havel's PROTEST",
+      "description": "A reading of the short play, PROTEST, by Vaclav Havel, to benefit immigrants being harassed or deported by the US government. What does it mean to \"live in truth\" in a society in which a majority of citizens appears happy to ignore untruths or doesn't know how to resist them? This darkly funny play exposes the very real pressures put on citizens of good will who nonetheless bend in the face of wrong. Performed by Drew Valins and David Millstone"
+    },
+    {
+      "image": "/static/26780cb8561fe8a2859d7c6e047acac9/30cdc/rand5.png",
+      "startTime": "10:00pm",
+      "title": "To Clarify"
+    },
+    {
+      "image": "/static/b23f50e9057e8752b0b402a36c88b90b/30cdc/rand13.png",
+      "startTime": "8:30pm",
+      "title": "Sam Barron"
+    },
+    {
+      "image": "/static/c069dbf1e9729cc877b2f15dea3ca8f0/30cdc/rand26.png",
+      "startTime": "9:30pm",
+      "title": "Anakeesta Ironwood"
+    },
+    {
+      "image": "/static/50727aebe5af2454fbc30d8b2f839505/f1af1/rand21.png",
+      "startTime": "10:30pm",
+      "title": "Jacob Aviner"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/Xq74mhn3n0bTvZG9Ef05Bg/sguuEr9tKqqt5r7vX2oiU9ogAvMroW30SILQmevL9WikG0Q-BWrFTfY5ACYExYtvoOd5w2YPV_LiSJ1sSa92G2TjHIMQphYi2faETlvtxlnD2jimKuVb48adETis0oXlJJfkFLUHQ75cqUfN7cmrgFeQcusJVwgicCHDEE2ozJQwCbbU2XpT6VqsT6bkvjWH/cLr0IA5d7Jmh0Hs00T5JgvU9XWTjHtsjERSKNY8JArQ",
+      "startTime": "9:00pm",
+      "title": "Hemlock Garden"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/UTwe4L2aJzwsmftA7S3wbA/puW00t11GB70pbcpyIfxuUmGYmljJye2jCTsKWLYypgXaoLLmFH_97307nr689NIGsNy4KIlgnJScEicPQwm5Ig7EAQD6kKpP8ua3fYsIDvzdX3g1Lt9KHdqBUgtK48WLGhpSHP6iBW_VhIaTlHq-g/SiCCwSD3fgACvdlLurhf1pOxLe_JxvVSLIDUmODqoEU",
+      "startTime": "10:00pm",
+      "title": "Mila Moon"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/FmOEfmigL40ekKzk0BF0WQ/qOmBSOf4C95usDXM-JwV_O1HlyDKwm3c_LoMrSt0LI_pxtfk8VJWObzxHshTylRf4lwx_REeTzdUV_7oGOJATrTOquxJm_LXWSOVIdXmHFv1RDDgS-OuyzL9Qz8H_XLE2uluwHF53uLoOdNMvB5qTA/li1N705tHC3DHkFJTDBvhiioh1g9mvvypOABx3_lNnA",
+      "startTime": "11:00pm",
+      "title": "Cause and Control"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/-VIOsUbtJ6_C0FLbQ3mBwg/J7ymACph1QNrq99LMsJbLn_X29u3PYSW4nz8g9s-pcHoD_gsdwyTfSDp-StEHPfISbJudUGn7UCkgvOTsNgWF4MJ0itkvQ4ISy-1oTuN6KEojvLCfKpCVhzCz6JIdsgociPYL1qvu2C9jMJsDKF5cA/G03_7JIZ5D3brDNeMBL92IfNHxZkMX3OarfAwAtehU4",
+      "startTime": "9:00pm",
+      "title": "Everbound"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/kg8gxl1zIn_NKUvE52hyug/IPTAWBh_5fUnWGQ4e6XY-LraVlpzAam68TG1AKfMkggARBEo-TAfeuWUYnVhmF88X6kumpWmyZSW_y_upkD3_OXdh574Y8nWk_SRu3OMk8ejHh3PKOKEIj3eMBXqwUgZ9yxFZWBJ5adiWItVopAlTg/A_ix__azlOCqxHWGz21rC4H1uEQ4ZvOZvzaUD4NCV5Y",
+      "startTime": "10:00pm",
+      "title": "The Lowliest One"
+    },
+    {
+      "image": "/static/c069dbf1e9729cc877b2f15dea3ca8f0/30cdc/rand26.png",
+      "startTime": "7:00pm",
+      "title": "Graham Lampe"
+    },
+    {
+      "image": "/static/da5161ae6cfeb88d7ab91fef5337e326/30cdc/rand8.png",
+      "startTime": "8:00pm",
+      "title": "Chris Ritter"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/wYf1WPmylYJgcoYgq97mIg/ZLw6XiYsXNfmnoj9blTGBDZT5QEhFN7cdcZwlHOGhyXqzq7vh-8PyecyvziBn_sXx9VHuz1Nxjgq3q2q44FAs86y-bzz4uYhZJDNP2KvvXcMEpsfD1nrKFt5Y4XQ38ix1hRrqMRKeM64mq0kjSM5kw/I5bgRle-ryjDgKBSwhCWZ0TUaMIvvhY66zM-u_1rZo8",
+      "startTime": "9:00pm",
+      "title": "Molly Ganley"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/GkASJtVw6INNi1aknEo1RQ/eY07fN3HUi3TdzNwsR4IQWkD64jS34QtxIK-B4c_VVSKX3qmi_Ocl9TkIQjQ5JqbrV-8bOQsj32i6QZZ_JYcj-N3bftRX7Sa1lK7wGsu2506FPnmFGs0dXOzv7nhqqxEr6BHsKR_OUeboqGUa7a4gg/e6UzySjeOOwtqIInEVL_YK759dv12JmF_isofN2gvlc",
+      "startTime": "10:00pm",
+      "title": "Mimi Oz"
+    },
+    {
+      "image": "/static/b6e3b20cc416c394ec77c2c2e03d0f45/fb081/rand9.png",
+      "startTime": "11:00pm",
+      "title": "Kadir Yucel"
+    },
+    {
+      "image": "/static/72aa81a3b589d111d8e384f797f3d4cb/30cdc/rand17.png",
+      "startTime": "8:30pm",
+      "title": "Diana Lawrence"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/_95dhn2XybpZpwD29D1P3w/unNmqo3ymHeEDmx3hARQvWPAdIZEEqJdrP7o7v34icOvcG17sFT76JAaJSDrENEF7mfi47M4ZeX0Iywc8IH6G_AcLR2TtblMWCA5Vm7nOCQgbabh05aLx_Og4v8D6UNwMQTLKEzGVFynL3A9FE_SEQ/2bUBEskAwPfFMVbqWA8hGoRqmFGxYr0lnnCvfwbS-1E",
+      "startTime": "9:30pm",
+      "title": "Liz and the Lovelies"
+    },
+    {
+      "image": "/static/306cb922f36495345017468ab496141a/30cdc/rand24.png",
+      "startTime": "10:30pm",
+      "title": "Jessica and The Muze"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/SH7tc77KxAeeDKMokTnaNg/5_EneJJhhKE1l9Gf30lr-ckDmeCpfn6IDnp0ca0BXb5PswyFeBcGp6hJ4bOQwE43X2hQN2wTknSJA4ejPblYNlt4UakIHsYT-V1KfaEEERxJKJWbkjgQo5hzWwTgTBl00JUm_zmGuAVzGp9zAJNlCg/lMkJYlUSTTTNajjLMU9LzkENZZTaHrRvQCM1risbeZo",
+      "startTime": "8:30pm",
+      "title": "Alexandra James"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/aWY01TCPShi5cGMmJ4WbNA/JcKznfW-vrW47z4xJ_R6bmblERpvph_H7Igbgnvf8Q-_w8rzLm3i8NL_p0DO6mwVOb0aU7TYzTjIhmtd0ePFqYnYyWK6bTStUjeVgNaD4WG7ErCnJRFdLwGEqhBfrSyC3lLrMDZckzDG6pAPoAdnUA/n5njYXgAOv-FJIZMik_dJTRLhObdNVPR8Wv_Ww9dCO8",
+      "startTime": "9:30pm",
+      "title": "Kendra McKinley"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/kQrwAtUf7IIlGlItQGqPvw/kJPmAb5Z0xZgtoeyQXQ-KDtVlhrsHpJ8PY1lKPFde2R7TSrbejLQFjbyFHaAG9fl-bVT95IzK8s2etaxLDNXsFkQddCfo5Ih9qjRYE-kplv2bwNCzMGJpM5dugrP-ZEue2quKe5zNfJAXOh8x71j4A/r8a8GxEvzTKAcE0aOrZaOwhUAw_yzLW0-ny1phtL80E",
+      "startTime": "8:30pm",
+      "title": "Colleen Orender"
+    },
+    {
+      "image": "/static/5ed89a0fe2177e12ac9e4af640d8cdc9/30cdc/rand11.png",
+      "startTime": "9:30pm",
+      "title": "Pearie Sol"
+    },
+    {
+      "image": "/static/d7b9495bdfc1594ca7456413a5d43743/30cdc/rand3.png",
+      "startTime": "9:00pm",
+      "title": "Common Jack"
+    },
+    {
+      "image": "/static/c7cea8968b9a882b6e77189060fdd9ae/30cdc/rand22.png",
+      "startTime": "10:00pm",
+      "title": "37 Houses"
+    },
+    {
+      "image": "/static/6f16463df3a1533170193c3c056588f6/30cdc/rand23.png",
+      "startTime": "7:00pm",
+      "title": "Abby Walker"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/Dr65X56pmbTJykRbW3oQ6g/Kxt_Vht5rBncis2NilHNEJ0pnlUZjGF7EdtSG1Msj1gyC_V0W1ReurQ95a-TiLg41KmNxmHBh2_E7dEEzsqt81Tl1ff8Q6UJK3qV532lwXj7Z7Iz0G02kS0bCPV5BYkWaqQad-hBUYjeorM41LD0uA/wAE5u-QRS12gGOwjYB6QNwG2ikOqUetKMBMCnPmag18",
+      "startTime": "8:00pm",
+      "title": "Cece June"
+    },
+    {
+      "image": "/static/d322643104012783750bc9677481c31e/30cdc/rand6.png",
+      "startTime": "8:30pm",
+      "title": "The Marley Howard Quartet"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/a2GSQ98gnnSAeLz_GxQtwg/fO09I6b2Y8DI0Bxe7oELewYN-MBwNUG3p0ZkP2_3gax5L1M0N0ioAebHajEVuDeS7ppxW-mrg0stmzTXfYeUsfvTyJf83fvXpUe--zM0vDFStxF2qCkb5oTxkKrEA5kQgHBvbhchOXIyG0Wrcjfi0dLGBw_WUzYTgcLehWWK-PY/m6-VM1VfHYC0svN6U450Ed2wHV59xcC5h6msNINRR_4",
+      "startTime": "9:00pm",
+      "title": "Jake Winstrom"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/1NLMxYVwA7rlEjgcfGNbkw/3OLh5IQYjLh2JYTEBMw8Zxb-T73HugZBqqc6KQPK2W3PbbY9JkezRi7w6xDux-9SR_pcV-w67dEntC2-9Y4XogYQC32KVCwJELxGD9CSWaQdJifTMgei_sCsrD5XxeiXKE6CtYO1JObbh2BbpsHWFQ/Oq6DC_VW_rD88L7bNUiOEln8UCa7j1UsZJYuBa0WkaA",
+      "startTime": "8:00pm",
+      "title": "Cara Lorraine"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/K4bI5tqKzqYLrnX6wTAf2g/MxOuC4luzncAy59Qj6yN1Bd2dBb4gXZ3PSLdltoRCJnMm8rpP0qqf2OAw8qsaYsXZ7oBOYzqmg4Z4yKjoLpVVA-7NixsBbvlt0pPl3EfsrxrAkZdMEm9j38BZ0DStAPwfiX1qrpvJKiY571D6D9ToA/wB6VVphCenf1oyO_LM9jr56KdZhcEJ9KhCPwCGtuqPM",
+      "startTime": "9:00pm",
+      "title": "Squirrels From Hell"
+    },
+    {
+      "image": "/static/80bd20b9e516a5c26782cf4688aae451/30cdc/rand20.png",
+      "startTime": "7:00pm",
+      "title": "My Favorite Thoroughfate",
+      "description": ""
+    },
+    {
+      "image": "/static/71cdcb2268b9a3ea49ef0bf63afe1f78/30cdc/rand4.png",
+      "startTime": "9:00pm",
+      "title": "Gustafer (Gus Benson)"
+    },
+    {
+      "image": "/static/cf478125c50ae6003e1eab2ff7a41542/30cdc/rand19.png",
+      "startTime": "10:00pm",
+      "title": "The Front Desk"
+    },
+    {
+      "image": "/static/78361f47f84cf5ce6b59b257094a75c0/30cdc/rand28.png",
+      "startTime": "7:00pm",
+      "title": "Peaceknicks"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/H8X4qv7JkPyZmqG0dV3kow/VSOHNXMDWN1zEMPLecjRlIsM85kIKt_8NyrdCyprf8w-bG5oG3IinlQd-ZhRosFK0mvGTWGWc_R67-wuRg6N56v61lZ7A17fpz89kKHCB1yjesdyb5XUvs2pKebZR1Ogt8g3S3MFfd1znIsOB6LE5hSY_Y4L2aVef2a6Pz-2Fas/a8Y11-lxDtgEBSGQrxWox7j1kczeNYCm7hQbGdtDW4o",
+      "startTime": "8:00pm",
+      "title": "Adam Najemian"
+    },
+    {
+      "image": "/static/72aa81a3b589d111d8e384f797f3d4cb/30cdc/rand17.png",
+      "startTime": "9:00pm",
+      "title": "The Handles"
+    },
+    {
+      "image": "/static/72aa81a3b589d111d8e384f797f3d4cb/30cdc/rand17.png",
+      "startTime": "8:30pm",
+      "title": "BMI Acoustic Lounge"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/jNCu1Y4Nk1wrDZWJKQMY-w/eRu7zwMAX9Ew13Zsqemlwhyk4JrWW1Pg8LbbZfyxCEz0Zo27_W3m3P_uAr4PZbAjWw5pnpoykTFSXhim05YUpxXTdZ78FPFg5_wcDUf3XEMa6qqsSpazkMHmxLQujDnE0Hlxn6UxTtQ0_XNRqq5_OvXjF1zGOJjUsLCtvKRBPWc/B6GzA_jxyGwx7rp-FFDk3LvMlCKtUnYyuUWcDWk7LNg",
+      "startTime": "9:00pm",
+      "title": "Lola Quinn"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/vIPhHu1oxjrBpuEzD5LQ_Q/BQJkjntZfhS3hFwkYLyj2phHCNIXw2AFLacD6dNNt27Lh0sT_dqHHQC08yj8_kmCrYiGE4V-8VpqnWO43kxW-VvDC5fUiU1FMncyEY1qjMYb88ZY-wEWWCB-kxWqu9dT4D1v4nklmbAE9Z93ZPAsrQ/d6iIB8rM_kCOkk3aUpKN4C5Qc0eKgRPriwOKG1UM03M",
+      "startTime": "8:30pm",
+      "title": "The Graveyardz"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/vIPhHu1oxjrBpuEzD5LQ_Q/BQJkjntZfhS3hFwkYLyj2phHCNIXw2AFLacD6dNNt27Lh0sT_dqHHQC08yj8_kmCrYiGE4V-8VpqnWO43kxW-VvDC5fUiU1FMncyEY1qjMYb88ZY-wEWWCB-kxWqu9dT4D1v4nklmbAE9Z93ZPAsrQ/d6iIB8rM_kCOkk3aUpKN4C5Qc0eKgRPriwOKG1UM03M",
+      "startTime": "8:30pm",
+      "title": "The Graveyardz"
+    },
+    {
+      "image": "/static/5ed89a0fe2177e12ac9e4af640d8cdc9/30cdc/rand11.png",
+      "startTime": "9:00pm",
+      "title": "Daisymaker"
+    },
+    {
+      "image": "/static/78361f47f84cf5ce6b59b257094a75c0/30cdc/rand28.png",
+      "startTime": "8:00pm",
+      "title": "Mifarma"
+    },
+    {
+      "image": "https://v5.airtableusercontent.com/v3/u/42/42/1750118400000/vIPhHu1oxjrBpuEzD5LQ_Q/BQJkjntZfhS3hFwkYLyj2phHCNIXw2AFLacD6dNNt27Lh0sT_dqHHQC08yj8_kmCrYiGE4V-8VpqnWO43kxW-VvDC5fUiU1FMncyEY1qjMYb88ZY-wEWWCB-kxWqu9dT4D1v4nklmbAE9Z93ZPAsrQ/d6iIB8rM_kCOkk3aUpKN4C5Qc0eKgRPriwOKG1UM03M",
+      "startTime": "8:30pm",
+      "title": "The Graveyardz"
+    },
+    {
+      "image": "/static/c7cea8968b9a882b6e77189060fdd9ae/30cdc/rand22.png",
+      "startTime": "8:30pm",
+      "title": "BMI Acoustic Lounge"
+    },
+    {
+      "image": "/static/b6e3b20cc416c394ec77c2c2e03d0f45/fb081/rand9.png",
+      "startTime": "8:30pm",
+      "title": "Gregg Belisle-Chi"
+    },
+    {
+      "image": "/static/c0d446844ecd2b78f85406cca69ab8b3/f1af1/rand14.png",
+      "startTime": "8:30pm",
+      "title": "Katy Guillen and The Drive"
+    },
+    {
+      "image": "/static/8101a9102041d6512988fc1541ee753c/30cdc/rand25.png",
+      "startTime": "7:00pm",
+      "title": "Tadeusz Dabrowski Reading",
+      "description": ""
+    }
+  ]
+}

@@ -1,0 +1,278 @@
+{
+  "venue_name": "St. Mazie",
+  "extraction_timestamp": "20250616_164721",
+  "data": [
+    {
+      "image": "https://www.stmazie.com/events/jazz-with-the-julian-smith-trio/",
+      "eventDate": "Friday, June 13",
+      "startTime": "7:30 pm - 9:30 pm",
+      "endTime": "7:30 pm - 9:30 pm",
+      "title": "Jazz with The Julian Smith Trio!",
+      "description": "Jazz with The Julian Smith Trio!"
+    },
+    {
+      "image": "https://www.stmazie.com/events/the-cellar-series-jazz-with-jordan-hyde/",
+      "eventDate": "Friday, June 13",
+      "startTime": "8:00 pm - 10:30 pm",
+      "endTime": "8:00 pm - 10:30 pm",
+      "title": "The Cellar Series • Jazz with Jordan Hyde!",
+      "description": "The Cellar Series • Jazz with Jordan Hyde!"
+    },
+    {
+      "image": "https://www.stmazie.com/events/jazz-blues-latin-more-with-mariella-price/",
+      "eventDate": "Friday, June 13",
+      "startTime": "10:00 pm - 12:30 am",
+      "endTime": "10:00 pm - 12:30 am",
+      "title": "Jazz, Blues, Latin & more with Mariella Price!",
+      "description": "Jazz, Blues, Latin & more with Mariella Price!"
+    },
+    {
+      "image": "https://www.stmazie.com/events/happy-hour-live-music-5-7pm-jazz-with-dion-berardo/",
+      "eventDate": "Saturday, June 14",
+      "startTime": "5:00 pm - 7:00 pm",
+      "endTime": "5:00 pm - 7:00 pm",
+      "title": "Happy Hour Live Music 5-7pm • Jazz with Dion Berardo!",
+      "description": "Happy Hour Live Music 5-7pm • Jazz with Dion Berardo!"
+    },
+    {
+      "image": "https://www.stmazie.com/events/jazz-with-the-alberto-pibiri-trio-3/",
+      "eventDate": "Saturday, June 14",
+      "startTime": "7:30 pm - 9:30 pm",
+      "endTime": "7:30 pm - 9:30 pm",
+      "title": "Jazz with The Alberto Pibiri Trio!",
+      "description": "Jazz with The Alberto Pibiri Trio!"
+    },
+    {
+      "image": "https://www.stmazie.com/events/the-cellar-series-jazz-with-pete-matthiesson/",
+      "eventDate": "Saturday, June 14",
+      "startTime": "8:00 pm - 10:30 pm",
+      "endTime": "8:00 pm - 10:30 pm",
+      "title": "The Cellar Series • Jazz with Pete Matthiesson!",
+      "description": "The Cellar Series • Jazz with Pete Matthiesson!"
+    },
+    {
+      "image": "https://www.stmazie.com/events/new-orleans-jazz-rhythm-blues-with-bill-malchow/",
+      "eventDate": "Saturday, June 14",
+      "startTime": "10:00 pm - 12:30 am",
+      "endTime": "10:00 pm - 12:30 am",
+      "title": "New Orleans Jazz, Rhythm & Blues with Bill Malchow!",
+      "description": "New Orleans Jazz, Rhythm & Blues with Bill Malchow!"
+    },
+    {
+      "image": "https://www.stmazie.com/events/new-orleans-jazz-with-konstantin-the-konstellation/",
+      "eventDate": "Sunday, June 15",
+      "startTime": "8:00 pm - 10:30 pm",
+      "endTime": "8:00 pm - 10:30 pm",
+      "title": "New Orleans Jazz with Konstantin & The Konstellation!",
+      "description": "New Orleans Jazz with Konstantin & The Konstellation!"
+    },
+    {
+      "image": "https://www.stmazie.com/events/monday-jazz-with-kings-county-swing/",
+      "eventDate": "Monday, June 16",
+      "startTime": "8:00 pm - 10:30 pm",
+      "endTime": "8:00 pm - 10:30 pm",
+      "title": "Monday Jazz with Kings County Swing!",
+      "description": "Monday Jazz with Kings County Swing!"
+    },
+    {
+      "image": "https://www.stmazie.com/events/miss-maybell-the-jazz-age-artistes-3/",
+      "eventDate": "Tuesday, June 17",
+      "startTime": "8:00 pm - 10:30 pm",
+      "endTime": "8:00 pm - 10:30 pm",
+      "title": "Miss Maybell & The Jazz Age Artistes!",
+      "description": "Miss Maybell & The Jazz Age Artistes!"
+    },
+    {
+      "image": "https://www.stmazie.com/events/gypsy-jazz-with-alex-simon-2/",
+      "eventDate": "Wednesday, June 18",
+      "startTime": "8:00 pm - 10:30 pm",
+      "endTime": "8:00 pm - 10:30 pm",
+      "title": "Gypsy Jazz with Alex Simon!",
+      "description": "Gypsy Jazz with Alex Simon!"
+    },
+    {
+      "image": "https://www.stmazie.com/events/the-cellar-series-jazz-with-antoine-thouvenin-2/",
+      "eventDate": "Thursday, June 19",
+      "startTime": "7:30 pm - 10:00 pm",
+      "endTime": "7:30 pm - 10:00 pm",
+      "title": "The Cellar Series • Jazz with Antoine Thouvenin!",
+      "description": "The Cellar Series • Jazz with Antoine Thouvenin!"
+    },
+    {
+      "image": "https://www.stmazie.com/events/jazz-blues-latin-more-with-mariella-price-2/",
+      "eventDate": "Thursday, June 19",
+      "startTime": "8:00 pm - 10:30 pm",
+      "endTime": "8:00 pm - 10:30 pm",
+      "title": "Jazz, Blues, Latin & more with Mariella Price!",
+      "description": "Jazz, Blues, Latin & more with Mariella Price!"
+    },
+    {
+      "image": "https://www.stmazie.com/events/jazz-with-the-julian-smith-trio-2/",
+      "eventDate": "Friday, June 20",
+      "startTime": "7:30 pm - 9:30 pm",
+      "endTime": "7:30 pm - 9:30 pm",
+      "title": "Jazz with The Julian Smith Trio!",
+      "description": "Jazz with The Julian Smith Trio!"
+    },
+    {
+      "image": "https://www.stmazie.com/events/the-cellar-series-gypsy-jazz-tango-with-gabriel-hermida/",
+      "eventDate": "Friday, June 20",
+      "startTime": "8:00 pm - 10:30 pm",
+      "endTime": "8:00 pm - 10:30 pm",
+      "title": "The Cellar Series • Gypsy Jazz & Tango with Gabriel Hermida!",
+      "description": "The Cellar Series • Gypsy Jazz & Tango with Gabriel Hermida!"
+    },
+    {
+      "image": "https://www.stmazie.com/events/international-jazz-with-carte-blanche/",
+      "eventDate": "Friday, June 20",
+      "startTime": "10:00 pm - 12:30 am",
+      "endTime": "10:00 pm - 12:30 am",
+      "title": "International Jazz with Carte Blanche!",
+      "description": "International Jazz with Carte Blanche!"
+    },
+    {
+      "image": "https://www.stmazie.com/events/happy-hour-live-music-5-7pm-jazz-with-dion-berardo-2/",
+      "eventDate": "Saturday, June 21",
+      "startTime": "5:00 pm - 7:00 pm",
+      "endTime": "5:00 pm - 7:00 pm",
+      "title": "Happy Hour Live Music 5-7pm • Jazz with Dion Berardo!",
+      "description": "Happy Hour Live Music 5-7pm • Jazz with Dion Berardo!"
+    },
+    {
+      "image": "https://www.stmazie.com/events/jazz-with-the-koran-agan-trio/",
+      "eventDate": "Saturday, June 21",
+      "startTime": "7:30 pm - 9:30 pm",
+      "endTime": "7:30 pm - 9:30 pm",
+      "title": "Jazz with The Koran Agan Trio!",
+      "description": "Jazz with The Koran Agan Trio!"
+    },
+    {
+      "image": "https://www.stmazie.com/events/the-cellar-series-jazz-with-asher-ben-or/",
+      "eventDate": "Saturday, June 21",
+      "startTime": "8:00 pm - 10:30 pm",
+      "endTime": "8:00 pm - 10:30 pm",
+      "title": "The Cellar Series • Jazz with Asher Ben-Or!",
+      "description": "The Cellar Series • Jazz with Asher Ben-Or!"
+    },
+    {
+      "image": "https://www.stmazie.com/events/blues-with-the-milkman-sons/",
+      "eventDate": "Saturday, June 21",
+      "startTime": "10:00 pm - 12:30 am",
+      "endTime": "10:00 pm - 12:30 am",
+      "title": "Blues with The Milkman & Sons!",
+      "description": "Blues with The Milkman & Sons!"
+    },
+    {
+      "image": "https://www.stmazie.com/events/jazz-with-kings-county-swing-3/",
+      "eventDate": "Monday, June 23",
+      "startTime": "8:00 pm - 10:30 pm",
+      "endTime": "8:00 pm - 10:30 pm",
+      "title": "Jazz with Kings County Swing!",
+      "description": "Jazz with Kings County Swing!"
+    },
+    {
+      "image": "https://www.stmazie.com/events/jazz-with-omar-kabir/",
+      "eventDate": "Tuesday, June 24",
+      "startTime": "8:00 pm - 10:30 pm",
+      "endTime": "8:00 pm - 10:30 pm",
+      "title": "Jazz with Omar Kabir!",
+      "description": "Jazz with Omar Kabir!"
+    },
+    {
+      "image": "https://www.stmazie.com/events/jazz-with-the-peter-yarin-trio/",
+      "eventDate": "Wednesday, June 25",
+      "startTime": "8:00 pm - 10:30 pm",
+      "endTime": "8:00 pm - 10:30 pm",
+      "title": "Jazz with The Peter Yarin Trio!",
+      "description": "Jazz with The Peter Yarin Trio!"
+    },
+    {
+      "image": "https://www.stmazie.com/events/the-cellar-series-jazz-with-ryan-weisheit/",
+      "eventDate": "Thursday, June 26",
+      "startTime": "7:30 pm - 10:00 pm",
+      "endTime": "7:30 pm - 10:00 pm",
+      "title": "The Cellar Series • Jazz with Ryan Weisheit!",
+      "description": "The Cellar Series • Jazz with Ryan Weisheit!"
+    },
+    {
+      "image": "https://www.stmazie.com/events/jazz-blues-latin-more-with-mariella-price-3/",
+      "eventDate": "Thursday, June 26",
+      "startTime": "8:00 pm - 10:30 pm",
+      "endTime": "8:00 pm - 10:30 pm",
+      "title": "Jazz, Blues, Latin & more with Mariella Price!",
+      "description": "Jazz, Blues, Latin & more with Mariella Price!"
+    },
+    {
+      "image": "https://www.stmazie.com/events/jazz-with-the-julian-smith-trio-3/",
+      "eventDate": "Friday, June 27",
+      "startTime": "7:30 pm - 9:30 pm",
+      "endTime": "7:30 pm - 9:30 pm",
+      "title": "Jazz with The Julian Smith Trio!",
+      "description": "Jazz with The Julian Smith Trio!"
+    },
+    {
+      "image": "https://www.stmazie.com/events/the-cellar-series-jazz-with-pete-mattheisson/",
+      "eventDate": "Friday, June 27",
+      "startTime": "8:00 pm - 10:30 pm",
+      "endTime": "8:00 pm - 10:30 pm",
+      "title": "The Cellar Series • Jazz with Pete Mattheisson!",
+      "description": "The Cellar Series • Jazz with Pete Mattheisson!"
+    },
+    {
+      "image": "https://www.stmazie.com/events/new-orleans-jazz-rhythm-blues-with-bill-malchow-2/",
+      "eventDate": "Friday, June 27",
+      "startTime": "10:00 pm - 12:30 am",
+      "endTime": "10:00 pm - 12:30 am",
+      "title": "New Orleans Jazz, Rhythm & Blues with Bill Malchow!",
+      "description": "New Orleans Jazz, Rhythm & Blues with Bill Malchow!"
+    },
+    {
+      "image": "https://www.stmazie.com/events/happy-hour-live-music-5-7pm-jazz-with-adrien-chevalier/",
+      "eventDate": "Saturday, June 28",
+      "startTime": "5:00 pm - 7:00 pm",
+      "endTime": "5:00 pm - 7:00 pm",
+      "title": "Happy Hour Live Music 5-7pm • Jazz with Adrien Chevalier!",
+      "description": "Happy Hour Live Music 5-7pm • Jazz with Adrien Chevalier!"
+    },
+    {
+      "image": "https://www.stmazie.com/events/jazz-with-the-koran-agan-trio-2/",
+      "eventDate": "Saturday, June 28",
+      "startTime": "7:30 pm - 9:30 pm",
+      "endTime": "7:30 pm - 9:30 pm",
+      "title": "Jazz with The Koran Agan Trio!",
+      "description": "Jazz with The Koran Agan Trio!"
+    },
+    {
+      "image": "https://www.stmazie.com/events/the-cellar-series-gypsy-jazz-tango-with-gabriel-hermida-2/",
+      "eventDate": "Saturday, June 28",
+      "startTime": "8:00 pm - 10:30 pm",
+      "endTime": "8:00 pm - 10:30 pm",
+      "title": "The Cellar Series • Gypsy Jazz & Tango with Gabriel Hermida!",
+      "description": "The Cellar Series • Gypsy Jazz & Tango with Gabriel Hermida!"
+    },
+    {
+      "image": "https://www.stmazie.com/events/prohibition-jazz-with-the-new-wonders/",
+      "eventDate": "Saturday, June 28",
+      "startTime": "10:00 pm - 12:30 am",
+      "endTime": "10:00 pm - 12:30 am",
+      "title": "Prohibition Jazz with The New Wonders!",
+      "description": "Prohibition Jazz with The New Wonders!"
+    },
+    {
+      "image": "https://www.stmazie.com/events/a-sunday-in-new-orleans-with-konstantin-the-konstellation-3/",
+      "eventDate": "Sunday, June 29",
+      "startTime": "8:00 pm - 10:30 pm",
+      "endTime": "8:00 pm - 10:30 pm",
+      "title": "A Sunday in New Orleans with Konstantin & The Konstellation!",
+      "description": "A Sunday in New Orleans with Konstantin & The Konstellation!"
+    },
+    {
+      "image": "https://www.stmazie.com/events/jazz-with-kings-county-swing-4/",
+      "eventDate": "Monday, June 30",
+      "startTime": "8:00 pm - 10:30 pm",
+      "endTime": "8:00 pm - 10:30 pm",
+      "title": "Jazz with Kings County Swing!",
+      "description": "Jazz with Kings County Swing!"
+    }
+  ]
+}
