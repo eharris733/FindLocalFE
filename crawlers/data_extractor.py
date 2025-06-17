@@ -122,6 +122,10 @@ async def extract_data_for_venue(venue_name: str):
         print(f"Extracted content for {venue_name}:")
         print(f"HTML length: {len(result.html)}")
         print("Extracted data preview:")
+        if not result.extracted_content:
+            print("No content extracted.")
+            save_extracted_data(venue_name, "")
+            return
         print(result.extracted_content[:500] + "..." if len(result.extracted_content) > 500 else result.extracted_content)
         
         # Save the extracted data
