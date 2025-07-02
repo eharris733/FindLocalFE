@@ -1,7 +1,7 @@
 import asyncio
 import json
 import sys
-from crawl4ai import AsyncWebCrawler, CacheMode, CrawlerRunConfig, JsonCssExtractionStrategy
+from crawl4ai import AsyncWebCrawler, CacheMode, CrawlerRunConfig, JsonCssExtractionStrategy, ProxyConfig
 import pandas as pd
 import os
 from datetime import datetime
@@ -102,12 +102,22 @@ async def extract_data_for_venue(venue_name: str):
         print(f"Error: Invalid JSON in schema file {schema_file_path}")
         return
 
+    # # proxy config, should this become neccesary later
+    # proxy_config = ProxyConfig(
+    #     proxy_type="http",  # or "socks5" if you prefer
+    #     proxy_host="your_proxy_host",  # Replace with your proxy host)
+    #     proxy_port=8080,  # Replace with your proxy port
+    #     proxy_username="your_proxy_username",  # Optional, if your proxy requires authentication
+    #     proxy_password="your_proxy_password"  # Optional, if your proxy requires authentication
+    # )
+
     # Base configuration
     base_config = CrawlerRunConfig(
         css_selector=css_selector,
         cache_mode=CacheMode.BYPASS,
         keep_data_attributes=keep_data_attributes,
         wait_for=f"css:{css_selector}"
+        # proxy_config=proxy_config
     )
 
     # Create config with extraction strategy
