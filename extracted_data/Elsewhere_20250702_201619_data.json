@@ -1,0 +1,729 @@
+{
+  "venue_name": "Elsewhere",
+  "extraction_timestamp": "20250702_201619",
+  "raw_data": [
+    {
+      "image": "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F977002683%2F2569518370411%2F1%2Foriginal.20250306-153455?crop=focalpoint&fit=crop&h=400&w=800&auto=format%2Ccompress&q=75&sharp=10&fp-x=0.005&fp-y=0.005&s=6fbef981421c4f8d93dd983be5951983",
+      "eventDate": "Wed, Jul 2",
+      "startTime": "7:00 PM",
+      "endTime": "",
+      "title": "Paco Versailles, Flavor Dave",
+      "description": "Paco Versailles performing on Wednesday July 2, 2025 at The Rooftop from 7:00 PM at Elsewhere, Brooklyn NY"
+    },
+    {
+      "image": "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F1063372063%2F2569518370411%2F1%2Foriginal.20250630-145450?crop=focalpoint&fit=crop&h=400&w=800&auto=format%2Ccompress&q=75&sharp=10&fp-x=0.537888613614&fp-y=0.409223417738&s=6be4c3b297f3af295fbc92786f50b2c4",
+      "eventDate": "Thu, Jul 3",
+      "startTime": "6:00 PM",
+      "endTime": "",
+      "title": "Elsewhere 4th of July weekend: MashBit, Poolhaus",
+      "description": "MashBit performing on Thursday July 3, 2025 at The Rooftop from 6:00 PM at Elsewhere, Brooklyn NY"
+    },
+    {
+      "image": "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F1055995633%2F2569518370411%2F1%2Foriginal.20250618-185055?crop=focalpoint&fit=crop&h=400&w=800&auto=format%2Ccompress&q=75&sharp=10&fp-x=0.5&fp-y=0.5&s=db5727571467b04bb2d914c4be53de6b",
+      "eventDate": "Thu, Jul 3",
+      "startTime": "10:30 PM",
+      "endTime": "",
+      "title": "South House vs Naija House",
+      "description": "South House vs Naija House performing on Thursday July 3, 2025 at Full Venue from 10:30 PM at Elsewhere, Brooklyn NY"
+    },
+    {
+      "image": "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F993659553%2F2569518370411%2F1%2Foriginal.20250326-213910?crop=focalpoint&fit=crop&h=400&w=800&auto=format%2Ccompress&q=75&sharp=10&fp-x=0.00515151515152&fp-y=0.00488764044944&s=53d97c78ceffda72c923100c94fa7d78",
+      "eventDate": "Fri, Jul 4",
+      "startTime": "4:00 PM",
+      "endTime": "",
+      "title": "Elsewhere 4th of July: EELF Showcase w/ dj poolboi, DJ Houseplants + more",
+      "description": "dj poolboi performing on Friday July 4, 2025 at The Rooftop from 4:00 PM at Elsewhere, Brooklyn NY"
+    },
+    {
+      "image": "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F1062137333%2F2569518370411%2F1%2Foriginal.20250627-182726?crop=focalpoint&fit=crop&h=400&w=800&auto=format%2Ccompress&q=75&sharp=10&fp-x=0.00518939393939&fp-y=0.0053171641791&s=0d368b83e9eebbf4df75d9e14b06611e",
+      "eventDate": "Fri, Jul 4",
+      "startTime": "10:30 PM",
+      "endTime": "",
+      "title": "Elsewhere 4th of July with LTJ Bukem, Delano Smith, rally: amita, Petal",
+      "description": "LTJ Bukem performing on Friday July 4, 2025 at The Hall & The Loft from 10:30 PM at Elsewhere, Brooklyn NY"
+    },
+    {
+      "image": "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F1045449903%2F2569518370411%2F1%2Foriginal.20250604-042429?crop=focalpoint&fit=crop&h=400&w=800&auto=format%2Ccompress&q=75&sharp=10&fp-x=0.507246376812&fp-y=0.567415730337&s=df5dbc9f51eb432934d8a64f91f37fbd",
+      "eventDate": "Sat, Jul 5",
+      "startTime": "4:00 PM",
+      "endTime": "",
+      "title": "freakquencies - dj sets by the dare, beach fossils, geese, WFYE",
+      "description": "The Dare performing on Saturday July 5, 2025 at The Rooftop from 4:00 PM at Elsewhere, Brooklyn NY"
+    },
+    {
+      "image": "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F1031804933%2F2569518370411%2F1%2Foriginal.20250515-164932?crop=focalpoint&fit=crop&h=400&w=800&auto=format%2Ccompress&q=75&sharp=10&fp-x=0.00458333333333&fp-y=0.00443820224719&s=9b66e30405cc3ab78751f58164cd2d4a",
+      "eventDate": "Sat, Jul 5",
+      "startTime": "7:00 PM",
+      "endTime": "",
+      "title": "Max Fry, FearDorian",
+      "description": "Max Fry performing on Saturday July 5, 2025 at Zone One from 7:00 PM at Elsewhere, Brooklyn NY"
+    },
+    {
+      "image": "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F1057302793%2F2569518370411%2F1%2Foriginal.20250620-144103?crop=focalpoint&fit=crop&h=400&w=800&auto=format%2Ccompress&q=75&sharp=10&fp-x=0.00498106060606&fp-y=0.00449814126394&s=96a25267418bcb0591924a9b7a8c44a2",
+      "eventDate": "Sat, Jul 5",
+      "startTime": "10:30 PM",
+      "endTime": "",
+      "title": "Rinse FM x Elsewhere: (a-z) Jossy Mitsu, Kush Jones, Neffa-T + more",
+      "description": "Jossy Mitsu performing on Saturday July 5, 2025 at Full Venue from 10:30 PM at Elsewhere, Brooklyn NY"
+    },
+    {
+      "image": "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F1063531063%2F2569518370411%2F1%2Foriginal.20250630-175123?crop=focalpoint&fit=crop&h=400&w=800&auto=format%2Ccompress&q=75&sharp=10&fp-x=0.00598484848485&fp-y=0.00509293680297&s=96a75385efaa0fa747eaf4a30a71416a",
+      "eventDate": "Sun, Jul 6",
+      "startTime": "4:00 PM",
+      "endTime": "",
+      "title": "Frequency Zoo: LUCØ, Alexa Spagnola, Erlsworld b2b Trev + more",
+      "description": "LUCØ performing on Sunday July 6, 2025 at The Rooftop from 4:00 PM at Elsewhere, Brooklyn NY"
+    },
+    {
+      "image": "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F1060600553%2F2569518370411%2F1%2Foriginal.20250625-192549?crop=focalpoint&fit=crop&h=400&w=800&auto=format%2Ccompress&q=75&sharp=10&fp-x=0.490540128766&fp-y=0.490775264911&s=f325a0bbc31b8883ff4e22ad134e0a60",
+      "eventDate": "Tue, Jul 8",
+      "startTime": "5:00 PM",
+      "endTime": "",
+      "title": "TSQ Live x Elsewhere Presents: UNIIQU3 @ Times Square",
+      "description": "UNIIQU3 performing on Tuesday July 8, 2025 at Times Square - Broadway & West 46th Street from 5:00 PM at Elsewhere, Brooklyn NY"
+    },
+    {
+      "image": "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F973680163%2F2569518370411%2F1%2Foriginal.20250303-145811?crop=focalpoint&fit=crop&h=400&w=800&auto=format%2Ccompress&q=75&sharp=10&fp-x=0.00534090909091&fp-y=0.00477528089888&s=74904ced00cbbd585a0bc635acf45fc8",
+      "eventDate": "Thu, Jul 10",
+      "startTime": "6:00 PM",
+      "endTime": "",
+      "title": "Shingo Nakamura, OTR (DJ Set), Julian Gray",
+      "description": "Shingo Nakamura performing on Thursday July 10, 2025 at The Rooftop from 6:00 PM at Elsewhere, Brooklyn NY"
+    },
+    {
+      "image": "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F1032056153%2F2569518370411%2F1%2Foriginal.20250515-214030?h=400&w=800&auto=format%2Ccompress&q=75&sharp=10&s=9684c28d8df2ce9e77fbc7cafdf7c2d6",
+      "eventDate": "Thu, Jul 10",
+      "startTime": "7:00 PM",
+      "endTime": "",
+      "title": "Jaded Forum Returns Live Hosted by Z and Yedoye featuring Zack Fox and more",
+      "description": " Zack Fox performing on Thursday July 10, 2025 at The Hall from 7:00 PM at Elsewhere, Brooklyn NY"
+    },
+    {
+      "image": "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F1059467543%2F2569518370411%2F1%2Foriginal.20250624-142443?crop=focalpoint&fit=crop&h=400&w=800&auto=format%2Ccompress&q=75&sharp=10&fp-x=0.491398348953&fp-y=0.439333275183&s=500d0c039613f576f3cd7f08c08b046d",
+      "eventDate": "Fri, Jul 11",
+      "startTime": "6:00 PM",
+      "endTime": "",
+      "title": "Skillibeng's International Summer",
+      "description": "Skillibeng performing on Friday July 11, 2025 at The Rooftop from 6:00 PM at Elsewhere, Brooklyn NY"
+    },
+    {
+      "image": "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F1065234253%2F2569518370411%2F1%2Foriginal.20250702-161123?crop=focalpoint&fit=crop&h=400&w=800&auto=format%2Ccompress&q=75&sharp=10&fp-x=0.554108764186&fp-y=0.559980022373&s=42a70e296c798ff9bec2a3ab184387de",
+      "eventDate": "Fri, Jul 11",
+      "startTime": "10:30 PM",
+      "endTime": "",
+      "title": "Elsewhere x Project 91 Presents: Emmit Fenn (DJ Set), Element, Le Petit Box",
+      "description": "Emmit Fenn performing on Friday July 11, 2025 at Full Venue from 10:30 PM at Elsewhere, Brooklyn NY"
+    },
+    {
+      "image": "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F1005869723%2F2569518370411%2F1%2Foriginal.20250410-144031?h=400&w=800&auto=format%2Ccompress&q=75&sharp=10&s=25ee498c3248915b238a04523fadc45d",
+      "eventDate": "Sat, Jul 12",
+      "startTime": "4:00 PM",
+      "endTime": "",
+      "title": "Ferreck Dawn",
+      "description": "Ferreck Dawn performing on Saturday July 12, 2025 at The Rooftop from 4:00 PM at Elsewhere, Brooklyn NY"
+    },
+    {
+      "image": "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F1056251753%2F2569518370411%2F1%2Foriginal.20250619-012315?crop=focalpoint&fit=crop&h=400&w=800&auto=format%2Ccompress&q=75&sharp=10&fp-x=0.00479166666667&fp-y=0.00423791821561&s=59b678ded5dd75d58aa655f9aad15a5b",
+      "eventDate": "Sat, Jul 12",
+      "startTime": "10:30 PM",
+      "endTime": "",
+      "title": "DR. GABBA, Girls Of The Internet (DJ Set), KYRUH, DJ CAMGIRL + more",
+      "description": "DR. GABBA performing on Saturday July 12, 2025 at Full Venue from 10:30 PM at Elsewhere, Brooklyn NY"
+    },
+    {
+      "image": "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F1050902013%2F2569518370411%2F1%2Foriginal.20250611-161147?crop=focalpoint&fit=crop&h=400&w=800&auto=format%2Ccompress&q=75&sharp=10&fp-x=0.00513257575758&fp-y=0.00479553903346&s=474f43e7ed3235205c29fd20cb91de3a",
+      "eventDate": "Sun, Jul 13",
+      "startTime": "4:00 PM",
+      "endTime": "",
+      "title": "Elevate Social New York City Hosted by The Whine Up: Kingszn + more",
+      "description": "Cryptocastro performing on Sunday July 13, 2025 at The Rooftop from 4:00 PM at Elsewhere, Brooklyn NY"
+    },
+    {
+      "image": "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F1031686353%2F2569518370411%2F1%2Foriginal.20250515-144424?crop=focalpoint&fit=crop&h=400&w=800&auto=format%2Ccompress&q=75&sharp=10&fp-x=0.00545454545455&fp-y=0.00516853932584&s=e56d8b0941ea20b1d7be50ed6e0c38b5",
+      "eventDate": "Sun, Jul 13",
+      "startTime": "7:00 PM",
+      "endTime": "",
+      "title": "Pop Music Fever Dream, Pure Adult, Star’s Revenge",
+      "description": "Pop Music Fever Dream performing on Sunday July 13, 2025 at Zone One from 7:00 PM at Elsewhere, Brooklyn NY"
+    },
+    {
+      "image": "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F1048946143%2F2569518370411%2F1%2Foriginal.20250609-145258?h=400&w=800&auto=format%2Ccompress&q=75&sharp=10&s=5366b7862deea4a39f08f064eaa044d9",
+      "eventDate": "Mon, Jul 14",
+      "startTime": "7:00 PM",
+      "endTime": "",
+      "title": "GIFT, Grumpy - free summer rooftop series presented by misguided spirits",
+      "description": "GIFT performing on Monday July 14, 2025 at The Rooftop from 7:00 PM at Elsewhere, Brooklyn NY"
+    },
+    {
+      "image": "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F1034082003%2F2569518370411%2F1%2Foriginal.20250519-154127?crop=focalpoint&fit=crop&h=400&w=800&auto=format%2Ccompress&q=75&sharp=10&fp-x=0.005&fp-y=0.005&s=47771c56580ed1c247f1afd39654165d",
+      "eventDate": "Mon, Jul 14",
+      "startTime": "7:30 PM",
+      "endTime": "",
+      "title": "Jason Schmidt Live",
+      "description": "Jason Schmidt performing on Monday July 14, 2025 at The Hall from 7:30 PM at Elsewhere, Brooklyn NY"
+    },
+    {
+      "image": "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F1060433583%2F2569518370411%2F1%2Foriginal.20250625-161723?crop=focalpoint&fit=crop&h=400&w=800&auto=format%2Ccompress&q=75&sharp=10&fp-x=0.005&fp-y=0.005&s=32691bc80e26cff2fc533f1c9d75e59c",
+      "eventDate": "Tue, Jul 15",
+      "startTime": "5:00 PM",
+      "endTime": "",
+      "title": "TSQ Live x Elsewhere Presents: hellotones \"El Hijo de PueblaYork\" @ TSQ",
+      "description": "UNIIQU3 performing on Tuesday July 15, 2025 at Times Square - Broadway & West 46th Street from 5:00 PM at Elsewhere, Brooklyn NY"
+    },
+    {
+      "image": "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F1050085703%2F2569518370411%2F1%2Foriginal.20250610-185050?crop=focalpoint&fit=crop&h=400&w=800&auto=format%2Ccompress&q=75&sharp=10&fp-x=0.602272727273&fp-y=0.379182156134&s=37f2ad499e4c2488222392a35b381713",
+      "eventDate": "Tue, Jul 15",
+      "startTime": "7:00 PM",
+      "endTime": "",
+      "title": "Kuru, ksuuvi, Cranes (DJ) b2b Binscorin (DJ)",
+      "description": "kuru performing on Tuesday July 15, 2025 at Zone One from 7:00 PM at Elsewhere, Brooklyn NY"
+    },
+    {
+      "image": "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F1005835473%2F2569518370411%2F1%2Foriginal.20250410-140513?crop=focalpoint&fit=crop&h=400&w=800&auto=format%2Ccompress&q=75&sharp=10&fp-x=0.507575757576&fp-y=0.490671641791&s=3a3eecdc965ba9b9d35550ef58e365f5",
+      "eventDate": "Tue, Jul 15",
+      "startTime": "7:00 PM",
+      "endTime": "",
+      "title": "Chandler + Sophie Hunter, Sounds by TuffLuckKid and Fellaair",
+      "description": "Chandler performing on Tuesday July 15, 2025 at The Rooftop from 7:00 PM at Elsewhere, Brooklyn NY"
+    },
+    {
+      "image": "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F977961523%2F2569518370411%2F1%2Foriginal.20250307-150533?crop=focalpoint&fit=crop&h=400&w=800&auto=format%2Ccompress&q=75&sharp=10&fp-x=0.448863636364&fp-y=0.330855018587&s=d3889aca409ec403d9ef51adb973ee0c",
+      "eventDate": "Wed, Jul 16",
+      "startTime": "7:00 PM",
+      "endTime": "",
+      "title": "Cola, Starcleaner Reunion",
+      "description": "Cola performing on Wednesday July 16, 2025 at The Rooftop from 7:00 PM at Elsewhere, Brooklyn NY"
+    },
+    {
+      "image": "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F1048922223%2F2569518370411%2F1%2Foriginal.20250609-142534?h=400&w=800&auto=format%2Ccompress&q=75&sharp=10&s=213b4792d3e4367b34443d44427f6b8e",
+      "eventDate": "Wed, Jul 16",
+      "startTime": "7:00 PM",
+      "endTime": "",
+      "title": "Bentley Robles & ZEE MACHINE Present: TEARS & GEARZ w/ RYL0, Matty Marz",
+      "description": "TEARS & GEARZ performing on Wednesday July 16, 2025 at Zone One from 7:00 PM at Elsewhere, Brooklyn NY"
+    },
+    {
+      "image": "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F992219273%2F2569518370411%2F1%2Foriginal.20250325-151248?h=400&w=800&auto=format%2Ccompress&q=75&sharp=10&s=428225c9041f2ebeecc6973846b9ac27",
+      "eventDate": "Thu, Jul 17",
+      "startTime": "8:00 PM",
+      "endTime": "",
+      "title": "MegaGoneFree, Melina KB",
+      "description": "MegaGoneFree performing on Thursday July 17, 2025 at Zone One from 8:00 PM at Elsewhere, Brooklyn NY"
+    },
+    {
+      "image": "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F977176393%2F2569518370411%2F1%2Foriginal.20250306-180459?crop=focalpoint&fit=crop&h=400&w=800&auto=format%2Ccompress&q=75&sharp=10&fp-x=0.463068181818&fp-y=0.548507462687&s=9175756bf720c3ca0443185ad1f3638b",
+      "eventDate": "Fri, Jul 18",
+      "startTime": "6:00 PM",
+      "endTime": "",
+      "title": "JSTJR, JSMN",
+      "description": "JSTJR performing on Friday July 18, 2025 at The Rooftop from 6:00 PM at Elsewhere, Brooklyn NY"
+    },
+    {
+      "image": "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F1055989033%2F2569518370411%2F1%2Foriginal.20250618-184420?crop=focalpoint&fit=crop&h=400&w=800&auto=format%2Ccompress&q=75&sharp=10&fp-x=0.520859602726&fp-y=0.460315590474&s=faa6b1f68fd244e45da33f711731f877",
+      "eventDate": "Fri, Jul 18",
+      "startTime": "10:30 PM",
+      "endTime": "",
+      "title": "Colorize NYC: Estiva, Jack Willard, Klur, mölly, informal., After Wes",
+      "description": "Estiva performing on Friday July 18, 2025 at Full Venue from 10:30 PM at Elsewhere, Brooklyn NY"
+    },
+    {
+      "image": "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F1052790813%2F2569518370411%2F1%2Foriginal.20250613-202559?crop=focalpoint&fit=crop&h=400&w=800&auto=format%2Ccompress&q=75&sharp=10&fp-x=0.00493371212121&fp-y=0.0042723880597&s=0c5a0de4686f80f086c95d6d583c3a57",
+      "eventDate": "Sat, Jul 19",
+      "startTime": "12:00 PM",
+      "endTime": "",
+      "title": "Laylit Boat Party w/ Fatin, Arianna Danae, MNSA (DAY CRUISE)",
+      "description": "Fatin performing on Saturday July 19, 2025 at Circle Line Sightseeing Cruises - Midtown from 12:00 PM at Elsewhere, Brooklyn NY"
+    },
+    {
+      "image": "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F1063677093%2F2569518370411%2F1%2Foriginal.20250630-203510?crop=focalpoint&fit=crop&h=400&w=800&auto=format%2Ccompress&q=75&sharp=10&fp-x=0.0149673693108&fp-y=0.446795904814&s=549bb92ce34d06ba8d6874d7269c84f3",
+      "eventDate": "Sat, Jul 19",
+      "startTime": "4:00 PM",
+      "endTime": "",
+      "title": "DESCENDANTS: An Afrohouse Experience",
+      "description": "Deejay Poco performing on Saturday July 19, 2025 at The Rooftop from 4:00 PM at Elsewhere, Brooklyn NY"
+    },
+    {
+      "image": "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F1052809023%2F2569518370411%2F1%2Foriginal.20250613-205249?crop=focalpoint&fit=crop&h=400&w=800&auto=format%2Ccompress&q=75&sharp=10&fp-x=0.484848484848&fp-y=0.419776119403&s=d9e57a7757b1679d48b81edeb54ffd7f",
+      "eventDate": "Sat, Jul 19",
+      "startTime": "7:00 PM",
+      "endTime": "",
+      "title": "Laylit Boat Party w/ Carmen Sandiego, Nadim Maghzal (NIGHT CRUISE)",
+      "description": "Carmen Sandiego performing on Saturday July 19, 2025 at Circle Line Sightseeing Cruises - Midtown from 7:00 PM at Elsewhere, Brooklyn NY"
+    },
+    {
+      "image": "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F1052024633%2F2569518370411%2F1%2Foriginal.20250612-200434?crop=focalpoint&fit=crop&h=400&w=800&auto=format%2Ccompress&q=75&sharp=10&fp-x=0.5&fp-y=0.475836431227&s=c08738762848332c6ad3b128fc559989",
+      "eventDate": "Sat, Jul 19",
+      "startTime": "10:30 PM",
+      "endTime": "",
+      "title": "Toytonics, wes mills, Bárbara Boeing, Cody Currie, ALOT",
+      "description": "Toytonics performing on Saturday July 19, 2025 at Full Venue from 10:30 PM at Elsewhere, Brooklyn NY"
+    },
+    {
+      "image": "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F1059845203%2F2569518370411%2F1%2Foriginal.20250624-212020?crop=focalpoint&fit=crop&h=400&w=800&auto=format%2Ccompress&q=75&sharp=10&fp-x=0.5&fp-y=0.5&s=289baa4f122b0129a13cfffbf289122b",
+      "eventDate": "Sun, Jul 20",
+      "startTime": "4:00 PM",
+      "endTime": "",
+      "title": "Sundae Sauuce: Travis George, Omar ؏, Soul Sugar, Annabelle Kline",
+      "description": "Travis George performing on Sunday July 20, 2025 at The Rooftop from 4:00 PM at Elsewhere, Brooklyn NY"
+    },
+    {
+      "image": "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F1028676173%2F2569518370411%2F1%2Foriginal.20250512-141027?crop=focalpoint&fit=crop&h=400&w=800&auto=format%2Ccompress&q=75&sharp=10&fp-x=0.005&fp-y=0.005&s=0c99561bcb4a18e013816364e2809dfe",
+      "eventDate": "Sun, Jul 20",
+      "startTime": "7:00 PM",
+      "endTime": "",
+      "title": "Tsu Nami",
+      "description": "Tsu Nami performing on Sunday July 20, 2025 at Zone One from 7:00 PM at Elsewhere, Brooklyn NY"
+    },
+    {
+      "image": "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F976992623%2F2569518370411%2F1%2Foriginal.20250306-152611?crop=focalpoint&fit=crop&h=400&w=800&auto=format%2Ccompress&q=75&sharp=10&fp-x=0.5&fp-y=0.5&s=c3e076376b281fc7b48420d1f71b4668",
+      "eventDate": "Mon, Jul 21",
+      "startTime": "7:00 PM",
+      "endTime": "",
+      "title": "Son Rompe Pera, Discolocas",
+      "description": "Son Rompe Pera performing on Monday July 21, 2025 at The Rooftop from 7:00 PM at Elsewhere, Brooklyn NY"
+    },
+    {
+      "image": "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F1005830843%2F2569518370411%2F1%2Foriginal.20250410-140027?crop=focalpoint&fit=crop&h=400&w=800&auto=format%2Ccompress&q=75&sharp=10&fp-x=0.00517992424242&fp-y=0.00514925373134&s=b84813e5f64280a617699867a1c107b8",
+      "eventDate": "Tue, Jul 22",
+      "startTime": "7:00 PM",
+      "endTime": "",
+      "title": "Ducks Ltd., Trace Mountains",
+      "description": "Ducks Ltd. performing on Tuesday July 22, 2025 at The Rooftop from 7:00 PM at Elsewhere, Brooklyn NY"
+    }
+  ],
+  "cleaned_events": [
+    {
+      "venue_name": "Elsewhere",
+      "title": "Paco Versailles, Flavor Dave",
+      "description": "Paco Versailles performing on Wednesday July 2, 2025 at The Rooftop from 7:00 PM at Elsewhere, Brooklyn NY",
+      "event_date": "2025-07-02",
+      "start_time": "19:00",
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F977002683%2F2569518370411%2F1%2Foriginal.20250306-153455?crop=focalpoint&fit=crop&h=400&w=800&auto=format%2Ccompress&q=75&sharp=10&fp-x=0.005&fp-y=0.005&s=6fbef981421c4f8d93dd983be5951983",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:16:19.795241"
+    },
+    {
+      "venue_name": "Elsewhere",
+      "title": "Elsewhere 4th of July weekend: MashBit, Poolhaus",
+      "description": "MashBit performing on Thursday July 3, 2025 at The Rooftop from 6:00 PM at Elsewhere, Brooklyn NY",
+      "event_date": "2025-07-03",
+      "start_time": "18:00",
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F1063372063%2F2569518370411%2F1%2Foriginal.20250630-145450?crop=focalpoint&fit=crop&h=400&w=800&auto=format%2Ccompress&q=75&sharp=10&fp-x=0.537888613614&fp-y=0.409223417738&s=6be4c3b297f3af295fbc92786f50b2c4",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:16:19.795649"
+    },
+    {
+      "venue_name": "Elsewhere",
+      "title": "South House vs Naija House",
+      "description": "South House vs Naija House performing on Thursday July 3, 2025 at Full Venue from 10:30 PM at Elsewhere, Brooklyn NY",
+      "event_date": "2025-07-03",
+      "start_time": "22:30",
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F1055995633%2F2569518370411%2F1%2Foriginal.20250618-185055?crop=focalpoint&fit=crop&h=400&w=800&auto=format%2Ccompress&q=75&sharp=10&fp-x=0.5&fp-y=0.5&s=db5727571467b04bb2d914c4be53de6b",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:16:19.795900"
+    },
+    {
+      "venue_name": "Elsewhere",
+      "title": "Elsewhere 4th of July: EELF Showcase w/ dj poolboi, DJ Houseplants + more",
+      "description": "dj poolboi performing on Friday July 4, 2025 at The Rooftop from 4:00 PM at Elsewhere, Brooklyn NY",
+      "event_date": "2025-07-04",
+      "start_time": "16:00",
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F993659553%2F2569518370411%2F1%2Foriginal.20250326-213910?crop=focalpoint&fit=crop&h=400&w=800&auto=format%2Ccompress&q=75&sharp=10&fp-x=0.00515151515152&fp-y=0.00488764044944&s=53d97c78ceffda72c923100c94fa7d78",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:16:19.796144"
+    },
+    {
+      "venue_name": "Elsewhere",
+      "title": "Elsewhere 4th of July with LTJ Bukem, Delano Smith, rally: amita, Petal",
+      "description": "LTJ Bukem performing on Friday July 4, 2025 at The Hall & The Loft from 10:30 PM at Elsewhere, Brooklyn NY",
+      "event_date": "2025-07-04",
+      "start_time": "22:30",
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F1062137333%2F2569518370411%2F1%2Foriginal.20250627-182726?crop=focalpoint&fit=crop&h=400&w=800&auto=format%2Ccompress&q=75&sharp=10&fp-x=0.00518939393939&fp-y=0.0053171641791&s=0d368b83e9eebbf4df75d9e14b06611e",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:16:19.796385"
+    },
+    {
+      "venue_name": "Elsewhere",
+      "title": "freakquencies - dj sets by the dare, beach fossils, geese, WFYE",
+      "description": "The Dare performing on Saturday July 5, 2025 at The Rooftop from 4:00 PM at Elsewhere, Brooklyn NY",
+      "event_date": "2025-07-05",
+      "start_time": "16:00",
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F1045449903%2F2569518370411%2F1%2Foriginal.20250604-042429?crop=focalpoint&fit=crop&h=400&w=800&auto=format%2Ccompress&q=75&sharp=10&fp-x=0.507246376812&fp-y=0.567415730337&s=df5dbc9f51eb432934d8a64f91f37fbd",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:16:19.796628"
+    },
+    {
+      "venue_name": "Elsewhere",
+      "title": "Max Fry, FearDorian",
+      "description": "Max Fry performing on Saturday July 5, 2025 at Zone One from 7:00 PM at Elsewhere, Brooklyn NY",
+      "event_date": "2025-07-05",
+      "start_time": "19:00",
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F1031804933%2F2569518370411%2F1%2Foriginal.20250515-164932?crop=focalpoint&fit=crop&h=400&w=800&auto=format%2Ccompress&q=75&sharp=10&fp-x=0.00458333333333&fp-y=0.00443820224719&s=9b66e30405cc3ab78751f58164cd2d4a",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:16:19.796909"
+    },
+    {
+      "venue_name": "Elsewhere",
+      "title": "Rinse FM x Elsewhere: (a-z) Jossy Mitsu, Kush Jones, Neffa-T + more",
+      "description": "Jossy Mitsu performing on Saturday July 5, 2025 at Full Venue from 10:30 PM at Elsewhere, Brooklyn NY",
+      "event_date": "2025-07-05",
+      "start_time": "22:30",
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F1057302793%2F2569518370411%2F1%2Foriginal.20250620-144103?crop=focalpoint&fit=crop&h=400&w=800&auto=format%2Ccompress&q=75&sharp=10&fp-x=0.00498106060606&fp-y=0.00449814126394&s=96a25267418bcb0591924a9b7a8c44a2",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:16:19.797146"
+    },
+    {
+      "venue_name": "Elsewhere",
+      "title": "Frequency Zoo: LUCØ, Alexa Spagnola, Erlsworld b2b Trev + more",
+      "description": "LUCØ performing on Sunday July 6, 2025 at The Rooftop from 4:00 PM at Elsewhere, Brooklyn NY",
+      "event_date": "2025-07-06",
+      "start_time": "16:00",
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F1063531063%2F2569518370411%2F1%2Foriginal.20250630-175123?crop=focalpoint&fit=crop&h=400&w=800&auto=format%2Ccompress&q=75&sharp=10&fp-x=0.00598484848485&fp-y=0.00509293680297&s=96a75385efaa0fa747eaf4a30a71416a",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:16:19.797385"
+    },
+    {
+      "venue_name": "Elsewhere",
+      "title": "TSQ Live x Elsewhere Presents: UNIIQU3 @ Times Square",
+      "description": "UNIIQU3 performing on Tuesday July 8, 2025 at Times Square - Broadway & West 46th Street from 5:00 PM at Elsewhere, Brooklyn NY",
+      "event_date": "2025-07-08",
+      "start_time": "17:00",
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F1060600553%2F2569518370411%2F1%2Foriginal.20250625-192549?crop=focalpoint&fit=crop&h=400&w=800&auto=format%2Ccompress&q=75&sharp=10&fp-x=0.490540128766&fp-y=0.490775264911&s=f325a0bbc31b8883ff4e22ad134e0a60",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:16:19.797623"
+    },
+    {
+      "venue_name": "Elsewhere",
+      "title": "Shingo Nakamura, OTR (DJ Set), Julian Gray",
+      "description": "Shingo Nakamura performing on Thursday July 10, 2025 at The Rooftop from 6:00 PM at Elsewhere, Brooklyn NY",
+      "event_date": "2025-07-10",
+      "start_time": "18:00",
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F973680163%2F2569518370411%2F1%2Foriginal.20250303-145811?crop=focalpoint&fit=crop&h=400&w=800&auto=format%2Ccompress&q=75&sharp=10&fp-x=0.00534090909091&fp-y=0.00477528089888&s=74904ced00cbbd585a0bc635acf45fc8",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:16:19.797860"
+    },
+    {
+      "venue_name": "Elsewhere",
+      "title": "Jaded Forum Returns Live Hosted by Z and Yedoye featuring Zack Fox and more",
+      "description": "Zack Fox performing on Thursday July 10, 2025 at The Hall from 7:00 PM at Elsewhere, Brooklyn NY",
+      "event_date": "2025-07-10",
+      "start_time": "19:00",
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F1032056153%2F2569518370411%2F1%2Foriginal.20250515-214030?h=400&w=800&auto=format%2Ccompress&q=75&sharp=10&s=9684c28d8df2ce9e77fbc7cafdf7c2d6",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:16:19.798136"
+    },
+    {
+      "venue_name": "Elsewhere",
+      "title": "Skillibeng's International Summer",
+      "description": "Skillibeng performing on Friday July 11, 2025 at The Rooftop from 6:00 PM at Elsewhere, Brooklyn NY",
+      "event_date": "2025-07-11",
+      "start_time": "18:00",
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F1059467543%2F2569518370411%2F1%2Foriginal.20250624-142443?crop=focalpoint&fit=crop&h=400&w=800&auto=format%2Ccompress&q=75&sharp=10&fp-x=0.491398348953&fp-y=0.439333275183&s=500d0c039613f576f3cd7f08c08b046d",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:16:19.798418"
+    },
+    {
+      "venue_name": "Elsewhere",
+      "title": "Elsewhere x Project 91 Presents: Emmit Fenn (DJ Set), Element, Le Petit Box",
+      "description": "Emmit Fenn performing on Friday July 11, 2025 at Full Venue from 10:30 PM at Elsewhere, Brooklyn NY",
+      "event_date": "2025-07-11",
+      "start_time": "22:30",
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F1065234253%2F2569518370411%2F1%2Foriginal.20250702-161123?crop=focalpoint&fit=crop&h=400&w=800&auto=format%2Ccompress&q=75&sharp=10&fp-x=0.554108764186&fp-y=0.559980022373&s=42a70e296c798ff9bec2a3ab184387de",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:16:19.798657"
+    },
+    {
+      "venue_name": "Elsewhere",
+      "title": "Ferreck Dawn",
+      "description": "Ferreck Dawn performing on Saturday July 12, 2025 at The Rooftop from 4:00 PM at Elsewhere, Brooklyn NY",
+      "event_date": "2025-07-12",
+      "start_time": "16:00",
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F1005869723%2F2569518370411%2F1%2Foriginal.20250410-144031?h=400&w=800&auto=format%2Ccompress&q=75&sharp=10&s=25ee498c3248915b238a04523fadc45d",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:16:19.798993"
+    },
+    {
+      "venue_name": "Elsewhere",
+      "title": "DR. GABBA, Girls Of The Internet (DJ Set), KYRUH, DJ CAMGIRL + more",
+      "description": "DR. GABBA performing on Saturday July 12, 2025 at Full Venue from 10:30 PM at Elsewhere, Brooklyn NY",
+      "event_date": "2025-07-12",
+      "start_time": "22:30",
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F1056251753%2F2569518370411%2F1%2Foriginal.20250619-012315?crop=focalpoint&fit=crop&h=400&w=800&auto=format%2Ccompress&q=75&sharp=10&fp-x=0.00479166666667&fp-y=0.00423791821561&s=59b678ded5dd75d58aa655f9aad15a5b",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:16:19.799493"
+    },
+    {
+      "venue_name": "Elsewhere",
+      "title": "Elevate Social New York City Hosted by The Whine Up: Kingszn + more",
+      "description": "Cryptocastro performing on Sunday July 13, 2025 at The Rooftop from 4:00 PM at Elsewhere, Brooklyn NY",
+      "event_date": "2025-07-13",
+      "start_time": "16:00",
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F1050902013%2F2569518370411%2F1%2Foriginal.20250611-161147?crop=focalpoint&fit=crop&h=400&w=800&auto=format%2Ccompress&q=75&sharp=10&fp-x=0.00513257575758&fp-y=0.00479553903346&s=474f43e7ed3235205c29fd20cb91de3a",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:16:19.799826"
+    },
+    {
+      "venue_name": "Elsewhere",
+      "title": "Pop Music Fever Dream, Pure Adult, Star’s Revenge",
+      "description": "Pop Music Fever Dream performing on Sunday July 13, 2025 at Zone One from 7:00 PM at Elsewhere, Brooklyn NY",
+      "event_date": "2025-07-13",
+      "start_time": "19:00",
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F1031686353%2F2569518370411%2F1%2Foriginal.20250515-144424?crop=focalpoint&fit=crop&h=400&w=800&auto=format%2Ccompress&q=75&sharp=10&fp-x=0.00545454545455&fp-y=0.00516853932584&s=e56d8b0941ea20b1d7be50ed6e0c38b5",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:16:19.800141"
+    },
+    {
+      "venue_name": "Elsewhere",
+      "title": "GIFT, Grumpy - free summer rooftop series presented by misguided spirits",
+      "description": "GIFT performing on Monday July 14, 2025 at The Rooftop from 7:00 PM at Elsewhere, Brooklyn NY",
+      "event_date": "2025-07-14",
+      "start_time": "19:00",
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F1048946143%2F2569518370411%2F1%2Foriginal.20250609-145258?h=400&w=800&auto=format%2Ccompress&q=75&sharp=10&s=5366b7862deea4a39f08f064eaa044d9",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:16:19.800388"
+    },
+    {
+      "venue_name": "Elsewhere",
+      "title": "Jason Schmidt Live",
+      "description": "Jason Schmidt performing on Monday July 14, 2025 at The Hall from 7:30 PM at Elsewhere, Brooklyn NY",
+      "event_date": "2025-07-14",
+      "start_time": "19:30",
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F1034082003%2F2569518370411%2F1%2Foriginal.20250519-154127?crop=focalpoint&fit=crop&h=400&w=800&auto=format%2Ccompress&q=75&sharp=10&fp-x=0.005&fp-y=0.005&s=47771c56580ed1c247f1afd39654165d",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:16:19.800632"
+    },
+    {
+      "venue_name": "Elsewhere",
+      "title": "TSQ Live x Elsewhere Presents: hellotones \"El Hijo de PueblaYork\" @ TSQ",
+      "description": "UNIIQU3 performing on Tuesday July 15, 2025 at Times Square - Broadway & West 46th Street from 5:00 PM at Elsewhere, Brooklyn NY",
+      "event_date": "2025-07-15",
+      "start_time": "17:00",
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F1060433583%2F2569518370411%2F1%2Foriginal.20250625-161723?crop=focalpoint&fit=crop&h=400&w=800&auto=format%2Ccompress&q=75&sharp=10&fp-x=0.005&fp-y=0.005&s=32691bc80e26cff2fc533f1c9d75e59c",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:16:19.800875"
+    },
+    {
+      "venue_name": "Elsewhere",
+      "title": "Kuru, ksuuvi, Cranes (DJ) b2b Binscorin (DJ)",
+      "description": "kuru performing on Tuesday July 15, 2025 at Zone One from 7:00 PM at Elsewhere, Brooklyn NY",
+      "event_date": "2025-07-15",
+      "start_time": "19:00",
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F1050085703%2F2569518370411%2F1%2Foriginal.20250610-185050?crop=focalpoint&fit=crop&h=400&w=800&auto=format%2Ccompress&q=75&sharp=10&fp-x=0.602272727273&fp-y=0.379182156134&s=37f2ad499e4c2488222392a35b381713",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:16:19.801117"
+    },
+    {
+      "venue_name": "Elsewhere",
+      "title": "Chandler + Sophie Hunter, Sounds by TuffLuckKid and Fellaair",
+      "description": "Chandler performing on Tuesday July 15, 2025 at The Rooftop from 7:00 PM at Elsewhere, Brooklyn NY",
+      "event_date": "2025-07-15",
+      "start_time": "19:00",
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F1005835473%2F2569518370411%2F1%2Foriginal.20250410-140513?crop=focalpoint&fit=crop&h=400&w=800&auto=format%2Ccompress&q=75&sharp=10&fp-x=0.507575757576&fp-y=0.490671641791&s=3a3eecdc965ba9b9d35550ef58e365f5",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:16:19.801515"
+    },
+    {
+      "venue_name": "Elsewhere",
+      "title": "Cola, Starcleaner Reunion",
+      "description": "Cola performing on Wednesday July 16, 2025 at The Rooftop from 7:00 PM at Elsewhere, Brooklyn NY",
+      "event_date": "2025-07-16",
+      "start_time": "19:00",
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F977961523%2F2569518370411%2F1%2Foriginal.20250307-150533?crop=focalpoint&fit=crop&h=400&w=800&auto=format%2Ccompress&q=75&sharp=10&fp-x=0.448863636364&fp-y=0.330855018587&s=d3889aca409ec403d9ef51adb973ee0c",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:16:19.801768"
+    },
+    {
+      "venue_name": "Elsewhere",
+      "title": "Bentley Robles & ZEE MACHINE Present: TEARS & GEARZ w/ RYL0, Matty Marz",
+      "description": "TEARS & GEARZ performing on Wednesday July 16, 2025 at Zone One from 7:00 PM at Elsewhere, Brooklyn NY",
+      "event_date": "2025-07-16",
+      "start_time": "19:00",
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F1048922223%2F2569518370411%2F1%2Foriginal.20250609-142534?h=400&w=800&auto=format%2Ccompress&q=75&sharp=10&s=213b4792d3e4367b34443d44427f6b8e",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:16:19.802015"
+    },
+    {
+      "venue_name": "Elsewhere",
+      "title": "MegaGoneFree, Melina KB",
+      "description": "MegaGoneFree performing on Thursday July 17, 2025 at Zone One from 8:00 PM at Elsewhere, Brooklyn NY",
+      "event_date": "2025-07-17",
+      "start_time": "20:00",
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F992219273%2F2569518370411%2F1%2Foriginal.20250325-151248?h=400&w=800&auto=format%2Ccompress&q=75&sharp=10&s=428225c9041f2ebeecc6973846b9ac27",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:16:19.802260"
+    },
+    {
+      "venue_name": "Elsewhere",
+      "title": "JSTJR, JSMN",
+      "description": "JSTJR performing on Friday July 18, 2025 at The Rooftop from 6:00 PM at Elsewhere, Brooklyn NY",
+      "event_date": "2025-07-18",
+      "start_time": "18:00",
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F977176393%2F2569518370411%2F1%2Foriginal.20250306-180459?crop=focalpoint&fit=crop&h=400&w=800&auto=format%2Ccompress&q=75&sharp=10&fp-x=0.463068181818&fp-y=0.548507462687&s=9175756bf720c3ca0443185ad1f3638b",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:16:19.802503"
+    },
+    {
+      "venue_name": "Elsewhere",
+      "title": "Colorize NYC: Estiva, Jack Willard, Klur, mölly, informal., After Wes",
+      "description": "Estiva performing on Friday July 18, 2025 at Full Venue from 10:30 PM at Elsewhere, Brooklyn NY",
+      "event_date": "2025-07-18",
+      "start_time": "22:30",
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F1055989033%2F2569518370411%2F1%2Foriginal.20250618-184420?crop=focalpoint&fit=crop&h=400&w=800&auto=format%2Ccompress&q=75&sharp=10&fp-x=0.520859602726&fp-y=0.460315590474&s=faa6b1f68fd244e45da33f711731f877",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:16:19.802748"
+    },
+    {
+      "venue_name": "Elsewhere",
+      "title": "Laylit Boat Party w/ Fatin, Arianna Danae, MNSA (DAY CRUISE)",
+      "description": "Fatin performing on Saturday July 19, 2025 at Circle Line Sightseeing Cruises - Midtown from 12:00 PM at Elsewhere, Brooklyn NY",
+      "event_date": "2025-07-19",
+      "start_time": "12:00",
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F1052790813%2F2569518370411%2F1%2Foriginal.20250613-202559?crop=focalpoint&fit=crop&h=400&w=800&auto=format%2Ccompress&q=75&sharp=10&fp-x=0.00493371212121&fp-y=0.0042723880597&s=0c5a0de4686f80f086c95d6d583c3a57",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:16:19.802991"
+    },
+    {
+      "venue_name": "Elsewhere",
+      "title": "DESCENDANTS: An Afrohouse Experience",
+      "description": "Deejay Poco performing on Saturday July 19, 2025 at The Rooftop from 4:00 PM at Elsewhere, Brooklyn NY",
+      "event_date": "2025-07-19",
+      "start_time": "16:00",
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F1063677093%2F2569518370411%2F1%2Foriginal.20250630-203510?crop=focalpoint&fit=crop&h=400&w=800&auto=format%2Ccompress&q=75&sharp=10&fp-x=0.0149673693108&fp-y=0.446795904814&s=549bb92ce34d06ba8d6874d7269c84f3",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:16:19.803234"
+    },
+    {
+      "venue_name": "Elsewhere",
+      "title": "Laylit Boat Party w/ Carmen Sandiego, Nadim Maghzal (NIGHT CRUISE)",
+      "description": "Carmen Sandiego performing on Saturday July 19, 2025 at Circle Line Sightseeing Cruises - Midtown from 7:00 PM at Elsewhere, Brooklyn NY",
+      "event_date": "2025-07-19",
+      "start_time": "19:00",
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F1052809023%2F2569518370411%2F1%2Foriginal.20250613-205249?crop=focalpoint&fit=crop&h=400&w=800&auto=format%2Ccompress&q=75&sharp=10&fp-x=0.484848484848&fp-y=0.419776119403&s=d9e57a7757b1679d48b81edeb54ffd7f",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:16:19.803477"
+    },
+    {
+      "venue_name": "Elsewhere",
+      "title": "Toytonics, wes mills, Bárbara Boeing, Cody Currie, ALOT",
+      "description": "Toytonics performing on Saturday July 19, 2025 at Full Venue from 10:30 PM at Elsewhere, Brooklyn NY",
+      "event_date": "2025-07-19",
+      "start_time": "22:30",
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F1052024633%2F2569518370411%2F1%2Foriginal.20250612-200434?crop=focalpoint&fit=crop&h=400&w=800&auto=format%2Ccompress&q=75&sharp=10&fp-x=0.5&fp-y=0.475836431227&s=c08738762848332c6ad3b128fc559989",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:16:19.803719"
+    },
+    {
+      "venue_name": "Elsewhere",
+      "title": "Sundae Sauuce: Travis George, Omar ؏, Soul Sugar, Annabelle Kline",
+      "description": "Travis George performing on Sunday July 20, 2025 at The Rooftop from 4:00 PM at Elsewhere, Brooklyn NY",
+      "event_date": "2025-07-20",
+      "start_time": "16:00",
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F1059845203%2F2569518370411%2F1%2Foriginal.20250624-212020?crop=focalpoint&fit=crop&h=400&w=800&auto=format%2Ccompress&q=75&sharp=10&fp-x=0.5&fp-y=0.5&s=289baa4f122b0129a13cfffbf289122b",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:16:19.804010"
+    },
+    {
+      "venue_name": "Elsewhere",
+      "title": "Tsu Nami",
+      "description": "Tsu Nami performing on Sunday July 20, 2025 at Zone One from 7:00 PM at Elsewhere, Brooklyn NY",
+      "event_date": "2025-07-20",
+      "start_time": "19:00",
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F1028676173%2F2569518370411%2F1%2Foriginal.20250512-141027?crop=focalpoint&fit=crop&h=400&w=800&auto=format%2Ccompress&q=75&sharp=10&fp-x=0.005&fp-y=0.005&s=0c99561bcb4a18e013816364e2809dfe",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:16:19.804253"
+    },
+    {
+      "venue_name": "Elsewhere",
+      "title": "Son Rompe Pera, Discolocas",
+      "description": "Son Rompe Pera performing on Monday July 21, 2025 at The Rooftop from 7:00 PM at Elsewhere, Brooklyn NY",
+      "event_date": "2025-07-21",
+      "start_time": "19:00",
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F976992623%2F2569518370411%2F1%2Foriginal.20250306-152611?crop=focalpoint&fit=crop&h=400&w=800&auto=format%2Ccompress&q=75&sharp=10&fp-x=0.5&fp-y=0.5&s=c3e076376b281fc7b48420d1f71b4668",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:16:19.804494"
+    },
+    {
+      "venue_name": "Elsewhere",
+      "title": "Ducks Ltd., Trace Mountains",
+      "description": "Ducks Ltd. performing on Tuesday July 22, 2025 at The Rooftop from 7:00 PM at Elsewhere, Brooklyn NY",
+      "event_date": "2025-07-22",
+      "start_time": "19:00",
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F1005830843%2F2569518370411%2F1%2Foriginal.20250410-140027?crop=focalpoint&fit=crop&h=400&w=800&auto=format%2Ccompress&q=75&sharp=10&fp-x=0.00517992424242&fp-y=0.00514925373134&s=b84813e5f64280a617699867a1c107b8",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:16:19.804735"
+    }
+  ],
+  "events_count": 36
+}

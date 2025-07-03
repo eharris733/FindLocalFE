@@ -1,0 +1,161 @@
+{
+  "venue_name": "National Sawdust",
+  "extraction_timestamp": "20250702_202227",
+  "raw_data": [
+    {
+      "eventDate": "September 9, 2025",
+      "startTime": "September 9, 2025",
+      "endTime": "September 9, 2025",
+      "title": "Just Mustard",
+      "description": "“Slathered in reverb and sent hurtling through a dizzying maze of guitar effects, Just Mustard document succumbing to the inertia of a panic attack with a biting urgency.” Ireland’s Just Mustard return with an intimate New York show on Tuesday, September 9th at National Sawdust."
+    },
+    {
+      "eventDate": "September 12, 2025",
+      "startTime": "September 12, 2025",
+      "endTime": "September 12, 2025",
+      "title": "Rachika Nayar and Nina Keith Present Disiniblud",
+      "description": "Nina Keith and Rachika Nayar were drawn to one another like mirror images or two sisters reuniting after a lifetime of separation. Four years ago, the artists met in Brooklyn's two-block–by–two-block Maria Hernandez Park after fan-girling each other’s music online. Dishing about messy post-lockdown long-distance lesbianism, heartfelt investments in Buddhist and Hindu philosophies, and a shared high-school love of the Eternal Sunshine OST, the two found their surface similarities gesturing toward a deeper shared existential worldview. Presented in partnership with AdHoc."
+    },
+    {
+      "eventDate": "September 16, 2025",
+      "startTime": "September 16, 2025",
+      "endTime": "September 16, 2025",
+      "title": "Devendra Banhart (Solo) with support from Kath Bloom",
+      "description": "Devendra Banhart (b. 1980, Houston, Texas) lives and works in Los Angeles. An internationally renowned musician considered a pioneer of the “freak folk” and “New Weird America” movements, Banhart has toured, performed, and collaborated with Vashti Bunyan, Yoko Ono, Os Mutantes, the Swans, ANOHNI, Caetano Veloso, and Beck, amongst many others. His musical work has always existed symbiotically alongside his pursuits in the other fine arts."
+    },
+    {
+      "eventDate": "September 17, 2025",
+      "startTime": "September 17, 2025",
+      "endTime": "September 17, 2025",
+      "title": "Devendra Banhart (Solo) with support from Kath Bloom",
+      "description": "Devendra Banhart (b. 1980, Houston, Texas) lives and works in Los Angeles. An internationally renowned musician considered a pioneer of the “freak folk” and “New Weird America” movements, Banhart has toured, performed, and collaborated with Vashti Bunyan, Yoko Ono, Os Mutantes, the Swans, ANOHNI, Caetano Veloso, and Beck, amongst many others. His musical work has always existed symbiotically alongside his pursuits in the other fine arts."
+    },
+    {
+      "eventDate": "September 26, 2025",
+      "startTime": "September 26, 2025",
+      "endTime": "September 26, 2025",
+      "title": "Juan Wauters",
+      "description": "After spending the majority of his adult life thus far in New York, Juan Wauters decides to revisit his native Montevideo, the culturally rich capital of Uruguay. Wauters explored the excitement of falling back in love with his birthplace on his subsequent record, 2023’s Wandering Rebel, but on his seventh studio album MVD LUV — due June 27 via Captured Tracks — Wauters doesn’t just introduce listeners to Montevideo; he invites them to feel at home within it. Having spent much of his career in the United States, Wauters has long carried the dual identity of immigrant and native son. With MVD LUV, a love letter to both his roots and his present, he set out to bridge those worlds by capturing the essence of Montevideo’s streets and communal spirit."
+    },
+    {
+      "eventDate": "September 27, 2025",
+      "startTime": "September 27, 2025",
+      "endTime": "September 27, 2025",
+      "title": "Zola Jesus",
+      "description": "Zola Jesus aka Nika is an American born singer, songwriter and producer. Since 2008, she has released two EPs and seven (?) full-length albums majoratively on NY multi-decade tastemaker label Sacred Bones. Nika began training as an opera singer at the age of 10. She dismantled that training to deliver her breakthrough lo-fi record The Spoils in 2009, most of which she recorded as an undergrad in her dorm room at UW Madison."
+    },
+    {
+      "eventDate": "September 27, 2025",
+      "startTime": "September 27, 2025",
+      "endTime": "September 27, 2025",
+      "title": "Zola Jesus (Late Show)",
+      "description": "Zola Jesus aka Nika is an American born singer, songwriter and producer. Since 2008, she has released two EPs and seven (?) full-length albums majoratively on NY multi-decade tastemaker label Sacred Bones. Nika began training as an opera singer at the age of 10. She dismantled that training to deliver her breakthrough lo-fi record The Spoils in 2009, most of which she recorded as an undergrad in her dorm room at UW Madison."
+    },
+    {
+      "eventDate": "October 1, 2025",
+      "startTime": "October 1, 2025",
+      "endTime": "October 1, 2025",
+      "title": "Evening With Elliot Moss",
+      "description": "New York-based singer, songwriter, and producer Elliot Moss celebrates the tenth anniversary of his seminal, career-launching record with Highspeeds (Expanded – 10th Anniversary), due August 8th via Nettwerk. The expanded edition will feature new songs left off the original album and stripped-down reworks of fan-favorites that made Elliot a cult-favorite."
+    }
+  ],
+  "cleaned_events": [
+    {
+      "venue_name": "National Sawdust",
+      "title": "Just Mustard",
+      "description": "“Slathered in reverb and sent hurtling through a dizzying maze of guitar effects, Just Mustard document succumbing to the inertia of a panic attack with a biting urgency.” Ireland’s Just Mustard return with an intimate New York show on Tuesday, September 9th at National Sawdust.",
+      "event_date": "2025-09-09",
+      "start_time": null,
+      "end_time": null,
+      "price": "N/A",
+      "image": null,
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:22:27.657746"
+    },
+    {
+      "venue_name": "National Sawdust",
+      "title": "Rachika Nayar and Nina Keith Present Disiniblud",
+      "description": "Nina Keith and Rachika Nayar were drawn to one another like mirror images or two sisters reuniting after a lifetime of separation. Four years ago, the artists met in Brooklyn's two-block–by–two-block Maria Hernandez Park after fan-girling each other’s music online. Dishing about messy post-lockdown long-distance lesbianism, heartfelt investments in Buddhist and Hindu philosophies, and a shared high-school love of the Eternal Sunshine OST, the two found their surface similarities gesturing toward a deeper shared existential worldview. Presented in partnership with AdHoc.",
+      "event_date": "2025-09-12",
+      "start_time": null,
+      "end_time": null,
+      "price": "N/A",
+      "image": null,
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:22:27.658095"
+    },
+    {
+      "venue_name": "National Sawdust",
+      "title": "Devendra Banhart (Solo) with support from Kath Bloom",
+      "description": "Devendra Banhart (b. 1980, Houston, Texas) lives and works in Los Angeles. An internationally renowned musician considered a pioneer of the “freak folk” and “New Weird America” movements, Banhart has toured, performed, and collaborated with Vashti Bunyan, Yoko Ono, Os Mutantes, the Swans, ANOHNI, Caetano Veloso, and Beck, amongst many others. His musical work has always existed symbiotically alongside his pursuits in the other fine arts.",
+      "event_date": "2025-09-16",
+      "start_time": null,
+      "end_time": null,
+      "price": "N/A",
+      "image": null,
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:22:27.658296"
+    },
+    {
+      "venue_name": "National Sawdust",
+      "title": "Devendra Banhart (Solo) with support from Kath Bloom",
+      "description": "Devendra Banhart (b. 1980, Houston, Texas) lives and works in Los Angeles. An internationally renowned musician considered a pioneer of the “freak folk” and “New Weird America” movements, Banhart has toured, performed, and collaborated with Vashti Bunyan, Yoko Ono, Os Mutantes, the Swans, ANOHNI, Caetano Veloso, and Beck, amongst many others. His musical work has always existed symbiotically alongside his pursuits in the other fine arts.",
+      "event_date": "2025-09-17",
+      "start_time": null,
+      "end_time": null,
+      "price": "N/A",
+      "image": null,
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:22:27.658472"
+    },
+    {
+      "venue_name": "National Sawdust",
+      "title": "Juan Wauters",
+      "description": "After spending the majority of his adult life thus far in New York, Juan Wauters decides to revisit his native Montevideo, the culturally rich capital of Uruguay. Wauters explored the excitement of falling back in love with his birthplace on his subsequent record, 2023’s Wandering Rebel, but on his seventh studio album MVD LUV — due June 27 via Captured Tracks — Wauters doesn’t just introduce listeners to Montevideo; he invites them to feel at home within it. Having spent much of his career in the United States, Wauters has long carried the dual identity of immigrant and native son. With MVD LUV, a love letter to both his roots and his present, he set out to bridge those worlds by capturing the essence of Montevideo’s streets and communal spirit.",
+      "event_date": "2025-09-26",
+      "start_time": null,
+      "end_time": null,
+      "price": "N/A",
+      "image": null,
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:22:27.658660"
+    },
+    {
+      "venue_name": "National Sawdust",
+      "title": "Zola Jesus",
+      "description": "Zola Jesus aka Nika is an American born singer, songwriter and producer. Since 2008, she has released two EPs and seven (?) full-length albums majoratively on NY multi-decade tastemaker label Sacred Bones. Nika began training as an opera singer at the age of 10. She dismantled that training to deliver her breakthrough lo-fi record The Spoils in 2009, most of which she recorded as an undergrad in her dorm room at UW Madison.",
+      "event_date": "2025-09-27",
+      "start_time": null,
+      "end_time": null,
+      "price": "N/A",
+      "image": null,
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:22:27.658837"
+    },
+    {
+      "venue_name": "National Sawdust",
+      "title": "Zola Jesus (Late Show)",
+      "description": "Zola Jesus aka Nika is an American born singer, songwriter and producer. Since 2008, she has released two EPs and seven (?) full-length albums majoratively on NY multi-decade tastemaker label Sacred Bones. Nika began training as an opera singer at the age of 10. She dismantled that training to deliver her breakthrough lo-fi record The Spoils in 2009, most of which she recorded as an undergrad in her dorm room at UW Madison.",
+      "event_date": "2025-09-27",
+      "start_time": null,
+      "end_time": null,
+      "price": "N/A",
+      "image": null,
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:22:27.659020"
+    },
+    {
+      "venue_name": "National Sawdust",
+      "title": "Evening With Elliot Moss",
+      "description": "New York-based singer, songwriter, and producer Elliot Moss celebrates the tenth anniversary of his seminal, career-launching record with Highspeeds (Expanded – 10th Anniversary), due August 8th via Nettwerk. The expanded edition will feature new songs left off the original album and stripped-down reworks of fan-favorites that made Elliot a cult-favorite.",
+      "event_date": "2025-10-01",
+      "start_time": null,
+      "end_time": null,
+      "price": "N/A",
+      "image": null,
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:22:27.659206"
+    }
+  ],
+  "events_count": 8
+}

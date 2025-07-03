@@ -5,7 +5,7 @@ from crawl4ai import AsyncWebCrawler, CacheMode, CrawlerRunConfig, JsonCssExtrac
 import pandas as pd
 import os
 from datetime import datetime
-from config import (
+from configs.config import (
     SCHEMAS_FOLDER,
     SCHEMA_FILE_SUFFIX,
     OUTPUT_FOLDER,
