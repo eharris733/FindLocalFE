@@ -8,12 +8,11 @@ import os
 from datetime import datetime
 from dateutil import parser
 from typing import Dict, List, Optional, Any
-from config import (
+from configs.config import (
     SCHEMAS_FOLDER,
     SCHEMA_FILE_SUFFIX,
     OUTPUT_FOLDER,
     OUTPUT_FILE_SUFFIX,
-    load_scraper_config,
     update_scraper_config
 )
 

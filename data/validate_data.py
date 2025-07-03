@@ -6,7 +6,7 @@
 import os
 import json
 from datetime import datetime
-from ..crawlers.config import (
+from ..configs.config import (
     OUTPUT_FOLDER,
     OUTPUT_FILE_SUFFIX,
     load_scraper_config

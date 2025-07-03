@@ -1,0 +1,309 @@
+{
+  "venue_name": "Babys All Right",
+  "extraction_timestamp": "20250702_202053",
+  "raw_data": [
+    {
+      "image": "https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiYWRlYzk5NjQtNDY4MS00NjZkLTg3YTYtYWEwYzBjNjRhZWY3IiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjozNjUsImhlaWdodCI6MzY1fX19",
+      "eventDate": "Thursday, Jul 03",
+      "startTime": "Thursday, Jul 03",
+      "endTime": "Thursday, Jul 03",
+      "title": "Sunny War",
+      "description": "Sunny War"
+    },
+    {
+      "image": "https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiOWFhYjllN2UtMzY4NS00OWY4LTg4OGQtNmYxNzY0NGVmYTJiIiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==",
+      "eventDate": "Saturday, Jul 05",
+      "startTime": "Saturday, Jul 05",
+      "endTime": "Saturday, Jul 05",
+      "title": "Luke Titus",
+      "description": "Luke Titus"
+    },
+    {
+      "image": "https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiNWM3N2VjMGYtZmE2YS00YzA1LTk1NjUtN2NjNzNlMTc2M2MwIiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjozNjUsImhlaWdodCI6MzY1fX19",
+      "eventDate": "Saturday, Jul 05",
+      "startTime": "Saturday, Jul 05",
+      "endTime": "Saturday, Jul 05",
+      "title": "ANTI-ICE BENEFIT",
+      "description": "ANTI-ICE BENEFIT"
+    },
+    {
+      "image": "https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiMzQ1MjkwNmEtYzA3OS00OGE4LWFhODQtYzJhZjRlOTQzNzQ5IiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjozNjUsImhlaWdodCI6MzY1fX19",
+      "eventDate": "Sunday, Jul 06",
+      "startTime": "Sunday, Jul 06",
+      "endTime": "Sunday, Jul 06",
+      "title": "Los Bitchos",
+      "description": "Los Bitchos"
+    },
+    {
+      "image": "https://cdn.vor.us/images/version3/images/v3-event-default.jpg",
+      "eventDate": "Tuesday, Jul 08",
+      "startTime": "Tuesday, Jul 08",
+      "endTime": "Tuesday, Jul 08",
+      "title": "Garbage Day",
+      "description": "Garbage Day"
+    },
+    {
+      "image": "https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiZmM1ZWQwMWYtMDE5Mi00YzkyLTg0MWMtZGM4YWVmZjgzZTdmIiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjozNjUsImhlaWdodCI6MzY1fX19",
+      "eventDate": "Wednesday, Jul 09",
+      "startTime": "Wednesday, Jul 09",
+      "endTime": "Wednesday, Jul 09",
+      "title": "Sheppard Canceled",
+      "description": "Sheppard Canceled"
+    },
+    {
+      "image": "https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiM2Q5M2IxOWYtZmU0Ny00MDViLTlmZjAtYWI4NTdjY2M3ODU5IiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==",
+      "eventDate": "Wednesday, Jul 09",
+      "startTime": "Wednesday, Jul 09",
+      "endTime": "Wednesday, Jul 09",
+      "title": "SUM SUN",
+      "description": "SUM SUN"
+    },
+    {
+      "image": "https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiYzgzYzhiMWMtZTU4Yi00M2Y0LThlNjYtM2VjNmJhZGFlZjE0IiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==",
+      "eventDate": "Wednesday, Jul 09",
+      "startTime": "Wednesday, Jul 09",
+      "endTime": "Wednesday, Jul 09",
+      "title": "Zastava",
+      "description": "Zastava"
+    },
+    {
+      "image": "https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiZGE2ZGQ5M2MtOGY1MC00YzliLThkODktOTM1N2Y0NTMxNjA4IiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==",
+      "eventDate": "Thursday, Jul 10",
+      "startTime": "Thursday, Jul 10",
+      "endTime": "Thursday, Jul 10",
+      "title": "Susannah Joffe",
+      "description": "Susannah Joffe"
+    },
+    {
+      "image": "https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiNmVjNmZlNmUtZmE2ZC00ZDA3LThkYWYtNzc2YTM4MjQzZGJlIiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==",
+      "eventDate": "Friday, Jul 11",
+      "startTime": "Friday, Jul 11",
+      "endTime": "Friday, Jul 11",
+      "title": "Argonaut & Wasp",
+      "description": "Argonaut & Wasp"
+    },
+    {
+      "image": "https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiNjMyNzljOTUtMDU3Zi00MTNlLThmNGMtY2NmNjk4M2UwZmZjIiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjozNjUsImhlaWdodCI6MzY1fX19",
+      "eventDate": "Friday, Jul 11",
+      "startTime": "Friday, Jul 11",
+      "endTime": "Friday, Jul 11",
+      "title": "Candi Pop - A Bubblegum Pop Dance Party",
+      "description": "Candi Pop - A Bubblegum Pop Dance Party"
+    },
+    {
+      "image": "https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiNzkzMzllN2ItYTdlZS00ZDg3LTgxMjAtNTA1MDY0MDVjMDcyIiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==",
+      "eventDate": "Saturday, Jul 12",
+      "startTime": "Saturday, Jul 12",
+      "endTime": "Saturday, Jul 12",
+      "title": "Cooking Class",
+      "description": "Cooking Class"
+    },
+    {
+      "image": "https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiMTg3ZjA2MDQtNzYyZi00NWI2LTgzMzctNGRlMGExNmM2YzYwIiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjozNjUsImhlaWdodCI6MzY1fX19",
+      "eventDate": "Saturday, Jul 12",
+      "startTime": "Saturday, Jul 12",
+      "endTime": "Saturday, Jul 12",
+      "title": "Dance Yourself Clean",
+      "description": "Dance Yourself Clean"
+    },
+    {
+      "image": "https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiNzViNmVmZGItYTNjZi00Yzk5LWE4ZTAtYzYwY2EzNmY1NzEwIiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==",
+      "eventDate": "Sunday, Jul 13",
+      "startTime": "Sunday, Jul 13",
+      "endTime": "Sunday, Jul 13",
+      "title": "Specialists",
+      "description": "Specialists"
+    },
+    {
+      "image": "https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiZDhjOWIwNzAtMWQwNS00OTYxLWIyMzYtMjM1ZTQ1YmMyZjAxIiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==",
+      "eventDate": "Monday, Jul 14",
+      "startTime": "Monday, Jul 14",
+      "endTime": "Monday, Jul 14",
+      "title": "sym fera Canceled",
+      "description": "sym fera Canceled"
+    }
+  ],
+  "cleaned_events": [
+    {
+      "venue_name": "Babys All Right",
+      "title": "Sunny War",
+      "description": "Sunny War",
+      "event_date": "2025-07-03",
+      "start_time": null,
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiYWRlYzk5NjQtNDY4MS00NjZkLTg3YTYtYWEwYzBjNjRhZWY3IiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjozNjUsImhlaWdodCI6MzY1fX19",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:20:53.828494"
+    },
+    {
+      "venue_name": "Babys All Right",
+      "title": "Luke Titus",
+      "description": "Luke Titus",
+      "event_date": "2025-07-05",
+      "start_time": null,
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiOWFhYjllN2UtMzY4NS00OWY4LTg4OGQtNmYxNzY0NGVmYTJiIiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:20:53.830653"
+    },
+    {
+      "venue_name": "Babys All Right",
+      "title": "ANTI-ICE BENEFIT",
+      "description": "ANTI-ICE BENEFIT",
+      "event_date": "2025-07-05",
+      "start_time": null,
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiNWM3N2VjMGYtZmE2YS00YzA1LTk1NjUtN2NjNzNlMTc2M2MwIiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjozNjUsImhlaWdodCI6MzY1fX19",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:20:53.830804"
+    },
+    {
+      "venue_name": "Babys All Right",
+      "title": "Los Bitchos",
+      "description": "Los Bitchos",
+      "event_date": "2025-07-06",
+      "start_time": null,
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiMzQ1MjkwNmEtYzA3OS00OGE4LWFhODQtYzJhZjRlOTQzNzQ5IiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjozNjUsImhlaWdodCI6MzY1fX19",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:20:53.830931"
+    },
+    {
+      "venue_name": "Babys All Right",
+      "title": "Garbage Day",
+      "description": "Garbage Day",
+      "event_date": "2025-07-08",
+      "start_time": null,
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://cdn.vor.us/images/version3/images/v3-event-default.jpg",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:20:53.831052"
+    },
+    {
+      "venue_name": "Babys All Right",
+      "title": "Sheppard Canceled",
+      "description": "Sheppard Canceled",
+      "event_date": "2025-07-09",
+      "start_time": null,
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiZmM1ZWQwMWYtMDE5Mi00YzkyLTg0MWMtZGM4YWVmZjgzZTdmIiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjozNjUsImhlaWdodCI6MzY1fX19",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:20:53.831171"
+    },
+    {
+      "venue_name": "Babys All Right",
+      "title": "SUM SUN",
+      "description": "SUM SUN",
+      "event_date": "2025-07-09",
+      "start_time": null,
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiM2Q5M2IxOWYtZmU0Ny00MDViLTlmZjAtYWI4NTdjY2M3ODU5IiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:20:53.831290"
+    },
+    {
+      "venue_name": "Babys All Right",
+      "title": "Zastava",
+      "description": "Zastava",
+      "event_date": "2025-07-09",
+      "start_time": null,
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiYzgzYzhiMWMtZTU4Yi00M2Y0LThlNjYtM2VjNmJhZGFlZjE0IiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:20:53.831407"
+    },
+    {
+      "venue_name": "Babys All Right",
+      "title": "Susannah Joffe",
+      "description": "Susannah Joffe",
+      "event_date": "2025-07-10",
+      "start_time": null,
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiZGE2ZGQ5M2MtOGY1MC00YzliLThkODktOTM1N2Y0NTMxNjA4IiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:20:53.831524"
+    },
+    {
+      "venue_name": "Babys All Right",
+      "title": "Argonaut & Wasp",
+      "description": "Argonaut & Wasp",
+      "event_date": "2025-07-11",
+      "start_time": null,
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiNmVjNmZlNmUtZmE2ZC00ZDA3LThkYWYtNzc2YTM4MjQzZGJlIiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:20:53.831640"
+    },
+    {
+      "venue_name": "Babys All Right",
+      "title": "Candi Pop - A Bubblegum Pop Dance Party",
+      "description": "Candi Pop - A Bubblegum Pop Dance Party",
+      "event_date": "2025-07-11",
+      "start_time": null,
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiNjMyNzljOTUtMDU3Zi00MTNlLThmNGMtY2NmNjk4M2UwZmZjIiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjozNjUsImhlaWdodCI6MzY1fX19",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:20:53.831755"
+    },
+    {
+      "venue_name": "Babys All Right",
+      "title": "Cooking Class",
+      "description": "Cooking Class",
+      "event_date": "2025-07-12",
+      "start_time": null,
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiNzkzMzllN2ItYTdlZS00ZDg3LTgxMjAtNTA1MDY0MDVjMDcyIiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:20:53.831868"
+    },
+    {
+      "venue_name": "Babys All Right",
+      "title": "Dance Yourself Clean",
+      "description": "Dance Yourself Clean",
+      "event_date": "2025-07-12",
+      "start_time": null,
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiMTg3ZjA2MDQtNzYyZi00NWI2LTgzMzctNGRlMGExNmM2YzYwIiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjozNjUsImhlaWdodCI6MzY1fX19",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:20:53.831984"
+    },
+    {
+      "venue_name": "Babys All Right",
+      "title": "Specialists",
+      "description": "Specialists",
+      "event_date": "2025-07-13",
+      "start_time": null,
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiNzViNmVmZGItYTNjZi00Yzk5LWE4ZTAtYzYwY2EzNmY1NzEwIiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:20:53.832097"
+    },
+    {
+      "venue_name": "Babys All Right",
+      "title": "sym fera Canceled",
+      "description": "sym fera Canceled",
+      "event_date": "2025-07-14",
+      "start_time": null,
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiZDhjOWIwNzAtMWQwNS00OTYxLWIyMzYtMjM1ZTQ1YmMyZjAxIiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:20:53.832212"
+    }
+  ],
+  "events_count": 15
+}

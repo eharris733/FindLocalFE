@@ -1,0 +1,45 @@
+{
+  "venue_name": "Kings Theater",
+  "extraction_timestamp": "20250702_201622",
+  "raw_data": [
+    {
+      "eventDate": "Get connected",
+      "startTime": "Get connected",
+      "endTime": "Get connected",
+      "title": "Get connected"
+    },
+    {
+      "eventDate": "Get connected",
+      "startTime": "Get connected",
+      "endTime": "Get connected",
+      "title": "Get connected"
+    }
+  ],
+  "cleaned_events": [
+    {
+      "venue_name": "Kings Theater",
+      "title": "Get connected",
+      "description": "N/A",
+      "event_date": "Get connected",
+      "start_time": null,
+      "end_time": null,
+      "price": "N/A",
+      "image": null,
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:16:22.397804"
+    },
+    {
+      "venue_name": "Kings Theater",
+      "title": "Get connected",
+      "description": "N/A",
+      "event_date": "Get connected",
+      "start_time": null,
+      "end_time": null,
+      "price": "N/A",
+      "image": null,
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:16:22.398078"
+    }
+  ],
+  "events_count": 2
+}

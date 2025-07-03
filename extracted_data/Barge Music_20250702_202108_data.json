@@ -1,0 +1,249 @@
+{
+  "venue_name": "Barge Music",
+  "extraction_timestamp": "20250702_202108",
+  "raw_data": [
+    {
+      "title": "2pm: Violin and Piano Recital with Mark Peskanov and Doris Stevenson"
+    },
+    {
+      "title": "4pm: Violin and Piano Recital with Mark Peskanov and Doris Stevenson"
+    },
+    {
+      "title": "2pm: Pianist Jerome Lowenthal Plays Tchaikovsky’s Seasons"
+    },
+    {
+      "title": "4pm: Pianist Ursula Oppens Plays Rzewski’s The People United…"
+    },
+    {
+      "title": "2pm: “Great Scott!”: Scott Joplin with Pianist Richard Dowling"
+    },
+    {
+      "title": "4pm: “Great Scott!” Scott Joplin with Pianist Richard Dowling"
+    },
+    {
+      "title": "2pm: Peskanov, Schwarz, and Bournaki Play Beethoven, Foote, and Mendelssohn"
+    },
+    {
+      "title": "4pm: Alexander Peskanov and Lu Ann Peskanov Duo Recital"
+    },
+    {
+      "title": "2pm: Semplice Players with Mark Peskanov Play Mozart and Beethoven"
+    },
+    {
+      "title": "4pm: Semplice Players with Mark Peskanov Play Mozart and Beethoven"
+    },
+    {
+      "title": "2pm: Semplice Players with Mark Peskanov Play Mozart and Beethoven"
+    },
+    {
+      "title": "4pm: Semplice Players with Mark Peskanov Play Mozart and Beethoven"
+    },
+    {
+      "title": "2pm: Pianist Taka Kigawa Plays Beethoven and Chopin"
+    },
+    {
+      "title": "4pm: Pianist Taka Kigawa Plays Beethoven and Chopin"
+    },
+    {
+      "title": "2pm: Pianist Taka Kigawa Plays Schumann and Bach/Busoni"
+    },
+    {
+      "title": "4pm: Pianist Taka Kigawa Plays Schumann and Bach/Busoni"
+    }
+  ],
+  "cleaned_events": [
+    {
+      "venue_name": "Barge Music",
+      "title": "2pm: Violin and Piano Recital with Mark Peskanov and Doris Stevenson",
+      "description": "N/A",
+      "event_date": null,
+      "start_time": null,
+      "end_time": null,
+      "price": "N/A",
+      "image": null,
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:21:08.048248"
+    },
+    {
+      "venue_name": "Barge Music",
+      "title": "4pm: Violin and Piano Recital with Mark Peskanov and Doris Stevenson",
+      "description": "N/A",
+      "event_date": null,
+      "start_time": null,
+      "end_time": null,
+      "price": "N/A",
+      "image": null,
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:21:08.048267"
+    },
+    {
+      "venue_name": "Barge Music",
+      "title": "2pm: Pianist Jerome Lowenthal Plays Tchaikovsky’s Seasons",
+      "description": "N/A",
+      "event_date": null,
+      "start_time": null,
+      "end_time": null,
+      "price": "N/A",
+      "image": null,
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:21:08.048272"
+    },
+    {
+      "venue_name": "Barge Music",
+      "title": "4pm: Pianist Ursula Oppens Plays Rzewski’s The People United…",
+      "description": "N/A",
+      "event_date": null,
+      "start_time": null,
+      "end_time": null,
+      "price": "N/A",
+      "image": null,
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:21:08.048276"
+    },
+    {
+      "venue_name": "Barge Music",
+      "title": "2pm: “Great Scott!”: Scott Joplin with Pianist Richard Dowling",
+      "description": "N/A",
+      "event_date": null,
+      "start_time": null,
+      "end_time": null,
+      "price": "N/A",
+      "image": null,
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:21:08.048280"
+    },
+    {
+      "venue_name": "Barge Music",
+      "title": "4pm: “Great Scott!” Scott Joplin with Pianist Richard Dowling",
+      "description": "N/A",
+      "event_date": null,
+      "start_time": null,
+      "end_time": null,
+      "price": "N/A",
+      "image": null,
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:21:08.048284"
+    },
+    {
+      "venue_name": "Barge Music",
+      "title": "2pm: Peskanov, Schwarz, and Bournaki Play Beethoven, Foote, and Mendelssohn",
+      "description": "N/A",
+      "event_date": null,
+      "start_time": null,
+      "end_time": null,
+      "price": "N/A",
+      "image": null,
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:21:08.048287"
+    },
+    {
+      "venue_name": "Barge Music",
+      "title": "4pm: Alexander Peskanov and Lu Ann Peskanov Duo Recital",
+      "description": "N/A",
+      "event_date": null,
+      "start_time": null,
+      "end_time": null,
+      "price": "N/A",
+      "image": null,
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:21:08.048290"
+    },
+    {
+      "venue_name": "Barge Music",
+      "title": "2pm: Semplice Players with Mark Peskanov Play Mozart and Beethoven",
+      "description": "N/A",
+      "event_date": null,
+      "start_time": null,
+      "end_time": null,
+      "price": "N/A",
+      "image": null,
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:21:08.048293"
+    },
+    {
+      "venue_name": "Barge Music",
+      "title": "4pm: Semplice Players with Mark Peskanov Play Mozart and Beethoven",
+      "description": "N/A",
+      "event_date": null,
+      "start_time": null,
+      "end_time": null,
+      "price": "N/A",
+      "image": null,
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:21:08.048297"
+    },
+    {
+      "venue_name": "Barge Music",
+      "title": "2pm: Semplice Players with Mark Peskanov Play Mozart and Beethoven",
+      "description": "N/A",
+      "event_date": null,
+      "start_time": null,
+      "end_time": null,
+      "price": "N/A",
+      "image": null,
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:21:08.048300"
+    },
+    {
+      "venue_name": "Barge Music",
+      "title": "4pm: Semplice Players with Mark Peskanov Play Mozart and Beethoven",
+      "description": "N/A",
+      "event_date": null,
+      "start_time": null,
+      "end_time": null,
+      "price": "N/A",
+      "image": null,
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:21:08.048303"
+    },
+    {
+      "venue_name": "Barge Music",
+      "title": "2pm: Pianist Taka Kigawa Plays Beethoven and Chopin",
+      "description": "N/A",
+      "event_date": null,
+      "start_time": null,
+      "end_time": null,
+      "price": "N/A",
+      "image": null,
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:21:08.048307"
+    },
+    {
+      "venue_name": "Barge Music",
+      "title": "4pm: Pianist Taka Kigawa Plays Beethoven and Chopin",
+      "description": "N/A",
+      "event_date": null,
+      "start_time": null,
+      "end_time": null,
+      "price": "N/A",
+      "image": null,
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:21:08.048310"
+    },
+    {
+      "venue_name": "Barge Music",
+      "title": "2pm: Pianist Taka Kigawa Plays Schumann and Bach/Busoni",
+      "description": "N/A",
+      "event_date": null,
+      "start_time": null,
+      "end_time": null,
+      "price": "N/A",
+      "image": null,
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:21:08.048313"
+    },
+    {
+      "venue_name": "Barge Music",
+      "title": "4pm: Pianist Taka Kigawa Plays Schumann and Bach/Busoni",
+      "description": "N/A",
+      "event_date": null,
+      "start_time": null,
+      "end_time": null,
+      "price": "N/A",
+      "image": null,
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:21:08.048316"
+    }
+  ],
+  "events_count": 16
+}

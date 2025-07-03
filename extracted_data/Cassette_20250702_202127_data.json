@@ -1,0 +1,609 @@
+{
+  "venue_name": "Cassette",
+  "extraction_timestamp": "20250702_202127",
+  "raw_data": [
+    {
+      "image": "https://dice-media.imgix.net/attachments/2025-06-13/35596149-2dc5-4ee5-a997-919298d082fa.jpg?rect=0%2C0%2C2304%2C2304&auto=format%2Ccompress&q=80&w=600&h=600&fit=crop&crop=faces%2Ccenter",
+      "eventDate": "Wed, Jul 2",
+      "startTime": "Wed, Jul 2",
+      "endTime": "Wed, Jul 2",
+      "title": "OFFICE HOURS, ROCCO & HIS BONES, HEADCASE, ASTRO NICK",
+      "description": "OFFICE HOURS, ROCCO & HIS BONES, HEADCASE, ASTRO NICKWed, Jul 2CassetteNew York$18.04"
+    },
+    {
+      "image": "https://dice-media.imgix.net/attachments/2025-06-12/bf82795b-7556-45c7-8027-b131b87c9597.jpg?rect=0%2C0%2C3631%2C3631&auto=format%2Ccompress&q=80&w=600&h=600&fit=crop&crop=faces%2Ccenter",
+      "eventDate": "Thu, Jul 3",
+      "startTime": "Thu, Jul 3",
+      "endTime": "Thu, Jul 3",
+      "title": "CHICO ROMANO, ASHLEY KOETT, MEDIOCRE CAFE",
+      "description": "CHICO ROMANO, ASHLEY KOETT, MEDIOCRE CAFEThu, Jul 3CassetteNew York$18.04"
+    },
+    {
+      "image": "https://dice-media.imgix.net/attachments/2025-06-25/a222466a-08cd-48b0-b7ae-6ab20960efc6.jpg?rect=0%2C0%2C1080%2C1080&auto=format%2Ccompress&q=80&w=600&h=600&fit=crop&crop=faces%2Ccenter",
+      "eventDate": "Fri, Jul 4",
+      "startTime": "Fri, Jul 4",
+      "endTime": "Fri, Jul 4",
+      "title": "WEENIES N WEEZER",
+      "description": "WEENIES N WEEZERFri, Jul 4CassetteNew YorkFree"
+    },
+    {
+      "image": "https://dice-media.imgix.net/attachments/2025-06-25/3bb4bb89-1f90-4b90-82f0-715a1868c500.jpg?rect=0%2C0%2C2088%2C2088&auto=format%2Ccompress&q=80&w=600&h=600&fit=crop&crop=faces%2Ccenter",
+      "eventDate": "Sun, Jul 6",
+      "startTime": "Sun, Jul 6",
+      "endTime": "Sun, Jul 6",
+      "title": "$QUIB, BUG BUS PIANO, FDSDF, GRANT MG",
+      "description": "$QUIB, BUG BUS PIANO, FDSDF, GRANT MGSun, Jul 6CassetteNew York$18.04"
+    },
+    {
+      "image": "https://dice-media.imgix.net/attachments/2025-05-09/8454434a-e823-42ec-8436-54ee0a4b3c32.jpg?rect=0%2C135%2C1080%2C1080&auto=format%2Ccompress&q=80&w=600&h=600&fit=crop&crop=faces%2Ccenter",
+      "eventDate": "Sun, Jul 6",
+      "startTime": "Sun, Jul 6",
+      "endTime": "Sun, Jul 6",
+      "title": "KARAOKE NIGHT",
+      "description": "KARAOKE NIGHTSun, Jul 6CassetteNew YorkFree"
+    },
+    {
+      "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mPMrAcAAVcA6iSCoPkAAAAASUVORK5CYII=",
+      "eventDate": "Mon, Jul 7",
+      "startTime": "Mon, Jul 7",
+      "endTime": "Mon, Jul 7",
+      "title": "LANEY TRIPP, LEFTY PARKER, TORRI WEIDINGER",
+      "description": "LANEY TRIPP, LEFTY PARKER, TORRI WEIDINGERMon, Jul 7CassetteNew York$18.04"
+    },
+    {
+      "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mPMrAcAAVcA6iSCoPkAAAAASUVORK5CYII=",
+      "eventDate": "Tue, Jul 8",
+      "startTime": "Tue, Jul 8",
+      "endTime": "Tue, Jul 8",
+      "title": "WATERGH0ST, HALLCAT, HIT",
+      "description": "WATERGH0ST, HALLCAT, HITTue, Jul 8CassetteNew York$18.04"
+    },
+    {
+      "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mPMrAcAAVcA6iSCoPkAAAAASUVORK5CYII=",
+      "eventDate": "Wed, Jul 9",
+      "startTime": "Wed, Jul 9",
+      "endTime": "Wed, Jul 9",
+      "title": "MARIA USBECK, MICHAEL BEHARIE, LULANNIE",
+      "description": "MARIA USBECK, MICHAEL BEHARIE, LULANNIEWed, Jul 9CassetteNew York$18.04"
+    },
+    {
+      "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mPMrAcAAVcA6iSCoPkAAAAASUVORK5CYII=",
+      "eventDate": "Thu, Jul 10",
+      "startTime": "Thu, Jul 10",
+      "endTime": "Thu, Jul 10",
+      "title": "MATTHEW FREAKBONES, AUDREY HEARTBURN, DANGEROUSLY CAREFUL, NORMAL AGAIN",
+      "description": "MATTHEW FREAKBONES, AUDREY HEARTBURN, DANGEROUSLY CAREFUL, NORMAL AGAINThu, Jul 10CassetteNew York$18.04"
+    },
+    {
+      "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mPMrAcAAVcA6iSCoPkAAAAASUVORK5CYII=",
+      "eventDate": "Fri, Jul 11",
+      "startTime": "Fri, Jul 11",
+      "endTime": "Fri, Jul 11",
+      "title": "FAMILY MEAL",
+      "description": "FAMILY MEALFri, Jul 11CassetteNew York$24.05"
+    },
+    {
+      "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mPMrAcAAVcA6iSCoPkAAAAASUVORK5CYII=",
+      "eventDate": "Sat, Jul 12",
+      "startTime": "Sat, Jul 12",
+      "endTime": "Sat, Jul 12",
+      "title": "SOFT SURFACE, VELVET VAUGHAN, ALEX HARWOOD",
+      "description": "SOFT SURFACE, VELVET VAUGHAN, ALEX HARWOODSat, Jul 12CassetteNew York$18.04"
+    },
+    {
+      "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mPMrAcAAVcA6iSCoPkAAAAASUVORK5CYII=",
+      "eventDate": "Sun, Jul 13",
+      "startTime": "Sun, Jul 13",
+      "endTime": "Sun, Jul 13",
+      "title": "SAM AND LOUISE SULLIVAN, KOLEŻANKA, KOLB",
+      "description": "SAM AND LOUISE SULLIVAN, KOLEŻANKA, KOLBSun, Jul 13CassetteNew York$18.04"
+    },
+    {
+      "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mPMrAcAAVcA6iSCoPkAAAAASUVORK5CYII=",
+      "eventDate": "Sun, Jul 13",
+      "startTime": "Sun, Jul 13",
+      "endTime": "Sun, Jul 13",
+      "title": "KARAOKE NIGHT",
+      "description": "KARAOKE NIGHTSun, Jul 13CassetteNew YorkFree"
+    },
+    {
+      "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mPMrAcAAVcA6iSCoPkAAAAASUVORK5CYII=",
+      "eventDate": "Tue, Jul 15",
+      "startTime": "Tue, Jul 15",
+      "endTime": "Tue, Jul 15",
+      "title": "DISOBEDIENT TUNES: KARRYL EUGENE",
+      "description": "DISOBEDIENT TUNES: KARRYL EUGENETue, Jul 15CassetteNew YorkFree"
+    },
+    {
+      "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mPMrAcAAVcA6iSCoPkAAAAASUVORK5CYII=",
+      "eventDate": "Wed, Jul 16",
+      "startTime": "Wed, Jul 16",
+      "endTime": "Wed, Jul 16",
+      "title": "MAYSUN, ALEX ZHANG HUNGTAI, SWAYA, AKAFAE",
+      "description": "MAYSUN, ALEX ZHANG HUNGTAI, SWAYA, AKAFAEWed, Jul 16CassetteNew York$18.04"
+    },
+    {
+      "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mPMrAcAAVcA6iSCoPkAAAAASUVORK5CYII=",
+      "eventDate": "Thu, Jul 17",
+      "startTime": "Thu, Jul 17",
+      "endTime": "Thu, Jul 17",
+      "title": "COOL WHIP, PAIN ANNIHILATOR, PLASTIC PALMS (SOLO)",
+      "description": "COOL WHIP, PAIN ANNIHILATOR, PLASTIC PALMS (SOLO)Thu, Jul 17CassetteNew York$18.04"
+    },
+    {
+      "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mPMrAcAAVcA6iSCoPkAAAAASUVORK5CYII=",
+      "eventDate": "Sat, Jul 19",
+      "startTime": "Sat, Jul 19",
+      "endTime": "Sat, Jul 19",
+      "title": "KRISTIN FLAMMIO & THE PRETTY BITCHIN, CAT CASUAL & THE FINAL WORD, J.WOLFE",
+      "description": "KRISTIN FLAMMIO & THE PRETTY BITCHIN, CAT CASUAL & THE FINAL WORD, J.WOLFESat, Jul 19CassetteNew York$18.04"
+    },
+    {
+      "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mPMrAcAAVcA6iSCoPkAAAAASUVORK5CYII=",
+      "eventDate": "Sun, Jul 20",
+      "startTime": "Sun, Jul 20",
+      "endTime": "Sun, Jul 20",
+      "title": "AESOP'S SOUND FABLES: STRANGE ANIMATIONS",
+      "description": "AESOP'S SOUND FABLES: STRANGE ANIMATIONSSun, Jul 20CassetteNew York$18.04"
+    },
+    {
+      "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mPMrAcAAVcA6iSCoPkAAAAASUVORK5CYII=",
+      "eventDate": "Sun, Jul 20",
+      "startTime": "Sun, Jul 20",
+      "endTime": "Sun, Jul 20",
+      "title": "KARAOKE NIGHT",
+      "description": "KARAOKE NIGHTSun, Jul 20CassetteNew YorkFree"
+    },
+    {
+      "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mPMrAcAAVcA6iSCoPkAAAAASUVORK5CYII=",
+      "eventDate": "Tue, Jul 22",
+      "startTime": "Tue, Jul 22",
+      "endTime": "Tue, Jul 22",
+      "title": "LUKE STEWART/KA BAIRD, KEITH FULLERTON WHITMAN/J.R. BOHANNON, C SPENCER YEH/RYAN SAWYER",
+      "description": "LUKE STEWART/KA BAIRD, KEITH FULLERTON WHITMAN/J.R. BOHANNON, C SPENCER YEH/RYAN SAWYERTue, Jul 22CassetteNew York$18.04"
+    },
+    {
+      "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mPMrAcAAVcA6iSCoPkAAAAASUVORK5CYII=",
+      "eventDate": "Wed, Jul 23",
+      "startTime": "Wed, Jul 23",
+      "endTime": "Wed, Jul 23",
+      "title": "EMAIL CORE, CHARLIE LOOKER & MIKE PRIDE, JONDOWNLOAD",
+      "description": "EMAIL CORE, CHARLIE LOOKER & MIKE PRIDE, JONDOWNLOADWed, Jul 23CassetteNew York$18.04"
+    },
+    {
+      "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mPMrAcAAVcA6iSCoPkAAAAASUVORK5CYII=",
+      "eventDate": "Thu, Jul 24",
+      "startTime": "Thu, Jul 24",
+      "endTime": "Thu, Jul 24",
+      "title": "CRICKET BLUE, BOLD FORBES, HALLIE SPOOR",
+      "description": "CRICKET BLUE, BOLD FORBES, HALLIE SPOORThu, Jul 24CassetteNew York$18.04"
+    },
+    {
+      "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mPMrAcAAVcA6iSCoPkAAAAASUVORK5CYII=",
+      "eventDate": "Sun, Jul 27",
+      "startTime": "Sun, Jul 27",
+      "endTime": "Sun, Jul 27",
+      "title": "LINA TULLGREN, ANNA FOX ROCHINSKI, FRANCES CHANG",
+      "description": "LINA TULLGREN, ANNA FOX ROCHINSKI, FRANCES CHANGSun, Jul 27CassetteNew York$18.04"
+    },
+    {
+      "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mPMrAcAAVcA6iSCoPkAAAAASUVORK5CYII=",
+      "eventDate": "Sun, Jul 27",
+      "startTime": "Sun, Jul 27",
+      "endTime": "Sun, Jul 27",
+      "title": "KARAOKE NIGHT",
+      "description": "KARAOKE NIGHTSun, Jul 27CassetteNew YorkFree"
+    },
+    {
+      "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mPMrAcAAVcA6iSCoPkAAAAASUVORK5CYII=",
+      "eventDate": "Tue, Jul 29",
+      "startTime": "Tue, Jul 29",
+      "endTime": "Tue, Jul 29",
+      "title": "JEROME SLOSS, KAMASAKI CORP, WAVE ALI, MICHEL NOIR",
+      "description": "JEROME SLOSS, KAMASAKI CORP, WAVE ALI, MICHEL NOIRTue, Jul 29CassetteNew York$18.04"
+    },
+    {
+      "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mPMrAcAAVcA6iSCoPkAAAAASUVORK5CYII=",
+      "eventDate": "Sat, Aug 2",
+      "startTime": "Sat, Aug 2",
+      "endTime": "Sat, Aug 2",
+      "title": "PYNKIE, RAMONA, ANNA ALTMAN, SHALLOWHALO",
+      "description": "PYNKIE, RAMONA, ANNA ALTMAN, SHALLOWHALOSat, Aug 2CassetteNew York$18.04"
+    },
+    {
+      "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mPMrAcAAVcA6iSCoPkAAAAASUVORK5CYII=",
+      "eventDate": "Fri, Aug 8",
+      "startTime": "Fri, Aug 8",
+      "endTime": "Fri, Aug 8",
+      "title": "EMERSON WOOLF & THE WISHBONES, STEFAN WEINER, BECCS",
+      "description": "EMERSON WOOLF & THE WISHBONES, STEFAN WEINER, BECCSFri, Aug 8CassetteNew York$18.04"
+    },
+    {
+      "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mPMrAcAAVcA6iSCoPkAAAAASUVORK5CYII=",
+      "eventDate": "Fri, Aug 15",
+      "startTime": "Fri, Aug 15",
+      "endTime": "Fri, Aug 15",
+      "title": "LOOPING, CAT BADDIE, ANTI-M, LAURA ORZEHOSKI",
+      "description": "LOOPING, CAT BADDIE, ANTI-M, LAURA ORZEHOSKIFri, Aug 15CassetteNew York$18.04"
+    },
+    {
+      "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mPMrAcAAVcA6iSCoPkAAAAASUVORK5CYII=",
+      "eventDate": "Sun, Aug 24",
+      "startTime": "Sun, Aug 24",
+      "endTime": "Sun, Aug 24",
+      "title": "TUXIS GIANT, CIAO MALZ, SALT",
+      "description": "TUXIS GIANT, CIAO MALZ, SALTSun, Aug 24CassetteNew York$18.04"
+    },
+    {
+      "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mPMrAcAAVcA6iSCoPkAAAAASUVORK5CYII=",
+      "eventDate": "Tue, Aug 26",
+      "startTime": "Tue, Aug 26",
+      "endTime": "Tue, Aug 26",
+      "title": "KATY PINKE, FOWL, THE CLEARWATER SWIMMERS, SILVER TREE",
+      "description": "KATY PINKE, FOWL, THE CLEARWATER SWIMMERS, SILVER TREETue, Aug 26CassetteNew York$18.04"
+    }
+  ],
+  "cleaned_events": [
+    {
+      "venue_name": "Cassette",
+      "title": "OFFICE HOURS, ROCCO & HIS BONES, HEADCASE, ASTRO NICK",
+      "description": "OFFICE HOURS, ROCCO & HIS BONES, HEADCASE, ASTRO NICKWed, Jul 2CassetteNew York$18.04",
+      "event_date": "2025-07-02",
+      "start_time": null,
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://dice-media.imgix.net/attachments/2025-06-13/35596149-2dc5-4ee5-a997-919298d082fa.jpg?rect=0%2C0%2C2304%2C2304&auto=format%2Ccompress&q=80&w=600&h=600&fit=crop&crop=faces%2Ccenter",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:21:27.204795"
+    },
+    {
+      "venue_name": "Cassette",
+      "title": "CHICO ROMANO, ASHLEY KOETT, MEDIOCRE CAFE",
+      "description": "CHICO ROMANO, ASHLEY KOETT, MEDIOCRE CAFEThu, Jul 3CassetteNew York$18.04",
+      "event_date": "2025-07-03",
+      "start_time": null,
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://dice-media.imgix.net/attachments/2025-06-12/bf82795b-7556-45c7-8027-b131b87c9597.jpg?rect=0%2C0%2C3631%2C3631&auto=format%2Ccompress&q=80&w=600&h=600&fit=crop&crop=faces%2Ccenter",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:21:27.205236"
+    },
+    {
+      "venue_name": "Cassette",
+      "title": "WEENIES N WEEZER",
+      "description": "WEENIES N WEEZERFri, Jul 4CassetteNew YorkFree",
+      "event_date": "2025-07-04",
+      "start_time": null,
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://dice-media.imgix.net/attachments/2025-06-25/a222466a-08cd-48b0-b7ae-6ab20960efc6.jpg?rect=0%2C0%2C1080%2C1080&auto=format%2Ccompress&q=80&w=600&h=600&fit=crop&crop=faces%2Ccenter",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:21:27.205442"
+    },
+    {
+      "venue_name": "Cassette",
+      "title": "$QUIB, BUG BUS PIANO, FDSDF, GRANT MG",
+      "description": "$QUIB, BUG BUS PIANO, FDSDF, GRANT MGSun, Jul 6CassetteNew York$18.04",
+      "event_date": "2025-07-06",
+      "start_time": null,
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://dice-media.imgix.net/attachments/2025-06-25/3bb4bb89-1f90-4b90-82f0-715a1868c500.jpg?rect=0%2C0%2C2088%2C2088&auto=format%2Ccompress&q=80&w=600&h=600&fit=crop&crop=faces%2Ccenter",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:21:27.205556"
+    },
+    {
+      "venue_name": "Cassette",
+      "title": "KARAOKE NIGHT",
+      "description": "KARAOKE NIGHTSun, Jul 6CassetteNew YorkFree",
+      "event_date": "2025-07-06",
+      "start_time": null,
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://dice-media.imgix.net/attachments/2025-05-09/8454434a-e823-42ec-8436-54ee0a4b3c32.jpg?rect=0%2C135%2C1080%2C1080&auto=format%2Ccompress&q=80&w=600&h=600&fit=crop&crop=faces%2Ccenter",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:21:27.205668"
+    },
+    {
+      "venue_name": "Cassette",
+      "title": "LANEY TRIPP, LEFTY PARKER, TORRI WEIDINGER",
+      "description": "LANEY TRIPP, LEFTY PARKER, TORRI WEIDINGERMon, Jul 7CassetteNew York$18.04",
+      "event_date": "2025-07-07",
+      "start_time": null,
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mPMrAcAAVcA6iSCoPkAAAAASUVORK5CYII=",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:21:27.205778"
+    },
+    {
+      "venue_name": "Cassette",
+      "title": "WATERGH0ST, HALLCAT, HIT",
+      "description": "WATERGH0ST, HALLCAT, HITTue, Jul 8CassetteNew York$18.04",
+      "event_date": "2025-07-08",
+      "start_time": null,
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mPMrAcAAVcA6iSCoPkAAAAASUVORK5CYII=",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:21:27.205888"
+    },
+    {
+      "venue_name": "Cassette",
+      "title": "MARIA USBECK, MICHAEL BEHARIE, LULANNIE",
+      "description": "MARIA USBECK, MICHAEL BEHARIE, LULANNIEWed, Jul 9CassetteNew York$18.04",
+      "event_date": "2025-07-09",
+      "start_time": null,
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mPMrAcAAVcA6iSCoPkAAAAASUVORK5CYII=",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:21:27.205995"
+    },
+    {
+      "venue_name": "Cassette",
+      "title": "MATTHEW FREAKBONES, AUDREY HEARTBURN, DANGEROUSLY CAREFUL, NORMAL AGAIN",
+      "description": "MATTHEW FREAKBONES, AUDREY HEARTBURN, DANGEROUSLY CAREFUL, NORMAL AGAINThu, Jul 10CassetteNew York$18.04",
+      "event_date": "2025-07-10",
+      "start_time": null,
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mPMrAcAAVcA6iSCoPkAAAAASUVORK5CYII=",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:21:27.206101"
+    },
+    {
+      "venue_name": "Cassette",
+      "title": "FAMILY MEAL",
+      "description": "FAMILY MEALFri, Jul 11CassetteNew York$24.05",
+      "event_date": "2025-07-11",
+      "start_time": null,
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mPMrAcAAVcA6iSCoPkAAAAASUVORK5CYII=",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:21:27.206212"
+    },
+    {
+      "venue_name": "Cassette",
+      "title": "SOFT SURFACE, VELVET VAUGHAN, ALEX HARWOOD",
+      "description": "SOFT SURFACE, VELVET VAUGHAN, ALEX HARWOODSat, Jul 12CassetteNew York$18.04",
+      "event_date": "2025-07-12",
+      "start_time": null,
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mPMrAcAAVcA6iSCoPkAAAAASUVORK5CYII=",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:21:27.206322"
+    },
+    {
+      "venue_name": "Cassette",
+      "title": "SAM AND LOUISE SULLIVAN, KOLEŻANKA, KOLB",
+      "description": "SAM AND LOUISE SULLIVAN, KOLEŻANKA, KOLBSun, Jul 13CassetteNew York$18.04",
+      "event_date": "2025-07-13",
+      "start_time": null,
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mPMrAcAAVcA6iSCoPkAAAAASUVORK5CYII=",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:21:27.206430"
+    },
+    {
+      "venue_name": "Cassette",
+      "title": "KARAOKE NIGHT",
+      "description": "KARAOKE NIGHTSun, Jul 13CassetteNew YorkFree",
+      "event_date": "2025-07-13",
+      "start_time": null,
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mPMrAcAAVcA6iSCoPkAAAAASUVORK5CYII=",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:21:27.206539"
+    },
+    {
+      "venue_name": "Cassette",
+      "title": "DISOBEDIENT TUNES: KARRYL EUGENE",
+      "description": "DISOBEDIENT TUNES: KARRYL EUGENETue, Jul 15CassetteNew YorkFree",
+      "event_date": "2025-07-15",
+      "start_time": null,
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mPMrAcAAVcA6iSCoPkAAAAASUVORK5CYII=",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:21:27.206647"
+    },
+    {
+      "venue_name": "Cassette",
+      "title": "MAYSUN, ALEX ZHANG HUNGTAI, SWAYA, AKAFAE",
+      "description": "MAYSUN, ALEX ZHANG HUNGTAI, SWAYA, AKAFAEWed, Jul 16CassetteNew York$18.04",
+      "event_date": "2025-07-16",
+      "start_time": null,
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mPMrAcAAVcA6iSCoPkAAAAASUVORK5CYII=",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:21:27.206755"
+    },
+    {
+      "venue_name": "Cassette",
+      "title": "COOL WHIP, PAIN ANNIHILATOR, PLASTIC PALMS (SOLO)",
+      "description": "COOL WHIP, PAIN ANNIHILATOR, PLASTIC PALMS (SOLO)Thu, Jul 17CassetteNew York$18.04",
+      "event_date": "2025-07-17",
+      "start_time": null,
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mPMrAcAAVcA6iSCoPkAAAAASUVORK5CYII=",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:21:27.206863"
+    },
+    {
+      "venue_name": "Cassette",
+      "title": "KRISTIN FLAMMIO & THE PRETTY BITCHIN, CAT CASUAL & THE FINAL WORD, J.WOLFE",
+      "description": "KRISTIN FLAMMIO & THE PRETTY BITCHIN, CAT CASUAL & THE FINAL WORD, J.WOLFESat, Jul 19CassetteNew York$18.04",
+      "event_date": "2025-07-19",
+      "start_time": null,
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mPMrAcAAVcA6iSCoPkAAAAASUVORK5CYII=",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:21:27.206971"
+    },
+    {
+      "venue_name": "Cassette",
+      "title": "AESOP'S SOUND FABLES: STRANGE ANIMATIONS",
+      "description": "AESOP'S SOUND FABLES: STRANGE ANIMATIONSSun, Jul 20CassetteNew York$18.04",
+      "event_date": "2025-07-20",
+      "start_time": null,
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mPMrAcAAVcA6iSCoPkAAAAASUVORK5CYII=",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:21:27.207077"
+    },
+    {
+      "venue_name": "Cassette",
+      "title": "KARAOKE NIGHT",
+      "description": "KARAOKE NIGHTSun, Jul 20CassetteNew YorkFree",
+      "event_date": "2025-07-20",
+      "start_time": null,
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mPMrAcAAVcA6iSCoPkAAAAASUVORK5CYII=",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:21:27.207185"
+    },
+    {
+      "venue_name": "Cassette",
+      "title": "LUKE STEWART/KA BAIRD, KEITH FULLERTON WHITMAN/J.R. BOHANNON, C SPENCER YEH/RYAN SAWYER",
+      "description": "LUKE STEWART/KA BAIRD, KEITH FULLERTON WHITMAN/J.R. BOHANNON, C SPENCER YEH/RYAN SAWYERTue, Jul 22CassetteNew York$18.04",
+      "event_date": "2025-07-22",
+      "start_time": null,
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mPMrAcAAVcA6iSCoPkAAAAASUVORK5CYII=",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:21:27.207293"
+    },
+    {
+      "venue_name": "Cassette",
+      "title": "EMAIL CORE, CHARLIE LOOKER & MIKE PRIDE, JONDOWNLOAD",
+      "description": "EMAIL CORE, CHARLIE LOOKER & MIKE PRIDE, JONDOWNLOADWed, Jul 23CassetteNew York$18.04",
+      "event_date": "2025-07-23",
+      "start_time": null,
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mPMrAcAAVcA6iSCoPkAAAAASUVORK5CYII=",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:21:27.207400"
+    },
+    {
+      "venue_name": "Cassette",
+      "title": "CRICKET BLUE, BOLD FORBES, HALLIE SPOOR",
+      "description": "CRICKET BLUE, BOLD FORBES, HALLIE SPOORThu, Jul 24CassetteNew York$18.04",
+      "event_date": "2025-07-24",
+      "start_time": null,
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mPMrAcAAVcA6iSCoPkAAAAASUVORK5CYII=",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:21:27.207508"
+    },
+    {
+      "venue_name": "Cassette",
+      "title": "LINA TULLGREN, ANNA FOX ROCHINSKI, FRANCES CHANG",
+      "description": "LINA TULLGREN, ANNA FOX ROCHINSKI, FRANCES CHANGSun, Jul 27CassetteNew York$18.04",
+      "event_date": "2025-07-27",
+      "start_time": null,
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mPMrAcAAVcA6iSCoPkAAAAASUVORK5CYII=",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:21:27.207615"
+    },
+    {
+      "venue_name": "Cassette",
+      "title": "KARAOKE NIGHT",
+      "description": "KARAOKE NIGHTSun, Jul 27CassetteNew YorkFree",
+      "event_date": "2025-07-27",
+      "start_time": null,
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mPMrAcAAVcA6iSCoPkAAAAASUVORK5CYII=",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:21:27.207722"
+    },
+    {
+      "venue_name": "Cassette",
+      "title": "JEROME SLOSS, KAMASAKI CORP, WAVE ALI, MICHEL NOIR",
+      "description": "JEROME SLOSS, KAMASAKI CORP, WAVE ALI, MICHEL NOIRTue, Jul 29CassetteNew York$18.04",
+      "event_date": "2025-07-29",
+      "start_time": null,
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mPMrAcAAVcA6iSCoPkAAAAASUVORK5CYII=",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:21:27.207829"
+    },
+    {
+      "venue_name": "Cassette",
+      "title": "PYNKIE, RAMONA, ANNA ALTMAN, SHALLOWHALO",
+      "description": "PYNKIE, RAMONA, ANNA ALTMAN, SHALLOWHALOSat, Aug 2CassetteNew York$18.04",
+      "event_date": "2025-08-02",
+      "start_time": null,
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mPMrAcAAVcA6iSCoPkAAAAASUVORK5CYII=",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:21:27.207936"
+    },
+    {
+      "venue_name": "Cassette",
+      "title": "EMERSON WOOLF & THE WISHBONES, STEFAN WEINER, BECCS",
+      "description": "EMERSON WOOLF & THE WISHBONES, STEFAN WEINER, BECCSFri, Aug 8CassetteNew York$18.04",
+      "event_date": "2025-08-08",
+      "start_time": null,
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mPMrAcAAVcA6iSCoPkAAAAASUVORK5CYII=",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:21:27.208042"
+    },
+    {
+      "venue_name": "Cassette",
+      "title": "LOOPING, CAT BADDIE, ANTI-M, LAURA ORZEHOSKI",
+      "description": "LOOPING, CAT BADDIE, ANTI-M, LAURA ORZEHOSKIFri, Aug 15CassetteNew York$18.04",
+      "event_date": "2025-08-15",
+      "start_time": null,
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mPMrAcAAVcA6iSCoPkAAAAASUVORK5CYII=",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:21:27.208147"
+    },
+    {
+      "venue_name": "Cassette",
+      "title": "TUXIS GIANT, CIAO MALZ, SALT",
+      "description": "TUXIS GIANT, CIAO MALZ, SALTSun, Aug 24CassetteNew York$18.04",
+      "event_date": "2025-08-24",
+      "start_time": null,
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mPMrAcAAVcA6iSCoPkAAAAASUVORK5CYII=",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:21:27.208255"
+    },
+    {
+      "venue_name": "Cassette",
+      "title": "KATY PINKE, FOWL, THE CLEARWATER SWIMMERS, SILVER TREE",
+      "description": "KATY PINKE, FOWL, THE CLEARWATER SWIMMERS, SILVER TREETue, Aug 26CassetteNew York$18.04",
+      "event_date": "2025-08-26",
+      "start_time": null,
+      "end_time": null,
+      "price": "N/A",
+      "image": "https://data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mPMrAcAAVcA6iSCoPkAAAAASUVORK5CYII=",
+      "url": null,
+      "extraction_timestamp": "2025-07-02T20:21:27.208362"
+    }
+  ],
+  "events_count": 30
+}

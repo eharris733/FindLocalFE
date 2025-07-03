@@ -5,7 +5,7 @@ from crawl4ai import AsyncWebCrawler, CacheMode, CrawlerRunConfig, JsonCssExtrac
 import pandas as pd
 import os
 from prompts.generate_jsoncss_events_prompt import generate_jsoncss_extraction_prompt
-from config import (
+from configs.config import (
     SCHEMAS_FOLDER, 
     SCHEMA_FILE_SUFFIX, 
     get_openai_client, 
