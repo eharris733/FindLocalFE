@@ -6,7 +6,7 @@ import { supabase } from '../supabase';
 export async function getEvents(): Promise<Event[]> {
     try {
       const { data, error } = await supabase
-        .from('Events')
+        .from('events')
         .select('*')
         .order('date', { ascending: true });
   
