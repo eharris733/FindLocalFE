@@ -1,6 +1,5 @@
 // src/App.tsx
 
-// import React from 'react';
 import { useEvents } from './hooks/useEvents';
 import ListView from './components/ListView';
 import CalendarView from './components/CalendarView';
@@ -23,9 +22,20 @@ function App() {
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      <Typography variant="h3" component="h1" align="center" gutterBottom sx={{ fontWeight: 'bold', color: 'primary.main' }}>
-        Brooklyn Nite-Out
-      </Typography>
+      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 3 }}>
+        <img 
+          src="/logo.png" 
+          alt="FindLocal Logo" 
+          style={{ 
+            maxWidth: '200px', 
+            height: 'auto', 
+            marginBottom: '16px' 
+          }} 
+        />
+        <Typography variant="h3" component="h1" align="center" gutterBottom sx={{ fontWeight: 'bold', color: 'primary.main' }}>
+          Brooklyn Nite-Out
+        </Typography>
+      </Box>
 
       {loading && (
         <Box sx={{ display: 'flex', justifyContent: 'center', my: 8 }}>
