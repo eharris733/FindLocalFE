@@ -27,14 +27,14 @@ function App() {
           src="/logo.png" 
           alt="FindLocal Logo" 
           style={{ 
-            maxWidth: '200px', 
+            maxWidth: '300px', 
             height: 'auto', 
             marginBottom: '16px' 
           }} 
         />
-        <Typography variant="h3" component="h1" align="center" gutterBottom sx={{ fontWeight: 'bold', color: 'primary.main' }}>
-          Brooklyn Nite-Out
-        </Typography>
+        {/* <Typography variant="h3" component="h1" align="center" gutterBottom sx={{ fontWeight: 'bold', color: 'primary.main' }}>
+          Find Local
+        </Typography> */}
       </Box>
 
       {loading && (
