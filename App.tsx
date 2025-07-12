@@ -8,9 +8,11 @@ import {
   SafeAreaView,
   StatusBar 
 } from 'react-native';
+import { ThemeProvider } from './src/context/ThemeContext';
 import { useEvents } from './src/hooks/useEvents';
 import EventCard from './src/components/EventCard';
 import FilterControls from './src/components/FilterControls';
+import { colors, typography, spacing, shadows } from './src/theme';
 
 export default function App() {
   const {
@@ -25,99 +27,114 @@ export default function App() {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
-        <StatusBar barStyle="dark-content" />
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#006B5E" />
-          <Text style={styles.loadingText}>Loading events...</Text>
-        </View>
-      </SafeAreaView>
+      <ThemeProvider>
+        <SafeAreaView style={styles.container}>
+          <StatusBar barStyle="dark-content" backgroundColor={colors.background.primary} />
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={colors.primary[500]} />
+            <Text style={styles.loadingText}>Loading events...</Text>
+          </View>
+        </SafeAreaView>
+      </ThemeProvider>
     );
   }
 
   if (error) {
     return (
-      <SafeAreaView style={styles.container}>
-        <StatusBar barStyle="dark-content" />
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorTitle}>Error loading events:</Text>
-          <Text style={styles.errorText}>{error}</Text>
-        </View>
-      </SafeAreaView>
+      <ThemeProvider>
+        <SafeAreaView style={styles.container}>
+          <StatusBar barStyle="dark-content" backgroundColor={colors.background.primary} />
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorTitle}>Error loading events:</Text>
+            <Text style={styles.errorText}>{error}</Text>
+          </View>
+        </SafeAreaView>
+      </ThemeProvider>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" />
-      
-      <View style={styles.header}>
-        <Text style={styles.title}>Find Local</Text>
-      </View>
+    <ThemeProvider>
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="dark-content" backgroundColor={colors.background.primary} />
+        
+        <View style={styles.header}>
+          <Text style={styles.title}>Find Local</Text>
+          <Text style={styles.subtitle}>Discover events near you</Text>
+        </View>
 
-      <FilterControls
-        filters={filters}
-        dispatchFilters={dispatchFilters}
-        availableCategories={availableCategories}
-        availableLocations={availableLocations}
-      />
+        <FilterControls
+          filters={filters}
+          dispatchFilters={dispatchFilters}
+          availableCategories={availableCategories}
+          availableLocations={availableLocations}
+        />
 
-      <FlatList
-        data={filteredEvents}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <EventCard event={item} />}
-        contentContainerStyle={styles.listContainer}
-        showsVerticalScrollIndicator={false}
-      />
-    </SafeAreaView>
+        <FlatList
+          data={filteredEvents}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => <EventCard event={item} />}
+          contentContainerStyle={styles.listContainer}
+          showsVerticalScrollIndicator={false}
+        />
+      </SafeAreaView>
+    </ThemeProvider>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.background.secondary,
   },
   header: {
     alignItems: 'center',
-    paddingVertical: 20,
-    backgroundColor: '#fff',
+    paddingVertical: spacing.xl,
+    paddingHorizontal: spacing.md,
+    backgroundColor: colors.background.primary,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: colors.border.light,
+    ...shadows.small,
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#006B5E',
+    ...typography.heading1,
+    color: colors.primary[500],
+    marginBottom: spacing.xs,
+  },
+  subtitle: {
+    ...typography.bodySmall,
+    color: colors.text.secondary,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: colors.background.primary,
   },
   loadingText: {
-    marginTop: 10,
-    fontSize: 16,
-    color: '#666',
+    marginTop: spacing.md,
+    ...typography.body,
+    color: colors.text.secondary,
   },
   errorContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    padding: spacing.xl,
+    backgroundColor: colors.background.primary,
   },
   errorTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#d32f2f',
-    marginBottom: 10,
+    ...typography.heading3,
+    color: colors.error,
+    marginBottom: spacing.md,
+    textAlign: 'center',
   },
   errorText: {
-    fontSize: 16,
-    color: '#666',
+    ...typography.body,
+    color: colors.text.secondary,
     textAlign: 'center',
   },
   listContainer: {
-    padding: 16,
+    padding: spacing.md,
   },
 });

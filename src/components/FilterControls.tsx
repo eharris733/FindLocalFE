@@ -8,6 +8,7 @@ import {
   StyleSheet 
 } from 'react-native';
 import type { EventFilters, FilterAction } from '../types/events';
+import { colors, typography, spacing, borderRadius, shadows } from '../theme';
 
 interface FilterControlsProps {
   filters: EventFilters;
@@ -24,20 +25,24 @@ const FilterControls: React.FC<FilterControlsProps> = ({
 }) => {
   return (
     <View style={styles.container}>
-      <TextInput
-        style={styles.searchInput}
-        placeholder="Search events..."
-        value={filters.searchText}
-        onChangeText={(text) => 
-          dispatchFilters({ type: 'SET_SEARCH_TEXT', payload: text })
-        }
-      />
+      <View style={styles.searchContainer}>
+        <TextInput
+          style={styles.searchInput}
+          placeholder="🔍 Search events..."
+          placeholderTextColor={colors.text.tertiary}
+          value={filters.searchText}
+          onChangeText={(text) => 
+            dispatchFilters({ type: 'SET_SEARCH_TEXT', payload: text })
+          }
+        />
+      </View>
       
       <Text style={styles.sectionTitle}>Categories</Text>
       <ScrollView 
         horizontal 
         showsHorizontalScrollIndicator={false}
         style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
       >
         {availableCategories.map((category) => (
           <TouchableOpacity
@@ -65,6 +70,7 @@ const FilterControls: React.FC<FilterControlsProps> = ({
         horizontal 
         showsHorizontalScrollIndicator={false}
         style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
       >
         {availableLocations.map((location) => (
           <TouchableOpacity
@@ -91,7 +97,7 @@ const FilterControls: React.FC<FilterControlsProps> = ({
         style={styles.resetButton}
         onPress={() => dispatchFilters({ type: 'RESET_FILTERS' })}
       >
-        <Text style={styles.resetButtonText}>Reset Filters</Text>
+        <Text style={styles.resetButtonText}>🔄 Reset Filters</Text>
       </TouchableOpacity>
     </View>
   );
@@ -99,63 +105,70 @@ const FilterControls: React.FC<FilterControlsProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#fff',
-    padding: 16,
+    backgroundColor: colors.background.primary,
+    padding: spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: colors.border.light,
+    ...shadows.small,
+  },
+  searchContainer: {
+    marginBottom: spacing.md,
   },
   searchInput: {
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    marginBottom: 16,
-    backgroundColor: '#f9f9f9',
+    borderColor: colors.border.medium,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
+    ...typography.body,
+    backgroundColor: colors.background.secondary,
+    color: colors.text.primary,
   },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 8,
-    marginTop: 8,
+    ...typography.heading4,
+    color: colors.text.primary,
+    marginBottom: spacing.sm,
+    marginTop: spacing.sm,
   },
   scrollView: {
-    marginBottom: 12,
+    marginBottom: spacing.md,
+  },
+  scrollContent: {
+    paddingRight: spacing.md,
   },
   filterChip: {
-    backgroundColor: '#f0f0f0',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    marginRight: 8,
+    backgroundColor: colors.gray[100],
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.full,
+    marginRight: spacing.sm,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: colors.border.light,
   },
   filterChipActive: {
-    backgroundColor: '#006B5E',
-    borderColor: '#006B5E',
+    backgroundColor: colors.primary[500],
+    borderColor: colors.primary[600],
   },
   filterChipText: {
-    fontSize: 14,
-    color: '#666',
+    ...typography.bodySmall,
+    color: colors.text.secondary,
     fontWeight: '500',
   },
   filterChipTextActive: {
-    color: '#fff',
+    color: colors.text.inverse,
+    fontWeight: '600',
   },
   resetButton: {
-    backgroundColor: '#f44336',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
+    backgroundColor: colors.secondary[500],
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    borderRadius: borderRadius.lg,
     alignSelf: 'center',
-    marginTop: 16,
+    marginTop: spacing.sm,
+    ...shadows.small,
   },
   resetButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    ...typography.button,
+    color: colors.text.inverse,
   },
 });
 
