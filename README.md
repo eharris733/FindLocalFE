@@ -1,53 +1,43 @@
-# Find Local Music: Frontend Application
+# Find Local Mobile
 
-A modern React + TypeScript frontend application for browsing local music events in Brooklyn. This app displays events scraped from venue websites and stored in Supabase.
+A React Native app for discovering local events, converted from the original React web application.
 
-## 🎨 Frontend Tech Stack
+## Features
 
-- **React 18** with TypeScript
-- **Vite** for build tooling and development
-- **Material-UI (MUI)** for component library
-- **Date-fns** for date handling
-- **Supabase** for backend services and data fetching
+- Browse local events in a clean list view
+- Filter events by category and venue
+- Search events by title or description
+- Tap events to open their URLs in your browser
 
-## 🚀 Quick Start
+## Setup
 
-### Prerequisites
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
 
-- Node.js 18+ with npm
-- Supabase project with events data
+2. Set up your environment variables:
+   - Add your Supabase URL and anonymous key to the `.env` file
 
-### Environment Setup
+3. Start the development server:
+   ```bash
+   npm start
+   ```
 
-Create a `.env` file in the root directory:
+## Development
 
-```env
-VITE_SUPABASE_URL=your_supabase_url
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-```
+This app uses:
+- React Native with Expo
+- TypeScript
+- Supabase for data
+- date-fns for date formatting
 
-### Installation & Development
+## Changes from Web Version
 
-```bash
-# Install dependencies
-npm install
-
-# Start development server
-npm run dev
-
-# Build for production
-npm run build
-
-# Preview production build
-npm run preview
-```
-
-## 📁 Project Structure
-
-```
-FindLocalFE/
-├── .env                    # Environment variables
-├── .gitignore             # Git ignore rules
+- Removed calendar view (list view only)
+- Converted from Material-UI to React Native components
+- Simplified UI for mobile-first experience
+- Uses React Native navigation patterns
 ├── README.md              # This file
 ├── main.py                # Backend API placeholder (development)
 ├── frontend/              # React application
