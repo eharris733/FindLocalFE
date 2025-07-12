@@ -1,13 +1,61 @@
 import { useState, useEffect, useMemo, useReducer } from 'react';
 import type { Event, EventFilters, FilterAction } from '../types/events';
 import { getEvents } from '../api/events';
-import { startOfDay, isBefore } from 'date-fns';
+import { 
+  startOfDay, 
+  endOfDay, 
+  isBefore, 
+  isAfter, 
+  isWithinInterval,
+  addDays,
+  startOfWeek,
+  endOfWeek,
+  startOfMonth,
+  endOfMonth,
+  isSameDay
+} from 'date-fns';
 
 const initialFilterState: EventFilters = {
   category: 'All',
   startDate: null,
+  endDate: null,
+  dateRange: 'all',
   searchText: '',
   venue: 'All',
+};
+
+const getDateRangeFromSelection = (dateRange: EventFilters['dateRange']): { start: Date | null; end: Date | null } => {
+  const today = new Date();
+  
+  switch (dateRange) {
+    case 'today':
+      return { start: startOfDay(today), end: endOfDay(today) };
+    
+    case 'tomorrow':
+      const tomorrow = addDays(today, 1);
+      return { start: startOfDay(tomorrow), end: endOfDay(tomorrow) };
+    
+    case 'this_week':
+      return { start: startOfWeek(today), end: endOfWeek(today) };
+    
+    case 'this_weekend':
+      const saturday = addDays(startOfWeek(today), 6);
+      const sunday = addDays(startOfWeek(today), 7);
+      return { start: startOfDay(saturday), end: endOfDay(sunday) };
+    
+    case 'next_week':
+      const nextWeekStart = addDays(startOfWeek(today), 7);
+      const nextWeekEnd = addDays(endOfWeek(today), 7);
+      return { start: nextWeekStart, end: nextWeekEnd };
+    
+    case 'this_month':
+      return { start: startOfMonth(today), end: endOfMonth(today) };
+    
+    case 'all':
+    case 'custom':
+    default:
+      return { start: null, end: null };
+  }
 };
 
 const filterReducer = (state: EventFilters, action: FilterAction): EventFilters => {
@@ -15,7 +63,17 @@ const filterReducer = (state: EventFilters, action: FilterAction): EventFilters 
     case 'SET_CATEGORY':
       return { ...state, category: action.payload };
     case 'SET_START_DATE':
-      return { ...state, startDate: action.payload };
+      return { ...state, startDate: action.payload, dateRange: 'custom' };
+    case 'SET_END_DATE':
+      return { ...state, endDate: action.payload, dateRange: 'custom' };
+    case 'SET_DATE_RANGE':
+      const { start, end } = getDateRangeFromSelection(action.payload);
+      return { 
+        ...state, 
+        dateRange: action.payload, 
+        startDate: start, 
+        endDate: end 
+      };
     case 'SET_SEARCH_TEXT':
       return { ...state, searchText: action.payload };
     case 'SET_LOCATION':
@@ -76,25 +134,42 @@ export const useEvents = (): UseEventsResult => {
 
   const filteredEvents = useMemo(() => {
     return events.filter(event => {
-      const eventDate = startOfDay(new Date(event.event_date));
+      const eventDate = new Date(event.event_date);
 
+      // Category filter
       if (filters.category !== 'All' && event.category !== filters.category) {
         return false;
       }
 
+      // Venue filter
       if (filters.venue !== 'All' && event.venue_name !== filters.venue) {
         return false;
       }
 
-      if (filters.startDate && isBefore(eventDate, startOfDay(filters.startDate))) {
-        return false;
+      // Date filter
+      if (filters.startDate && filters.endDate) {
+        if (!isWithinInterval(eventDate, { start: filters.startDate, end: filters.endDate })) {
+          return false;
+        }
+      } else if (filters.startDate) {
+        if (isBefore(eventDate, startOfDay(filters.startDate))) {
+          return false;
+        }
+      } else if (filters.endDate) {
+        if (isAfter(eventDate, endOfDay(filters.endDate))) {
+          return false;
+        }
       }
 
+      // Search text filter
       if (filters.searchText) {
         const searchLower = filters.searchText.toLowerCase();
         const titleLower = event.title.toLowerCase();
         const descriptionLower = (event.description || '').toLowerCase();
-        if (!titleLower.includes(searchLower) && !descriptionLower.includes(searchLower)) {
+        const venueLower = event.venue_name.toLowerCase();
+        if (!titleLower.includes(searchLower) && 
+            !descriptionLower.includes(searchLower) && 
+            !venueLower.includes(searchLower)) {
           return false;
         }
       }
