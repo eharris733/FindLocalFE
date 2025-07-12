@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, Image, TouchableOpacity, Linking, StyleSheet } from 'react-native';
 import { format } from 'date-fns';
 import type { Event } from '../types/events';
+import { colors, typography, spacing, borderRadius, shadows } from '../theme';
 
 interface EventCardProps {
   event: Event;
@@ -38,7 +39,7 @@ const EventCard: React.FC<EventCardProps> = ({ event }) => {
     <TouchableOpacity style={styles.card} onPress={handleCardPress} disabled={!event.url}>
       <View style={styles.cardContent}>
         <Image
-          source={{ uri: event.preview_image || 'https://via.placeholder.com/150' }}
+          source={{ uri: event.preview_image || 'https://via.placeholder.com/150x150/63BAAB/FFFFFF?text=Event' }}
           style={styles.image}
           resizeMode="cover"
         />
@@ -60,7 +61,7 @@ const EventCard: React.FC<EventCardProps> = ({ event }) => {
           </View>
           
           <Text style={styles.venue} numberOfLines={1}>
-            {event.venue_name}
+            📍 {event.venue_name}
           </Text>
           
           {event.category && (
@@ -70,7 +71,7 @@ const EventCard: React.FC<EventCardProps> = ({ event }) => {
           )}
           
           {event.description && (
-            <Text style={styles.description} numberOfLines={3}>
+            <Text style={styles.description} numberOfLines={2}>
               {event.description}
             </Text>
           )}
@@ -82,72 +83,72 @@ const EventCard: React.FC<EventCardProps> = ({ event }) => {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    backgroundColor: colors.background.primary,
+    borderRadius: borderRadius.lg,
+    marginBottom: spacing.md,
+    ...shadows.medium,
+    borderWidth: 1,
+    borderColor: colors.border.light,
   },
   cardContent: {
     flexDirection: 'row',
-    padding: 16,
+    padding: spacing.md,
   },
   image: {
-    width: 80,
-    height: 80,
-    borderRadius: 8,
-    marginRight: 16,
+    width: 100,
+    height: 100,
+    borderRadius: borderRadius.md,
+    marginRight: spacing.md,
+    backgroundColor: colors.gray[100],
   },
   textContent: {
     flex: 1,
   },
   title: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 8,
+    ...typography.heading4,
+    color: colors.text.primary,
+    marginBottom: spacing.sm,
   },
   metaInfo: {
     flexDirection: 'row',
-    marginBottom: 4,
+    alignItems: 'center',
+    marginBottom: spacing.sm,
   },
   date: {
-    fontSize: 14,
-    color: '#666',
-    marginRight: 12,
+    ...typography.bodySmall,
+    color: colors.primary[600],
+    fontWeight: '600',
+    marginRight: spacing.md,
   },
   time: {
-    fontSize: 14,
-    color: '#666',
+    ...typography.bodySmall,
+    color: colors.secondary[500],
+    fontWeight: '600',
   },
   venue: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 8,
+    ...typography.bodySmall,
+    color: colors.text.secondary,
+    marginBottom: spacing.sm,
+    fontStyle: 'italic',
   },
   categoryContainer: {
     alignSelf: 'flex-start',
-    backgroundColor: '#006B5E',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
-    marginBottom: 8,
+    backgroundColor: colors.accent[500],
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.full,
+    marginBottom: spacing.sm,
   },
   category: {
-    fontSize: 12,
-    color: '#fff',
+    ...typography.caption,
+    color: colors.text.inverse,
     fontWeight: '600',
+    textTransform: 'uppercase',
   },
   description: {
-    fontSize: 14,
-    color: '#666',
-    lineHeight: 20,
+    ...typography.bodySmall,
+    color: colors.text.secondary,
+    lineHeight: 18,
   },
 });
 
