@@ -21,7 +21,7 @@ const ListView: React.FC<ListViewProps> = ({ events }) => {
   }
   // 1. Sort the events array *before* mapping
   const sortedEvents = [...events].sort((a, b) => {
-    return new Date(a.date).getTime() - new Date(b.date).getTime();
+    return new Date(a.event_date).getTime() - new Date(b.event_date).getTime();
   });
 
   return (

@@ -67,7 +67,7 @@ const EventCard: React.FC<EventCardProps> = ({ event }) => {
                 maxHeight: '100%', // Ensure image doesn't overflow container
                 objectFit: 'contain', // <--- IMPORTANT: Prevents stretching, maintains aspect ratio
               }}
-              image={event.preview_image}
+              image={event.preview_image || '/placeholder-image.png'}
               alt={event.title}
             />
           </Box>
@@ -105,7 +105,7 @@ const EventCard: React.FC<EventCardProps> = ({ event }) => {
                 {event.title}
               </Typography>
               <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 0.75 }}>
-                {format(event.date, 'EEEE, MMMM do')} at {event.time? formatMilitaryTime(event.time): 'Time not specified'}
+                {format(new Date(event.event_date), 'EEEE, MMMM do')} at {event.time? formatMilitaryTime(event.time): 'Time not specified'}
               </Typography>
               <Typography
                 variant="body2"
@@ -120,7 +120,7 @@ const EventCard: React.FC<EventCardProps> = ({ event }) => {
                   flexGrow: 1, // Ensures description uses available space
                 }}
               >
-                {event.description}
+                {event.description || 'No description available'}
               </Typography>
             </CardContent>
             {/* Chips Box */}
@@ -128,8 +128,8 @@ const EventCard: React.FC<EventCardProps> = ({ event }) => {
               {event.category && (
                 <Chip label={event.category} color="primary" size="small" />
               )}
-              {event.venue && (
-                <Chip label={event.venue} color="secondary" size="small" />
+              {event.venue_name && (
+                <Chip label={event.venue_name} color="secondary" size="small" />
               )}
             </Box>
           </Box>

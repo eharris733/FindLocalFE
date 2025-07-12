@@ -37,23 +37,29 @@ const CalendarView: React.FC<CalendarViewProps> = ({ events }) => {
 
   const rbcEvents: RBCEvent[] = useMemo(() => {
     return events.map(event => {
-      // Assuming event.date is a Date object or valid date string
-      const eventDate = new Date(event.date);
+      // Use event_date instead of date
+      const eventDate = new Date(event.event_date);
       
       // Parse time - adjust this according to your actual time format
       let startTime: Date;
       try {
-        // Try to parse time like "7:30pm" or similar
-        const timeStr = event.time.replace(/\s/g, ''); // Remove spaces
-        const isPM = /pm$/i.test(timeStr);
-        let hours = parseInt(timeStr.replace(/[^0-9:]/g, '').split(':')[0]);
-        const minutes = parseInt(timeStr.replace(/[^0-9:]/g, '').split(':')[1] || '0');
-        
-        if (isPM && hours < 12) hours += 12;
-        if (!isPM && hours === 12) hours = 0;
-        
-        startTime = new Date(eventDate);
-        startTime.setHours(hours, minutes, 0, 0);
+        if (event.time) {
+          // Try to parse time like "7:30pm" or similar
+          const timeStr = event.time.replace(/\s/g, ''); // Remove spaces
+          const isPM = /pm$/i.test(timeStr);
+          let hours = parseInt(timeStr.replace(/[^0-9:]/g, '').split(':')[0]);
+          const minutes = parseInt(timeStr.replace(/[^0-9:]/g, '').split(':')[1] || '0');
+          
+          if (isPM && hours < 12) hours += 12;
+          if (!isPM && hours === 12) hours = 0;
+          
+          startTime = new Date(eventDate);
+          startTime.setHours(hours, minutes, 0, 0);
+        } else {
+          // No time specified, default to 7:00 PM
+          startTime = new Date(eventDate);
+          startTime.setHours(19, 0, 0, 0);
+        }
       } catch (e) {
         // Fallback if parsing fails
         startTime = new Date(eventDate);

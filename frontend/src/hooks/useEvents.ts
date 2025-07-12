@@ -72,7 +72,7 @@ export const useEvents = (): UseEventsResult => {
     const locations = new Set(['All']);
     events.forEach(event => {
       if (event.category) categories.add(event.category);
-      if (event.venue) locations.add(event.venue);
+      if (event.venue_name) locations.add(event.venue_name);
     });
     return {
       availableCategories: Array.from(categories).sort(),
@@ -82,13 +82,13 @@ export const useEvents = (): UseEventsResult => {
 
   const filteredEvents = useMemo(() => {
     return events.filter(event => {
-      const eventDate = startOfDay(event.date);
+      const eventDate = startOfDay(new Date(event.event_date));
 
       if (filters.category !== 'All' && event.category !== filters.category) {
         return false;
       }
 
-      if (filters.venue !== 'All' && event.venue !== filters.venue) {
+      if (filters.venue !== 'All' && event.venue_name !== filters.venue) {
         return false;
       }
 
@@ -99,7 +99,7 @@ export const useEvents = (): UseEventsResult => {
       if (filters.searchText) {
         const searchLower = filters.searchText.toLowerCase();
         const titleLower = event.title.toLowerCase();
-        const descriptionLower = event.description.toLowerCase();
+        const descriptionLower = (event.description || '').toLowerCase();
         if (!titleLower.includes(searchLower) && !descriptionLower.includes(searchLower)) {
           return false;
         }
