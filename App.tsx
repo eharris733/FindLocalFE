@@ -65,7 +65,6 @@ export default function App() {
             style={styles.logo}
             resizeMode="contain"
           />
-          <Text style={styles.subtitle}>Discover events near you</Text>
         </View>
 
         <FilterControls
@@ -102,8 +101,8 @@ const styles = StyleSheet.create({
     ...shadows.small,
   },
   logo: {
-    height: 60,
-    width: 200,
+    height: 120,
+    width: 400,
     marginBottom: spacing.sm,
   },
   title: {

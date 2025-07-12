@@ -150,7 +150,7 @@ const styles = StyleSheet.create({
     ...shadows.medium,
   },
   markerSelected: {
-    backgroundColor: colors.orange[500],
+    backgroundColor: colors.background.primary,
     transform: [{ scale: 1.2 }],
   },
   markerText: {
