@@ -4,17 +4,12 @@ import { supabase } from '../supabase';
 
 export async function getEvents(): Promise<Event[]> {
     try {
-      console.log('Attempting to fetch events from Supabase...');
-      console.log('Supabase URL:', import.meta.env.VITE_SUPABASE_URL);
-      console.log('Schema:', 'brooklyn'); // Since you're using brooklyn schema
       
       const { data, error } = await supabase
         .from('events_gold')
         .select('*')
         .order('event_date', { ascending: true });
   
-      console.log('Supabase response - data:', data);
-      console.log('Supabase response - error:', error);
       
       if (error) {
         console.error('Error fetching events from Supabase:', error);
