@@ -6,7 +6,8 @@ import {
   ActivityIndicator, 
   StyleSheet, 
   SafeAreaView,
-  StatusBar 
+  StatusBar,
+  Image
 } from 'react-native';
 import { ThemeProvider } from './src/context/ThemeContext';
 import { useEvents } from './src/hooks/useEvents';
@@ -59,7 +60,11 @@ export default function App() {
         <StatusBar barStyle="dark-content" backgroundColor={colors.background.primary} />
         
         <View style={styles.header}>
-          <Text style={styles.title}>Find Local</Text>
+          <Image 
+            source={require('./assets/logo.png')} 
+            style={styles.logo}
+            resizeMode="contain"
+          />
           <Text style={styles.subtitle}>Discover events near you</Text>
         </View>
 
@@ -89,12 +94,17 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    paddingVertical: spacing.xl,
+    paddingVertical: spacing.lg,
     paddingHorizontal: spacing.md,
     backgroundColor: colors.background.primary,
     borderBottomWidth: 1,
     borderBottomColor: colors.border.light,
     ...shadows.small,
+  },
+  logo: {
+    height: 60,
+    width: 200,
+    marginBottom: spacing.sm,
   },
   title: {
     ...typography.heading1,
