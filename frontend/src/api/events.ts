@@ -6,9 +6,9 @@ import { supabase } from '../supabase';
 export async function getEvents(): Promise<Event[]> {
     try {
       const { data, error } = await supabase
-        .from('events')
+        .from('events_gold')
         .select('*')
-        .order('date', { ascending: true });
+        .order('event_date', { ascending: true });
   
       if (error) {
         console.error('Error fetching events from Supabase:', error);

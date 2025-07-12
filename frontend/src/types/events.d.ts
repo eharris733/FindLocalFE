@@ -1,13 +1,16 @@
 export interface Event {
-    title: string;
-    date: string;
-    time: string;
-    description: string;
-    preview_image: string;
-    category: string;
     id: string;
-    venue: string;
+    created_at: string;
+    title: string;
+    event_date: string;
+    time: string | null;
+    venue_name: string;
+    category: string;
     url: string;
+    preview_image: string | null;
+    description: string | null;
+    venue_id: number | null;
+    clean_title: string | null;
   }
 
 export type ViewType = 'list' | 'calendar';
