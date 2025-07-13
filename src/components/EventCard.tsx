@@ -6,6 +6,7 @@ import { colors, typography, spacing, borderRadius, shadows } from '../theme';
 
 interface EventCardProps {
   event: Event;
+  onPress?: (event: Event) => void; // Add onPress prop for venue modal
 }
 
 function formatMilitaryTime(time: string): string {
@@ -28,18 +29,25 @@ function formatMilitaryTime(time: string): string {
   return `${formattedHours}:${formattedMinutes} ${isPM ? 'PM' : 'AM'}`;
 }
 
-const EventCard: React.FC<EventCardProps> = ({ event }) => {
+const EventCard: React.FC<EventCardProps> = ({ event, onPress }) => {
   const handleCardPress = () => {
-    if (event.url) {
-      Linking.openURL(event.url);
+    if (onPress) {
+      onPress(event); // Show venue modal
+    } else if (event.url) {
+      Linking.openURL(event.url); // Fallback to opening event URL
     }
   };
 
+  // Determine the image source
+  const imageSource = event.preview_image 
+    ? { uri: event.preview_image }
+    : require('../../assets/music.png'); // Use require for local assets
+
   return (
-    <TouchableOpacity style={styles.card} onPress={handleCardPress} disabled={!event.url}>
+    <TouchableOpacity style={styles.card} onPress={handleCardPress}>
       <View style={styles.cardContent}>
         <Image
-          source={{ uri: event.preview_image || 'https://via.placeholder.com/150x150/63BAAB/FFFFFF?text=Event' }}
+          source={imageSource}
           style={styles.image}
           resizeMode="cover"
         />
@@ -60,9 +68,15 @@ const EventCard: React.FC<EventCardProps> = ({ event }) => {
             )}
           </View>
           
-          <Text style={styles.venue} numberOfLines={1}>
-            📍 {event.venue_name}
-          </Text>
+          <TouchableOpacity 
+            style={styles.venueContainer}
+            onPress={handleCardPress}
+          >
+            <Text style={styles.venue} numberOfLines={1}>
+              📍 {event.venue_name}
+            </Text>
+            <Text style={styles.venueHint}>Tap for venue details</Text>
+          </TouchableOpacity>
           
           {event.category && (
             <View style={styles.categoryContainer}>
@@ -125,11 +139,19 @@ const styles = StyleSheet.create({
     color: colors.secondary[500],
     fontWeight: '600',
   },
+  venueContainer: {
+    marginBottom: spacing.sm,
+  },
   venue: {
     ...typography.bodySmall,
     color: colors.text.secondary,
-    marginBottom: spacing.sm,
     fontStyle: 'italic',
+  },
+  venueHint: {
+    ...typography.caption,
+    color: colors.primary[600],
+    fontStyle: 'italic',
+    marginTop: 2,
   },
   categoryContainer: {
     alignSelf: 'flex-start',
