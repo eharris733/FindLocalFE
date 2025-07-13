@@ -1,12 +1,14 @@
 import React from 'react';
-import { View, Text, Image, TouchableOpacity, Linking, StyleSheet } from 'react-native';
+import { View, Image, TouchableOpacity, Linking, StyleSheet } from 'react-native';
 import { format } from 'date-fns';
 import type { Event } from '../types/events';
-import { colors, typography, spacing, borderRadius, shadows } from '../theme';
+import { useTheme } from '../context/ThemeContext';
+import { Text, Card } from './ui';
 
 interface EventCardProps {
   event: Event;
-  onPress?: (event: Event) => void; // Add onPress prop for venue modal
+  onPress?: (event: Event) => void;
+  variant?: 'default' | 'compact';
 }
 
 function formatMilitaryTime(time: string): string {
@@ -29,148 +31,237 @@ function formatMilitaryTime(time: string): string {
   return `${formattedHours}:${formattedMinutes} ${isPM ? 'PM' : 'AM'}`;
 }
 
-const EventCard: React.FC<EventCardProps> = ({ event, onPress }) => {
+const EventCard: React.FC<EventCardProps> = ({ event, onPress, variant = 'default' }) => {
+  const { theme } = useTheme();
+  
   const handleCardPress = () => {
     if (onPress) {
-      onPress(event); // Show venue modal
+      onPress(event);
     } else if (event.url) {
-      Linking.openURL(event.url); // Fallback to opening event URL
+      Linking.openURL(event.url);
     }
   };
 
-  // Determine the image source
   const imageSource = event.preview_image 
     ? { uri: event.preview_image }
-    : require('../../assets/music.png'); // Use require for local assets
+    : require('../../assets/music.png');
 
-  return (
-    <TouchableOpacity style={styles.card} onPress={handleCardPress}>
-      <View style={styles.cardContent}>
-        <Image
-          source={imageSource}
-          style={styles.image}
-          resizeMode="cover"
-        />
-        
-        <View style={styles.textContent}>
-          <Text style={styles.title} numberOfLines={2}>
-            {event.title}
-          </Text>
+  if (variant === 'compact') {
+    return (
+      <TouchableOpacity onPress={handleCardPress}>
+        <View style={[styles.compactCard, { 
+          backgroundColor: theme.colors.background.primary,
+          borderBottomColor: theme.colors.border.light,
+        }]}>
+          <Image
+            source={imageSource}
+            style={[styles.compactImage, { backgroundColor: theme.colors.gray[100] }]}
+            resizeMode="cover"
+          />
           
-          <View style={styles.metaInfo}>
-            <Text style={styles.date}>
-              {format(new Date(event.event_date), 'MMM dd, yyyy')}
+          <View style={styles.compactContent}>
+            <Text variant="body1" numberOfLines={2} style={styles.compactTitle}>
+              {event.title}
             </Text>
-            {event.time && (
-              <Text style={styles.time}>
-                {formatMilitaryTime(event.time)}
+            
+            <Text variant="caption" color="secondary" numberOfLines={1} style={styles.compactVenue}>
+              📍 {event.venue_name}
+            </Text>
+            
+            <View style={styles.compactMeta}>
+              <Text variant="caption" style={[styles.compactDate, { color: theme.colors.primary[600] }]}>
+                {format(new Date(event.event_date), 'MMM dd')}
+              </Text>
+              {event.time && (
+                <Text variant="caption" style={[styles.compactTime, { color: theme.colors.secondary[500] }]}>
+                  {formatMilitaryTime(event.time)}
+                </Text>
+              )}
+              {event.category && (
+                <View style={[styles.compactCategory, { backgroundColor: theme.colors.accent[500] }]}>
+                  <Text variant="caption" color="inverse" style={styles.compactCategoryText}>
+                    {event.category}
+                  </Text>
+                </View>
+              )}
+            </View>
+          </View>
+        </View>
+      </TouchableOpacity>
+    );
+  }
+
+  // Default variant (existing layout)
+  return (
+    <TouchableOpacity onPress={handleCardPress}>
+      <Card variant="elevated" style={styles.card}>
+        <View style={styles.cardContent}>
+          <Image
+            source={imageSource}
+            style={[styles.image, { backgroundColor: theme.colors.gray[100] }]}
+            resizeMode="cover"
+          />
+          
+          <View style={styles.textContent}>
+            <Text variant="h5" numberOfLines={2} style={styles.title}>
+              {event.title}
+            </Text>
+            
+            <View style={styles.metaInfo}>
+              <Text 
+                variant="body2" 
+                style={[styles.date, { color: theme.colors.primary[600] }]}
+              >
+                {format(new Date(event.event_date), 'MMM dd, yyyy')}
+              </Text>
+              {event.time && (
+                <Text 
+                  variant="body2" 
+                  style={[styles.time, { color: theme.colors.secondary[500] }]}
+                >
+                  {formatMilitaryTime(event.time)}
+                </Text>
+              )}
+            </View>
+            
+            <TouchableOpacity 
+              style={styles.venueContainer}
+              onPress={handleCardPress}
+            >
+              <Text variant="body2" color="secondary" numberOfLines={1} style={styles.venue}>
+                📍 {event.venue_name}
+              </Text>
+              <Text 
+                variant="caption" 
+                style={[styles.venueHint, { color: theme.colors.primary[600] }]}
+              >
+                Tap for venue details
+              </Text>
+            </TouchableOpacity>
+            
+            {event.category && (
+              <View style={[styles.categoryContainer, { backgroundColor: theme.colors.accent[500] }]}>
+                <Text variant="caption" color="inverse" style={styles.category}>
+                  {event.category}
+                </Text>
+              </View>
+            )}
+            
+            {event.description && (
+              <Text variant="body2" color="secondary" numberOfLines={2} style={styles.description}>
+                {event.description}
               </Text>
             )}
           </View>
-          
-          <TouchableOpacity 
-            style={styles.venueContainer}
-            onPress={handleCardPress}
-          >
-            <Text style={styles.venue} numberOfLines={1}>
-              📍 {event.venue_name}
-            </Text>
-            <Text style={styles.venueHint}>Tap for venue details</Text>
-          </TouchableOpacity>
-          
-          {event.category && (
-            <View style={styles.categoryContainer}>
-              <Text style={styles.category}>{event.category}</Text>
-            </View>
-          )}
-          
-          {event.description && (
-            <Text style={styles.description} numberOfLines={2}>
-              {event.description}
-            </Text>
-          )}
         </View>
-      </View>
+      </Card>
     </TouchableOpacity>
   );
 };
 
 const styles = StyleSheet.create({
+  // Default variant styles
   card: {
-    backgroundColor: colors.background.primary,
-    borderRadius: borderRadius.lg,
-    marginBottom: spacing.md,
-    ...shadows.medium,
-    borderWidth: 1,
-    borderColor: colors.border.light,
+    marginBottom: 16,
   },
   cardContent: {
     flexDirection: 'row',
-    padding: spacing.md,
   },
   image: {
     width: 100,
     height: 100,
-    borderRadius: borderRadius.md,
-    marginRight: spacing.md,
-    backgroundColor: colors.gray[100],
+    borderRadius: 8,
+    marginRight: 16,
   },
   textContent: {
     flex: 1,
   },
   title: {
-    ...typography.heading4,
-    color: colors.text.primary,
-    marginBottom: spacing.sm,
+    marginBottom: 8,
   },
   metaInfo: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: spacing.sm,
+    marginBottom: 8,
   },
   date: {
-    ...typography.bodySmall,
-    color: colors.primary[600],
     fontWeight: '600',
-    marginRight: spacing.md,
+    marginRight: 16,
   },
   time: {
-    ...typography.bodySmall,
-    color: colors.secondary[500],
     fontWeight: '600',
   },
   venueContainer: {
-    marginBottom: spacing.sm,
+    marginBottom: 8,
   },
   venue: {
-    ...typography.bodySmall,
-    color: colors.text.secondary,
     fontStyle: 'italic',
   },
   venueHint: {
-    ...typography.caption,
-    color: colors.primary[600],
     fontStyle: 'italic',
     marginTop: 2,
   },
   categoryContainer: {
     alignSelf: 'flex-start',
-    backgroundColor: colors.accent[500],
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: borderRadius.full,
-    marginBottom: spacing.sm,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginBottom: 8,
   },
   category: {
-    ...typography.caption,
-    color: colors.text.inverse,
     fontWeight: '600',
     textTransform: 'uppercase',
   },
   description: {
-    ...typography.bodySmall,
-    color: colors.text.secondary,
     lineHeight: 18,
+  },
+  
+  // Compact variant styles
+  compactCard: {
+    flexDirection: 'row',
+    padding: 12,
+    borderBottomWidth: 1,
+  },
+  compactImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 6,
+    marginRight: 12,
+  },
+  compactContent: {
+    flex: 1,
+    justifyContent: 'space-between',
+  },
+  compactTitle: {
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  compactVenue: {
+    marginBottom: 4,
+  },
+  compactMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+  },
+  compactDate: {
+    fontWeight: '600',
+    marginRight: 8,
+  },
+  compactTime: {
+    fontWeight: '500',
+    marginRight: 8,
+  },
+  compactCategory: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 8,
+    marginTop: 2,
+  },
+  compactCategoryText: {
+    fontSize: 10,
+    fontWeight: '600',
+    textTransform: 'uppercase',
   },
 });
 

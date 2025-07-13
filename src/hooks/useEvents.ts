@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useReducer } from 'react';
-import type { Event, EventFilters, FilterAction } from '../types/events';
+import type { Event, FilterState, FilterAction } from '../types/events';
 import { getEvents } from '../api/events';
 import { 
   startOfDay, 
@@ -15,16 +15,16 @@ import {
   isSameDay
 } from 'date-fns';
 
-const initialFilterState: EventFilters = {
-  category: 'All',
+const initialFilterState: FilterState = {
+  category: 'all',
   startDate: null,
   endDate: null,
   dateRange: 'all',
   searchText: '',
-  venue: 'All',
+  location: 'all',
 };
 
-const getDateRangeFromSelection = (dateRange: EventFilters['dateRange']): { start: Date | null; end: Date | null } => {
+const getDateRangeFromSelection = (dateRange: FilterState['dateRange']): { start: Date | null; end: Date | null } => {
   const today = new Date();
   
   switch (dateRange) {
@@ -58,7 +58,7 @@ const getDateRangeFromSelection = (dateRange: EventFilters['dateRange']): { star
   }
 };
 
-const filterReducer = (state: EventFilters, action: FilterAction): EventFilters => {
+const filterReducer = (state: FilterState, action: FilterAction): FilterState => {
   switch (action.type) {
     case 'SET_CATEGORY':
       return { ...state, category: action.payload };
@@ -70,14 +70,15 @@ const filterReducer = (state: EventFilters, action: FilterAction): EventFilters 
       const { start, end } = getDateRangeFromSelection(action.payload);
       return { 
         ...state, 
-        dateRange: action.payload, 
-        startDate: start, 
-        endDate: end 
+        dateRange: action.payload,
+        startDate: start,
+        endDate: end
       };
     case 'SET_SEARCH_TEXT':
       return { ...state, searchText: action.payload };
     case 'SET_LOCATION':
-      return { ...state, venue: action.payload };
+      return { ...state, location: action.payload };
+    case 'CLEAR_ALL':
     case 'RESET_FILTERS':
       return initialFilterState;
     default:
@@ -90,7 +91,7 @@ interface UseEventsResult {
   loading: boolean;
   error: string | null;
   filteredEvents: Event[];
-  filters: EventFilters;
+  filters: FilterState;
   dispatchFilters: React.Dispatch<FilterAction>;
   availableCategories: string[];
   availableLocations: string[];
@@ -120,15 +121,23 @@ export const useEvents = (): UseEventsResult => {
   }, []);
 
   const { availableCategories, availableLocations } = useMemo(() => {
-    const categories = new Set(['All']);
-    const locations = new Set(['All']);
+    const categories = new Set(['all']);
+    const locations = new Set(['all']);
     events.forEach(event => {
       if (event.category) categories.add(event.category);
       if (event.venue_name) locations.add(event.venue_name);
     });
     return {
-      availableCategories: Array.from(categories).sort(),
-      availableLocations: Array.from(locations).sort(),
+      availableCategories: Array.from(categories).sort((a, b) => {
+        if (a === 'all') return -1;
+        if (b === 'all') return 1;
+        return a.localeCompare(b);
+      }),
+      availableLocations: Array.from(locations).sort((a, b) => {
+        if (a === 'all') return -1;
+        if (b === 'all') return 1;
+        return a.localeCompare(b);
+      }),
     };
   }, [events]);
 
@@ -137,12 +146,12 @@ export const useEvents = (): UseEventsResult => {
       const eventDate = new Date(event.event_date);
 
       // Category filter
-      if (filters.category !== 'All' && event.category !== filters.category) {
+      if (filters.category !== 'all' && event.category !== filters.category) {
         return false;
       }
 
-      // Venue filter
-      if (filters.venue !== 'All' && event.venue_name !== filters.venue) {
+      // Location filter (venue)
+      if (filters.location !== 'all' && event.venue_name !== filters.location) {
         return false;
       }
 
@@ -189,3 +198,5 @@ export const useEvents = (): UseEventsResult => {
     availableLocations,
   };
 };
+
+export type { FilterState, FilterAction };

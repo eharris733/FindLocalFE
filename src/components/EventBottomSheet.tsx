@@ -1,7 +1,6 @@
 import React from 'react';
 import {
   View,
-  Text,
   Image,
   TouchableOpacity,
   Linking,
@@ -11,7 +10,8 @@ import {
 } from 'react-native';
 import { format } from 'date-fns';
 import type { Event } from '../types/events';
-import { colors, typography, spacing, borderRadius, shadows } from '../theme';
+import { useTheme } from '../context/ThemeContext';
+import { Text } from './ui';
 
 interface EventBottomSheetProps {
   event: Event | null;
@@ -41,6 +41,8 @@ function formatMilitaryTime(time: string): string {
 }
 
 const EventBottomSheet: React.FC<EventBottomSheetProps> = ({ event, onClose }) => {
+  const { theme } = useTheme();
+
   if (!event) return null;
 
   const handleEventPress = () => {
@@ -53,8 +55,17 @@ const EventBottomSheet: React.FC<EventBottomSheetProps> = ({ event, onClose }) =
     <View style={styles.overlay}>
       <TouchableOpacity style={styles.backdrop} onPress={onClose} />
       
-      <View style={styles.bottomSheet}>
-        <View style={styles.handle} />
+      <View style={[styles.bottomSheet, {
+        backgroundColor: theme.colors.background.primary,
+        borderTopLeftRadius: theme.borderRadius.xl,
+        borderTopRightRadius: theme.borderRadius.xl,
+        ...theme.shadows.large,
+      }]}>
+        <View style={[styles.handle, {
+          backgroundColor: theme.colors.gray[300],
+          marginTop: theme.spacing.sm,
+          marginBottom: theme.spacing.md,
+        }]} />
         
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           <View style={styles.header}>
@@ -62,60 +73,134 @@ const EventBottomSheet: React.FC<EventBottomSheetProps> = ({ event, onClose }) =
               source={{ 
                 uri: event.preview_image || 'https://via.placeholder.com/300x200/63BAAB/FFFFFF?text=Event' 
               }}
-              style={styles.image}
+              style={[styles.image, { backgroundColor: theme.colors.gray[100] }]}
               resizeMode="cover"
             />
             
-            <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-              <Text style={styles.closeButtonText}>✕</Text>
+            <TouchableOpacity 
+              style={[styles.closeButton, {
+                backgroundColor: theme.colors.background.primary,
+                borderRadius: theme.borderRadius.full,
+                ...theme.shadows.small,
+                top: theme.spacing.md,
+                right: theme.spacing.md,
+              }]} 
+              onPress={onClose}
+            >
+              <Text variant="body1" style={{ color: theme.colors.text.secondary }}>
+                ✕
+              </Text>
             </TouchableOpacity>
           </View>
 
-          <View style={styles.details}>
-            <Text style={styles.title}>{event.title}</Text>
+          <View style={[styles.details, { padding: theme.spacing.md }]}>
+            <Text variant="h2" style={[styles.title, { 
+              color: theme.colors.text.primary,
+              marginBottom: theme.spacing.md,
+            }]}>
+              {event.title}
+            </Text>
             
-            <View style={styles.metaRow}>
-              <View style={styles.metaItem}>
-                <Text style={styles.metaLabel}>📅 Date</Text>
-                <Text style={styles.metaValue}>
+            <View style={[styles.metaRow, { marginBottom: theme.spacing.md }]}>
+              <View style={[styles.metaItem, { marginRight: theme.spacing.sm }]}>
+                <Text variant="caption" style={{
+                  color: theme.colors.text.tertiary,
+                  textTransform: 'uppercase',
+                  marginBottom: theme.spacing.xs,
+                }}>
+                  📅 Date
+                </Text>
+                <Text variant="body2" style={{
+                  color: theme.colors.primary[600],
+                  fontWeight: '600',
+                }}>
                   {format(new Date(event.event_date), 'EEEE, MMM dd, yyyy')}
                 </Text>
               </View>
               
               {event.time && (
                 <View style={styles.metaItem}>
-                  <Text style={styles.metaLabel}>🕐 Time</Text>
-                  <Text style={styles.metaValue}>
+                  <Text variant="caption" style={{
+                    color: theme.colors.text.tertiary,
+                    textTransform: 'uppercase',
+                    marginBottom: theme.spacing.xs,
+                  }}>
+                    🕐 Time
+                  </Text>
+                  <Text variant="body2" style={{
+                    color: theme.colors.primary[600],
+                    fontWeight: '600',
+                  }}>
                     {formatMilitaryTime(event.time)}
                   </Text>
                 </View>
               )}
             </View>
 
-            <View style={styles.venueContainer}>
-              <Text style={styles.metaLabel}>📍 Venue</Text>
-              <Text style={styles.venue}>{event.venue_name}</Text>
+            <View style={[styles.venueContainer, { marginBottom: theme.spacing.md }]}>
+              <Text variant="caption" style={{
+                color: theme.colors.text.tertiary,
+                textTransform: 'uppercase',
+                marginBottom: theme.spacing.xs,
+              }}>
+                📍 Venue
+              </Text>
+              <Text variant="body1" style={{
+                color: theme.colors.text.secondary,
+                fontStyle: 'italic',
+              }}>
+                {event.venue_name}
+              </Text>
             </View>
 
             {event.category && (
-              <View style={styles.categoryContainer}>
-                <Text style={styles.category}>{event.category}</Text>
+              <View style={[styles.categoryContainer, {
+                backgroundColor: theme.colors.accent[500],
+                paddingHorizontal: theme.spacing.md,
+                paddingVertical: theme.spacing.xs,
+                borderRadius: theme.borderRadius.full,
+                marginBottom: theme.spacing.md,
+              }]}>
+                <Text variant="caption" style={{
+                  color: theme.colors.text.inverse,
+                  fontWeight: '600',
+                  textTransform: 'uppercase',
+                }}>
+                  {event.category}
+                </Text>
               </View>
             )}
 
             {event.description && (
-              <View style={styles.descriptionContainer}>
-                <Text style={styles.descriptionLabel}>About this event</Text>
-                <Text style={styles.description}>{event.description}</Text>
+              <View style={[styles.descriptionContainer, { marginBottom: theme.spacing.xl }]}>
+                <Text variant="h4" style={{
+                  color: theme.colors.text.primary,
+                  marginBottom: theme.spacing.sm,
+                }}>
+                  About this event
+                </Text>
+                <Text variant="body1" style={{
+                  color: theme.colors.text.secondary,
+                  lineHeight: 24,
+                }}>
+                  {event.description}
+                </Text>
               </View>
             )}
 
             <TouchableOpacity
-              style={styles.actionButton}
+              style={[styles.actionButton, {
+                backgroundColor: theme.colors.secondary[500],
+                paddingVertical: theme.spacing.md,
+                paddingHorizontal: theme.spacing.lg,
+                borderRadius: theme.borderRadius.lg,
+                marginBottom: theme.spacing.lg,
+                ...theme.shadows.small,
+              }]}
               onPress={handleEventPress}
               disabled={!event.url}
             >
-              <Text style={styles.actionButtonText}>
+              <Text variant="button" style={{ color: theme.colors.text.inverse }}>
                 {event.url ? '🎫 View Event Details' : 'No Link Available'}
               </Text>
             </TouchableOpacity>
@@ -140,20 +225,13 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   bottomSheet: {
-    backgroundColor: colors.background.primary,
-    borderTopLeftRadius: borderRadius.xl,
-    borderTopRightRadius: borderRadius.xl,
     maxHeight: height * 0.75,
-    ...shadows.large,
   },
   handle: {
     width: 40,
     height: 4,
-    backgroundColor: colors.gray[300],
     borderRadius: 2,
     alignSelf: 'center',
-    marginTop: spacing.sm,
-    marginBottom: spacing.md,
   },
   content: {
     flex: 1,
@@ -164,99 +242,30 @@ const styles = StyleSheet.create({
   image: {
     width: '100%',
     height: 200,
-    backgroundColor: colors.gray[100],
   },
   closeButton: {
     position: 'absolute',
-    top: spacing.md,
-    right: spacing.md,
-    backgroundColor: colors.background.primary,
-    borderRadius: borderRadius.full,
     width: 32,
     height: 32,
     alignItems: 'center',
     justifyContent: 'center',
-    ...shadows.small,
   },
-  closeButtonText: {
-    ...typography.body,
-    color: colors.text.secondary,
-  },
-  details: {
-    padding: spacing.md,
-  },
-  title: {
-    ...typography.heading2,
-    color: colors.text.primary,
-    marginBottom: spacing.md,
-  },
+  details: {},
+  title: {},
   metaRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: spacing.md,
   },
   metaItem: {
     flex: 1,
-    marginRight: spacing.sm,
   },
-  metaLabel: {
-    ...typography.caption,
-    color: colors.text.tertiary,
-    textTransform: 'uppercase',
-    marginBottom: spacing.xs,
-  },
-  metaValue: {
-    ...typography.bodySmall,
-    color: colors.primary[600],
-    fontWeight: '600',
-  },
-  venueContainer: {
-    marginBottom: spacing.md,
-  },
-  venue: {
-    ...typography.body,
-    color: colors.text.secondary,
-    fontStyle: 'italic',
-  },
+  venueContainer: {},
   categoryContainer: {
     alignSelf: 'flex-start',
-    backgroundColor: colors.accent[500],
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    borderRadius: borderRadius.full,
-    marginBottom: spacing.md,
   },
-  category: {
-    ...typography.caption,
-    color: colors.text.inverse,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-  },
-  descriptionContainer: {
-    marginBottom: spacing.xl,
-  },
-  descriptionLabel: {
-    ...typography.heading4,
-    color: colors.text.primary,
-    marginBottom: spacing.sm,
-  },
-  description: {
-    ...typography.body,
-    color: colors.text.secondary,
-    lineHeight: 24,
-  },
+  descriptionContainer: {},
   actionButton: {
-    backgroundColor: colors.secondary[500],
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
-    borderRadius: borderRadius.lg,
     alignItems: 'center',
-    marginBottom: spacing.lg,
-    ...shadows.small,
-  },
-  actionButtonText: {
-    ...typography.button,
-    color: colors.text.inverse,
   },
 });
 

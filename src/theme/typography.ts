@@ -5,6 +5,7 @@ export const typography = {
   fontFamily: {
     regular: 'System', // Default system font
     medium: 'System', // You can add custom fonts later
+    semibold: 'System',
     bold: 'System',
     light: 'System',
   },
@@ -23,6 +24,14 @@ export const typography = {
 
   // Line heights
   lineHeight: {
+    xs: 16,
+    sm: 20,
+    base: 24,
+    lg: 28,
+    xl: 32,
+    '2xl': 36,
+    '3xl': 40,
+    '4xl': 44,
     tight: 1.2,
     normal: 1.5,
     relaxed: 1.75,

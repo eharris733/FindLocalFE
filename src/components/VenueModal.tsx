@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
   View,
-  Text,
   Image,
   TouchableOpacity,
   Linking,
@@ -14,7 +13,8 @@ import {
 import type { Venue } from '../types/venues';
 import type { Event } from '../types/events';
 import { getVenueByName, getVenueById } from '../api/venues';
-import { colors, typography, spacing, borderRadius, shadows } from '../theme';
+import { useTheme } from '../context/ThemeContext';
+import { Text } from './ui';
 
 interface VenueModalProps {
   visible: boolean;
@@ -25,6 +25,7 @@ interface VenueModalProps {
 const { width, height } = Dimensions.get('window');
 
 const VenueModal: React.FC<VenueModalProps> = ({ visible, event, onClose }) => {
+  const { theme } = useTheme();
   const [venue, setVenue] = useState<Venue | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -96,28 +97,49 @@ const VenueModal: React.FC<VenueModalProps> = ({ visible, event, onClose }) => {
       presentationStyle="pageSheet"
       onRequestClose={onClose}
     >
-      <View style={styles.container}>
+      <View style={[styles.container, { backgroundColor: theme.colors.background.primary }]}>
         {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-            <Text style={styles.closeButtonText}>✕</Text>
+        <View style={[styles.header, {
+          borderBottomColor: theme.colors.border.light,
+          backgroundColor: theme.colors.background.primary,
+          ...theme.shadows.small,
+        }]}>
+          <TouchableOpacity 
+            style={[styles.closeButton, { backgroundColor: theme.colors.gray[100] }]} 
+            onPress={onClose}
+          >
+            <Text variant="body1" style={{ color: theme.colors.text.secondary, fontWeight: '600' }}>
+              ✕
+            </Text>
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Venue Details</Text>
+          <Text variant="h3" style={[styles.headerTitle, { color: theme.colors.text.primary }]}>
+            Venue Details
+          </Text>
           <View style={styles.headerSpacer} />
         </View>
 
         <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
           {loading && (
             <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color={colors.primary[500]} />
-              <Text style={styles.loadingText}>Loading venue information...</Text>
+              <ActivityIndicator size="large" color={theme.colors.primary[500]} />
+              <Text variant="body1" style={[styles.loadingText, { 
+                color: theme.colors.text.secondary,
+                marginTop: theme.spacing.md,
+              }]}>
+                Loading venue information...
+              </Text>
             </View>
           )}
 
           {error && (
             <View style={styles.errorContainer}>
-              <Text style={styles.errorText}>😔 {error}</Text>
-              <Text style={styles.errorSubtext}>
+              <Text variant="h3" style={[styles.errorText, { 
+                color: theme.colors.text.secondary,
+                marginBottom: theme.spacing.sm,
+              }]}>
+                😔 {error}
+              </Text>
+              <Text variant="body1" style={{ color: theme.colors.text.tertiary }}>
                 We couldn't find detailed information for this venue.
               </Text>
             </View>
@@ -131,48 +153,116 @@ const VenueModal: React.FC<VenueModalProps> = ({ visible, event, onClose }) => {
                   source={{
                     uri: venue.image_url || 'https://via.placeholder.com/400x200/63BAAB/FFFFFF?text=Venue'
                   }}
-                  style={styles.venueImage}
+                  style={[styles.venueImage, { backgroundColor: theme.colors.gray[100] }]}
                   resizeMode="cover"
                 />
                 
                 {/* Venue Type Badge */}
-                <View style={styles.typeBadge}>
-                  <Text style={styles.typeBadgeText}>{venue.venue_type}</Text>
+                <View style={[styles.typeBadge, {
+                  backgroundColor: theme.colors.primary[500],
+                  paddingHorizontal: theme.spacing.md,
+                  paddingVertical: theme.spacing.xs,
+                  borderRadius: theme.borderRadius.full,
+                  ...theme.shadows.small,
+                }]}>
+                  <Text variant="caption" style={{
+                    color: theme.colors.text.inverse,
+                    fontWeight: '600',
+                    textTransform: 'uppercase',
+                  }}>
+                    {venue.venue_type}
+                  </Text>
                 </View>
               </View>
 
               {/* Venue Info */}
-              <View style={styles.venueInfo}>
-                <Text style={styles.venueName}>{venue.name}</Text>
+              <View style={[styles.venueInfo, { padding: theme.spacing.md }]}>
+                <Text variant="h1" style={[styles.venueName, { 
+                  color: theme.colors.text.primary,
+                  marginBottom: theme.spacing.md,
+                }]}>
+                  {venue.name}
+                </Text>
                 
                 {venue.address && (
                   <TouchableOpacity 
-                    style={styles.addressContainer}
+                    style={[styles.addressContainer, {
+                      backgroundColor: theme.colors.background.secondary,
+                      padding: theme.spacing.md,
+                      borderRadius: theme.borderRadius.lg,
+                      marginBottom: theme.spacing.md,
+                    }]}
                     onPress={handleAddressPress}
                   >
-                    <Text style={styles.addressLabel}>📍 Address</Text>
-                    <Text style={styles.address}>{venue.address}</Text>
-                    <Text style={styles.addressHint}>Tap to open in maps</Text>
+                    <Text variant="caption" style={{
+                      color: theme.colors.text.tertiary,
+                      textTransform: 'uppercase',
+                      marginBottom: theme.spacing.xs,
+                    }}>
+                      📍 Address
+                    </Text>
+                    <Text variant="body1" style={{
+                      color: theme.colors.text.primary,
+                      marginBottom: theme.spacing.xs,
+                    }}>
+                      {venue.address}
+                    </Text>
+                    <Text variant="caption" style={{
+                      color: theme.colors.primary[600],
+                      fontStyle: 'italic',
+                    }}>
+                      Tap to open in maps
+                    </Text>
                   </TouchableOpacity>
                 )}
 
                 {venue.description && (
-                  <View style={styles.descriptionContainer}>
-                    <Text style={styles.descriptionLabel}>About this venue</Text>
-                    <Text style={styles.description}>{venue.description}</Text>
+                  <View style={[styles.descriptionContainer, { marginBottom: theme.spacing.lg }]}>
+                    <Text variant="h4" style={{
+                      color: theme.colors.text.primary,
+                      marginBottom: theme.spacing.sm,
+                    }}>
+                      About this venue
+                    </Text>
+                    <Text variant="body1" style={{
+                      color: theme.colors.text.secondary,
+                      lineHeight: 24,
+                    }}>
+                      {venue.description}
+                    </Text>
                   </View>
                 )}
 
                 {/* Event Info */}
                 {event && (
-                  <View style={styles.eventSection}>
-                    <Text style={styles.eventSectionTitle}>Event Details</Text>
+                  <View style={[styles.eventSection, { marginBottom: theme.spacing.lg }]}>
+                    <Text variant="h3" style={{
+                      color: theme.colors.text.primary,
+                      marginBottom: theme.spacing.md,
+                    }}>
+                      Event Details
+                    </Text>
                     
-                    <View style={styles.eventCard}>
-                      <Text style={styles.eventTitle}>{event.title}</Text>
+                    <View style={[styles.eventCard, {
+                      backgroundColor: theme.colors.background.secondary,
+                      padding: theme.spacing.md,
+                      borderRadius: theme.borderRadius.lg,
+                      borderLeftWidth: 4,
+                      borderLeftColor: theme.colors.secondary[500],
+                    }]}>
+                      <Text variant="h4" style={{
+                        color: theme.colors.text.primary,
+                        marginBottom: theme.spacing.sm,
+                      }}>
+                        {event.title}
+                      </Text>
                       
-                      <View style={styles.eventMeta}>
-                        <Text style={styles.eventDate}>
+                      <View style={[styles.eventMeta, { marginBottom: theme.spacing.sm }]}>
+                        <Text variant="body2" style={{
+                          color: theme.colors.primary[600],
+                          fontWeight: '600',
+                          marginBottom: theme.spacing.xs,
+                        }}>
                           📅 {new Date(event.event_date).toLocaleDateString('en-US', {
                             weekday: 'long',
                             year: 'numeric',
@@ -182,14 +272,20 @@ const VenueModal: React.FC<VenueModalProps> = ({ visible, event, onClose }) => {
                         </Text>
                         
                         {event.time && (
-                          <Text style={styles.eventTime}>
+                          <Text variant="body2" style={{
+                            color: theme.colors.secondary[500],
+                            fontWeight: '600',
+                          }}>
                             🕐 {event.time}
                           </Text>
                         )}
                       </View>
 
                       {event.description && (
-                        <Text style={styles.eventDescription} numberOfLines={3}>
+                        <Text variant="body2" numberOfLines={3} style={{
+                          color: theme.colors.text.secondary,
+                          lineHeight: 20,
+                        }}>
                           {event.description}
                         </Text>
                       )}
@@ -198,22 +294,40 @@ const VenueModal: React.FC<VenueModalProps> = ({ visible, event, onClose }) => {
                 )}
 
                 {/* Action Buttons */}
-                <View style={styles.actionButtons}>
+                <View style={[styles.actionButtons, { gap: theme.spacing.sm }]}>
                   {event?.url && (
                     <TouchableOpacity
-                      style={[styles.actionButton, styles.primaryButton]}
+                      style={[styles.actionButton, {
+                        backgroundColor: theme.colors.secondary[500],
+                        paddingVertical: theme.spacing.md,
+                        paddingHorizontal: theme.spacing.lg,
+                        borderRadius: theme.borderRadius.lg,
+                        ...theme.shadows.small,
+                      }]}
                       onPress={handleEventLink}
                     >
-                      <Text style={styles.primaryButtonText}>🎫 View Event</Text>
+                      <Text variant="button" style={{ color: theme.colors.text.inverse }}>
+                        🎫 View Event
+                      </Text>
                     </TouchableOpacity>
                   )}
                   
                   {venue.url && (
                     <TouchableOpacity
-                      style={[styles.actionButton, styles.secondaryButton]}
+                      style={[styles.actionButton, {
+                        backgroundColor: theme.colors.background.secondary,
+                        borderWidth: 1,
+                        borderColor: theme.colors.border.medium,
+                        paddingVertical: theme.spacing.md,
+                        paddingHorizontal: theme.spacing.lg,
+                        borderRadius: theme.borderRadius.lg,
+                        ...theme.shadows.small,
+                      }]}
                       onPress={handleVenueWebsite}
                     >
-                      <Text style={styles.secondaryButtonText}>🌐 Venue Website</Text>
+                      <Text variant="button" style={{ color: theme.colors.text.primary }}>
+                        🌐 Venue Website
+                      </Text>
                     </TouchableOpacity>
                   )}
                 </View>
@@ -229,34 +343,22 @@ const VenueModal: React.FC<VenueModalProps> = ({ visible, event, onClose }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background.primary,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border.light,
-    backgroundColor: colors.background.primary,
-    ...shadows.small,
   },
   closeButton: {
-    backgroundColor: colors.gray[100],
-    borderRadius: borderRadius.full,
+    borderRadius: 9999,
     width: 32,
     height: 32,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  closeButtonText: {
-    ...typography.body,
-    color: colors.text.secondary,
-    fontWeight: '600',
-  },
   headerTitle: {
-    ...typography.heading3,
-    color: colors.text.primary,
     flex: 1,
     textAlign: 'center',
   },
@@ -270,29 +372,17 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: spacing.xl * 2,
+    paddingVertical: 64,
   },
-  loadingText: {
-    ...typography.body,
-    color: colors.text.secondary,
-    marginTop: spacing.md,
-  },
+  loadingText: {},
   errorContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.xl * 2,
+    paddingHorizontal: 32,
+    paddingVertical: 64,
   },
   errorText: {
-    ...typography.heading3,
-    color: colors.text.secondary,
-    textAlign: 'center',
-    marginBottom: spacing.sm,
-  },
-  errorSubtext: {
-    ...typography.body,
-    color: colors.text.tertiary,
     textAlign: 'center',
   },
   content: {
@@ -304,131 +394,22 @@ const styles = StyleSheet.create({
   venueImage: {
     width: '100%',
     height: 250,
-    backgroundColor: colors.gray[100],
   },
   typeBadge: {
     position: 'absolute',
-    top: spacing.md,
-    right: spacing.md,
-    backgroundColor: colors.primary[500],
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    borderRadius: borderRadius.full,
-    ...shadows.small,
+    top: 16,
+    right: 16,
   },
-  typeBadgeText: {
-    ...typography.caption,
-    color: colors.text.inverse,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-  },
-  venueInfo: {
-    padding: spacing.md,
-  },
-  venueName: {
-    ...typography.heading1,
-    color: colors.text.primary,
-    marginBottom: spacing.md,
-  },
-  addressContainer: {
-    backgroundColor: colors.background.secondary,
-    padding: spacing.md,
-    borderRadius: borderRadius.lg,
-    marginBottom: spacing.md,
-  },
-  addressLabel: {
-    ...typography.caption,
-    color: colors.text.tertiary,
-    textTransform: 'uppercase',
-    marginBottom: spacing.xs,
-  },
-  address: {
-    ...typography.body,
-    color: colors.text.primary,
-    marginBottom: spacing.xs,
-  },
-  addressHint: {
-    ...typography.caption,
-    color: colors.primary[600],
-    fontStyle: 'italic',
-  },
-  descriptionContainer: {
-    marginBottom: spacing.lg,
-  },
-  descriptionLabel: {
-    ...typography.heading4,
-    color: colors.text.primary,
-    marginBottom: spacing.sm,
-  },
-  description: {
-    ...typography.body,
-    color: colors.text.secondary,
-    lineHeight: 24,
-  },
-  eventSection: {
-    marginBottom: spacing.lg,
-  },
-  eventSectionTitle: {
-    ...typography.heading3,
-    color: colors.text.primary,
-    marginBottom: spacing.md,
-  },
-  eventCard: {
-    backgroundColor: colors.background.secondary,
-    padding: spacing.md,
-    borderRadius: borderRadius.lg,
-    borderLeftWidth: 4,
-    borderLeftColor: colors.secondary[500],
-  },
-  eventTitle: {
-    ...typography.heading4,
-    color: colors.text.primary,
-    marginBottom: spacing.sm,
-  },
-  eventMeta: {
-    marginBottom: spacing.sm,
-  },
-  eventDate: {
-    ...typography.bodySmall,
-    color: colors.primary[600],
-    fontWeight: '600',
-    marginBottom: spacing.xs,
-  },
-  eventTime: {
-    ...typography.bodySmall,
-    color: colors.secondary[500],
-    fontWeight: '600',
-  },
-  eventDescription: {
-    ...typography.bodySmall,
-    color: colors.text.secondary,
-    lineHeight: 20,
-  },
-  actionButtons: {
-    gap: spacing.sm,
-  },
+  venueInfo: {},
+  venueName: {},
+  addressContainer: {},
+  descriptionContainer: {},
+  eventSection: {},
+  eventCard: {},
+  eventMeta: {},
+  actionButtons: {},
   actionButton: {
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
-    borderRadius: borderRadius.lg,
     alignItems: 'center',
-    ...shadows.small,
-  },
-  primaryButton: {
-    backgroundColor: colors.secondary[500],
-  },
-  secondaryButton: {
-    backgroundColor: colors.background.secondary,
-    borderWidth: 1,
-    borderColor: colors.border.medium,
-  },
-  primaryButtonText: {
-    ...typography.button,
-    color: colors.text.inverse,
-  },
-  secondaryButtonText: {
-    ...typography.button,
-    color: colors.text.primary,
   },
 });
 
