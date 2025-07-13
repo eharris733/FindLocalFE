@@ -1,15 +1,23 @@
 import React from 'react';
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import MapView, { Marker } from '@teovilla/react-native-web-maps';
 import type { Event } from '../types/events';
-import { colors, typography, spacing } from '../theme';
+import { useTheme } from '../context/ThemeContext';
+import { Text } from './ui';
 
 interface MapViewWebProps {
   events: Event[];
   onMarkerPress: (event: Event) => void;
+  highlightedEventId?: string;
 }
 
-const MapViewWeb: React.FC<MapViewWebProps> = ({ events, onMarkerPress }) => {
+const MapViewWeb: React.FC<MapViewWebProps> = ({ 
+  events, 
+  onMarkerPress, 
+  highlightedEventId 
+}) => {
+  const { theme } = useTheme();
+
   // Brooklyn coordinates
   const initialRegion = {
     latitude: 40.6782,
@@ -36,11 +44,8 @@ const MapViewWeb: React.FC<MapViewWebProps> = ({ events, onMarkerPress }) => {
     };
   };
 
-  console.log('MapView.web.tsx: Rendering with', events.length, 'events');
-  console.log('MapView.web.tsx: API Key available:', !!process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY);
-
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.colors.background.secondary }]}>
       <MapView
         style={styles.map}
         provider="google"
@@ -53,8 +58,9 @@ const MapViewWeb: React.FC<MapViewWebProps> = ({ events, onMarkerPress }) => {
         scrollEnabled={true}
         zoomControlEnabled={true}
       >
-        {events.slice(0, 20).map((event, index) => { // Limit to 20 markers for better performance
+        {events.slice(0, 20).map((event, index) => {
           const coordinates = getEventCoordinates(event, index);
+          const isHighlighted = highlightedEventId === event.id;
           
           return (
             <Marker
@@ -62,6 +68,7 @@ const MapViewWeb: React.FC<MapViewWebProps> = ({ events, onMarkerPress }) => {
               coordinate={coordinates}
               title={event.title}
               description={`${event.venue_name} - ${new Date(event.event_date).toLocaleDateString()}`}
+              pinColor={isHighlighted ? '#FF6B6B' : '#4ECDC4'}
               onPress={() => {
                 console.log('Marker pressed:', event.title);
                 onMarkerPress(event);
@@ -72,9 +79,12 @@ const MapViewWeb: React.FC<MapViewWebProps> = ({ events, onMarkerPress }) => {
       </MapView>
       
       {/* Debug overlay */}
-      <View style={styles.debugOverlay}>
-        <Text style={styles.debugText}>
-          📍 {events.length} events • API: {process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY ? 'OK' : 'Missing'}
+      <View style={[styles.debugOverlay, { 
+        backgroundColor: theme.colors.background.primary + 'CC',
+        borderColor: theme.colors.border.light,
+      }]}>
+        <Text variant="caption" color="secondary" style={styles.debugText}>
+          📍 {events.length} events {highlightedEventId ? `• Highlighting: ${highlightedEventId}` : ''} • API: {process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY ? 'OK' : 'Missing'}
         </Text>
       </View>
     </View>
@@ -84,7 +94,6 @@ const MapViewWeb: React.FC<MapViewWebProps> = ({ events, onMarkerPress }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.gray[100],
   },
   map: {
     flex: 1,
@@ -92,16 +101,14 @@ const styles = StyleSheet.create({
   },
   debugOverlay: {
     position: 'absolute',
-    bottom: spacing.md,
-    left: spacing.md,
-    right: spacing.md,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    padding: spacing.sm,
+    bottom: 16,
+    left: 16,
+    right: 16,
+    padding: 12,
     borderRadius: 8,
+    borderWidth: 1,
   },
   debugText: {
-    ...typography.caption,
-    color: 'white',
     textAlign: 'center',
   },
 });

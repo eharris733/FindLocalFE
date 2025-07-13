@@ -1,26 +1,20 @@
 import React, { useState } from 'react';
 import { 
   View, 
-  Text, 
-  FlatList, 
   ActivityIndicator, 
   StyleSheet, 
   SafeAreaView,
   StatusBar,
-  Image
 } from 'react-native';
-import { ThemeProvider } from './src/context/ThemeContext';
+import { ThemeProvider, useTheme } from './src/context/ThemeContext';
 import { useEvents } from './src/hooks/useEvents';
-import EventCard from './src/components/EventCard';
-import FilterControls from './src/components/FilterControls';
-import TabNavigation from './src/components/TabNavigation';
-import MapPage from './src/components/MapPage';
+import MainLayout from './src/components/MainLayout';
 import VenueModal from './src/components/VenueModal';
+import { Text } from './src/components/ui';
 import type { Event } from './src/types/events';
-import { colors, typography, spacing, shadows } from './src/theme';
 
-export default function App() {
-  const [activeTab, setActiveTab] = useState<'list' | 'map'>('list');
+function AppContent() {
+  const { theme, isDark } = useTheme();
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [showVenueModal, setShowVenueModal] = useState(false);
   
@@ -46,83 +40,70 @@ export default function App() {
 
   if (loading) {
     return (
-      <ThemeProvider>
-        <SafeAreaView style={styles.container}>
-          <StatusBar barStyle="dark-content" backgroundColor={colors.background.primary} />
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={colors.primary[500]} />
-            <Text style={styles.loadingText}>Loading events...</Text>
-          </View>
-        </SafeAreaView>
-      </ThemeProvider>
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background.primary }]}>
+        <StatusBar 
+          barStyle={isDark ? "light-content" : "dark-content"} 
+          backgroundColor={theme.colors.background.primary} 
+        />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={theme.colors.primary[500]} />
+          <Text variant="body1" color="secondary" style={styles.loadingText}>
+            Loading events...
+          </Text>
+        </View>
+      </SafeAreaView>
     );
   }
 
   if (error) {
     return (
-      <ThemeProvider>
-        <SafeAreaView style={styles.container}>
-          <StatusBar barStyle="dark-content" backgroundColor={colors.background.primary} />
-          <View style={styles.errorContainer}>
-            <Text style={styles.errorTitle}>Error loading events:</Text>
-            <Text style={styles.errorText}>{error}</Text>
-          </View>
-        </SafeAreaView>
-      </ThemeProvider>
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background.primary }]}>
+        <StatusBar 
+          barStyle={isDark ? "light-content" : "dark-content"} 
+          backgroundColor={theme.colors.background.primary} 
+        />
+        <View style={styles.errorContainer}>
+          <Text variant="h3" color="error" style={styles.errorTitle}>
+            Error loading events:
+          </Text>
+          <Text variant="body1" color="secondary" style={styles.errorText}>
+            {error}
+          </Text>
+        </View>
+      </SafeAreaView>
     );
   }
 
   return (
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background.secondary }]}>
+      <StatusBar 
+        barStyle={isDark ? "light-content" : "dark-content"} 
+        backgroundColor={theme.colors.background.primary} 
+      />
+      
+      <MainLayout
+        events={filteredEvents}
+        filters={filters}
+        dispatchFilters={dispatchFilters}
+        availableCategories={availableCategories}
+        availableLocations={availableLocations}
+        onEventPress={handleEventPress}
+      />
+
+      {/* Venue Modal */}
+      <VenueModal
+        visible={showVenueModal}
+        event={selectedEvent}
+        onClose={handleCloseVenueModal}
+      />
+    </SafeAreaView>
+  );
+}
+
+export default function App() {
+  return (
     <ThemeProvider>
-      <SafeAreaView style={styles.container}>
-        <StatusBar barStyle="dark-content" backgroundColor={colors.background.primary} />
-        
-        <View style={styles.header}>
-          <Image 
-            source={require('./assets/logo.png')} 
-            style={styles.logo}
-            resizeMode="contain"
-          />
-        </View>
-
-        <TabNavigation
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-        />
-
-        {activeTab === 'list' ? (
-          <View style={styles.listContainer}>
-            <FilterControls
-              filters={filters}
-              dispatchFilters={dispatchFilters}
-              availableCategories={availableCategories}
-              availableLocations={availableLocations}
-            />
-
-            <FlatList
-              data={filteredEvents}
-              keyExtractor={(item) => item.id}
-              renderItem={({ item }) => (
-                <EventCard 
-                  event={item} 
-                  onPress={handleEventPress}
-                />
-              )}
-              contentContainerStyle={styles.listContent}
-              showsVerticalScrollIndicator={false}
-            />
-          </View>
-        ) : (
-          <MapPage />
-        )}
-
-        {/* Venue Modal */}
-        <VenueModal
-          visible={showVenueModal}
-          event={selectedEvent}
-          onClose={handleCloseVenueModal}
-        />
-      </SafeAreaView>
+      <AppContent />
     </ThemeProvider>
   );
 }
@@ -130,64 +111,26 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background.secondary,
-  },
-  header: {
-    alignItems: 'center',
-    paddingVertical: spacing.lg,
-    paddingHorizontal: spacing.md,
-    backgroundColor: colors.background.primary,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border.light,
-    ...shadows.small,
-  },
-  logo: {
-    height: 120,
-    width: 400,
-    marginBottom: spacing.sm,
-  },
-  title: {
-    ...typography.heading1,
-    color: colors.primary[500],
-    marginBottom: spacing.xs,
-  },
-  subtitle: {
-    ...typography.bodySmall,
-    color: colors.text.secondary,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: colors.background.primary,
   },
   loadingText: {
-    marginTop: spacing.md,
-    ...typography.body,
-    color: colors.text.secondary,
+    marginTop: 16,
   },
   errorContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: spacing.xl,
-    backgroundColor: colors.background.primary,
+    padding: 32,
   },
   errorTitle: {
-    ...typography.heading3,
-    color: colors.error,
-    marginBottom: spacing.md,
+    marginBottom: 16,
     textAlign: 'center',
   },
   errorText: {
-    ...typography.body,
-    color: colors.text.secondary,
     textAlign: 'center',
-  },
-  listContainer: {
-    flex: 1,
-  },
-  listContent: {
-    padding: spacing.md,
   },
 });

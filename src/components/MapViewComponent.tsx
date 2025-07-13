@@ -1,42 +1,69 @@
 import React, { useState } from 'react';
-import { Platform, View, Text, StyleSheet, Dimensions } from 'react-native';
+import { Platform, View, StyleSheet, Dimensions } from 'react-native';
 import type { Event } from '../types/events';
-import { colors, spacing, typography, shadows } from '../theme';
+import { useTheme } from '../context/ThemeContext';
+import { Text } from './ui';
 
 interface MapViewComponentProps {
   events: Event[];
-  onMarkerPress: (event: Event) => void;
+  onEventPress: (event: Event) => void;
+  highlightedEventId?: string;
 }
 
 const MapViewComponent: React.FC<MapViewComponentProps> = ({
   events,
-  onMarkerPress,
+  onEventPress,
+  highlightedEventId,
 }) => {
+  const { theme } = useTheme();
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
 
   const handleMarkerPress = (event: Event) => {
     setSelectedEventId(event.id);
-    onMarkerPress(event);
+    onEventPress(event);
   };
 
   // For web platform, use the web map component
   if (Platform.OS === 'web') {
     const MapViewWeb = require('./MapView.web').default;
-    return <MapViewWeb events={events} onMarkerPress={handleMarkerPress} />;
+    return (
+      <MapViewWeb 
+        events={events} 
+        onMarkerPress={handleMarkerPress}
+        highlightedEventId={highlightedEventId}
+      />
+    );
   }
 
   // For mobile platforms, show a placeholder for now
-  // (You can implement react-native-maps later)
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.colors.background.secondary }]}>
       <View style={styles.placeholder}>
-        <Text style={styles.placeholderTitle}>📱 Mobile Map</Text>
-        <Text style={styles.placeholderText}>
+        <Text variant="h3" style={[styles.placeholderTitle, { 
+          color: theme.colors.text.primary,
+          marginBottom: theme.spacing.md,
+        }]}>
+          📱 Mobile Map
+        </Text>
+        <Text variant="body1" style={[styles.placeholderText, {
+          color: theme.colors.text.secondary,
+          marginBottom: theme.spacing.sm,
+        }]}>
           Map view for mobile platforms will be implemented with react-native-maps
         </Text>
-        <Text style={styles.placeholderSubtext}>
+        <Text variant="body2" style={[styles.placeholderSubtext, {
+          color: theme.colors.text.tertiary,
+        }]}>
           {events.length} events ready to display
         </Text>
+        {highlightedEventId && (
+          <Text variant="caption" style={[styles.highlightText, {
+            color: theme.colors.primary[600],
+            marginTop: theme.spacing.sm,
+          }]}>
+            Event {highlightedEventId} highlighted
+          </Text>
+        )}
       </View>
     </View>
   );
@@ -45,29 +72,25 @@ const MapViewComponent: React.FC<MapViewComponentProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background.secondary,
   },
   placeholder: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: spacing.xl,
+    padding: 32,
   },
   placeholderTitle: {
-    ...typography.heading2,
-    color: colors.text.primary,
-    marginBottom: spacing.md,
+    textAlign: 'center',
   },
   placeholderText: {
-    ...typography.body,
-    color: colors.text.secondary,
     textAlign: 'center',
-    marginBottom: spacing.sm,
   },
   placeholderSubtext: {
-    ...typography.bodySmall,
-    color: colors.text.tertiary,
     textAlign: 'center',
+  },
+  highlightText: {
+    textAlign: 'center',
+    fontWeight: '600',
   },
 });
 
