@@ -33,7 +33,7 @@ export default function TopNavigation({ onNavLinkPress }: TopNavigationProps) {
           {/* Left spacer for centering logo */}
           <View style={styles.leftSection} />
           
-          {/* Centered Logo */}
+          {/* Centered Logo - Made bigger */}
           <View style={styles.centerSection}>
             <Image 
               source={require('../../assets/logo.png')} 
@@ -82,7 +82,7 @@ export default function TopNavigation({ onNavLinkPress }: TopNavigationProps) {
 
 const styles = StyleSheet.create({
   container: {
-    paddingVertical: 12,
+    paddingVertical: 16, // Increased padding for bigger logo
     paddingHorizontal: 16,
     borderBottomWidth: 1,
     zIndex: 1000,
@@ -91,7 +91,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    minHeight: 48,
+    minHeight: 60, // Increased min height
   },
   leftSection: {
     flex: 1,
@@ -107,8 +107,8 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   logo: {
-    height: 40,
-    width: 160,
+    height: 60, // Increased from 40 to 60
+    width: 240, // Increased from 160 to 240
   },
   navLinks: {
     flexDirection: 'row',

@@ -10,3 +10,9 @@ export type { CardVariant } from './Card';
 export { Container } from './Container';
 
 export { ThemeToggle } from './ThemeToggle';
+
+export { SearchableDropdown } from './SearchableDropdown';
+
+export { DateRangePicker } from './DateRangePicker';
+
+export { Portal } from './Portal';
