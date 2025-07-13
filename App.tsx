@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   View, 
   Text, 
@@ -13,9 +13,13 @@ import { ThemeProvider } from './src/context/ThemeContext';
 import { useEvents } from './src/hooks/useEvents';
 import EventCard from './src/components/EventCard';
 import FilterControls from './src/components/FilterControls';
+import TabNavigation from './src/components/TabNavigation';
+import MapPage from './src/components/MapPage';
 import { colors, typography, spacing, shadows } from './src/theme';
 
 export default function App() {
+  const [activeTab, setActiveTab] = useState<'list' | 'map'>('list');
+  
   const {
     loading,
     error,
@@ -67,20 +71,31 @@ export default function App() {
           />
         </View>
 
-        <FilterControls
-          filters={filters}
-          dispatchFilters={dispatchFilters}
-          availableCategories={availableCategories}
-          availableLocations={availableLocations}
+        <TabNavigation
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
         />
 
-        <FlatList
-          data={filteredEvents}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => <EventCard event={item} />}
-          contentContainerStyle={styles.listContainer}
-          showsVerticalScrollIndicator={false}
-        />
+        {activeTab === 'list' ? (
+          <View style={styles.listContainer}>
+            <FilterControls
+              filters={filters}
+              dispatchFilters={dispatchFilters}
+              availableCategories={availableCategories}
+              availableLocations={availableLocations}
+            />
+
+            <FlatList
+              data={filteredEvents}
+              keyExtractor={(item) => item.id}
+              renderItem={({ item }) => <EventCard event={item} />}
+              contentContainerStyle={styles.listContent}
+              showsVerticalScrollIndicator={false}
+            />
+          </View>
+        ) : (
+          <MapPage />
+        )}
       </SafeAreaView>
     </ThemeProvider>
   );
@@ -144,6 +159,9 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   listContainer: {
+    flex: 1,
+  },
+  listContent: {
     padding: spacing.md,
   },
 });
