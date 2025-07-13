@@ -15,10 +15,14 @@ import EventCard from './src/components/EventCard';
 import FilterControls from './src/components/FilterControls';
 import TabNavigation from './src/components/TabNavigation';
 import MapPage from './src/components/MapPage';
+import VenueModal from './src/components/VenueModal';
+import type { Event } from './src/types/events';
 import { colors, typography, spacing, shadows } from './src/theme';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'list' | 'map'>('list');
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [showVenueModal, setShowVenueModal] = useState(false);
   
   const {
     loading,
@@ -29,6 +33,16 @@ export default function App() {
     availableCategories,
     availableLocations,
   } = useEvents();
+
+  const handleEventPress = (event: Event) => {
+    setSelectedEvent(event);
+    setShowVenueModal(true);
+  };
+
+  const handleCloseVenueModal = () => {
+    setShowVenueModal(false);
+    setSelectedEvent(null);
+  };
 
   if (loading) {
     return (
@@ -88,7 +102,12 @@ export default function App() {
             <FlatList
               data={filteredEvents}
               keyExtractor={(item) => item.id}
-              renderItem={({ item }) => <EventCard event={item} />}
+              renderItem={({ item }) => (
+                <EventCard 
+                  event={item} 
+                  onPress={handleEventPress}
+                />
+              )}
               contentContainerStyle={styles.listContent}
               showsVerticalScrollIndicator={false}
             />
@@ -96,6 +115,13 @@ export default function App() {
         ) : (
           <MapPage />
         )}
+
+        {/* Venue Modal */}
+        <VenueModal
+          visible={showVenueModal}
+          event={selectedEvent}
+          onClose={handleCloseVenueModal}
+        />
       </SafeAreaView>
     </ThemeProvider>
   );
