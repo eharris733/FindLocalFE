@@ -14,7 +14,9 @@ import { useTheme } from '../context/ThemeContext';
 import { Text } from './ui';
 
 interface EventBottomSheetProps {
+  visible: boolean;
   event: Event | null;
+  onEventPress?: (event: Event) => void; // Make this optional
   onClose: () => void;
 }
 
@@ -40,13 +42,15 @@ function formatMilitaryTime(time: string): string {
   return `${formattedHours}:${formattedMinutes} ${isPM ? 'PM' : 'AM'}`;
 }
 
-const EventBottomSheet: React.FC<EventBottomSheetProps> = ({ event, onClose }) => {
+const EventBottomSheet: React.FC<EventBottomSheetProps> = ({ visible, event, onEventPress, onClose }) => {
   const { theme } = useTheme();
 
-  if (!event) return null;
+  if (!visible || !event) return null;
 
   const handleEventPress = () => {
-    if (event.url) {
+    if (onEventPress) {
+      onEventPress(event);
+    } else if (event.url) {
       Linking.openURL(event.url);
     }
   };

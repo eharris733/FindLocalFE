@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, Dimensions, Platform } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import TopNavigation from './TopNavigation';
+import TabNavigation from './TabNavigation';
 import FilterBar from './FilterBar';
 import SidebarEventList from './SidebarEventList';
 import MapPanel from './MapPanel';
