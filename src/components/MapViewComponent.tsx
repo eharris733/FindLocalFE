@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Platform, View, StyleSheet, Dimensions } from 'react-native';
 import type { Event } from '../types/events';
+import type { Venue } from '../types/venues';
+import { getAllVenues } from '../api/venues';
 import { useTheme } from '../context/ThemeContext';
 import { Text } from './ui';
 
@@ -17,6 +19,30 @@ const MapViewComponent: React.FC<MapViewComponentProps> = ({
 }) => {
   const { theme } = useTheme();
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  const [venues, setVenues] = useState<Venue[]>([]);
+  const [venuesLoading, setVenuesLoading] = useState(true);
+
+  // Fetch venues with coordinates
+  useEffect(() => {
+    const fetchVenues = async () => {
+      try {
+        setVenuesLoading(true);
+        const venueData = await getAllVenues();
+        // Filter venues that have coordinates
+        const venuesWithCoords = venueData.filter(venue => 
+          venue.latitude && venue.longitude && venue.is_active
+        );
+        setVenues(venuesWithCoords);
+        console.log('Loaded venues with coordinates:', venuesWithCoords.length);
+      } catch (error) {
+        console.error('Failed to fetch venues:', error);
+      } finally {
+        setVenuesLoading(false);
+      }
+    };
+
+    fetchVenues();
+  }, []);
 
   const handleMarkerPress = (event: Event) => {
     setSelectedEventId(event.id);
@@ -29,6 +55,8 @@ const MapViewComponent: React.FC<MapViewComponentProps> = ({
     return (
       <MapViewWeb 
         events={events} 
+        venues={venues}
+        venuesLoading={venuesLoading}
         onMarkerPress={handleMarkerPress}
         highlightedEventId={highlightedEventId}
       />
@@ -54,7 +82,7 @@ const MapViewComponent: React.FC<MapViewComponentProps> = ({
         <Text variant="body2" style={[styles.placeholderSubtext, {
           color: theme.colors.text.tertiary,
         }]}>
-          {events.length} events ready to display
+          {events.length} events • {venues.length} venues with coordinates
         </Text>
         {highlightedEventId && (
           <Text variant="caption" style={[styles.highlightText, {

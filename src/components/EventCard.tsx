@@ -37,14 +37,28 @@ const EventCard: React.FC<EventCardProps> = ({ event, onPress, variant = 'defaul
   const handleCardPress = () => {
     if (onPress) {
       onPress(event);
-    } else if (event.url) {
-      Linking.openURL(event.url);
+    } else if (event.detail_page_url) {
+      Linking.openURL(event.detail_page_url);
     }
   };
 
-  const imageSource = event.preview_image 
-    ? { uri: event.preview_image }
+  const imageSource = event.image_url 
+    ? { uri: event.image_url }
     : require('../../assets/music.png');
+
+  // Extract first genre from music_info for display
+  const getDisplayGenre = () => {
+    if (event.music_info && event.music_info.genres) {
+      if (Array.isArray(event.music_info.genres)) {
+        return event.music_info.genres[0];
+      } else if (typeof event.music_info.genres === 'string') {
+        return event.music_info.genres;
+      }
+    }
+    return null;
+  };
+
+  const displayGenre = getDisplayGenre();
 
   if (variant === 'compact') {
     return (
@@ -61,26 +75,28 @@ const EventCard: React.FC<EventCardProps> = ({ event, onPress, variant = 'defaul
           
           <View style={styles.compactContent}>
             <Text variant="body1" numberOfLines={2} style={styles.compactTitle}>
-              {event.title}
+              {event.title || 'Untitled Event'}
             </Text>
             
             <Text variant="caption" color="secondary" numberOfLines={1} style={styles.compactVenue}>
-              📍 {event.venue_name}
+              📍 {event.city}
             </Text>
             
             <View style={styles.compactMeta}>
-              <Text variant="caption" style={[styles.compactDate, { color: theme.colors.primary[600] }]}>
-                {format(new Date(event.event_date), 'MMM dd')}
-              </Text>
-              {event.time && (
-                <Text variant="caption" style={[styles.compactTime, { color: theme.colors.secondary[500] }]}>
-                  {formatMilitaryTime(event.time)}
+              {event.event_date && (
+                <Text variant="caption" style={[styles.compactDate, { color: theme.colors.primary[600] }]}>
+                  {format(new Date(event.event_date), 'MMM dd')}
                 </Text>
               )}
-              {event.category && (
+              {event.start_time && (
+                <Text variant="caption" style={[styles.compactTime, { color: theme.colors.secondary[500] }]}>
+                  {formatMilitaryTime(event.start_time)}
+                </Text>
+              )}
+              {displayGenre && (
                 <View style={[styles.compactCategory, { backgroundColor: theme.colors.accent[500] }]}>
                   <Text variant="caption" color="inverse" style={styles.compactCategoryText}>
-                    {event.category}
+                    {displayGenre}
                   </Text>
                 </View>
               )}
@@ -104,22 +120,24 @@ const EventCard: React.FC<EventCardProps> = ({ event, onPress, variant = 'defaul
           
           <View style={styles.textContent}>
             <Text variant="h5" numberOfLines={2} style={styles.title}>
-              {event.title}
+              {event.title || 'Untitled Event'}
             </Text>
             
             <View style={styles.metaInfo}>
-              <Text 
-                variant="body2" 
-                style={[styles.date, { color: theme.colors.primary[600] }]}
-              >
-                {format(new Date(event.event_date), 'MMM dd, yyyy')}
-              </Text>
-              {event.time && (
+              {event.event_date && (
+                <Text 
+                  variant="body2" 
+                  style={[styles.date, { color: theme.colors.primary[600] }]}
+                >
+                  {format(new Date(event.event_date), 'MMM dd, yyyy')}
+                </Text>
+              )}
+              {event.start_time && (
                 <Text 
                   variant="body2" 
                   style={[styles.time, { color: theme.colors.secondary[500] }]}
                 >
-                  {formatMilitaryTime(event.time)}
+                  {formatMilitaryTime(event.start_time)}
                 </Text>
               )}
             </View>
@@ -129,20 +147,20 @@ const EventCard: React.FC<EventCardProps> = ({ event, onPress, variant = 'defaul
               onPress={handleCardPress}
             >
               <Text variant="body2" color="secondary" numberOfLines={1} style={styles.venue}>
-                📍 {event.venue_name}
+                📍 {event.city}
               </Text>
               <Text 
                 variant="caption" 
                 style={[styles.venueHint, { color: theme.colors.primary[600] }]}
               >
-                Tap for venue details
+                Tap for event details
               </Text>
             </TouchableOpacity>
             
-            {event.category && (
+            {displayGenre && (
               <View style={[styles.categoryContainer, { backgroundColor: theme.colors.accent[500] }]}>
                 <Text variant="caption" color="inverse" style={styles.category}>
-                  {event.category}
+                  {displayGenre}
                 </Text>
               </View>
             )}

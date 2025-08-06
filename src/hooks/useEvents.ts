@@ -124,8 +124,16 @@ export const useEvents = (): UseEventsResult => {
     const categories = new Set(['all']);
     const locations = new Set(['all']);
     events.forEach(event => {
-      if (event.category) categories.add(event.category);
-      if (event.venue_name) locations.add(event.venue_name);
+      // Extract genres from music_info if available
+      if (event.music_info && event.music_info.genres) {
+        if (Array.isArray(event.music_info.genres)) {
+          event.music_info.genres.forEach((genre: string) => categories.add(genre));
+        } else if (typeof event.music_info.genres === 'string') {
+          categories.add(event.music_info.genres);
+        }
+      }
+      // Use city as location
+      if (event.city) locations.add(event.city);
     });
     return {
       availableCategories: Array.from(categories).sort((a, b) => {
@@ -143,15 +151,26 @@ export const useEvents = (): UseEventsResult => {
 
   const filteredEvents = useMemo(() => {
     return events.filter(event => {
+      // Skip events without valid date
+      if (!event.event_date) return false;
+      
       const eventDate = new Date(event.event_date);
 
-      // Category filter
-      if (filters.category !== 'all' && event.category !== filters.category) {
-        return false;
+      // Category filter - check music_info.genres
+      if (filters.category !== 'all') {
+        let hasMatchingGenre = false;
+        if (event.music_info && event.music_info.genres) {
+          if (Array.isArray(event.music_info.genres)) {
+            hasMatchingGenre = event.music_info.genres.includes(filters.category);
+          } else if (typeof event.music_info.genres === 'string') {
+            hasMatchingGenre = event.music_info.genres === filters.category;
+          }
+        }
+        if (!hasMatchingGenre) return false;
       }
 
-      // Location filter (venue)
-      if (filters.location !== 'all' && event.venue_name !== filters.location) {
+      // Location filter (city)
+      if (filters.location !== 'all' && event.city !== filters.location) {
         return false;
       }
 
@@ -173,12 +192,12 @@ export const useEvents = (): UseEventsResult => {
       // Search text filter
       if (filters.searchText) {
         const searchLower = filters.searchText.toLowerCase();
-        const titleLower = event.title.toLowerCase();
+        const titleLower = (event.title || '').toLowerCase();
         const descriptionLower = (event.description || '').toLowerCase();
-        const venueLower = event.venue_name.toLowerCase();
+        const cityLower = event.city.toLowerCase();
         if (!titleLower.includes(searchLower) && 
             !descriptionLower.includes(searchLower) && 
-            !venueLower.includes(searchLower)) {
+            !cityLower.includes(searchLower)) {
           return false;
         }
       }

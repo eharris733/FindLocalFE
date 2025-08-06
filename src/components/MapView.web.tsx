@@ -1,48 +1,93 @@
-import React from 'react';
-import { View, StyleSheet } from 'react-native';
-import MapView, { Marker } from '@teovilla/react-native-web-maps';
-import type { Event } from '../types/events';
+import React, { useMemo } from 'react';
+import { View, Dimensions, StyleSheet } from 'react-native';
+import { Event } from '../types/events';
+import { Venue } from '../types/venues';
+import { Text } from './ui/Text';
 import { useTheme } from '../context/ThemeContext';
-import { Text } from './ui';
+
+// Import using require to bypass TypeScript issues with this library
+const MapView = require('@teovilla/react-native-web-maps').default;
+const { Marker } = require('@teovilla/react-native-web-maps');
 
 interface MapViewWebProps {
   events: Event[];
+  venues: Venue[];
+  venuesLoading: boolean;
   onMarkerPress: (event: Event) => void;
   highlightedEventId?: string;
 }
 
 const MapViewWeb: React.FC<MapViewWebProps> = ({ 
   events, 
+  venues,
+  venuesLoading,
   onMarkerPress, 
   highlightedEventId 
 }) => {
   const { theme } = useTheme();
 
-  // Brooklyn coordinates
-  const initialRegion = {
-    latitude: 40.6782,
-    longitude: -73.9442,
-    latitudeDelta: 0.1,
-    longitudeDelta: 0.1,
-  };
+  // Calculate initial region based on venue coordinates
+  const getInitialRegion = () => {
+    if (venues.length === 0) {
+      // Default to Brooklyn if no venues
+      return {
+        latitude: 40.6782,
+        longitude: -73.9442,
+        latitudeDelta: 0.1,
+        longitudeDelta: 0.1,
+      };
+    }
 
-  // Mock coordinates for events - making them more spread out in Brooklyn
-  const getEventCoordinates = (event: Event, index: number) => {
-    const baseLatitude = 40.6782;
-    const baseLongitude = -73.9442;
-    
-    // Create a more predictable distribution
-    const row = Math.floor(index / 5);
-    const col = index % 5;
-    
-    const offsetLat = (row - 2) * 0.02; // Spread vertically
-    const offsetLng = (col - 2) * 0.03; // Spread horizontally
-    
+    // Calculate bounds from venue coordinates
+    const latitudes = venues.map(v => Number(v.latitude)).filter(lat => !isNaN(lat));
+    const longitudes = venues.map(v => Number(v.longitude)).filter(lng => !isNaN(lng));
+
+    if (latitudes.length === 0 || longitudes.length === 0) {
+      // Fallback to Brooklyn
+      return {
+        latitude: 40.6782,
+        longitude: -73.9442,
+        latitudeDelta: 0.1,
+        longitudeDelta: 0.1,
+      };
+    }
+
+    const minLat = Math.min(...latitudes);
+    const maxLat = Math.max(...latitudes);
+    const minLng = Math.min(...longitudes);
+    const maxLng = Math.max(...longitudes);
+
+    const centerLat = (minLat + maxLat) / 2;
+    const centerLng = (minLng + maxLng) / 2;
+    const deltaLat = Math.max((maxLat - minLat) * 1.2, 0.01); // Add padding
+    const deltaLng = Math.max((maxLng - minLng) * 1.2, 0.01); // Add padding
+
     return {
-      latitude: baseLatitude + offsetLat,
-      longitude: baseLongitude + offsetLng,
+      latitude: centerLat,
+      longitude: centerLng,
+      latitudeDelta: deltaLat,
+      longitudeDelta: deltaLng,
     };
   };
+
+  // Get events for a specific venue
+  const getEventsForVenue = (venue: Venue): Event[] => {
+    return events.filter(event => 
+      event.venue_name?.toLowerCase() === venue.name?.toLowerCase() ||
+      event.venue_id === venue.id
+    );
+  };
+
+  const initialRegion = getInitialRegion();
+
+  // Debug logging
+  console.log('MapView.web.tsx - Debug info:', {
+    venuesCount: venues.length,
+    venuesLoading,
+    eventsCount: events.length,
+    venuesWithCoords: venues.filter(v => v.latitude && v.longitude).length,
+    sampleVenue: venues[0]
+  });
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background.secondary }]}>
@@ -58,20 +103,35 @@ const MapViewWeb: React.FC<MapViewWebProps> = ({
         scrollEnabled={true}
         zoomControlEnabled={true}
       >
-        {events.slice(0, 20).map((event, index) => {
-          const coordinates = getEventCoordinates(event, index);
-          const isHighlighted = highlightedEventId === event.id;
+        {!venuesLoading && venues.map((venue) => {
+          const latitude = Number(venue.latitude);
+          const longitude = Number(venue.longitude);
+          
+          // Skip venues with invalid coordinates
+          if (isNaN(latitude) || isNaN(longitude)) {
+            return null;
+          }
+
+          const venueEvents = getEventsForVenue(venue);
+          const hasEvents = venueEvents.length > 0;
+          const isHighlighted = venueEvents.some(event => event.id === highlightedEventId);
           
           return (
             <Marker
-              key={event.id}
-              coordinate={coordinates}
-              title={event.title}
-              description={`${event.venue_name} - ${new Date(event.event_date).toLocaleDateString()}`}
-              pinColor={isHighlighted ? '#FF6B6B' : '#4ECDC4'}
+              key={venue.id}
+              coordinate={{
+                latitude,
+                longitude,
+              }}
+              title={venue.name}
+              description={`${venue.city} • ${venueEvents.length} event${venueEvents.length !== 1 ? 's' : ''} • ${venue.type || 'Venue'}`}
+              pinColor={isHighlighted ? '#FF6B6B' : hasEvents ? '#4ECDC4' : '#CCCCCC'}
               onPress={() => {
-                console.log('Marker pressed:', event.title);
-                onMarkerPress(event);
+                console.log('Venue marker pressed:', venue.name);
+                // If venue has events, trigger onMarkerPress with the first event
+                if (venueEvents.length > 0) {
+                  onMarkerPress(venueEvents[0]);
+                }
               }}
             />
           );
@@ -84,7 +144,7 @@ const MapViewWeb: React.FC<MapViewWebProps> = ({
         borderColor: theme.colors.border.light,
       }]}>
         <Text variant="caption" color="secondary" style={styles.debugText}>
-          📍 {events.length} events {highlightedEventId ? `• Highlighting: ${highlightedEventId}` : ''} • API: {process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY ? 'OK' : 'Missing'}
+          📍 {venues.length} venues • {events.length} events {highlightedEventId ? `• Highlighting: ${highlightedEventId}` : ''} • API: {process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY ? 'OK' : 'Missing'}
         </Text>
       </View>
     </View>

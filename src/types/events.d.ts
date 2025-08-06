@@ -1,16 +1,17 @@
 export interface Event {
-  id: string;
-  created_at: string;
-  title: string;
-  event_date: string;
-  time: string | null;
-  venue_name: string;
-  category: string;
-  url: string;
-  preview_image: string | null;
+  id: string; // uuid
+  silver_event_id: string | null; // uuid, foreign key to events_silver
+  city: string;
+  title: string | null;
   description: string | null;
-  venue_id: number | null;
-  clean_title: string | null;
+  event_date: string | null; // date
+  start_time: string | null; // time without time zone
+  end_time: string | null; // time without time zone
+  detail_page_url: string | null;
+  root_url: string | null;
+  image_url: string | null;
+  music_info: any | null; // jsonb
+  created_at: string | null; // timestamp with time zone
 }
 
 export interface FilterState {

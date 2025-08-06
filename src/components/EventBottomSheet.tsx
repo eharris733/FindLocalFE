@@ -50,8 +50,8 @@ const EventBottomSheet: React.FC<EventBottomSheetProps> = ({ visible, event, onE
   const handleEventPress = () => {
     if (onEventPress) {
       onEventPress(event);
-    } else if (event.url) {
-      Linking.openURL(event.url);
+    } else if (event.detail_page_url) {
+      Linking.openURL(event.detail_page_url);
     }
   };
 
@@ -75,7 +75,7 @@ const EventBottomSheet: React.FC<EventBottomSheetProps> = ({ visible, event, onE
           <View style={styles.header}>
             <Image
               source={{ 
-                uri: event.preview_image || 'https://via.placeholder.com/300x200/63BAAB/FFFFFF?text=Event' 
+                uri: event.image_url || 'https://via.placeholder.com/300x200/63BAAB/FFFFFF?text=Event' 
               }}
               style={[styles.image, { backgroundColor: theme.colors.gray[100] }]}
               resizeMode="cover"
@@ -102,27 +102,29 @@ const EventBottomSheet: React.FC<EventBottomSheetProps> = ({ visible, event, onE
               color: theme.colors.text.primary,
               marginBottom: theme.spacing.md,
             }]}>
-              {event.title}
+              {event.title || 'Untitled Event'}
             </Text>
             
             <View style={[styles.metaRow, { marginBottom: theme.spacing.md }]}>
-              <View style={[styles.metaItem, { marginRight: theme.spacing.sm }]}>
-                <Text variant="caption" style={{
-                  color: theme.colors.text.tertiary,
-                  textTransform: 'uppercase',
-                  marginBottom: theme.spacing.xs,
-                }}>
-                  📅 Date
-                </Text>
-                <Text variant="body2" style={{
-                  color: theme.colors.primary[600],
-                  fontWeight: '600',
-                }}>
-                  {format(new Date(event.event_date), 'EEEE, MMM dd, yyyy')}
-                </Text>
-              </View>
+              {event.event_date && (
+                <View style={[styles.metaItem, { marginRight: theme.spacing.sm }]}>
+                  <Text variant="caption" style={{
+                    color: theme.colors.text.tertiary,
+                    textTransform: 'uppercase',
+                    marginBottom: theme.spacing.xs,
+                  }}>
+                    📅 Date
+                  </Text>
+                  <Text variant="body2" style={{
+                    color: theme.colors.primary[600],
+                    fontWeight: '600',
+                  }}>
+                    {format(new Date(event.event_date), 'EEEE, MMM dd, yyyy')}
+                  </Text>
+                </View>
+              )}
               
-              {event.time && (
+              {event.start_time && (
                 <View style={styles.metaItem}>
                   <Text variant="caption" style={{
                     color: theme.colors.text.tertiary,
@@ -135,7 +137,7 @@ const EventBottomSheet: React.FC<EventBottomSheetProps> = ({ visible, event, onE
                     color: theme.colors.primary[600],
                     fontWeight: '600',
                   }}>
-                    {formatMilitaryTime(event.time)}
+                    {formatMilitaryTime(event.start_time)}
                   </Text>
                 </View>
               )}
@@ -147,17 +149,18 @@ const EventBottomSheet: React.FC<EventBottomSheetProps> = ({ visible, event, onE
                 textTransform: 'uppercase',
                 marginBottom: theme.spacing.xs,
               }}>
-                📍 Venue
+                📍 City
               </Text>
               <Text variant="body1" style={{
                 color: theme.colors.text.secondary,
                 fontStyle: 'italic',
               }}>
-                {event.venue_name}
+                {event.city}
               </Text>
             </View>
 
-            {event.category && (
+            {/* Display genres from music_info */}
+            {event.music_info && event.music_info.genres && (
               <View style={[styles.categoryContainer, {
                 backgroundColor: theme.colors.accent[500],
                 paddingHorizontal: theme.spacing.md,
@@ -170,7 +173,9 @@ const EventBottomSheet: React.FC<EventBottomSheetProps> = ({ visible, event, onE
                   fontWeight: '600',
                   textTransform: 'uppercase',
                 }}>
-                  {event.category}
+                  {Array.isArray(event.music_info.genres) 
+                    ? event.music_info.genres.join(', ') 
+                    : event.music_info.genres}
                 </Text>
               </View>
             )}
@@ -202,10 +207,10 @@ const EventBottomSheet: React.FC<EventBottomSheetProps> = ({ visible, event, onE
                 ...theme.shadows.small,
               }]}
               onPress={handleEventPress}
-              disabled={!event.url}
+              disabled={!event.detail_page_url}
             >
-              <Text variant="button" style={{ color: theme.colors.text.inverse }}>
-                {event.url ? '🎫 View Event Details' : 'No Link Available'}
+              <Text variant="body1" style={{ color: theme.colors.text.inverse, fontWeight: '600' }}>
+                {event.detail_page_url ? '🎫 View Event Details' : 'No Link Available'}
               </Text>
             </TouchableOpacity>
           </View>
