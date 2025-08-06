@@ -1,13 +1,13 @@
 import { TextStyle } from 'react-native';
 
 export const typography = {
-  // Font families
+  // Font families with fallbacks
   fontFamily: {
-    light: 'WorkSans_300Light',
-    regular: 'WorkSans_400Regular',
-    medium: 'WorkSans_500Medium',
-    semibold: 'WorkSans_600SemiBold',
-    bold: 'WorkSans_700Bold',
+    light: 'WorkSans_300Light, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Arial, sans-serif',
+    regular: 'WorkSans_400Regular, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Arial, sans-serif',
+    medium: 'WorkSans_500Medium, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Arial, sans-serif',
+    semibold: 'WorkSans_600SemiBold, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Arial, sans-serif',
+    bold: 'WorkSans_700Bold, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Arial, sans-serif',
   },
 
   // Font sizes

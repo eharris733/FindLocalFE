@@ -25,15 +25,28 @@ function AppContent() {
   const { theme, isDark } = useTheme();
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [showVenueModal, setShowVenueModal] = useState(false);
+  const [fontTimeout, setFontTimeout] = useState(false);
   
-  // Load Work Sans fonts
-  const [fontsLoaded] = useFonts({
+  // Load Work Sans fonts with error handling
+  const [fontsLoaded, fontError] = useFonts({
     WorkSans_300Light,
     WorkSans_400Regular,
     WorkSans_500Medium,
     WorkSans_600SemiBold,
     WorkSans_700Bold,
   });
+
+  // Set a timeout to prevent infinite loading on font failure
+  React.useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (!fontsLoaded && !fontError) {
+        console.warn('Font loading timeout - proceeding with fallback fonts');
+        setFontTimeout(true);
+      }
+    }, 10000); // 10 second timeout
+
+    return () => clearTimeout(timeout);
+  }, [fontsLoaded, fontError]);
   
   const {
     loading,
@@ -55,8 +68,8 @@ function AppContent() {
     setSelectedEvent(null);
   };
 
-  // Show loading while fonts are loading
-  if (!fontsLoaded) {
+  // Show loading while fonts are loading (but not forever)
+  if (!fontsLoaded && !fontError && !fontTimeout) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background.primary }]}>
         <StatusBar 
