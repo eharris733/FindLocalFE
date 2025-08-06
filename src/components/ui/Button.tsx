@@ -76,16 +76,15 @@ export const Button: React.FC<ButtonProps> = ({
       baseStyles,
       sizeStyles[size],
       variantStyles[variant],
-      fullWidth && { width: '100%' },
+      fullWidth && { width: '100%' as const },
       disabled && { opacity: 0.6 },
     ];
   };
 
   const getTextStyles = () => {
     const baseTextStyles = {
-      fontFamily: theme.typography.fontFamily.medium,
+      fontFamily: theme.typography.fontFamily.semibold,
       textAlign: 'center' as const,
-      fontWeight: '600' as const,
     };
 
     const sizeTextStyles = {

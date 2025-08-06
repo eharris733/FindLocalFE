@@ -6,6 +6,14 @@ import {
   SafeAreaView,
   StatusBar,
 } from 'react-native';
+import { useFonts } from 'expo-font';
+import {
+  WorkSans_300Light,
+  WorkSans_400Regular,
+  WorkSans_500Medium,
+  WorkSans_600SemiBold,
+  WorkSans_700Bold,
+} from '@expo-google-fonts/work-sans';
 import { ThemeProvider, useTheme } from './src/context/ThemeContext';
 import { useEvents } from './src/hooks/useEvents';
 import MainLayout from './src/components/MainLayout';
@@ -17,6 +25,15 @@ function AppContent() {
   const { theme, isDark } = useTheme();
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [showVenueModal, setShowVenueModal] = useState(false);
+  
+  // Load Work Sans fonts
+  const [fontsLoaded] = useFonts({
+    WorkSans_300Light,
+    WorkSans_400Regular,
+    WorkSans_500Medium,
+    WorkSans_600SemiBold,
+    WorkSans_700Bold,
+  });
   
   const {
     loading,
@@ -37,6 +54,24 @@ function AppContent() {
     setShowVenueModal(false);
     setSelectedEvent(null);
   };
+
+  // Show loading while fonts are loading
+  if (!fontsLoaded) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background.primary }]}>
+        <StatusBar 
+          barStyle={isDark ? "light-content" : "dark-content"} 
+          backgroundColor={theme.colors.background.primary} 
+        />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={theme.colors.primary[500]} />
+          <Text variant="body1" color="secondary" style={styles.loadingText}>
+            Loading fonts...
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   if (loading) {
     return (

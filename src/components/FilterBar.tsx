@@ -23,12 +23,9 @@ export default function FilterBar({
   const isMobile = width < 768;
 
   const quickDateOptions = [
-    { value: 'all', label: 'All', emoji: '📅' },
     { value: 'today', label: 'Today', emoji: '🔥' },
     { value: 'tomorrow', label: 'Tomorrow', emoji: '⏰' },
     { value: 'this_week', label: 'Week', emoji: '📆' },
-    { value: 'this_weekend', label: 'Weekend', emoji: '🎉' },
-    { value: 'this_month', label: 'Month', emoji: '🗓️' },
   ];
 
   const activeFiltersCount = Object.values(filters).filter(
