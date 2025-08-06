@@ -3,11 +3,11 @@ import { TextStyle } from 'react-native';
 export const typography = {
   // Font families
   fontFamily: {
-    regular: 'System', // Default system font
-    medium: 'System', // You can add custom fonts later
-    semibold: 'System',
-    bold: 'System',
-    light: 'System',
+    light: 'WorkSans_300Light',
+    regular: 'WorkSans_400Regular',
+    medium: 'WorkSans_500Medium',
+    semibold: 'WorkSans_600SemiBold',
+    bold: 'WorkSans_700Bold',
   },
 
   // Font sizes
@@ -40,49 +40,49 @@ export const typography = {
   // Text styles
   heading1: {
     fontSize: 30,
-    fontWeight: 'bold' as TextStyle['fontWeight'],
+    fontFamily: 'WorkSans_700Bold',
     lineHeight: 36,
   },
   
   heading2: {
     fontSize: 24,
-    fontWeight: 'bold' as TextStyle['fontWeight'],
+    fontFamily: 'WorkSans_700Bold',
     lineHeight: 28,
   },
   
   heading3: {
     fontSize: 20,
-    fontWeight: '600' as TextStyle['fontWeight'],
+    fontFamily: 'WorkSans_600SemiBold',
     lineHeight: 24,
   },
   
   heading4: {
     fontSize: 18,
-    fontWeight: '600' as TextStyle['fontWeight'],
+    fontFamily: 'WorkSans_600SemiBold',
     lineHeight: 22,
   },
   
   body: {
     fontSize: 16,
-    fontWeight: 'normal' as TextStyle['fontWeight'],
+    fontFamily: 'WorkSans_400Regular',
     lineHeight: 24,
   },
   
   bodySmall: {
     fontSize: 14,
-    fontWeight: 'normal' as TextStyle['fontWeight'],
+    fontFamily: 'WorkSans_400Regular',
     lineHeight: 20,
   },
   
   caption: {
     fontSize: 12,
-    fontWeight: 'normal' as TextStyle['fontWeight'],
+    fontFamily: 'WorkSans_400Regular',
     lineHeight: 16,
   },
   
   button: {
     fontSize: 16,
-    fontWeight: '600' as TextStyle['fontWeight'],
+    fontFamily: 'WorkSans_600SemiBold',
     lineHeight: 20,
   },
 };

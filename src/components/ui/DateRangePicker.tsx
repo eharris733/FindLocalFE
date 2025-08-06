@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   TouchableOpacity,
@@ -6,12 +6,14 @@ import {
   Platform,
   Modal,
   SafeAreaView,
-  ScrollView,
+  DatePickerIOS,
+  DatePickerAndroid,
 } from 'react-native';
 import { useTheme } from '../../context/ThemeContext';
 import { Text } from './Text';
 import { Portal } from './Portal';
-import { format, addDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
+import { Calendar } from './Calendar';
+import { format, addDays, startOfWeek, endOfWeek } from 'date-fns';
 
 interface DateRange {
   start: Date | null;
@@ -33,9 +35,11 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
 }) => {
   const { theme } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
-  const [tempRange, setTempRange] = useState<DateRange>(value);
+  const [tempStart, setTempStart] = useState<Date | null>(null);
+  const [dropdownLayout, setDropdownLayout] = useState({ x: 0, y: 0, width: 0, height: 0 });
+  const containerRef = useRef<View>(null);
 
-  const presets = [
+  const quickOptions = [
     { 
       label: 'Today', 
       emoji: '🔥',
@@ -50,14 +54,9 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
       }
     },
     { 
-      label: 'This Week', 
+      label: 'Week', 
       emoji: '📆',
       getValue: () => ({ start: startOfWeek(new Date()), end: endOfWeek(new Date()) })
-    },
-    { 
-      label: 'This Month', 
-      emoji: '🗓️',
-      getValue: () => ({ start: startOfMonth(new Date()), end: endOfMonth(new Date()) })
     },
   ];
 
@@ -73,29 +72,49 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
     return 'Select dates';
   };
 
-  const handlePresetSelect = (preset: any) => {
-    const range = preset.getValue();
-    onChange(range);
-    setIsOpen(false);
+  const measureContainer = () => {
+    if (containerRef.current) {
+      containerRef.current.measureInWindow((x, y, width, height) => {
+        setDropdownLayout({ x, y: y + height, width, height });
+      });
+    }
   };
 
-  const handleClear = () => {
-    onChange({ start: null, end: null });
+  const handleQuickSelect = (option: any) => {
+    const range = option.getValue();
+    onChange(range);
     setIsOpen(false);
+    setTempStart(null);
+  };
+
+  const handleDateSelect = (date: Date) => {
+    setTempStart(date);
+  };
+
+  const handleRangeComplete = (start: Date, end: Date) => {
+    onChange({ start, end });
+    setIsOpen(false);
+    setTempStart(null);
   };
 
   const handleOpen = () => {
     if (!disabled) {
-      setTempRange(value);
+      measureContainer();
       setIsOpen(true);
+      setTempStart(null);
     }
   };
 
+  const handleClose = () => {
+    setIsOpen(false);
+    setTempStart(null);
+  };
+
+  // Native date picker for mobile
   if (Platform.OS !== 'web') {
-    // On mobile, use native date picker in modal
     return (
       <>
-        <View style={[styles.container, { minWidth: 160 }]}>
+        <View ref={containerRef} style={[styles.container, { minWidth: 160 }]}>
           {label && (
             <Text variant="caption" color="secondary" style={styles.label}>
               {label.toUpperCase()}
@@ -134,55 +153,44 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
           visible={isOpen}
           animationType="slide"
           presentationStyle="pageSheet"
-          onRequestClose={() => setIsOpen(false)}
+          onRequestClose={handleClose}
         >
           <SafeAreaView style={[styles.modal, { backgroundColor: theme.colors.background.primary }]}>
             <View style={[styles.modalHeader, { borderBottomColor: theme.colors.border.light }]}>
               <Text variant="h3">Select Date Range</Text>
-              <TouchableOpacity onPress={() => setIsOpen(false)}>
+              <TouchableOpacity onPress={handleClose}>
                 <Text variant="h3" color="secondary">✕</Text>
               </TouchableOpacity>
             </View>
             
-            <ScrollView style={styles.modalContent}>
+            <View style={styles.modalContent}>
               <Text variant="h4" style={{ marginBottom: 16 }}>Quick Select</Text>
-              {presets.map((preset) => (
+              {quickOptions.map((option) => (
                 <TouchableOpacity
-                  key={preset.label}
-                  style={[styles.presetButton, {
+                  key={option.label}
+                  style={[styles.quickButton, {
                     backgroundColor: theme.colors.background.secondary,
                     borderColor: theme.colors.border.light,
                     marginBottom: 8,
                   }]}
-                  onPress={() => handlePresetSelect(preset)}
+                  onPress={() => handleQuickSelect(option)}
                 >
                   <Text variant="body1">
-                    {preset.emoji} {preset.label}
+                    {option.emoji} {option.label}
                   </Text>
                 </TouchableOpacity>
               ))}
-              
-              <TouchableOpacity
-                style={[styles.clearButton, {
-                  backgroundColor: theme.colors.background.secondary,
-                  borderColor: theme.colors.border.medium,
-                  marginTop: 16,
-                }]}
-                onPress={handleClear}
-              >
-                <Text variant="body1" color="secondary">Clear Dates</Text>
-              </TouchableOpacity>
-            </ScrollView>
+            </View>
           </SafeAreaView>
         </Modal>
       </>
     );
   }
 
-  // Web implementation with inline calendar
+  // Web implementation with calendar portal
   return (
     <>
-      <View style={[styles.container, { minWidth: 160 }]}>
+      <View ref={containerRef} style={[styles.container, { minWidth: 160 }]}>
         {label && (
           <Text variant="caption" color="secondary" style={styles.label}>
             {label.toUpperCase()}
@@ -219,66 +227,66 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
 
       {isOpen && (
         <Portal>
-          <View
-            style={[
-              styles.dropdown,
-              {
-                position: 'absolute',
-                top: 100, // Adjust based on your filter bar height
-                left: '50%',
-                transform: [{ translateX: -200 }],
-                width: 400,
-                backgroundColor: theme.colors.background.secondary,
-                borderColor: theme.colors.primary[500],
-                ...theme.shadows.large,
-                zIndex: 9999,
-              }
-            ]}
+          <TouchableOpacity 
+            style={styles.backdrop} 
+            activeOpacity={1} 
+            onPress={handleClose}
           >
-            <View style={[styles.calendarHeader, { 
-              borderBottomColor: theme.colors.border.light,
-              padding: 16,
-            }]}>
-              <Text variant="h4">Select Date Range</Text>
-              <TouchableOpacity onPress={() => setIsOpen(false)}>
-                <Text variant="body1" color="secondary">✕</Text>
-              </TouchableOpacity>
-            </View>
-
-            <View style={{ padding: 16 }}>
-              <Text variant="body1" style={{ marginBottom: 12, fontWeight: '600' }}>
-                Quick Select
-              </Text>
-              <View style={styles.presetGrid}>
-                {presets.map((preset) => (
-                  <TouchableOpacity
-                    key={preset.label}
-                    style={[styles.presetChip, {
-                      backgroundColor: theme.colors.background.primary,
-                      borderColor: theme.colors.border.light,
-                    }]}
-                    onPress={() => handlePresetSelect(preset)}
-                  >
-                    <Text variant="caption">
-                      {preset.emoji} {preset.label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+            <View
+              style={[
+                styles.dropdown,
+                {
+                  position: 'absolute',
+                  top: dropdownLayout.y + 8,
+                  left: Math.max(16, dropdownLayout.x - 100),
+                  backgroundColor: theme.colors.background.secondary,
+                  borderColor: theme.colors.primary[500],
+                  ...theme.shadows.large,
+                  zIndex: 9999,
+                }
+              ]}
+              onStartShouldSetResponder={() => true}
+            >
+              {/* Quick Select Buttons */}
+              <View style={[styles.quickSelectContainer, { 
+                borderBottomColor: theme.colors.border.light,
+                padding: 16,
+              }]}>
+                <Text variant="body1" style={{ marginBottom: 12, fontWeight: '600' }}>
+                  Quick Select
+                </Text>
+                <View style={styles.quickGrid}>
+                  {quickOptions.map((option) => (
+                    <TouchableOpacity
+                      key={option.label}
+                      style={[styles.quickChip, {
+                        backgroundColor: theme.colors.background.primary,
+                        borderColor: theme.colors.border.light,
+                      }]}
+                      onPress={() => handleQuickSelect(option)}
+                    >
+                      <Text variant="caption">
+                        {option.emoji} {option.label}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
               </View>
 
-              <TouchableOpacity
-                style={[styles.clearButton, {
-                  backgroundColor: theme.colors.background.primary,
-                  borderColor: theme.colors.border.medium,
-                  marginTop: 16,
-                  alignSelf: 'center',
-                }]}
-                onPress={handleClear}
-              >
-                <Text variant="body2" color="secondary">Clear Dates</Text>
-              </TouchableOpacity>
+              {/* Calendar */}
+              <View style={{ padding: 16 }}>
+                <Text variant="body1" style={{ marginBottom: 12, fontWeight: '600' }}>
+                  {tempStart ? 'Select end date' : 'Select start date'}
+                </Text>
+                <Calendar
+                  startDate={tempStart || value.start}
+                  endDate={value.end}
+                  onDateSelect={handleDateSelect}
+                  onRangeComplete={handleRangeComplete}
+                />
+              </View>
             </View>
-          </View>
+          </TouchableOpacity>
         </Portal>
       )}
     </>
@@ -306,34 +314,33 @@ const styles = StyleSheet.create({
   arrow: {
     marginLeft: 8,
   },
+  backdrop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.1)',
+  },
   dropdown: {
     borderWidth: 1,
     borderRadius: 8,
     overflow: 'hidden',
+    maxWidth: 320,
   },
-  calendarHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+  quickSelectContainer: {
     borderBottomWidth: 1,
   },
-  presetGrid: {
+  quickGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
   },
-  presetChip: {
+  quickChip: {
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderWidth: 1,
     borderRadius: 6,
-  },
-  clearButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderWidth: 1,
-    borderRadius: 6,
-    alignItems: 'center',
   },
   
   // Mobile styles
@@ -351,7 +358,7 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
   },
-  presetButton: {
+  quickButton: {
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderWidth: 1,
