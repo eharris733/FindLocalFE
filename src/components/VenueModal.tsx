@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import type { Venue } from '../types/venues';
 import type { Event } from '../types/events';
-import { getVenueByName, getVenueById } from '../api/venues';
+import { getVenueByName, getVenueById, getVenuesByCity } from '../api/venues';
 import { useTheme } from '../context/ThemeContext';
 import { Text } from './ui';
 
@@ -36,32 +36,25 @@ const VenueModal: React.FC<VenueModalProps> = ({ visible, event, onClose }) => {
     }
   }, [visible, event]);
 
-  const fetchVenueData = async () => {
+    const fetchVenueData = async () => {
     if (!event) return;
-
+    
     setLoading(true);
     setError(null);
-    setVenue(null);
-
+    
     try {
-      let venueData = null;
-
-      // Try to fetch by venue_id first, then fall back to name
-      if (event.venue_id) {
-        venueData = await getVenueById(event.venue_id);
-      }
+      // For now, since events no longer have direct venue relationships,
+      // we'll show venues in the same city as the event
+      const venuesInCity = await getVenuesByCity(event.city);
       
-      if (!venueData && event.venue_name) {
-        venueData = await getVenueByName(event.venue_name);
-      }
-
-      if (venueData) {
-        setVenue(venueData);
+      if (venuesInCity.length > 0) {
+        // For now, just show the first venue in the city
+        setVenue(venuesInCity[0]);
       } else {
-        setError('Venue information not found');
+        setError('No venues found in this city');
       }
     } catch (err) {
-      console.error('Error fetching venue:', err);
+      console.error('Error fetching venues:', err);
       setError('Failed to load venue information');
     } finally {
       setLoading(false);
@@ -75,8 +68,8 @@ const VenueModal: React.FC<VenueModalProps> = ({ visible, event, onClose }) => {
   };
 
   const handleEventLink = () => {
-    if (event?.url) {
-      Linking.openURL(event.url);
+    if (event?.detail_page_url) {
+      Linking.openURL(event.detail_page_url);
     }
   };
 
@@ -151,7 +144,7 @@ const VenueModal: React.FC<VenueModalProps> = ({ visible, event, onClose }) => {
               <View style={styles.imageContainer}>
                 <Image
                   source={{
-                    uri: venue.image_url || 'https://via.placeholder.com/400x200/63BAAB/FFFFFF?text=Venue'
+                    uri: venue.image || 'https://via.placeholder.com/400x200/63BAAB/FFFFFF?text=Venue'
                   }}
                   style={[styles.venueImage, { backgroundColor: theme.colors.gray[100] }]}
                   resizeMode="cover"
@@ -170,7 +163,7 @@ const VenueModal: React.FC<VenueModalProps> = ({ visible, event, onClose }) => {
                     fontWeight: '600',
                     textTransform: 'uppercase',
                   }}>
-                    {venue.venue_type}
+                    {venue.type || 'Venue'}
                   </Text>
                 </View>
               </View>
@@ -258,25 +251,27 @@ const VenueModal: React.FC<VenueModalProps> = ({ visible, event, onClose }) => {
                       </Text>
                       
                       <View style={[styles.eventMeta, { marginBottom: theme.spacing.sm }]}>
-                        <Text variant="body2" style={{
-                          color: theme.colors.primary[600],
-                          fontWeight: '600',
-                          marginBottom: theme.spacing.xs,
-                        }}>
-                          📅 {new Date(event.event_date).toLocaleDateString('en-US', {
-                            weekday: 'long',
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric'
-                          })}
-                        </Text>
+                        {event.event_date && (
+                          <Text variant="body2" style={{
+                            color: theme.colors.primary[600],
+                            fontWeight: '600',
+                            marginBottom: theme.spacing.xs,
+                          }}>
+                            📅 {new Date(event.event_date).toLocaleDateString('en-US', {
+                              weekday: 'long',
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric'
+                            })}
+                          </Text>
+                        )}
                         
-                        {event.time && (
+                        {event.start_time && (
                           <Text variant="body2" style={{
                             color: theme.colors.secondary[500],
                             fontWeight: '600',
                           }}>
-                            🕐 {event.time}
+                            🕐 {event.start_time}
                           </Text>
                         )}
                       </View>
@@ -295,7 +290,7 @@ const VenueModal: React.FC<VenueModalProps> = ({ visible, event, onClose }) => {
 
                 {/* Action Buttons */}
                 <View style={[styles.actionButtons, { gap: theme.spacing.sm }]}>
-                  {event?.url && (
+                  {event?.detail_page_url && (
                     <TouchableOpacity
                       style={[styles.actionButton, {
                         backgroundColor: theme.colors.secondary[500],
@@ -306,7 +301,7 @@ const VenueModal: React.FC<VenueModalProps> = ({ visible, event, onClose }) => {
                       }]}
                       onPress={handleEventLink}
                     >
-                      <Text variant="button" style={{ color: theme.colors.text.inverse }}>
+                      <Text variant="body1" style={{ color: theme.colors.text.inverse, fontWeight: '600' }}>
                         🎫 View Event
                       </Text>
                     </TouchableOpacity>
@@ -325,7 +320,7 @@ const VenueModal: React.FC<VenueModalProps> = ({ visible, event, onClose }) => {
                       }]}
                       onPress={handleVenueWebsite}
                     >
-                      <Text variant="button" style={{ color: theme.colors.text.primary }}>
+                      <Text variant="body1" style={{ color: theme.colors.text.primary, fontWeight: '600' }}>
                         🌐 Venue Website
                       </Text>
                     </TouchableOpacity>

@@ -21,7 +21,7 @@ export async function getVenueByName(venueName: string): Promise<Venue | null> {
   }
 }
 
-export async function getVenueById(venueId: number): Promise<Venue | null> {
+export async function getVenueById(venueId: string): Promise<Venue | null> {
   try {
     const { data, error } = await supabase
       .from('venues')
@@ -38,5 +38,46 @@ export async function getVenueById(venueId: number): Promise<Venue | null> {
   } catch (error: any) {
     console.error('Error fetching venue:', error);
     return null;
+  }
+}
+
+export async function getVenuesByCity(city: string): Promise<Venue[]> {
+  try {
+    const { data, error } = await supabase
+      .from('venues')
+      .select('*')
+      .eq('city', city)
+      .eq('is_active', true)
+      .order('name');
+
+    if (error) {
+      console.error('Error fetching venues by city from Supabase:', error);
+      return [];
+    }
+
+    return data as Venue[];
+  } catch (error: any) {
+    console.error('Error fetching venues by city:', error);
+    return [];
+  }
+}
+
+export async function getAllVenues(): Promise<Venue[]> {
+  try {
+    const { data, error } = await supabase
+      .from('venues')
+      .select('*')
+      .eq('is_active', true)
+      .order('name');
+
+    if (error) {
+      console.error('Error fetching all venues from Supabase:', error);
+      return [];
+    }
+
+    return data as Venue[];
+  } catch (error: any) {
+    console.error('Error fetching all venues:', error);
+    return [];
   }
 }
