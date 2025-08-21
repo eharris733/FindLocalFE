@@ -46,10 +46,10 @@ const VenueModal: React.FC<VenueModalProps> = ({ visible, event, onClose }) => {
       // For now, since events no longer have direct venue relationships,
       // we'll show venues in the same city as the event
       const venuesInCity = await getVenuesByCity(event.city);
+      console.log('Venues in city:', venuesInCity);
       
       if (venuesInCity.length > 0) {
-        // For now, just show the first venue in the city
-        setVenue(venuesInCity[0]);
+        setVenue(venuesInCity.find(venue => venue.id === event.venue_id) ?? null);
       } else {
         setError('No venues found in this city');
       }

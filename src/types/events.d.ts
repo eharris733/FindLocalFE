@@ -1,8 +1,9 @@
 export interface Event {
   id: string; // uuid
   silver_event_id: string | null; // uuid, foreign key to events_silver
-  city: string;
+  venue_id: string | null;
   title: string | null;
+  city: string;
   description: string | null;
   event_date: string | null; // date
   start_time: string | null; // time without time zone
