@@ -48,8 +48,7 @@ const VenueModal: React.FC<VenueModalProps> = ({ visible, event, onClose }) => {
       const venuesInCity = await getVenuesByCity(event.city);
       
       if (venuesInCity.length > 0) {
-        // For now, just show the first venue in the city
-        setVenue(venuesInCity[0]);
+        setVenue(venuesInCity.find(venue => venue.id === event.venue_id) ?? null);
       } else {
         setError('No venues found in this city');
       }
