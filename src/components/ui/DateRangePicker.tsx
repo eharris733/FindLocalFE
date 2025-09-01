@@ -42,12 +42,10 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
   const quickOptions = [
     { 
       label: 'Today', 
-      emoji: '🔥',
       getValue: () => ({ start: new Date(), end: new Date() })
     },
     { 
       label: 'Tomorrow', 
-      emoji: '⏰',
       getValue: () => {
         const tomorrow = addDays(new Date(), 1);
         return { start: tomorrow, end: tomorrow };
@@ -55,7 +53,6 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
     },
     { 
       label: 'Week', 
-      emoji: '📆',
       getValue: () => ({ start: startOfWeek(new Date()), end: endOfWeek(new Date()) })
     },
   ];
@@ -122,16 +119,17 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
           )}
           
           <TouchableOpacity
-            style={[
-              styles.input,
-              {
-                backgroundColor: theme.colors.background.secondary,
-                borderColor: theme.colors.border.light,
-                borderRadius: theme.borderRadius.md,
-                height: 44,
-              },
-              disabled && { opacity: 0.5 }
-            ]}
+            style={[{
+              flexDirection: 'row',
+              alignItems: 'center',
+              borderWidth: 1,
+              borderColor: theme.colors.border.light,
+              backgroundColor: theme.colors.background.secondary,
+              paddingHorizontal: theme.spacing.md,
+              borderRadius: theme.borderRadius.md,
+              minWidth: 200,
+              height: 36,
+            }, disabled && { opacity: 0.5 }]}
             onPress={handleOpen}
             disabled={disabled}
           >
@@ -139,12 +137,9 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
               variant="body2" 
               color={(!value.start && !value.end) ? 'tertiary' : 'primary'}
               numberOfLines={1}
-              style={styles.inputText}
+              style={{ flex: 1, fontSize: 14 }}
             >
               {formatDisplayValue()}
-            </Text>
-            <Text variant="body2" color="tertiary" style={styles.arrow}>
-              📅
             </Text>
           </TouchableOpacity>
         </View>
@@ -176,7 +171,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
                   onPress={() => handleQuickSelect(option)}
                 >
                   <Text variant="body1">
-                    {option.emoji} {option.label}
+                    {option.label}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -204,7 +199,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
               backgroundColor: theme.colors.background.secondary,
               borderColor: isOpen ? theme.colors.primary[500] : theme.colors.border.light,
               borderRadius: theme.borderRadius.md,
-              height: 44,
+              height: 36,
             },
             disabled && { opacity: 0.5 }
           ]}
@@ -218,9 +213,6 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
             style={styles.inputText}
           >
             {formatDisplayValue()}
-          </Text>
-          <Text variant="body2" color="tertiary" style={styles.arrow}>
-            📅
           </Text>
         </TouchableOpacity>
       </View>
@@ -266,7 +258,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
                       onPress={() => handleQuickSelect(option)}
                     >
                       <Text variant="caption">
-                        {option.emoji} {option.label}
+                        {option.label}
                       </Text>
                     </TouchableOpacity>
                   ))}

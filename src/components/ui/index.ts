@@ -16,3 +16,5 @@ export { SearchableDropdown } from './SearchableDropdown';
 export { DateRangePicker } from './DateRangePicker';
 
 export { Portal } from './Portal';
+
+export { default as VenueSelectionModal } from './VenueSelectionModal';

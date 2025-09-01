@@ -64,6 +64,8 @@ export async function getVenuesByCity(city: string): Promise<Venue[]> {
 
 export async function getAllVenues(): Promise<Venue[]> {
   try {
+    console.log('🏢 Fetching all venues from database...');
+    
     const { data, error } = await supabase
       .from('venues')
       .select('*')
@@ -74,6 +76,14 @@ export async function getAllVenues(): Promise<Venue[]> {
       console.error('Error fetching all venues from Supabase:', error);
       return [];
     }
+
+    console.log(`🏢 Found ${data?.length || 0} venues in database`);
+    console.log('🏢 Sample venues:', data?.slice(0, 3).map(v => ({ 
+      id: v.id, 
+      name: v.name, 
+      city: v.city, 
+      is_active: v.is_active 
+    })));
 
     return data as Venue[];
   } catch (error: any) {

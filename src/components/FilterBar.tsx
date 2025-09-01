@@ -1,24 +1,30 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, Platform, TextInput, TouchableOpacity, Dimensions } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
-import { Button, Text, SearchableDropdown, DateRangePicker } from './ui';
+import { Button, Text, SearchableDropdown, DateRangePicker, VenueSelectionModal } from './ui';
 import type { FilterState, FilterAction } from '../hooks/useEvents';
+import type { Venue } from '../types/venues';
 
 interface FilterBarProps {
   filters: FilterState;
   dispatchFilters: React.Dispatch<FilterAction>;
   availableCategories: string[];
   availableLocations: string[];
+  venues: Venue[];
+  venuesLoading: boolean;
 }
 
 export default function FilterBar({ 
   filters, 
   dispatchFilters, 
   availableCategories, 
-  availableLocations 
+  availableLocations,
+  venues,
+  venuesLoading
 }: FilterBarProps) {
   const { theme } = useTheme();
   const [showAllFilters, setShowAllFilters] = useState(false);
+  const [showVenueModal, setShowVenueModal] = useState(false);
   const { width } = Dimensions.get('window');
   const isMobile = width < 768;
 
@@ -28,9 +34,12 @@ export default function FilterBar({
     { value: 'this_week', label: 'Week', emoji: '📆' },
   ];
 
-  const activeFiltersCount = Object.values(filters).filter(
-    value => value !== '' && value !== 'all' && value !== null
-  ).length;
+  const activeFiltersCount = Object.entries(filters).filter(([key, value]) => {
+    if (key === 'venues') {
+      return Array.isArray(value) && value.length > 0;
+    }
+    return value !== '' && value !== 'ALL' && value !== null;
+  }).length;
 
   const clearAllFilters = () => {
     dispatchFilters({ type: 'CLEAR_ALL' });
@@ -54,6 +63,20 @@ export default function FilterBar({
       dispatchFilters({ type: 'SET_START_DATE', payload: null });
       dispatchFilters({ type: 'SET_END_DATE', payload: null });
     }
+  };
+
+  const handleVenueSelectionChange = (venueIds: string[]) => {
+    dispatchFilters({ type: 'SET_VENUES', payload: venueIds });
+  };
+
+  // Get venue names for display
+  const getSelectedVenueNames = () => {
+    if (filters.venues.length === 0) return 'All Venues';
+    if (filters.venues.length === 1) {
+      const venue = venues.find(v => v.id === filters.venues[0]);
+      return venue ? venue.name : 'Unknown Venue';
+    }
+    return `${filters.venues.length} venues selected`;
   };
 
   if (isMobile) {
@@ -115,16 +138,36 @@ export default function FilterBar({
             paddingHorizontal: theme.spacing.md,
             paddingVertical: theme.spacing.sm,
           }]}>
-            {/* Venue Dropdown */}
+            {/* Venue Selection */}
             <View style={[styles.mobileFilterSection, { marginBottom: theme.spacing.md }]}>
-              <SearchableDropdown
-                label="Venues"
-                data={availableLocations}
-                value={filters.location}
-                onSelect={(value) => dispatchFilters({ type: 'SET_LOCATION', payload: value })}
-                placeholder="Search venues..."
-                maxHeight={150}
-              />
+              <Text variant="caption" color="secondary" style={styles.mobileFilterLabel}>
+                VENUES
+              </Text>
+              <TouchableOpacity
+                style={[styles.venueSelector, {
+                  borderColor: theme.colors.border.light,
+                  backgroundColor: theme.colors.background.secondary,
+                  paddingHorizontal: theme.spacing.md,
+                  paddingVertical: theme.spacing.sm,
+                  borderRadius: theme.borderRadius.md,
+                }]}
+                onPress={() => setShowVenueModal(true)}
+                disabled={venuesLoading}
+              >
+                <Text 
+                  variant="body2" 
+                  color={venuesLoading ? 'tertiary' : 'primary'}
+                  numberOfLines={1}
+                  style={{ flex: 1 }}
+                >
+                  {venuesLoading ? 'Loading venues...' : 'Select venues'}
+                </Text>
+                {filters.venues.length > 0 && (
+                  <Text variant="body2" color="secondary">
+                    ({filters.venues.length})
+                  </Text>
+                )}
+              </TouchableOpacity>
             </View>
 
             {/* Date Range Picker */}
@@ -134,53 +177,6 @@ export default function FilterBar({
                 value={getDateRangeValue()}
                 onChange={handleDateRangeChange}
               />
-            </View>
-
-            {/* Quick Date Filters */}
-            <View style={[styles.mobileFilterSection, { marginBottom: theme.spacing.md }]}>
-              <Text variant="caption" color="secondary" style={styles.mobileFilterLabel}>
-                QUICK SELECT
-              </Text>
-              <ScrollView 
-                horizontal 
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.mobileFilterScroll}
-              >
-                {quickDateOptions.map((option) => (
-                  <TouchableOpacity
-                    key={option.value}
-                    style={[
-                      styles.mobileFilterChip,
-                      {
-                        backgroundColor: filters.dateRange === option.value 
-                          ? theme.colors.primary[500] 
-                          : theme.colors.background.primary,
-                        borderColor: filters.dateRange === option.value 
-                          ? theme.colors.primary[600] 
-                          : theme.colors.border.light,
-                        paddingHorizontal: theme.spacing.sm,
-                        paddingVertical: theme.spacing.xs,
-                        borderRadius: theme.borderRadius.md,
-                        marginRight: theme.spacing.xs,
-                      }
-                    ]}
-                    onPress={() => 
-                      dispatchFilters({ type: 'SET_DATE_RANGE', payload: option.value as any })
-                    }
-                  >
-                    <Text variant="body2" style={{ marginRight: 4 }}>
-                      {option.emoji}
-                    </Text>
-                    <Text 
-                      variant="caption" 
-                      color={filters.dateRange === option.value ? 'inverse' : 'secondary'}
-                      style={{ fontWeight: '500' }}
-                    >
-                      {option.label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
             </View>
 
             {/* Categories */}
@@ -289,18 +285,39 @@ export default function FilterBar({
           />
         </View>
 
-        {/* Venue Dropdown */}
+        {/* Venue Selection */}
         <View style={[styles.filterGroup, { marginRight: theme.spacing.lg, minWidth: 200 }]}>
-          <SearchableDropdown
-            label="Venues"
-            data={availableLocations}
-            value={filters.location}
-            onSelect={(value) => dispatchFilters({ type: 'SET_LOCATION', payload: value })}
-            placeholder="Search venues..."
-            maxHeight={200}
-            minWidth={200}
-            maxWidth={300}
-          />
+          <Text variant="caption" color="secondary" style={styles.filterLabel}>
+            VENUES
+          </Text>
+          <TouchableOpacity
+            style={[styles.venueSelector, {
+              borderColor: theme.colors.border.light,
+              backgroundColor: theme.colors.background.secondary,
+              paddingHorizontal: theme.spacing.md,
+              paddingVertical: theme.spacing.sm,
+              borderRadius: theme.borderRadius.md,
+              minWidth: 200,
+              maxWidth: 300,
+              height: 36,
+            }]}
+            onPress={() => setShowVenueModal(true)}
+            disabled={venuesLoading}
+          >
+            <Text 
+              variant="body2" 
+              color={venuesLoading ? 'tertiary' : 'primary'}
+              numberOfLines={1}
+              style={{ flex: 1, fontSize: 14 }}
+            >
+              {venuesLoading ? 'Loading venues...' : 'Select venues'}
+            </Text>
+            {filters.venues.length > 0 && (
+              <Text variant="body2" color="secondary" style={{ fontSize: 14 }}>
+                ({filters.venues.length})
+              </Text>
+            )}
+          </TouchableOpacity>
         </View>
 
         {/* Date Range Picker */}
@@ -310,25 +327,6 @@ export default function FilterBar({
             value={getDateRangeValue()}
             onChange={handleDateRangeChange}
           />
-        </View>
-
-        {/* Quick Date Filters */}
-        <View style={[styles.filterGroup, { marginRight: theme.spacing.lg }]}>
-          <Text variant="caption" color="secondary" style={styles.filterLabel}>
-            QUICK SELECT
-          </Text>
-          <View style={styles.filterButtons}>
-            {quickDateOptions.map((option) => (
-              <Button
-                key={option.value}
-                variant={filters.dateRange === option.value ? 'primary' : 'outline'}
-                size="small"
-                title={`${option.emoji} ${option.label}`}
-                onPress={() => dispatchFilters({ type: 'SET_DATE_RANGE', payload: option.value as any })}
-                style={styles.filterButton}
-              />
-            ))}
-          </View>
         </View>
 
         {/* Category Filter */}
@@ -363,6 +361,15 @@ export default function FilterBar({
           </View>
         )}
       </ScrollView>
+      
+      {/* Venue Selection Modal */}
+      <VenueSelectionModal
+        visible={showVenueModal}
+        onClose={() => setShowVenueModal(false)}
+        selectedVenues={filters.venues}
+        onVenuesChange={handleVenueSelectionChange}
+        title="Select Venues"
+      />
     </View>
   );
 }
@@ -437,5 +444,10 @@ const styles = StyleSheet.create({
   clearButton: {
     borderWidth: 1,
     alignItems: 'center',
+  },
+  venueSelector: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
   },
 });
