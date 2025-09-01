@@ -8,6 +8,7 @@ import SidebarEventList from './SidebarEventList';
 import MapPanel from './MapPanel';
 import type { Event } from '../types/events';
 import type { FilterState, FilterAction } from '../hooks/useEvents';
+import type { Venue } from '../types/venues';
 
 interface MainLayoutProps {
   events: Event[];
@@ -15,6 +16,8 @@ interface MainLayoutProps {
   dispatchFilters: React.Dispatch<FilterAction>;
   availableCategories: string[];
   availableLocations: string[];
+  venues: Venue[];
+  venuesLoading: boolean;
   onEventPress: (event: Event) => void;
 }
 
@@ -24,6 +27,8 @@ export default function MainLayout({
   dispatchFilters,
   availableCategories,
   availableLocations,
+  venues,
+  venuesLoading,
   onEventPress,
 }: MainLayoutProps) {
   const { theme } = useTheme();
@@ -72,6 +77,8 @@ export default function MainLayout({
           dispatchFilters={dispatchFilters}
           availableCategories={availableCategories}
           availableLocations={availableLocations}
+          venues={venues}
+          venuesLoading={venuesLoading}
         />
         
         <TabNavigation
@@ -110,6 +117,8 @@ export default function MainLayout({
         dispatchFilters={dispatchFilters}
         availableCategories={availableCategories}
         availableLocations={availableLocations}
+        venues={venues}
+        venuesLoading={venuesLoading}
       />
       
       <View style={styles.splitContainer}>

@@ -21,7 +21,8 @@ export interface FilterState {
   endDate: Date | null;
   dateRange: 'all' | 'today' | 'tomorrow' | 'this_week' | 'this_weekend' | 'next_week' | 'this_month' | 'custom';
   searchText: string;
-  location: string; // Changed from 'venue' to 'location' for consistency
+  location: string; // Changed from 'venue' to 'location' for consistency (cities)
+  venues: string[]; // New field for multi-select venues
 }
 
 // Backwards compatibility
@@ -34,5 +35,6 @@ export type FilterAction =
   | { type: 'SET_DATE_RANGE'; payload: FilterState['dateRange'] }
   | { type: 'SET_SEARCH_TEXT'; payload: string }
   | { type: 'SET_LOCATION'; payload: string }
+  | { type: 'SET_VENUES'; payload: string[] }
   | { type: 'CLEAR_ALL' } // Added clear all action
   | { type: 'RESET_FILTERS' }; // Keep for backwards compatibility

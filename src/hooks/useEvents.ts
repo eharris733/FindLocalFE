@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo, useReducer } from 'react';
 import type { Event, FilterState, FilterAction } from '../types/events';
+import type { Venue } from '../types/venues';
 import { getEvents } from '../api/events';
+import { getAllVenues, getVenuesByCity } from '../api/venues';
 import { 
   startOfDay, 
   endOfDay, 
@@ -16,12 +18,13 @@ import {
 } from 'date-fns';
 
 const initialFilterState: FilterState = {
-  category: 'all',
+  category: 'ALL',
   startDate: null,
   endDate: null,
   dateRange: 'all',
   searchText: '',
   location: 'all',
+  venues: [], // Initialize as empty array
 };
 
 const getDateRangeFromSelection = (dateRange: FilterState['dateRange']): { start: Date | null; end: Date | null } => {
@@ -78,6 +81,8 @@ const filterReducer = (state: FilterState, action: FilterAction): FilterState =>
       return { ...state, searchText: action.payload };
     case 'SET_LOCATION':
       return { ...state, location: action.payload };
+    case 'SET_VENUES':
+      return { ...state, venues: action.payload };
     case 'CLEAR_ALL':
     case 'RESET_FILTERS':
       return initialFilterState;
@@ -95,12 +100,16 @@ interface UseEventsResult {
   dispatchFilters: React.Dispatch<FilterAction>;
   availableCategories: string[];
   availableLocations: string[];
+  venues: Venue[];
+  venuesLoading: boolean;
 }
 
 export const useEvents = (): UseEventsResult => {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [venues, setVenues] = useState<Venue[]>([]);
+  const [venuesLoading, setVenuesLoading] = useState<boolean>(true);
   const [filters, dispatchFilters] = useReducer(filterReducer, initialFilterState);
 
   useEffect(() => {
@@ -120,8 +129,26 @@ export const useEvents = (): UseEventsResult => {
     fetchEvents();
   }, []);
 
+  // Fetch venues for filtering
+  useEffect(() => {
+    const fetchVenues = async () => {
+      setVenuesLoading(true);
+      try {
+        // For now, filter by brooklyn - later this can be dynamic based on user location
+        const venueData = await getVenuesByCity('brooklyn');
+        setVenues(venueData);
+        console.log('Loaded venues for brooklyn:', venueData.length);
+      } catch (err) {
+        console.error('Failed to fetch venues:', err);
+      } finally {
+        setVenuesLoading(false);
+      }
+    };
+    fetchVenues();
+  }, []);
+
   const { availableCategories, availableLocations } = useMemo(() => {
-    const categories = new Set(['all']);
+    const categories = new Set(['ALL']);
     const locations = new Set(['all']);
     events.forEach(event => {
       // Extract genres from music_info if available
@@ -137,8 +164,8 @@ export const useEvents = (): UseEventsResult => {
     });
     return {
       availableCategories: Array.from(categories).sort((a, b) => {
-        if (a === 'all') return -1;
-        if (b === 'all') return 1;
+        if (a === 'ALL') return -1;
+        if (b === 'ALL') return 1;
         return a.localeCompare(b);
       }),
       availableLocations: Array.from(locations).sort((a, b) => {
@@ -157,7 +184,7 @@ export const useEvents = (): UseEventsResult => {
       const eventDate = new Date(event.event_date);
 
       // Category filter - check music_info.genres
-      if (filters.category !== 'all') {
+      if (filters.category !== 'ALL') {
         let hasMatchingGenre = false;
         if (event.music_info && event.music_info.genres) {
           if (Array.isArray(event.music_info.genres)) {
@@ -172,6 +199,13 @@ export const useEvents = (): UseEventsResult => {
       // Location filter (city)
       if (filters.location !== 'all' && event.city !== filters.location) {
         return false;
+      }
+
+      // Venue filter - check if event's venue is in selected venues
+      if (filters.venues.length > 0 && event.venue_id) {
+        if (!filters.venues.includes(event.venue_id)) {
+          return false;
+        }
       }
 
       // Date filter
@@ -195,16 +229,27 @@ export const useEvents = (): UseEventsResult => {
         const titleLower = (event.title || '').toLowerCase();
         const descriptionLower = (event.description || '').toLowerCase();
         const cityLower = event.city.toLowerCase();
+        
+        // Also search venue names
+        let venueNameLower = '';
+        if (event.venue_id) {
+          const venue = venues.find(v => v.id === event.venue_id);
+          if (venue) {
+            venueNameLower = venue.name.toLowerCase();
+          }
+        }
+        
         if (!titleLower.includes(searchLower) && 
             !descriptionLower.includes(searchLower) && 
-            !cityLower.includes(searchLower)) {
+            !cityLower.includes(searchLower) &&
+            !venueNameLower.includes(searchLower)) {
           return false;
         }
       }
 
       return true;
     });
-  }, [events, filters]);
+  }, [events, filters, venues]);
 
   return {
     events,
@@ -215,6 +260,8 @@ export const useEvents = (): UseEventsResult => {
     dispatchFilters,
     availableCategories,
     availableLocations,
+    venues,
+    venuesLoading,
   };
 };
 
