@@ -133,9 +133,12 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
             onPress={handleOpen}
             disabled={disabled}
           >
+            <Text variant="body2" style={{ marginRight: 6, fontSize: 14 }}>
+              📅
+            </Text>
             <Text 
               variant="body2" 
-              color={(!value.start && !value.end) ? 'tertiary' : 'primary'}
+              color="primary"
               numberOfLines={1}
               style={{ flex: 1, fontSize: 14 }}
             >
@@ -206,9 +209,12 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
           onPress={handleOpen}
           disabled={disabled}
         >
+          <Text variant="body2" style={{ marginRight: 6, fontSize: 14 }}>
+            📅
+          </Text>
           <Text 
             variant="body2" 
-            color={(!value.start && !value.end) ? 'tertiary' : 'primary'}
+            color="primary"
             numberOfLines={1}
             style={styles.inputText}
           >
