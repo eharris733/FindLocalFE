@@ -56,6 +56,8 @@ function AppContent() {
     dispatchFilters,
     availableCategories,
     availableLocations,
+    venues,
+    venuesLoading,
   } = useEvents();
 
   const handleEventPress = (event: Event) => {
@@ -135,6 +137,8 @@ function AppContent() {
         dispatchFilters={dispatchFilters}
         availableCategories={availableCategories}
         availableLocations={availableLocations}
+        venues={venues}
+        venuesLoading={venuesLoading}
         onEventPress={handleEventPress}
       />
 
