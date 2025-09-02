@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Image, TouchableOpacity, Linking, StyleSheet } from 'react-native';
+import { View, Image, TouchableOpacity, Linking, StyleSheet, Platform, Alert, Pressable } from 'react-native';
 import { format } from 'date-fns';
 import type { Event } from '../types/events';
 import type { Venue } from '../types/venues';
@@ -37,6 +37,7 @@ function formatMilitaryTime(time: string): string {
 const EventCard: React.FC<EventCardProps> = ({ event, onPress, variant = 'default', venues }) => {
   const { theme } = useTheme();
   const [venue, setVenue] = useState<Venue | null>(null);
+  const [showTooltip, setShowTooltip] = useState(false);
   
   // Look up venue information if event has a venue_id
   useEffect(() => {
@@ -297,17 +298,43 @@ const EventCard: React.FC<EventCardProps> = ({ event, onPress, variant = 'defaul
                 View Details
               </Text>
             </TouchableOpacity>
-            <TouchableOpacity 
-              style={[styles.mockupSaveButton, { 
-                borderColor: theme.colors.border.medium,
-                backgroundColor: 'transparent'
-              }]}
-              onPress={handleCardPress}
-            >
-              <Text style={[styles.mockupSaveButtonText, { color: theme.colors.text.secondary }]}>
-                Save
-              </Text>
-            </TouchableOpacity>
+            <View style={{ position: 'relative' }}>
+              <Pressable
+                style={[styles.mockupShareButton, { 
+                  borderColor: theme.colors.border.light,
+                  backgroundColor: theme.colors.background.tertiary,
+                  opacity: 0.5,
+                }]}
+                onPress={() => {
+                  if (Platform.OS !== 'web') {
+                    setShowTooltip(!showTooltip);
+                    // Auto-hide tooltip after 2 seconds on mobile
+                    setTimeout(() => setShowTooltip(false), 2000);
+                  }
+                }}
+                onHoverIn={Platform.OS === 'web' ? () => setShowTooltip(true) : undefined}
+                onHoverOut={Platform.OS === 'web' ? () => setShowTooltip(false) : undefined}
+                onPressIn={Platform.OS === 'web' ? () => setShowTooltip(true) : undefined}
+                onPressOut={Platform.OS === 'web' ? undefined : undefined}
+              >
+                <Text style={[styles.mockupShareButtonText, { color: theme.colors.text.tertiary }]}>
+                  🔗 Share
+                </Text>
+              </Pressable>
+              
+              {/* Tooltip */}
+              {showTooltip && (
+                <View style={[styles.tooltip, {
+                  backgroundColor: theme.colors.gray[900],
+                  shadowColor: theme.colors.gray[900],
+                }]}>
+                  <Text style={[styles.tooltipText, { color: theme.colors.text.inverse }]}>
+                    Coming soon!
+                  </Text>
+                  <View style={[styles.tooltipArrow, { borderTopColor: theme.colors.gray[900] }]} />
+                </View>
+              )}
+            </View>
           </View>
         </View>
       </View>
@@ -475,13 +502,13 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontSize: 12,
   },
-  saveButton: {
+  shareButton: {
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 6,
     borderWidth: 1,
   },
-  saveButtonText: {
+  shareButtonText: {
     fontWeight: '600',
     fontSize: 12,
   },
@@ -698,7 +725,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
   },
-  mockupSaveButton: {
+  mockupShareButton: {
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 6,
@@ -706,9 +733,46 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     minWidth: 60,
   },
-  mockupSaveButtonText: {
+  mockupShareButtonText: {
     fontSize: 12,
     fontWeight: '600',
+  },
+  
+  // Tooltip styles
+  tooltip: {
+    position: 'absolute',
+    bottom: '100%',
+    left: '50%',
+    marginLeft: -35, // Center the tooltip (approximate width/2)
+    marginBottom: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+    zIndex: 1000,
+    minWidth: 70,
+    alignItems: 'center',
+  },
+  tooltipText: {
+    fontSize: 12,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  tooltipArrow: {
+    position: 'absolute',
+    top: '100%',
+    left: '50%',
+    marginLeft: -5,
+    width: 0,
+    height: 0,
+    borderLeftWidth: 5,
+    borderRightWidth: 5,
+    borderTopWidth: 5,
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
   },
 });
 
