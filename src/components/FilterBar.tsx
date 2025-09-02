@@ -37,8 +37,6 @@ export default function FilterBar({
   const { theme } = useTheme();
   const [selectedCity, setSelectedCity] = useState('New York, NY');
   const [selectedDateRange, setSelectedDateRange] = useState<DateRange>({ start: null, end: null });
-  const [selectedPrice, setSelectedPrice] = useState('All prices');
-  const [selectedSize, setSelectedSize] = useState('All sizes');
 
   // Screenshot marker for development
   React.useEffect(() => {
@@ -70,15 +68,11 @@ export default function FilterBar({
   };
 
   const handlePriceChange = (price: string) => {
-    setSelectedPrice(price);
-    // TODO: Integrate with actual price filtering
-    console.log('Price changed to:', price);
+    dispatchFilters({ type: 'SET_PRICE', payload: price });
   };
 
   const handleSizeChange = (size: string) => {
-    setSelectedSize(size);
-    // TODO: Integrate with actual size filtering
-    console.log('Size changed to:', size);
+    dispatchFilters({ type: 'SET_SIZE', payload: size });
   };
 
   return (
@@ -107,8 +101,8 @@ export default function FilterBar({
       {/* Filter Row with Results Count */}
       <FilterRow
         selectedDateRange={selectedDateRange}
-        selectedPrice={selectedPrice}
-        selectedSize={selectedSize}
+        selectedPrice={filters.price}
+        selectedSize={filters.size}
         onDateRangeChange={handleDateRangeChange}
         onPriceChange={handlePriceChange}
         onSizeChange={handleSizeChange}

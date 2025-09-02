@@ -13,6 +13,7 @@ interface FilterDropdownProps {
   isOpen: boolean;
   onToggle: () => void;
   icon?: string;
+  disabled?: boolean;
 }
 
 const FilterDropdown: React.FC<FilterDropdownProps> = ({
@@ -23,6 +24,7 @@ const FilterDropdown: React.FC<FilterDropdownProps> = ({
   isOpen,
   onToggle,
   icon,
+  disabled = false,
 }) => {
   const { theme } = useTheme();
 
@@ -34,9 +36,11 @@ const FilterDropdown: React.FC<FilterDropdownProps> = ({
           {
             backgroundColor: theme.colors.background.secondary,
             borderColor: theme.colors.border.light,
+            opacity: disabled ? 0.6 : 1,
           }
         ]}
-        onPress={onToggle}
+        onPress={disabled ? undefined : onToggle}
+        disabled={disabled}
       >
         <View style={styles.buttonContent}>
           {icon && (
@@ -49,11 +53,11 @@ const FilterDropdown: React.FC<FilterDropdownProps> = ({
           </Text>
         </View>
         <Text variant="body2" color="secondary" style={styles.arrow}>
-          {isOpen ? '▲' : '▼'}
+          {disabled ? '' : (isOpen ? '▲' : '▼')}
         </Text>
       </TouchableOpacity>
 
-      {isOpen && (
+      {isOpen && !disabled && (
         <View style={[
           styles.dropdown,
           {
@@ -127,7 +131,7 @@ export const FilterRow: React.FC<FilterRowProps> = ({
   const { theme } = useTheme();
   const [openDropdown, setOpenDropdown] = useState<'price' | 'size' | null>(null);
 
-  const priceOptions = ['All prices', 'Free', '$1-$25', '$25-$50', '$50-$100', '$100+'];
+  const priceOptions = ['All prices']; // Only allow "All prices" until real price data is available
   const sizeOptions = ['All sizes', 'Small (< 50)', 'Medium (50-200)', 'Large (200+)'];
 
   const handleDropdownToggle = (dropdown: 'price' | 'size') => {
@@ -155,6 +159,7 @@ export const FilterRow: React.FC<FilterRowProps> = ({
             isOpen={openDropdown === 'price'}
             onToggle={() => handleDropdownToggle('price')}
             icon="💰"
+            disabled={true}
           />
           <FilterDropdown
             label="Size"
@@ -165,18 +170,20 @@ export const FilterRow: React.FC<FilterRowProps> = ({
             onToggle={() => handleDropdownToggle('size')}
             icon="🏢"
           />
-          
+        </View>
+        
+        {/* Results count and view toggle row */}
+        <View style={styles.bottomRow}>
           {resultsCount !== undefined && (
-            <View style={styles.resultsContainer}>
-              <Text 
-                variant="body2" 
-                color="primary" 
-                style={[styles.resultsText, { color: theme.colors.primary[600] }]}
-              >
-                {resultsCount} events found
-              </Text>
-            </View>
+            <Text 
+              variant="body2" 
+              style={[styles.resultsText, { color: theme.colors.text.secondary }]}
+            >
+              {resultsCount} events found
+            </Text>
           )}
+          
+          <View style={styles.spacer} />
           
           {onViewModeChange && (
             <ViewToggle
@@ -211,24 +218,38 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
   },
+  bottomRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  spacer: {
+    flex: 1,
+  },
+  resultsRow: {
+    marginTop: 8,
+    alignItems: 'flex-start',
+  },
   dropdownContainer: {
     position: 'relative',
-    minWidth: 120,
+    minWidth: 90,
+    flex: 1,
+    maxWidth: 120,
     zIndex: 1001,
   },
   dropdownButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 12,
+    paddingHorizontal: 8,
     paddingVertical: 8,
     borderWidth: 1,
     borderRadius: 6,
-    minWidth: 120,
+    minWidth: 90,
   },
   dropdownText: {
-    marginRight: 4,
-    fontSize: 13,
+    marginRight: 2,
+    fontSize: 11,
     flex: 1,
   },
   buttonContent: {
@@ -272,12 +293,15 @@ const styles = StyleSheet.create({
     borderBottomColor: 'rgba(0,0,0,0.1)',
   },
   resultsContainer: {
-    flex: 1,
-    marginLeft: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    alignSelf: 'flex-start',
   },
   resultsText: {
     fontWeight: '500',
     fontSize: 13,
+    marginLeft: 4,
   },
   backdrop: {
     position: 'absolute',

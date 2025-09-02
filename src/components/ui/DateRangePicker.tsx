@@ -111,7 +111,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
   if (Platform.OS !== 'web') {
     return (
       <>
-        <View ref={containerRef} style={[styles.container, { minWidth: 160 }]}>
+        <View ref={containerRef} style={[styles.container, { minWidth: 120 }]}>
           {label && (
             <Text variant="caption" color="secondary" style={styles.label}>
               {label.toUpperCase()}
@@ -127,7 +127,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
               backgroundColor: theme.colors.background.secondary,
               paddingHorizontal: theme.spacing.md,
               borderRadius: theme.borderRadius.md,
-              minWidth: 200,
+              minWidth: 160,
               height: 36,
             }, disabled && { opacity: 0.5 }]}
             onPress={handleOpen}
@@ -188,7 +188,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
   // Web implementation with calendar portal
   return (
     <>
-      <View ref={containerRef} style={[styles.container, { minWidth: 160 }]}>
+      <View ref={containerRef} style={[styles.container, { minWidth: 120 }]}>
         {label && (
           <Text variant="caption" color="secondary" style={styles.label}>
             {label.toUpperCase()}

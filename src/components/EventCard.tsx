@@ -70,9 +70,22 @@ const EventCard: React.FC<EventCardProps> = ({ event, onPress, variant = 'defaul
 
   // Get the venue information for display
   const getVenueInfo = () => {
+    const getSizeLabel = (size: string) => {
+      switch (size?.toLowerCase()) {
+        case 'small': return 'Small (< 50)';
+        case 'medium': return 'Medium (50-200)';
+        case 'large': return 'Large (200+)';
+        default: return size || '';
+      }
+    };
+    
     return {
       name: venue?.name || null,
-      address: venue?.address || event.city
+      address: venue?.address || event.city,
+      size: venue?.venue_size || null,
+      sizeLabel: venue?.venue_size ? getSizeLabel(venue.venue_size) : null,
+      type: venue?.type || null,
+      image: venue?.image || null
     };
   };
   
@@ -84,9 +97,12 @@ const EventCard: React.FC<EventCardProps> = ({ event, onPress, variant = 'defaul
     }
   };
 
+  // Priority: event image -> venue image -> default music icon
   const imageSource = event.image_url 
     ? { uri: event.image_url }
-    : require('../../assets/music.png');
+    : venue?.image
+    ? { uri: venue.image }
+    : require('../../assets/record.png');
 
   // Extract first genre from music_info for display
   const getDisplayGenre = () => {
@@ -142,6 +158,11 @@ const EventCard: React.FC<EventCardProps> = ({ event, onPress, variant = 'defaul
                     <Text variant="caption" color="secondary" numberOfLines={1} style={styles.compactVenueAddress}>
                       {venueInfo.address}
                     </Text>
+                    {(venueInfo.sizeLabel || venueInfo.type) && (
+                      <Text variant="caption" color="secondary" numberOfLines={1} style={styles.compactVenueType}>
+                        {[venueInfo.sizeLabel, venueInfo.type].filter(Boolean).join(' • ')}
+                      </Text>
+                    )}
                   </View>
                 </View>
               );
@@ -254,7 +275,16 @@ const EventCard: React.FC<EventCardProps> = ({ event, onPress, variant = 'defaul
           </View>
           
           <View style={styles.mockupVenueTypeRow}>
-            <Text style={[styles.mockupVenueType, { color: theme.colors.text.secondary }]}>🏢 Large venue</Text>
+            {(() => {
+              const venueInfo = getVenueInfo();
+              const sizeText = venueInfo.sizeLabel || 'Unknown size';
+              const typeText = venueInfo.type || 'Venue';
+              return (
+                <Text style={[styles.mockupVenueType, { color: theme.colors.text.secondary }]}>
+                  🏢 {sizeText} • {typeText}
+                </Text>
+              );
+            })()}
           </View>
           
           {/* Action buttons */}
@@ -499,6 +529,12 @@ const styles = StyleSheet.create({
   compactVenueAddress: {
     fontSize: 11,
     lineHeight: 14,
+  },
+  compactVenueType: {
+    fontSize: 10,
+    lineHeight: 12,
+    marginTop: 1,
+    fontStyle: 'italic',
   },
   compactMeta: {
     flexDirection: 'row',
