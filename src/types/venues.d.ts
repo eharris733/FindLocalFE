@@ -18,4 +18,6 @@ export interface Venue {
   type: string | null; // default 'Music'
   latitude: number | null; // numeric(10, 8)
   longitude: number | null; // numeric(11, 8)
+  venue_size: string | null; // venue size field
+  event_types: any | null; // jsonb
 }

@@ -91,3 +91,28 @@ export async function getAllVenues(): Promise<Venue[]> {
     return [];
   }
 }
+
+export async function getAvailableCities(): Promise<string[]> {
+  try {
+    console.log('🏙️ Fetching available cities from database...');
+    
+    const { data, error } = await supabase
+      .from('venues')
+      .select('city')
+      .eq('is_active', true);
+
+    if (error) {
+      console.error('Error fetching cities from Supabase:', error);
+      return [];
+    }
+
+    // Get unique cities
+    const cities = [...new Set(data.map(venue => venue.city))].filter(Boolean);
+    console.log(`🏙️ Found cities with venues:`, cities);
+
+    return cities;
+  } catch (error: any) {
+    console.error('Error fetching cities:', error);
+    return [];
+  }
+}
