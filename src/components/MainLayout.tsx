@@ -66,6 +66,10 @@ export default function MainLayout({
     // TODO: Implement navigation logic
   };
 
+  const handleViewModeChange = (mode: 'list' | 'map') => {
+    setActiveTab(mode);
+  };
+
   if (isMobile) {
     // Mobile layout with tabs
     return (
@@ -79,11 +83,9 @@ export default function MainLayout({
           availableLocations={availableLocations}
           venues={venues}
           venuesLoading={venuesLoading}
-        />
-        
-        <TabNavigation
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
+          viewMode={activeTab}
+          onViewModeChange={handleViewModeChange}
+          resultsCount={events.length}
         />
         
         {activeTab === 'list' ? (
@@ -91,6 +93,7 @@ export default function MainLayout({
             events={events}
             onEventPress={onEventPress}
             highlightedEventId={highlightedEventId}
+            venues={venues}
           />
         ) : (
           <MapPanel
@@ -104,7 +107,7 @@ export default function MainLayout({
     );
   }
 
-  // Desktop/Tablet layout with split view
+  // Desktop/Tablet layout with split view or single view based on toggle
   const sidebarWidth = isTablet ? '45%' : '40%';
   const mapWidth = isTablet ? '55%' : '60%';
 
@@ -119,22 +122,23 @@ export default function MainLayout({
         availableLocations={availableLocations}
         venues={venues}
         venuesLoading={venuesLoading}
+        viewMode={activeTab}
+        onViewModeChange={handleViewModeChange}
+        resultsCount={events.length}
       />
       
-      <View style={styles.splitContainer}>
-        <View style={[styles.sidebar, { 
-          width: sidebarWidth,
-          borderRightColor: theme.colors.border.light,
-        }]}>
+      {activeTab === 'list' ? (
+        <View style={styles.fullContainer}>
           <SidebarEventList
             events={events}
             onEventPress={onEventPress}
             onEventHover={handleEventHover}
             highlightedEventId={highlightedEventId}
+            venues={venues}
           />
         </View>
-        
-        <View style={[styles.mapContainer, { width: mapWidth }]}>
+      ) : (
+        <View style={styles.fullContainer}>
           <MapPanel
             events={events}
             onEventPress={onEventPress}
@@ -142,7 +146,7 @@ export default function MainLayout({
             onMarkerPress={handleMarkerPress}
           />
         </View>
-      </View>
+      )}
     </View>
   );
 }
@@ -150,10 +154,16 @@ export default function MainLayout({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    overflow: 'visible',
+  },
+  fullContainer: {
+    flex: 1,
+    overflow: 'visible',
   },
   splitContainer: {
     flex: 1,
     flexDirection: 'row',
+    overflow: 'visible',
   },
   sidebar: {
     borderRightWidth: 1,

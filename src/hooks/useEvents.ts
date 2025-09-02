@@ -18,7 +18,7 @@ import {
 } from 'date-fns';
 
 const initialFilterState: FilterState = {
-  category: 'ALL',
+  category: 'all',
   startDate: null,
   endDate: null,
   dateRange: 'all',
@@ -148,24 +148,23 @@ export const useEvents = (): UseEventsResult => {
   }, []);
 
   const { availableCategories, availableLocations } = useMemo(() => {
-    const categories = new Set(['ALL']);
+    const categories = new Set(['all']); // Use lowercase 'all' instead of 'ALL'
     const locations = new Set(['all']);
     events.forEach(event => {
-      // Extract genres from music_info if available
-      if (event.music_info && event.music_info.genres) {
-        if (Array.isArray(event.music_info.genres)) {
-          event.music_info.genres.forEach((genre: string) => categories.add(genre));
-        } else if (typeof event.music_info.genres === 'string') {
-          categories.add(event.music_info.genres);
-        }
-      }
+      // Add predefined categories that we support
+      categories.add('music');
+      categories.add('bar');
+      categories.add('theater');
+      categories.add('comedy');
+      categories.add('other');
+      
       // Use city as location
       if (event.city) locations.add(event.city);
     });
     return {
       availableCategories: Array.from(categories).sort((a, b) => {
-        if (a === 'ALL') return -1;
-        if (b === 'ALL') return 1;
+        if (a === 'all') return -1;
+        if (b === 'all') return 1;
         return a.localeCompare(b);
       }),
       availableLocations: Array.from(locations).sort((a, b) => {
@@ -184,15 +183,70 @@ export const useEvents = (): UseEventsResult => {
       const eventDate = new Date(event.event_date);
 
       // Category filter - check music_info.genres
-      if (filters.category !== 'ALL') {
+      if (filters.category !== 'all') {
         let hasMatchingGenre = false;
+        
+        // Map category IDs to genre matching logic
         if (event.music_info && event.music_info.genres) {
-          if (Array.isArray(event.music_info.genres)) {
-            hasMatchingGenre = event.music_info.genres.includes(filters.category);
-          } else if (typeof event.music_info.genres === 'string') {
-            hasMatchingGenre = event.music_info.genres === filters.category;
+          const genres = Array.isArray(event.music_info.genres) 
+            ? event.music_info.genres 
+            : [event.music_info.genres];
+          
+          // Convert genres to lowercase for comparison
+          const lowerGenres = genres.map((g: string) => g.toLowerCase());
+          
+          switch (filters.category) {
+            case 'music':
+              // Match music-related genres
+              hasMatchingGenre = lowerGenres.some((g: string) => 
+                g.includes('music') || g.includes('rock') || g.includes('pop') || 
+                g.includes('jazz') || g.includes('blues') || g.includes('hip hop') ||
+                g.includes('electronic') || g.includes('classical') || g.includes('folk')
+              );
+              break;
+            case 'bar':
+              // Match bar/nightlife genres
+              hasMatchingGenre = lowerGenres.some((g: string) => 
+                g.includes('bar') || g.includes('nightlife') || g.includes('drinks') ||
+                g.includes('cocktail') || g.includes('pub')
+              );
+              break;
+            case 'theater':
+              // Match theater genres
+              hasMatchingGenre = lowerGenres.some((g: string) => 
+                g.includes('theater') || g.includes('theatre') || g.includes('play') ||
+                g.includes('musical') || g.includes('drama')
+              );
+              break;
+            case 'comedy':
+              // Match comedy genres
+              hasMatchingGenre = lowerGenres.some((g: string) => 
+                g.includes('comedy') || g.includes('stand up') || g.includes('standup') ||
+                g.includes('humor') || g.includes('funny')
+              );
+              break;
+            case 'other':
+              // For other, show events that don't match the main categories
+              hasMatchingGenre = !lowerGenres.some((g: string) => 
+                g.includes('music') || g.includes('rock') || g.includes('pop') || 
+                g.includes('jazz') || g.includes('blues') || g.includes('hip hop') ||
+                g.includes('electronic') || g.includes('classical') || g.includes('folk') ||
+                g.includes('bar') || g.includes('nightlife') || g.includes('drinks') ||
+                g.includes('cocktail') || g.includes('pub') ||
+                g.includes('theater') || g.includes('theatre') || g.includes('play') ||
+                g.includes('musical') || g.includes('drama') ||
+                g.includes('comedy') || g.includes('stand up') || g.includes('standup') ||
+                g.includes('humor') || g.includes('funny')
+              );
+              break;
+            default:
+              hasMatchingGenre = false;
           }
+        } else {
+          // If no music_info or genres, only show in "other" category
+          hasMatchingGenre = filters.category === 'other';
         }
+        
         if (!hasMatchingGenre) return false;
       }
 
