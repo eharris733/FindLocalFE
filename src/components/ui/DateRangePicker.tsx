@@ -6,8 +6,6 @@ import {
   Platform,
   Modal,
   SafeAreaView,
-  DatePickerIOS,
-  DatePickerAndroid,
 } from 'react-native';
 import { useTheme } from '../../context/ThemeContext';
 import { Text } from './Text';
@@ -36,6 +34,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
   const { theme } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
   const [tempStart, setTempStart] = useState<Date | null>(null);
+  const [selectingEnd, setSelectingEnd] = useState(false);
   const [dropdownLayout, setDropdownLayout] = useState({ x: 0, y: 0, width: 0, height: 0 });
   const containerRef = useRef<View>(null);
 
@@ -69,42 +68,91 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
     return 'Select dates';
   };
 
-  const measureContainer = () => {
-    if (containerRef.current) {
-      containerRef.current.measureInWindow((x, y, width, height) => {
-        setDropdownLayout({ x, y: y + height, width, height });
-      });
-    }
-  };
-
   const handleQuickSelect = (option: any) => {
     const range = option.getValue();
     onChange(range);
     setIsOpen(false);
     setTempStart(null);
+    setSelectingEnd(false);
   };
 
   const handleDateSelect = (date: Date) => {
-    setTempStart(date);
+    if (!tempStart && !selectingEnd) {
+      // Starting a new selection
+      setTempStart(date);
+      setSelectingEnd(true);
+    } else if (tempStart && selectingEnd) {
+      // Completing a range
+      if (date.getTime() === tempStart.getTime()) {
+        // Same date selected, treat as single day
+        onChange({ start: date, end: date });
+        setTempStart(null);
+        setSelectingEnd(false);
+      } else if (date > tempStart) {
+        // Valid range with end after start
+        onChange({ start: tempStart, end: date });
+        setTempStart(null);
+        setSelectingEnd(false);
+      } else {
+        // Date before current start, make it the new start
+        setTempStart(date);
+        setSelectingEnd(true);
+      }
+    } else {
+      // Handle existing range selection
+      if (value.start && value.end) {
+        // Check if clicked date is within existing range
+        if (date >= value.start && date <= value.end) {
+          // Update end date
+          if (date.getTime() === value.start.getTime()) {
+            // Clicked on start date, treat as single day
+            onChange({ start: date, end: date });
+          } else {
+            onChange({ start: value.start, end: date });
+          }
+          setTempStart(null);
+          setSelectingEnd(false);
+        } else {
+          // Date outside range, start new selection
+          setTempStart(date);
+          setSelectingEnd(true);
+        }
+      } else {
+        // No existing range, start new selection
+        setTempStart(date);
+        setSelectingEnd(true);
+      }
+    }
   };
 
   const handleRangeComplete = (start: Date, end: Date) => {
     onChange({ start, end });
-    setIsOpen(false);
     setTempStart(null);
+    setSelectingEnd(false);
   };
 
   const handleOpen = () => {
     if (!disabled) {
-      measureContainer();
-      setIsOpen(true);
-      setTempStart(null);
+      // Measure container position before opening to prevent flash
+      if (containerRef.current) {
+        containerRef.current.measureInWindow((x, y, width, height) => {
+          setDropdownLayout({ x, y: y + height, width, height });
+          setIsOpen(true);
+          setTempStart(null);
+          setSelectingEnd(false);
+        });
+      } else {
+        setIsOpen(true);
+        setTempStart(null);
+        setSelectingEnd(false);
+      }
     }
   };
 
   const handleClose = () => {
     setIsOpen(false);
     setTempStart(null);
+    setSelectingEnd(false);
   };
 
   // Native date picker for mobile
@@ -245,6 +293,21 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
               ]}
               onStartShouldSetResponder={() => true}
             >
+              {/* Close button */}
+              <View style={[styles.dropdownHeader, { borderBottomColor: theme.colors.border.light }]}>
+                <Text variant="body1" style={{ fontWeight: '600', flex: 1 }}>
+                  Select Date Range
+                </Text>
+                <TouchableOpacity 
+                  style={styles.closeButton}
+                  onPress={handleClose}
+                >
+                  <Text variant="body1" color="secondary" style={{ fontSize: 18, fontWeight: 'bold' }}>
+                    ✕
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
               {/* Quick Select Buttons */}
               <View style={[styles.quickSelectContainer, { 
                 borderBottomColor: theme.colors.border.light,
@@ -274,11 +337,15 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
               {/* Calendar */}
               <View style={{ padding: 16 }}>
                 <Text variant="body1" style={{ marginBottom: 12, fontWeight: '600' }}>
-                  {tempStart ? 'Select end date' : 'Select start date'}
+                  {selectingEnd && tempStart 
+                    ? 'Select end date (or click same date for single day)' 
+                    : tempStart 
+                    ? 'Select end date' 
+                    : 'Select start date'}
                 </Text>
                 <Calendar
                   startDate={tempStart || value.start}
-                  endDate={value.end}
+                  endDate={selectingEnd ? null : value.end}
                   onDateSelect={handleDateSelect}
                   onRangeComplete={handleRangeComplete}
                 />
@@ -325,6 +392,17 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     overflow: 'hidden',
     maxWidth: 320,
+  },
+  dropdownHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    borderBottomWidth: 1,
+  },
+  closeButton: {
+    padding: 4,
+    marginLeft: 8,
   },
   quickSelectContainer: {
     borderBottomWidth: 1,

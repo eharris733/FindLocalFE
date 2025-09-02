@@ -33,7 +33,6 @@ export const Calendar: React.FC<CalendarProps> = ({
 }) => {
   const { theme } = useTheme();
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [selectingStart, setSelectingStart] = useState(true);
 
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(monthStart);
@@ -41,20 +40,8 @@ export const Calendar: React.FC<CalendarProps> = ({
   const endDate_cal = endOfWeek(monthEnd);
 
   const handleDateClick = (date: Date) => {
-    if (!startDate || !selectingStart) {
-      // Select start date
-      onDateSelect(date);
-      setSelectingStart(false);
-    } else {
-      // Select end date
-      if (isAfter(date, startDate) || isSameDay(date, startDate)) {
-        onRangeComplete(startDate, date);
-      } else {
-        // If selected date is before start, make it the new start
-        onDateSelect(date);
-        setSelectingStart(false);
-      }
-    }
+    // Let the parent component handle all the selection logic
+    onDateSelect(date);
   };
 
   const renderHeader = () => (
