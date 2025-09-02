@@ -36,7 +36,6 @@ export default function FilterBar({
 }: FilterBarProps) {
   const { theme } = useTheme();
   const [selectedCity, setSelectedCity] = useState('New York, NY');
-  const [selectedDateRange, setSelectedDateRange] = useState<DateRange>({ start: null, end: null });
 
   // Screenshot marker for development
   React.useEffect(() => {
@@ -62,8 +61,9 @@ export default function FilterBar({
   };
 
   const handleDateRangeChange = (range: DateRange) => {
-    setSelectedDateRange(range);
-    // TODO: Integrate with actual date filtering
+    // Dispatch actions to update the filter state in useEvents
+    dispatchFilters({ type: 'SET_START_DATE', payload: range.start });
+    dispatchFilters({ type: 'SET_END_DATE', payload: range.end });
     console.log('Date range changed to:', range);
   };
 
@@ -100,7 +100,7 @@ export default function FilterBar({
 
       {/* Filter Row with Results Count */}
       <FilterRow
-        selectedDateRange={selectedDateRange}
+        selectedDateRange={{ start: filters.startDate, end: filters.endDate }}
         selectedPrice={filters.price}
         selectedSize={filters.size}
         onDateRangeChange={handleDateRangeChange}
