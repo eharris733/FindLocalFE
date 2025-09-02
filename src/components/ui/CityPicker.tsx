@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, TouchableOpacity, StyleSheet, Modal, ScrollView, Dimensions, ActivityIndicator } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Modal, ScrollView, Dimensions, ActivityIndicator, Image } from 'react-native';
 import { useTheme } from '../../context/ThemeContext';
 import { Text } from './Text';
 import { getAvailableCities } from '../../api/events';
@@ -179,9 +179,10 @@ export const CityPicker: React.FC<CityPickerProps> = ({
         onPress={() => setIsOpen(true)}
       >
         <View style={styles.locationRow}>
-          <Text variant="body1" color="primary" style={styles.locationIcon}>
-            🧐
-          </Text>
+          <Image 
+            source={require('../../../assets/monocle.png')} 
+            style={styles.locationIcon}
+          />
           <Text variant="h3" color="primary" style={styles.locationText}>
             Events Near{' '}
             <Text variant="h3" style={{ fontWeight: '700', color: theme.colors.text.primary }}>
@@ -346,8 +347,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   locationIcon: {
+    width: 20,
+    height: 20,
     marginRight: 8,
-    fontSize: 18,
   },
   locationText: {
     fontSize: 20,
