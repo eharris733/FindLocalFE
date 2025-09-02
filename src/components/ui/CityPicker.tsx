@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, TouchableOpacity, StyleSheet, Modal, ScrollView, Dimensions, ActivityIndicator } from 'react-native';
 import { useTheme } from '../../context/ThemeContext';
 import { Text } from './Text';
-import { getAvailableCities } from '../../api/venues';
+import { getAvailableCities } from '../../api/events';
 
 interface CityData {
   name: string;
@@ -24,6 +24,7 @@ export const CityPicker: React.FC<CityPickerProps> = ({
   const [expandedCities, setExpandedCities] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [allCityData, setAllCityData] = useState<CityData[]>([]);
+  const [availableCitiesFromDB, setAvailableCitiesFromDB] = useState<string[]>([]);
 
   // Load cities from database on component mount
   useEffect(() => {
@@ -31,58 +32,89 @@ export const CityPicker: React.FC<CityPickerProps> = ({
       try {
         setLoading(true);
         const availableCities = await getAvailableCities();
+        console.log('Available cities with events:', availableCities);
+        console.log('Individual cities:', availableCities.map((city, index) => `${index}: "${city}"`));
+        
+        // Store available cities for neighborhood checking
+        setAvailableCitiesFromDB(availableCities);
+        
+        // Helper function to check if a city has venues (case-insensitive and neighborhood mapping)
+        const cityHasVenues = (cityName: string, neighborhoods?: string[]) => {
+          // Check exact match (case-insensitive)
+          const exactMatch = availableCities.some(city => city.toLowerCase() === cityName.toLowerCase());
+          console.log(`Checking ${cityName}: exact match = ${exactMatch}`);
+          
+          if (exactMatch) {
+            return true;
+          }
+          
+          // Check if any neighborhoods have venues
+          if (neighborhoods) {
+            const neighborhoodMatch = neighborhoods.some(neighborhood => {
+              const match = availableCities.some(city => city.toLowerCase() === neighborhood.toLowerCase());
+              if (match) {
+                console.log(`${cityName}: found match for neighborhood ${neighborhood}`);
+              }
+              return match;
+            });
+            console.log(`${cityName}: neighborhood match = ${neighborhoodMatch}`);
+            return neighborhoodMatch;
+          }
+          
+          return false;
+        };
         
         // Hardcoded city data with neighborhoods - merge with database data
         const cityData: CityData[] = [
           {
             name: 'New York',
             neighborhoods: ['Manhattan', 'Brooklyn', 'Queens', 'Bronx', 'Staten Island'],
-            hasVenues: availableCities.includes('New York')
+            hasVenues: cityHasVenues('New York', ['Manhattan', 'Brooklyn', 'Queens', 'Bronx', 'Staten Island'])
           },
           {
             name: 'Boston',
             neighborhoods: ['Back Bay', 'Cambridge', 'Allston', 'South End', 'North End', 'Fenway'],
-            hasVenues: availableCities.includes('Boston')
+            hasVenues: cityHasVenues('Boston', ['Back Bay', 'Cambridge', 'Allston', 'South End', 'North End', 'Fenway'])
           },
           {
             name: 'Los Angeles',
             neighborhoods: ['Hollywood', 'Beverly Hills', 'Santa Monica', 'Venice', 'West Hollywood'],
-            hasVenues: availableCities.includes('Los Angeles')
+            hasVenues: cityHasVenues('Los Angeles', ['Hollywood', 'Beverly Hills', 'Santa Monica', 'Venice', 'West Hollywood'])
           },
           {
             name: 'Chicago',
             neighborhoods: ['Loop', 'Lincoln Park', 'Wicker Park', 'River North', 'Gold Coast'],
-            hasVenues: availableCities.includes('Chicago')
+            hasVenues: cityHasVenues('Chicago', ['Loop', 'Lincoln Park', 'Wicker Park', 'River North', 'Gold Coast'])
           },
           {
             name: 'San Francisco',
             neighborhoods: ['SOMA', 'Mission', 'Castro', 'Haight', 'Pacific Heights'],
-            hasVenues: availableCities.includes('San Francisco')
+            hasVenues: cityHasVenues('San Francisco', ['SOMA', 'Mission', 'Castro', 'Haight', 'Pacific Heights'])
           },
           {
             name: 'Seattle',
             neighborhoods: ['Capitol Hill', 'Fremont', 'Ballard', 'Queen Anne', 'Belltown'],
-            hasVenues: availableCities.includes('Seattle')
+            hasVenues: cityHasVenues('Seattle', ['Capitol Hill', 'Fremont', 'Ballard', 'Queen Anne', 'Belltown'])
           },
           {
             name: 'Washington, DC',
             neighborhoods: ['Dupont Circle', 'Georgetown', 'Adams Morgan', 'U Street', 'Capitol Hill'],
-            hasVenues: availableCities.includes('Washington, DC')
+            hasVenues: cityHasVenues('Washington, DC', ['Dupont Circle', 'Georgetown', 'Adams Morgan', 'U Street', 'Capitol Hill'])
           },
           {
             name: 'Miami',
             neighborhoods: ['South Beach', 'Wynwood', 'Brickell', 'Little Havana', 'Coconut Grove'],
-            hasVenues: availableCities.includes('Miami')
+            hasVenues: cityHasVenues('Miami', ['South Beach', 'Wynwood', 'Brickell', 'Little Havana', 'Coconut Grove'])
           },
           {
             name: 'Austin',
             neighborhoods: ['Downtown', 'South by Southwest', 'East Austin', 'Zilker', 'The Domain'],
-            hasVenues: availableCities.includes('Austin')
+            hasVenues: cityHasVenues('Austin', ['Downtown', 'South by Southwest', 'East Austin', 'Zilker', 'The Domain'])
           },
           {
             name: 'Portland',
             neighborhoods: ['Pearl District', 'Hawthorne', 'Alberta', 'Nob Hill', 'Sellwood'],
-            hasVenues: availableCities.includes('Portland')
+            hasVenues: cityHasVenues('Portland', ['Pearl District', 'Hawthorne', 'Alberta', 'Nob Hill', 'Sellwood'])
           }
         ];
         
@@ -248,34 +280,43 @@ export const CityPicker: React.FC<CityPickerProps> = ({
                   {/* Neighborhoods (if expanded) */}
                   {expandedCities.has(cityInfo.name) && cityInfo.neighborhoods && (
                     <View style={styles.neighborhoodSection}>
-                      {cityInfo.neighborhoods.map((neighborhood) => (
-                        <TouchableOpacity
-                          key={neighborhood}
-                          style={[
-                            styles.neighborhoodOption,
-                            {
-                              backgroundColor: isNeighborhoodSelected(neighborhood)
-                                ? theme.colors.primary[50]
-                                : 'transparent',
-                            }
-                          ]}
-                          onPress={() => handleSelection(neighborhood)}
-                        >
-                          <Text 
-                            variant="body1" 
-                            color={isNeighborhoodSelected(neighborhood) ? 'primary' : 'secondary'}
-                            style={{ 
-                              fontWeight: isNeighborhoodSelected(neighborhood) ? '600' : '400',
-                              marginLeft: 20,
-                            }}
+                      {cityInfo.neighborhoods.map((neighborhood) => {
+                        // Check if this specific neighborhood has venues in the database
+                        const neighborhoodHasVenues = availableCitiesFromDB.some((city: string) => 
+                          city.toLowerCase() === neighborhood.toLowerCase()
+                        );
+                        
+                        return (
+                          <TouchableOpacity
+                            key={neighborhood}
+                            style={[
+                              styles.neighborhoodOption,
+                              {
+                                backgroundColor: isNeighborhoodSelected(neighborhood)
+                                  ? theme.colors.primary[50]
+                                  : 'transparent',
+                                opacity: neighborhoodHasVenues ? 1 : 0.4,
+                              }
+                            ]}
+                            onPress={neighborhoodHasVenues ? () => handleSelection(neighborhood) : undefined}
+                            disabled={!neighborhoodHasVenues}
                           >
-                            {neighborhood}
-                          </Text>
-                          {isNeighborhoodSelected(neighborhood) && (
-                            <Text variant="body1" color="primary">✓</Text>
-                          )}
-                        </TouchableOpacity>
-                      ))}
+                            <Text 
+                              variant="body1" 
+                              color={isNeighborhoodSelected(neighborhood) ? 'primary' : neighborhoodHasVenues ? 'secondary' : 'tertiary'}
+                              style={{ 
+                                fontWeight: isNeighborhoodSelected(neighborhood) ? '600' : '400',
+                                marginLeft: 20,
+                              }}
+                            >
+                              {neighborhood}
+                            </Text>
+                            {isNeighborhoodSelected(neighborhood) && (
+                              <Text variant="body1" color="primary">✓</Text>
+                            )}
+                          </TouchableOpacity>
+                        );
+                      })}
                     </View>
                   )}
                 </View>

@@ -93,3 +93,28 @@ export async function getEventsByDateRange(
     throw new Error(`Failed to fetch events by date range: ${error.message}`);
   }
 }
+
+export async function getAvailableCities(): Promise<string[]> {
+  try {
+    console.log('🏙️ Fetching available cities from events_gold table...');
+    
+    const { data, error } = await supabase
+      .from('events_gold')
+      .select('city')
+      .not('city', 'is', null);
+
+    if (error) {
+      console.error('Error fetching cities from events_gold:', error);
+      return [];
+    }
+
+    // Get unique cities from events
+    const cities = [...new Set(data.map(event => event.city).filter(Boolean))];
+    console.log(`🏙️ Found cities with events:`, cities);
+
+    return cities;
+  } catch (error: any) {
+    console.error('Error fetching cities from events:', error);
+    return [];
+  }
+}
