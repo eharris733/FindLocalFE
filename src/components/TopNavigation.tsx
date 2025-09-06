@@ -3,6 +3,7 @@ import { View, StyleSheet, Image, TouchableOpacity, Platform, Dimensions, Modal,
 import { useTheme } from '../context/ThemeContext';
 import { Text } from './ui';
 import ProfileModal from './ProfileModal';
+import {useIsMobile} from "../hooks/useIsMobile";
 
 interface TopNavigationProps {
   onNavLinkPress?: (link: string) => void;
@@ -10,20 +11,12 @@ interface TopNavigationProps {
 
 export default function TopNavigation({ onNavLinkPress }: TopNavigationProps) {
   const { theme } = useTheme();
+  const {isMobile} = useIsMobile();
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
-  const [screenWidth, setScreenWidth] = useState(Dimensions.get('window').width);
   const [slideAnim] = useState(new Animated.Value(-250)); // Start off-screen
 
   const navLinks = ['About', 'Friends', 'Support'];
-  const isMobile = screenWidth < 768; // Consider screens smaller than 768px as mobile
-
-  useEffect(() => {
-    const subscription = Dimensions.addEventListener('change', ({ window }) => {
-      setScreenWidth(window.width);
-    });
-    return () => subscription?.remove();
-  }, []);
 
   useEffect(() => {
     if (showMobileMenu) {

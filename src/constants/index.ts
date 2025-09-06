@@ -1,0 +1,1 @@
+export const MOBILE_MIN = 768;
