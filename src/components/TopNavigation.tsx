@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Image, TouchableOpacity, Platform, Dimensions, Modal, Animated, Pressable } from 'react-native';
+import { View, StyleSheet, Image, TouchableOpacity, Modal, Animated, Pressable } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import { Text } from './ui';
 import ProfileModal from './ProfileModal';
-import {useIsMobile} from "../hooks/useIsMobile";
+import {useDeviceInfo} from "../hooks/useDeviceInfo";
 
 interface TopNavigationProps {
   onNavLinkPress?: (link: string) => void;
@@ -11,7 +11,7 @@ interface TopNavigationProps {
 
 export default function TopNavigation({ onNavLinkPress }: TopNavigationProps) {
   const { theme } = useTheme();
-  const {isMobile} = useIsMobile();
+  const {isMobile} = useDeviceInfo();
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [slideAnim] = useState(new Animated.Value(-250)); // Start off-screen
