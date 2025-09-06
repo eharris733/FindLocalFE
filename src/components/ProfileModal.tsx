@@ -57,9 +57,7 @@ export default function ProfileModal({ visible, onClose }: ProfileModalProps) {
                 </Text>
               </View>
             </View>
-            <Button variant="primary" style={styles.signInButton}>
-              Sign In
-            </Button>
+            <Button variant="primary" style={styles.signInButton} title="Sign In" />
           </Card>
 
           {/* Appearance Section */}
