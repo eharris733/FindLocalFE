@@ -1,14 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Dimensions, Platform } from 'react-native';
+import React, { useState } from 'react';
+import { View, StyleSheet, Platform } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import TopNavigation from './TopNavigation';
-import TabNavigation from './TabNavigation';
 import FilterBar from './FilterBar';
 import SidebarEventList from './SidebarEventList';
 import MapPanel from './MapPanel';
 import type { Event } from '../types/events';
 import type { FilterState, FilterAction } from '../hooks/useEvents';
 import type { Venue } from '../types/venues';
+import {useDeviceInfo} from "../hooks/useDeviceInfo";
 
 interface MainLayoutProps {
   events: Event[];
@@ -32,21 +32,9 @@ export default function MainLayout({
   onEventPress,
 }: MainLayoutProps) {
   const { theme } = useTheme();
-  const [screenWidth, setScreenWidth] = useState(Dimensions.get('window').width);
+  const {isMobile, isTablet} = useDeviceInfo();
   const [activeTab, setActiveTab] = useState<'list' | 'map'>('list');
   const [highlightedEventId, setHighlightedEventId] = useState<string | undefined>();
-
-  const isMobile = screenWidth < 768;
-  const isTablet = screenWidth >= 768 && screenWidth < 1024;
-  const isDesktop = screenWidth >= 1024;
-
-  useEffect(() => {
-    const subscription = Dimensions.addEventListener('change', ({ window }) => {
-      setScreenWidth(window.width);
-    });
-
-    return () => subscription?.remove();
-  }, []);
 
   const handleEventHover = (event: Event | null) => {
     if (Platform.OS === 'web' && !isMobile) {

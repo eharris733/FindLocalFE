@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Image, TouchableOpacity, Platform, Dimensions, Modal, Animated, Pressable } from 'react-native';
+import { View, StyleSheet, Image, TouchableOpacity, Modal, Animated, Pressable } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import { Text } from './ui';
 import ProfileModal from './ProfileModal';
+import {useDeviceInfo} from "../hooks/useDeviceInfo";
+import {Logo} from "./ui/Logo";
 
 interface TopNavigationProps {
   onNavLinkPress?: (link: string) => void;
@@ -10,20 +12,12 @@ interface TopNavigationProps {
 
 export default function TopNavigation({ onNavLinkPress }: TopNavigationProps) {
   const { theme } = useTheme();
+  const {isMobile} = useDeviceInfo();
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
-  const [screenWidth, setScreenWidth] = useState(Dimensions.get('window').width);
   const [slideAnim] = useState(new Animated.Value(-250)); // Start off-screen
 
   const navLinks = ['About', 'Friends', 'Support'];
-  const isMobile = screenWidth < 768; // Consider screens smaller than 768px as mobile
-
-  useEffect(() => {
-    const subscription = Dimensions.addEventListener('change', ({ window }) => {
-      setScreenWidth(window.width);
-    });
-    return () => subscription?.remove();
-  }, []);
 
   useEffect(() => {
     if (showMobileMenu) {
@@ -64,7 +58,10 @@ export default function TopNavigation({ onNavLinkPress }: TopNavigationProps) {
 
   return (
     <>
-      <View style={[styles.container, { 
+      <View style={[
+          styles.container,
+          isMobile ? styles.condensed : styles.roomy,
+        {
         backgroundColor: theme.colors.background.primary,
         borderBottomColor: theme.colors.border.light,
         ...theme.shadows.small,
@@ -84,16 +81,8 @@ export default function TopNavigation({ onNavLinkPress }: TopNavigationProps) {
             )}
           </View>
           
-          {/* Centered Logo */}
           <View style={styles.centerSection}>
-            <Image 
-              source={require('../../assets/logo.png')} 
-              style={[
-                styles.logo,
-                isMobile && styles.logoMobile
-              ]}
-              resizeMode="contain"
-            />
+            <Logo isMobile={isMobile}/>
           </View>
           
           {/* Right section with nav links and profile */}
@@ -147,11 +136,8 @@ export default function TopNavigation({ onNavLinkPress }: TopNavigationProps) {
             >
               {/* Menu header */}
               <View style={[styles.menuHeader, { borderBottomColor: theme.colors.border.light }]}>
-                <Image 
-                  source={require('../../assets/logo.png')} 
-                  style={styles.menuLogo}
-                  resizeMode="contain"
-                />
+                <Logo isMobile={isMobile} isMenu={true} />
+
                 <TouchableOpacity
                   style={[styles.closeButton, { backgroundColor: theme.colors.background.secondary }]}
                   onPress={closeMobileMenu}
@@ -204,6 +190,12 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     zIndex: 1000,
   },
+  roomy: {
+    paddingVertical: 16,
+  },
+  condensed: {
+    paddingVertical: 2,
+  },
   content: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -225,14 +217,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-end',
-  },
-  logo: {
-    height: 60,
-    width: 240,
-  },
-  logoMobile: {
-    height: 40,
-    width: 140, // Even smaller on mobile to ensure no overlap
   },
   menuButton: {
     width: 40,
@@ -302,10 +286,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderBottomWidth: 1,
-  },
-  menuLogo: {
-    height: 30,
-    width: 100,
   },
   closeButton: {
     width: 30,
