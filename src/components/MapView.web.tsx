@@ -1,41 +1,95 @@
-import React, { useMemo } from 'react';
-import { View, Dimensions, StyleSheet } from 'react-native';
+import React, { useRef, useEffect, useState } from 'react';
+import { View, StyleSheet } from 'react-native';
 import { Event } from '../types/events';
 import { Venue } from '../types/venues';
-import { Text } from './ui/Text';
 import { useTheme } from '../context/ThemeContext';
+import CustomMapMarker from './CustomMapMarker';
+
 
 // Import using require to bypass TypeScript issues with this library
 const MapView = require('@teovilla/react-native-web-maps').default;
-const { Marker } = require('@teovilla/react-native-web-maps');
 
 interface MapViewWebProps {
   events: Event[];
   venues: Venue[];
   venuesLoading: boolean;
-  onMarkerPress: (event: Event) => void;
+  onEventPress: (event: Event) => void;
+  onVenuePress?: (venue: Venue) => void;
   highlightedEventId?: string;
 }
+
+const fallbackCamera = {
+  center: {
+    latitude: 40.6782,
+    longitude: -73.9442,
+  },
+  zoom: 10,
+  heading: 0,
+  pitch: 0,
+}
+
+const customMapStyle = [
+  // Hide all points of interest
+  { featureType: 'poi', stylers: [{ visibility: 'off' }] },
+  { featureType: 'poi.business', stylers: [{ visibility: 'off' }] },
+  { featureType: 'poi.attraction', stylers: [{ visibility: 'off' }] },
+  { featureType: 'poi.government', stylers: [{ visibility: 'off' }] },
+  { featureType: 'poi.medical', stylers: [{ visibility: 'off' }] },
+  { featureType: 'poi.park', stylers: [{ visibility: 'off' }] },
+  { featureType: 'poi.place_of_worship', stylers: [{ visibility: 'off' }] },
+  { featureType: 'poi.school', stylers: [{ visibility: 'off' }] },
+  { featureType: 'poi.sports_complex', stylers: [{ visibility: 'off' }] },
+  
+  // Hide transit elements
+  { featureType: 'transit', stylers: [{ visibility: 'off' }] },
+  { featureType: 'transit.line', stylers: [{ visibility: 'off' }] },
+  { featureType: 'transit.station', stylers: [{ visibility: 'off' }] },
+  
+  // Hide all label icons and text
+  { elementType: 'labels.icon', stylers: [{ visibility: 'off' }] },
+  { elementType: 'labels.text', stylers: [{ visibility: 'off' }] },
+  { elementType: 'labels.text.fill', stylers: [{ visibility: 'off' }] },
+  { elementType: 'labels.text.stroke', stylers: [{ visibility: 'off' }] },
+  
+  // Clean up roads - keep geometry but remove labels
+  { featureType: 'road', elementType: 'labels', stylers: [{ visibility: 'off' }] },
+  { featureType: 'road', elementType: 'labels.text', stylers: [{ visibility: 'off' }] },
+  { featureType: 'road.highway', elementType: 'labels', stylers: [{ visibility: 'off' }] },
+  { featureType: 'road.arterial', elementType: 'labels', stylers: [{ visibility: 'off' }] },
+  { featureType: 'road.local', elementType: 'labels', stylers: [{ visibility: 'off' }] },
+  
+  // Hide administrative labels (city names, etc.)
+  { featureType: 'administrative', elementType: 'labels', stylers: [{ visibility: 'on' }] },
+];
 
 const MapViewWeb: React.FC<MapViewWebProps> = ({ 
   events, 
   venues,
   venuesLoading,
-  onMarkerPress, 
+  onEventPress,
+  onVenuePress,
   highlightedEventId 
 }) => {
   const { theme } = useTheme();
+  const mapRef = useRef<any>(null);
+  const [activeCalloutId, setActiveCalloutId] = useState<string | null>(null);
+  const markerClickedRef = useRef<boolean>(false);
+  const lastActionRef = useRef<{ type: 'marker' | 'map', timestamp: number } | null>(null);
 
-  // Calculate initial region based on venue coordinates
-  const getInitialRegion = () => {
+  // Debug activeCalloutId changes
+  useEffect(() => {
+    console.log('🔄 activeCalloutId STATE CHANGED:', { 
+      previous: 'see prev log', 
+      current: activeCalloutId,
+      timestamp: new Date().toISOString()
+    });
+  }, [activeCalloutId]);
+
+  // Calculate initial camera based on venue coordinates
+  const getInitialCamera = () => {
     if (venues.length === 0) {
       // Default to Brooklyn if no venues
-      return {
-        latitude: 40.6782,
-        longitude: -73.9442,
-        latitudeDelta: 0.1,
-        longitudeDelta: 0.1,
-      };
+      return fallbackCamera;
     }
 
     // Calculate bounds from venue coordinates
@@ -44,12 +98,7 @@ const MapViewWeb: React.FC<MapViewWebProps> = ({
 
     if (latitudes.length === 0 || longitudes.length === 0) {
       // Fallback to Brooklyn
-      return {
-        latitude: 40.6782,
-        longitude: -73.9442,
-        latitudeDelta: 0.1,
-        longitudeDelta: 0.1,
-      };
+      return fallbackCamera;
     }
 
     const minLat = Math.min(...latitudes);
@@ -59,94 +108,168 @@ const MapViewWeb: React.FC<MapViewWebProps> = ({
 
     const centerLat = (minLat + maxLat) / 2;
     const centerLng = (minLng + maxLng) / 2;
-    const deltaLat = Math.max((maxLat - minLat) * 1.2, 0.01); // Add padding
-    const deltaLng = Math.max((maxLng - minLng) * 1.2, 0.01); // Add padding
-
+    
     return {
-      latitude: centerLat,
-      longitude: centerLng,
-      latitudeDelta: deltaLat,
-      longitudeDelta: deltaLng,
+      center: {
+        latitude: centerLat,
+        longitude: centerLng,
+      },
+      zoom: 10,
+      heading: 0,
+      pitch: 0,
     };
   };
+
+  useEffect(() => {
+    if (!venuesLoading && venues.length > 0 && mapRef.current) {
+      const coords = venues
+        .map(v => ({ 
+          latitude: Number(v.latitude), 
+          longitude: Number(v.longitude) 
+        }))
+        .filter(c => !Number.isNaN(c.latitude) && !Number.isNaN(c.longitude));
+
+      if (coords.length > 0) {
+        // Use a small timeout to ensure map is fully loaded
+        setTimeout(() => {
+          mapRef.current?.fitToCoordinates(coords, {
+            edgePadding: { top: 50, right: 50, bottom: 50, left: 50 }, // Tight padding
+            animated: false,
+          });
+        }, 100);
+      }
+    }
+  }, [venuesLoading, venues]);
+
+  // Close active callout when highlighted event changes
+  useEffect(() => {
+    setActiveCalloutId(null);
+  }, [highlightedEventId]);
 
   // Get events for a specific venue
   const getEventsForVenue = (venue: Venue): Event[] => {
     return events.filter(event => 
-      event.venue_name?.toLowerCase() === venue.name?.toLowerCase() ||
+      event.venue_id?.toLowerCase() === venue.id?.toLowerCase() ||
       event.venue_id === venue.id
     );
   };
 
-  const initialRegion = getInitialRegion();
+  // Handle callout toggle with logging
+  const handleCalloutToggle = (venueId: string | null) => {
+    console.log('📍 Callout toggle requested:', { 
+      from: activeCalloutId, 
+      to: venueId,
+      isClosing: venueId === null,
+      isSwitching: activeCalloutId !== null && venueId !== null && activeCalloutId !== venueId,
+      timestamp: new Date().toISOString()
+    });
+    
+    // Use functional update to ensure we have the latest state
+    setActiveCalloutId(prevState => {
+      console.log('📍 State update: prev =', prevState, ', new =', venueId);
+      return venueId;
+    });
+  };
+
+  const initialCamera = getInitialCamera();
+
+  const handleMapClick = (e: any) => {
+    const now = Date.now();
+    console.log('🗺️ Map clicked, markerClickedRef:', markerClickedRef.current);
+    console.log('🗺️ Last action:', lastActionRef.current);
+    
+    // If a marker was just clicked (within 500ms), don't close the callout
+    if (markerClickedRef.current || 
+        (lastActionRef.current?.type === 'marker' && now - lastActionRef.current.timestamp < 500)) {
+      console.log('🗺️ Map click ignored - marker was recently clicked');
+      return;
+    }
+    
+    lastActionRef.current = { type: 'map', timestamp: now };
+    
+    // Close any active callout when clicking on the map
+    setActiveCalloutId(prevState => {
+      if (prevState) {
+        console.log('🗺️ Closing callout from map click, was:', prevState);
+        return null;
+      } else {
+        console.log('🗺️ Map click - no active callout to close');
+        return prevState;
+      }
+    });
+  };
 
   // Debug logging
-  console.log('MapView.web.tsx - Debug info:', {
-    venuesCount: venues.length,
-    venuesLoading,
-    eventsCount: events.length,
-    venuesWithCoords: venues.filter(v => v.latitude && v.longitude).length,
-    sampleVenue: venues[0]
-  });
+  // console.log('MapView.web.tsx - Debug info:', {
+  //   venuesCount: venues.length,
+  //   venuesLoading,
+  //   eventsCount: events.length,
+  //   venuesWithCoords: venues.filter(v => v.latitude && v.longitude).length,
+  //   sampleVenue: venues[0]
+  // });
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background.secondary }]}>
       <MapView
+        ref={mapRef}
         style={styles.map}
         provider="google"
-        initialRegion={initialRegion}
+        initialCamera={initialCamera}
         googleMapsApiKey={process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY}
-        mapType="roadmap"
         showsUserLocation={false}
         showsMyLocationButton={false}
         zoomEnabled={true}
         scrollEnabled={true}
         zoomControlEnabled={true}
+        customMapStyle={customMapStyle}
+        onPress={handleMapClick}
       >
         {!venuesLoading && venues.map((venue) => {
-          const latitude = Number(venue.latitude);
-          const longitude = Number(venue.longitude);
+          const venueEvents = getEventsForVenue(venue);
+          const isHighlighted = venueEvents.some(event => event.id === highlightedEventId);
+          const isActive = activeCalloutId === venue.id;
           
-          // Skip venues with invalid coordinates
-          if (isNaN(latitude) || isNaN(longitude)) {
+          // Debug logging for active state
+          if (venue.id === activeCalloutId || isActive) {
+            console.log('🏢 Venue render debug:', {
+              venueId: venue.id,
+              activeCalloutId,
+              isActive,
+              venueEvents: venueEvents.length
+            });
+          }
+          
+          // Only render markers for venues that have events
+          if (venueEvents.length === 0) {
             return null;
           }
-
-          const venueEvents = getEventsForVenue(venue);
-          const hasEvents = venueEvents.length > 0;
-          const isHighlighted = venueEvents.some(event => event.id === highlightedEventId);
           
           return (
-            <Marker
+            <CustomMapMarker
               key={venue.id}
-              coordinate={{
-                latitude,
-                longitude,
-              }}
-              title={venue.name}
-              description={`${venue.city} • ${venueEvents.length} event${venueEvents.length !== 1 ? 's' : ''} • ${venue.type || 'Venue'}`}
-              pinColor={isHighlighted ? '#FF6B6B' : hasEvents ? '#4ECDC4' : '#CCCCCC'}
-              onPress={() => {
-                console.log('Venue marker pressed:', venue.name);
-                // If venue has events, trigger onMarkerPress with the first event
-                if (venueEvents.length > 0) {
-                  onMarkerPress(venueEvents[0]);
-                }
-              }}
+              venue={venue}
+              venueEvents={venueEvents}
+              isHighlighted={isHighlighted}
+              isActive={isActive}
+              markerClickedRef={markerClickedRef}
+              lastActionRef={lastActionRef}
+              onCalloutToggle={handleCalloutToggle}
+              onEventPress={onEventPress}
+              onVenuePress={onVenuePress}
             />
           );
         })}
       </MapView>
       
-      {/* Debug overlay */}
-      <View style={[styles.debugOverlay, { 
+      {/* Debug overlay - uncomment if necessary */}
+      {/* <View style={[styles.debugOverlay, { 
         backgroundColor: theme.colors.background.primary + 'CC',
         borderColor: theme.colors.border.light,
       }]}>
         <Text variant="caption" color="secondary" style={styles.debugText}>
           📍 {venues.length} venues • {events.length} events {highlightedEventId ? `• Highlighting: ${highlightedEventId}` : ''} • API: {process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY ? 'OK' : 'Missing'}
         </Text>
-      </View>
+      </View> */}
     </View>
   );
 };
@@ -167,6 +290,7 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 8,
     borderWidth: 1,
+    width: '50%',
   },
   debugText: {
     textAlign: 'center',
