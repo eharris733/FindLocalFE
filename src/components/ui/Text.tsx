@@ -2,7 +2,7 @@ import React from 'react';
 import { Text as RNText, TextProps as RNTextProps, StyleSheet } from 'react-native';
 import { useTheme } from '../../context/ThemeContext';
 
-export type TextVariant = 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'body1' | 'body2' | 'caption' | 'overline';
+export type TextVariant = 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'body1' | 'body2' | 'caption' | 'overline' | 'link';
 export type TextColor = 'primary' | 'secondary' | 'tertiary' | 'inverse' | 'success' | 'warning' | 'error' | 'info';
 
 interface TextProps extends Omit<RNTextProps, 'style'> {
@@ -76,6 +76,12 @@ export const Text: React.FC<TextProps> = ({
         textTransform: 'uppercase' as const,
         letterSpacing: 1,
       },
+      link: {
+        fontSize: theme.typography.fontSize.xs,
+        lineHeight: theme.typography.lineHeight.xs,
+        fontFamily: theme.typography.fontFamily.medium,
+        textDecorationLine: 'underline',
+      }
     };
 
     const colorStyles = {
