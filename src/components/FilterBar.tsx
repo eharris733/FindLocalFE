@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, Platform, TextInput, TouchableOpacity, Dimensions } from 'react-native';
+import {View, StyleSheet, ScrollView, Platform, TextInput, TouchableOpacity, Dimensions, Pressable} from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import {
   Button,
@@ -44,6 +44,7 @@ export default function FilterBar({
   resultsCount = 0
 }: FilterBarProps) {
   const { theme } = useTheme();
+  const [showMore, setShowMore] = useState(false);
   const {selectedCity} = useCityLocation();
   const {isMobile} = useDeviceInfo();
 
@@ -91,15 +92,18 @@ export default function FilterBar({
         onSearchChange={handleSearchChange}
       />
 
-      <View style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row' }}>
+      <View style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: 'center' }}>
       {/* Category Pills */}
       <CategoryPills
         selectedCategory={filters.category}
         onCategoryChange={handleCategoryChange}
       />
-
-      {/* Filter Row with Results Count */}
-      <FilterRow
+        <Pressable onPress={() => setShowMore(!showMore)}>
+          <Text variant='link'>{`${showMore ? 'Hide' : 'Show'} More Filters`}</Text>
+        </Pressable>
+      </View>
+      {/* Additional Filtering */}
+        {showMore && (<FilterRow
         selectedDateRange={{ start: filters.startDate, end: filters.endDate }}
         selectedPrice={filters.price}
         selectedSize={filters.size}
@@ -109,8 +113,7 @@ export default function FilterBar({
         resultsCount={resultsCount}
         viewMode={viewMode}
         onViewModeChange={handleViewModeChange}
-      />
-      </View>
+      />)}
       {/* Results count and view toggle row */}
       <View style={styles.bottomRow}>
         {resultsCount !== undefined && (
