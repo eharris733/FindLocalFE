@@ -4,101 +4,8 @@ import { useTheme } from '../../context/ThemeContext';
 import { Text } from './Text';
 import { ViewToggle } from './ViewToggle';
 import { DateRangePicker } from './DateRangePicker';
-
-interface FilterDropdownProps {
-  label: string;
-  selectedValue: string;
-  options: string[];
-  onValueChange: (value: string) => void;
-  isOpen: boolean;
-  onToggle: () => void;
-  icon?: string;
-  disabled?: boolean;
-}
-
-const FilterDropdown: React.FC<FilterDropdownProps> = ({
-  label,
-  selectedValue,
-  options,
-  onValueChange,
-  isOpen,
-  onToggle,
-  icon,
-  disabled = false,
-}) => {
-  const { theme } = useTheme();
-
-  return (
-    <View style={styles.dropdownContainer}>
-      <TouchableOpacity
-        style={[
-          styles.dropdownButton,
-          {
-            backgroundColor: theme.colors.background.secondary,
-            borderColor: theme.colors.border.light,
-            opacity: disabled ? 0.6 : 1,
-          }
-        ]}
-        onPress={disabled ? undefined : onToggle}
-        disabled={disabled}
-      >
-        <View style={styles.buttonContent}>
-          {icon && (
-            <Text variant="body2" style={styles.icon}>
-              {icon}
-            </Text>
-          )}
-          <Text variant="body2" color="primary" style={styles.dropdownText}>
-            {selectedValue}
-          </Text>
-        </View>
-        <Text variant="body2" color="secondary" style={styles.arrow}>
-          {disabled ? '' : (isOpen ? '▲' : '▼')}
-        </Text>
-      </TouchableOpacity>
-
-      {isOpen && !disabled && (
-        <View style={[
-          styles.dropdown,
-          {
-            backgroundColor: theme.colors.background.secondary,
-            borderColor: theme.colors.border.light,
-            ...theme.shadows.medium,
-          }
-        ]}>
-          {options.map((option) => (
-            <TouchableOpacity
-              key={option}
-              style={[
-                styles.option,
-                {
-                  backgroundColor: option === selectedValue 
-                    ? theme.colors.primary[50] 
-                    : 'transparent',
-                }
-              ]}
-              onPress={() => {
-                onValueChange(option);
-                onToggle(); // Close the dropdown
-              }}
-            >
-              <Text 
-                variant="body2" 
-                color={option === selectedValue ? 'primary' : 'secondary'}
-                style={{ fontWeight: option === selectedValue ? '600' : '400' }}
-              >
-                {option}
-              </Text>
-              {option === selectedValue && (
-                <Text variant="body2" color="primary">✓</Text>
-              )}
-            </TouchableOpacity>
-          ))}
-        </View>
-      )}
-    </View>
-  );
-};
+import {useCityLocation} from "../../hooks/useCityLocation";
+import {FilterDropdown} from "./FilterDropdown";
 
 interface DateRange {
   start: Date | null;
@@ -124,11 +31,7 @@ export const FilterRow: React.FC<FilterRowProps> = ({
   onDateRangeChange,
   onPriceChange,
   onSizeChange,
-  resultsCount,
-  viewMode = 'list',
-  onViewModeChange,
 }) => {
-  const { theme } = useTheme();
   const [openDropdown, setOpenDropdown] = useState<'price' | 'size' | null>(null);
 
   const priceOptions = ['All prices']; // Only allow "All prices" until real price data is available
@@ -171,27 +74,6 @@ export const FilterRow: React.FC<FilterRowProps> = ({
             icon="🏢"
           />
         </View>
-        
-        {/* Results count and view toggle row */}
-        <View style={styles.bottomRow}>
-          {resultsCount !== undefined && (
-            <Text 
-              variant="body2" 
-              style={[styles.resultsText, { color: theme.colors.text.secondary }]}
-            >
-              {resultsCount} events found
-            </Text>
-          )}
-          
-          <View style={styles.spacer} />
-          
-          {onViewModeChange && (
-            <ViewToggle
-              viewMode={viewMode}
-              onViewModeChange={onViewModeChange}
-            />
-          )}
-        </View>
       </View>
       
       {/* Backdrop to close dropdown when clicking outside */}
@@ -229,68 +111,6 @@ const styles = StyleSheet.create({
   resultsRow: {
     marginTop: 8,
     alignItems: 'flex-start',
-  },
-  dropdownContainer: {
-    position: 'relative',
-    minWidth: 90,
-    flex: 1,
-    maxWidth: 120,
-    zIndex: 1001,
-  },
-  dropdownButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 8,
-    paddingVertical: 8,
-    borderWidth: 1,
-    borderRadius: 6,
-    minWidth: 90,
-  },
-  dropdownText: {
-    marginRight: 2,
-    fontSize: 11,
-    flex: 1,
-  },
-  buttonContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  icon: {
-    marginRight: 6,
-    fontSize: 14,
-  },
-  arrow: {
-    fontSize: 10,
-  },
-  dropdown: {
-    position: 'absolute',
-    top: '100%',
-    left: 0,
-    right: 0,
-    borderWidth: 1,
-    borderRadius: 6,
-    maxHeight: 200,
-    zIndex: 1002,
-    elevation: 8,
-    marginTop: 2,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-  },
-  option: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0,0,0,0.1)',
   },
   resultsContainer: {
     paddingHorizontal: 8,
