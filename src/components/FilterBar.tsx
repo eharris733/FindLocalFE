@@ -5,6 +5,7 @@ import { Button, Text, SearchableDropdown, DateRangePicker, VenueSelectionModal,
 import type { FilterState, FilterAction } from '../hooks/useEvents';
 import type { Venue } from '../types/venues';
 import { screenshotMarker } from '../utils/screenshot';
+import {useCityLocation} from "../hooks/useCityLocation";
 
 interface FilterBarProps {
   filters: FilterState;
@@ -25,28 +26,17 @@ interface DateRange {
 
 export default function FilterBar({ 
   filters, 
-  dispatchFilters, 
-  availableCategories, 
-  availableLocations,
-  venues,
-  venuesLoading,
+  dispatchFilters,
   viewMode = 'list',
   onViewModeChange,
   resultsCount = 0
 }: FilterBarProps) {
   const { theme } = useTheme();
-  const [selectedCity, setSelectedCity] = useState('New York, NY');
 
   // Screenshot marker for development
   React.useEffect(() => {
     screenshotMarker('FilterBar redesign loaded');
   }, []);
-
-  const handleCityChange = (city: string) => {
-    setSelectedCity(city);
-    // TODO: Integrate with actual location filtering
-    console.log('City changed to:', city);
-  };
 
   const handleCategoryChange = (category: string) => {
     dispatchFilters({ type: 'SET_CATEGORY', payload: category });
@@ -80,11 +70,6 @@ export default function FilterBar({
       backgroundColor: theme.colors.background.primary,
       borderBottomColor: theme.colors.border.light,
     }]}>
-      {/* City Picker */}
-      <CityPicker
-        selectedCity={selectedCity}
-        onCityChange={handleCityChange}
-      />
 
       {/* Search Bar and View Toggle */}
       <SearchAndToggle
@@ -115,9 +100,13 @@ export default function FilterBar({
 }
 
 const styles = StyleSheet.create({
+  something: {
+    display: 'flex',
+  },
   container: {
     borderBottomWidth: 1,
     position: 'relative',
     zIndex: 100,
+    display: 'flex',
   },
 });

@@ -8,8 +8,9 @@ import {
   ScrollView,
 } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
-import { Text, Card, Button } from './ui';
+import {Text, Card, Button, CityPicker} from './ui';
 import { ThemeToggle } from './ui/ThemeToggle';
+import {useCityLocation} from "../hooks/useCityLocation";
 
 interface ProfileModalProps {
   visible: boolean;
@@ -18,6 +19,7 @@ interface ProfileModalProps {
 
 export default function ProfileModal({ visible, onClose }: ProfileModalProps) {
   const { theme } = useTheme();
+  const {selectedCity, onCityChange} = useCityLocation();
 
   return (
     <Modal
@@ -39,7 +41,6 @@ export default function ProfileModal({ visible, onClose }: ProfileModalProps) {
         </View>
 
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-          {/* Profile Section */}
           <Card style={styles.section}>
             <Text variant="h4" style={styles.sectionTitle}>
               Profile
@@ -58,6 +59,16 @@ export default function ProfileModal({ visible, onClose }: ProfileModalProps) {
               </View>
             </View>
             <Button variant="primary" style={styles.signInButton} title="Sign In" />
+          </Card>
+
+          <Card style={styles.section}>
+            <Text variant="h4" style={styles.sectionTitle}>
+              Select Your City
+            </Text>
+            <CityPicker
+                selectedCity={selectedCity}
+                onCityChange={onCityChange}
+            />
           </Card>
 
           {/* Appearance Section */}

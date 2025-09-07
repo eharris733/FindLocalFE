@@ -4,6 +4,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { Text } from './Text';
 import { ViewToggle } from './ViewToggle';
 import { DateRangePicker } from './DateRangePicker';
+import {useCityLocation} from "../../hooks/useCityLocation";
 
 interface FilterDropdownProps {
   label: string;
@@ -129,6 +130,7 @@ export const FilterRow: React.FC<FilterRowProps> = ({
   onViewModeChange,
 }) => {
   const { theme } = useTheme();
+  const {selectedCity} = useCityLocation();
   const [openDropdown, setOpenDropdown] = useState<'price' | 'size' | null>(null);
 
   const priceOptions = ['All prices']; // Only allow "All prices" until real price data is available
@@ -179,7 +181,7 @@ export const FilterRow: React.FC<FilterRowProps> = ({
               variant="body2" 
               style={[styles.resultsText, { color: theme.colors.text.secondary }]}
             >
-              {resultsCount} events found
+              {resultsCount} events found in {selectedCity}
             </Text>
           )}
           
