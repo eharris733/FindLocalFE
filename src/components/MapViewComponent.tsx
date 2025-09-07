@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Platform, View, StyleSheet, Dimensions } from 'react-native';
+import { Platform, View, StyleSheet } from 'react-native';
 import type { Event } from '../types/events';
 import type { Venue } from '../types/venues';
 import { getAllVenues } from '../api/venues';
@@ -9,16 +9,17 @@ import { Text } from './ui';
 interface MapViewComponentProps {
   events: Event[];
   onEventPress: (event: Event) => void;
+  onVenuePress?: (venue: Venue) => void;
   highlightedEventId?: string;
 }
 
 const MapViewComponent: React.FC<MapViewComponentProps> = ({
   events,
   onEventPress,
+  onVenuePress,
   highlightedEventId,
 }) => {
   const { theme } = useTheme();
-  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [venues, setVenues] = useState<Venue[]>([]);
   const [venuesLoading, setVenuesLoading] = useState(true);
 
@@ -44,11 +45,6 @@ const MapViewComponent: React.FC<MapViewComponentProps> = ({
     fetchVenues();
   }, []);
 
-  const handleMarkerPress = (event: Event) => {
-    setSelectedEventId(event.id);
-    onEventPress(event);
-  };
-
   // For web platform, use the web map component
   if (Platform.OS === 'web') {
     const MapViewWeb = require('./MapView.web').default;
@@ -57,7 +53,8 @@ const MapViewComponent: React.FC<MapViewComponentProps> = ({
         events={events} 
         venues={venues}
         venuesLoading={venuesLoading}
-        onMarkerPress={handleMarkerPress}
+        onEventPress={onEventPress}
+        onVenuePress={onVenuePress}
         highlightedEventId={highlightedEventId}
       />
     );

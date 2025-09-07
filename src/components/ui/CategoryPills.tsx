@@ -8,24 +8,24 @@ interface CategoryPillsProps {
   onCategoryChange: (category: string) => void;
 }
 
+const categories = [
+  { id: 'all', label: 'All', emoji: '🎭' },
+  { id: 'music', label: 'Music', emoji: '🎵' },
+  { id: 'bar', label: 'Bar', emoji: '🍺' },
+  { id: 'theater', label: 'Theater', emoji: '🎭' },
+  { id: 'comedy', label: 'Comedy', emoji: '😄' },
+  { id: 'other', label: 'Other', emoji: '🎪' },
+];
+
 export const CategoryPills: React.FC<CategoryPillsProps> = ({
   selectedCategory,
   onCategoryChange,
 }) => {
   const { theme } = useTheme();
 
-  const categories = [
-    { id: 'all', label: 'All', emoji: '🎭' },
-    { id: 'music', label: 'Music', emoji: '🎵' },
-    { id: 'bar', label: 'Bar', emoji: '🍺' },
-    { id: 'theater', label: 'Theater', emoji: '🎭' },
-    { id: 'comedy', label: 'Comedy', emoji: '😄' },
-    { id: 'other', label: 'Other', emoji: '🎪' },
-  ];
-
   return (
     <View style={styles.container}>
-      <ScrollView 
+      <ScrollView
         horizontal 
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}

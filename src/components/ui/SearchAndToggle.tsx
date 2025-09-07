@@ -15,7 +15,6 @@ export const SearchAndToggle: React.FC<SearchAndToggleProps> = ({
   const { theme } = useTheme();
 
   return (
-    <View style={styles.container}>
       <View style={[
         styles.searchContainer,
         {
@@ -39,15 +38,10 @@ export const SearchAndToggle: React.FC<SearchAndToggleProps> = ({
           onChangeText={onSearchChange}
         />
       </View>
-    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-  },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
