@@ -1,11 +1,23 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, Platform, TextInput, TouchableOpacity, Dimensions } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
-import { Button, Text, SearchableDropdown, DateRangePicker, VenueSelectionModal, CityPicker, CategoryPills, FilterRow, SearchAndToggle } from './ui';
+import {
+  Button,
+  Text,
+  SearchableDropdown,
+  DateRangePicker,
+  VenueSelectionModal,
+  CityPicker,
+  CategoryPills,
+  FilterRow,
+  SearchAndToggle,
+  ViewToggle
+} from './ui';
 import type { FilterState, FilterAction } from '../hooks/useEvents';
 import type { Venue } from '../types/venues';
 import { screenshotMarker } from '../utils/screenshot';
 import {useCityLocation} from "../hooks/useCityLocation";
+import {useDeviceInfo} from "../hooks/useDeviceInfo";
 
 interface FilterBarProps {
   filters: FilterState;
@@ -32,6 +44,8 @@ export default function FilterBar({
   resultsCount = 0
 }: FilterBarProps) {
   const { theme } = useTheme();
+  const {selectedCity} = useCityLocation();
+  const {isMobile} = useDeviceInfo();
 
   // Screenshot marker for development
   React.useEffect(() => {
@@ -77,6 +91,7 @@ export default function FilterBar({
         onSearchChange={handleSearchChange}
       />
 
+      <View style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row' }}>
       {/* Category Pills */}
       <CategoryPills
         selectedCategory={filters.category}
@@ -95,18 +110,50 @@ export default function FilterBar({
         viewMode={viewMode}
         onViewModeChange={handleViewModeChange}
       />
+      </View>
+      {/* Results count and view toggle row */}
+      <View style={styles.bottomRow}>
+        {resultsCount !== undefined && (
+            <Text
+                variant="body2"
+                style={[styles.resultsText, { color: theme.colors.text.secondary }]}
+            >
+              {resultsCount} events found in {selectedCity}
+            </Text>
+        )}
+
+        <View style={styles.spacer} />
+
+        {onViewModeChange && (
+            <ViewToggle
+                viewMode={viewMode}
+                onViewModeChange={onViewModeChange}
+            />
+        )}
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  something: {
-    display: 'flex',
-  },
   container: {
     borderBottomWidth: 1,
     position: 'relative',
     zIndex: 100,
-    display: 'flex',
+    paddingHorizontal: 8,
+    paddingVertical: 8,
+  },
+  bottomRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  resultsText: {
+    fontWeight: '500',
+    fontSize: 13,
+    marginLeft: 4,
+  },
+  spacer: {
+    flex: 1,
   },
 });
