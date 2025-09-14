@@ -92,15 +92,30 @@ export default function FilterBar({
         onSearchChange={handleSearchChange}
       />
 
-      <View style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: 'center' }}>
-      {/* Category Pills */}
-      <CategoryPills
-        selectedCategory={filters.category}
-        onCategoryChange={handleCategoryChange}
-      />
-        <Pressable onPress={() => setShowMore(!showMore)}>
-          <Text variant='link'>{`${showMore ? 'Hide' : 'Show'} More Filters`}</Text>
-        </Pressable>
+      <View style={{ 
+        display: 'flex', 
+        flexDirection: isMobile ? 'column' : 'row', 
+        alignItems: isMobile ? 'stretch' : 'center',
+        gap: isMobile ? 8 : 0
+      }}>
+        {/* Category Pills - Full width on mobile for better scrolling */}
+        <View style={{ flex: isMobile ? undefined : 1 }}>
+          <CategoryPills
+            selectedCategory={filters.category}
+            onCategoryChange={handleCategoryChange}
+          />
+        </View>
+        
+        {/* Show More Filters Button */}
+        <View style={{ 
+          alignItems: isMobile ? 'center' : 'flex-end',
+          paddingHorizontal: isMobile ? 16 : 0,
+          marginLeft: isMobile ? 0 : 16
+        }}>
+          <Pressable onPress={() => setShowMore(!showMore)}>
+            <Text variant='link'>{`${showMore ? 'Hide' : 'Show'} More Filters`}</Text>
+          </Pressable>
+        </View>
       </View>
       {/* Additional Filtering */}
         {showMore && (<FilterRow
