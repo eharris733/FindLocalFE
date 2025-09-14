@@ -15,7 +15,9 @@ import {
   WorkSans_700Bold,
 } from '@expo-google-fonts/work-sans';
 import { ThemeProvider, useTheme } from './src/context/ThemeContext';
+import { CityProvider } from './src/context/CityContext';
 import { useEvents } from './src/hooks/useEvents';
+import { useCityLocation } from './src/context/CityContext';
 import MainLayout from './src/components/MainLayout';
 import VenueModal from './src/components/VenueModal';
 import { Text } from './src/components/ui';
@@ -26,6 +28,14 @@ function AppContent() {
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [showVenueModal, setShowVenueModal] = useState(false);
   const [fontTimeout, setFontTimeout] = useState(false);
+  
+  // Get city location data
+  const { selectedCity, onCityChange } = useCityLocation();
+  
+  // Debug: Log when selectedCity changes in App component
+  React.useEffect(() => {
+    console.log('🚀 App component: selectedCity changed to:', selectedCity);
+  }, [selectedCity]);
   
   // Load Work Sans fonts with error handling
   const [fontsLoaded, fontError] = useFonts({
@@ -48,6 +58,9 @@ function AppContent() {
     return () => clearTimeout(timeout);
   }, [fontsLoaded, fontError]);
   
+  // Debug: Log what we're about to pass to useEvents
+  console.log('🚀 App component: About to call useEvents with selectedCity:', selectedCity);
+  
   const {
     loading,
     error,
@@ -58,7 +71,7 @@ function AppContent() {
     availableLocations,
     venues,
     venuesLoading,
-  } = useEvents();
+  } = useEvents({ selectedCity });
 
   const handleEventPress = (event: Event) => {
     setSelectedEvent(event);
@@ -155,7 +168,9 @@ function AppContent() {
 export default function App() {
   return (
     <ThemeProvider>
-      <AppContent />
+      <CityProvider>
+        <AppContent />
+      </CityProvider>
     </ThemeProvider>
   );
 }

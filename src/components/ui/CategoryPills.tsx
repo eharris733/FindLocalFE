@@ -2,6 +2,7 @@ import React from 'react';
 import { View, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
 import { useTheme } from '../../context/ThemeContext';
 import { Text } from './Text';
+import { useDeviceInfo } from '../../hooks/useDeviceInfo';
 
 interface CategoryPillsProps {
   selectedCategory: string;
@@ -22,13 +23,15 @@ export const CategoryPills: React.FC<CategoryPillsProps> = ({
   onCategoryChange,
 }) => {
   const { theme } = useTheme();
+  const { isMobile } = useDeviceInfo();
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingHorizontal: isMobile ? 12 : 16 }]}>
       <ScrollView
         horizontal 
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingRight: isMobile ? 12 : 16 }]}
+        style={{ flexGrow: 0 }} // Prevent ScrollView from expanding vertically
       >
         {categories.map((category) => {
           const isSelected = selectedCategory === category.id;
@@ -68,11 +71,11 @@ export const CategoryPills: React.FC<CategoryPillsProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 16,
     paddingVertical: 8,
+    width: '100%', // Ensure full width on mobile
   },
   scrollContent: {
-    paddingRight: 16,
+    alignItems: 'center',
   },
   pill: {
     flexDirection: 'row',

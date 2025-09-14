@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Platform, View, StyleSheet } from 'react-native';
 import type { Event } from '../types/events';
 import type { Venue } from '../types/venues';
-import { getAllVenues } from '../api/venues';
+import { getAllVenues, getVenuesByCity } from '../api/venues';
 import { useTheme } from '../context/ThemeContext';
+import { useCityLocation } from '../context/CityContext';
 import { Text } from './ui';
 
 interface MapViewComponentProps {
@@ -20,42 +21,53 @@ const MapViewComponent: React.FC<MapViewComponentProps> = ({
   highlightedEventId,
 }) => {
   const { theme } = useTheme();
+  const { selectedCity, displayCity } = useCityLocation();
   const [venues, setVenues] = useState<Venue[]>([]);
   const [venuesLoading, setVenuesLoading] = useState(true);
 
-  // Fetch venues with coordinates
+  // Fetch venues with coordinates based on selected city
   useEffect(() => {
     const fetchVenues = async () => {
       try {
+        console.log('🗺️ MapViewComponent: Fetching venues for city:', selectedCity);
         setVenuesLoading(true);
-        const venueData = await getAllVenues();
+        
+        // Use selectedCity to fetch city-specific venues
+        const venueData = selectedCity 
+          ? await getVenuesByCity(selectedCity)
+          : await getAllVenues();
+          
         // Filter venues that have coordinates
         const venuesWithCoords = venueData.filter(venue => 
           venue.latitude && venue.longitude && venue.is_active
         );
+        
+        console.log(`🗺️ MapViewComponent: Found ${venuesWithCoords.length} venues with coordinates for ${selectedCity}`);
         setVenues(venuesWithCoords);
-        console.log('Loaded venues with coordinates:', venuesWithCoords.length);
       } catch (error) {
-        console.error('Failed to fetch venues:', error);
+        console.error('Failed to fetch venues for map:', error);
       } finally {
         setVenuesLoading(false);
       }
     };
 
     fetchVenues();
-  }, []);
+  }, [selectedCity]); // Re-fetch when selectedCity changes
 
   // For web platform, use the web map component
   if (Platform.OS === 'web') {
     const MapViewWeb = require('./MapView.web').default;
     return (
       <MapViewWeb 
+        key={`map-${selectedCity}`} // Force complete re-render when city changes
         events={events} 
         venues={venues}
         venuesLoading={venuesLoading}
         onEventPress={onEventPress}
         onVenuePress={onVenuePress}
         highlightedEventId={highlightedEventId}
+        selectedCity={selectedCity}
+        displayCity={displayCity}
       />
     );
   }
@@ -79,7 +91,7 @@ const MapViewComponent: React.FC<MapViewComponentProps> = ({
         <Text variant="body2" style={[styles.placeholderSubtext, {
           color: theme.colors.text.tertiary,
         }]}>
-          {events.length} events • {venues.length} venues with coordinates
+          {events.length} events • {venues.length} venues with coordinates in {displayCity}
         </Text>
         {highlightedEventId && (
           <Text variant="caption" style={[styles.highlightText, {

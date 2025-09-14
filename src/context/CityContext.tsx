@@ -1,5 +1,5 @@
-import {useEffect, useState} from "react";
-import {getAvailableCities} from "../api/events";
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { getAvailableCities } from '../api/events';
 
 interface CityData {
     name: string;
@@ -7,7 +7,22 @@ interface CityData {
     hasVenues?: boolean;
 }
 
-export const useCityLocation = () => {
+interface CityContextType {
+    selectedCity: string; // Database city name
+    displayCity: string;  // Display city name
+    onCityChange: (city: string) => void;
+    allCityData: CityData[];
+    loading: boolean;
+    error: boolean;
+}
+
+const CityContext = createContext<CityContextType | undefined>(undefined);
+
+interface CityProviderProps {
+    children: ReactNode;
+}
+
+export const CityProvider: React.FC<CityProviderProps> = ({ children }) => {
     const [availableCitiesFromDB, setAvailableCitiesFromDB] = useState<string[]>([]);
     const [allCityData, setAllCityData] = useState<CityData[]>([]);
     const [loading, setLoading] = useState(true);
@@ -16,7 +31,7 @@ export const useCityLocation = () => {
     const [displayCity, setDisplayCity] = useState('Boston'); // Display city name
 
     const onCityChange = (city: string) => {
-        console.log('🏙️ onCityChange called with:', city);
+        console.log('🏙️ CityContext onCityChange called with:', city);
         
         // Map display names to database city names
         let dbCityName = city.toLowerCase();
@@ -41,12 +56,11 @@ export const useCityLocation = () => {
             }
         }
         
-        console.log('🏙️ Setting selectedCity from:', selectedCity, 'to:', dbCityName);
-        console.log('🏙️ Setting displayCity to:', city);
+        console.log('🏙️ CityContext Setting selectedCity from:', selectedCity, 'to:', dbCityName);
+        console.log('🏙️ CityContext Setting displayCity to:', city);
         setSelectedCity(dbCityName);
-        console.log('🏙️ City changed from display name:', city, 'to database name:', dbCityName, 'display will be:', city);
+        console.log('🏙️ CityContext City changed from display name:', city, 'to database name:', dbCityName);
     };
-
 
     // Load cities from database on component mount
     useEffect(() => {
@@ -164,12 +178,26 @@ export const useCityLocation = () => {
         loadCities();
     }, []);
 
-    return {
-        selectedCity, // Database city name (for API calls)
-        displayCity,  // Display city name (for UI)
+    const value: CityContextType = {
+        selectedCity,
+        displayCity,
         onCityChange,
         allCityData,
         loading,
         error
+    };
+
+    return (
+        <CityContext.Provider value={value}>
+            {children}
+        </CityContext.Provider>
+    );
+};
+
+export const useCityLocation = (): CityContextType => {
+    const context = useContext(CityContext);
+    if (context === undefined) {
+        throw new Error('useCityLocation must be used within a CityProvider');
     }
-}
+    return context;
+};
