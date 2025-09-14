@@ -3,7 +3,7 @@ import { View, TouchableOpacity, StyleSheet, Modal, ScrollView, Dimensions, Acti
 import { useTheme } from '../../context/ThemeContext';
 import { Text } from './Text';
 import { getAvailableCities } from '../../api/events';
-import {useCityLocation} from "../../hooks/useCityLocation";
+import {useCityLocation} from "../../context/CityContext";
 
 interface CityData {
   name: string;
@@ -21,7 +21,7 @@ export const CityPicker: React.FC<CityPickerProps> = ({
   onCityChange,
 }) => {
   const { theme } = useTheme();
-  const {loading, allCityData} = useCityLocation();
+  const {loading, allCityData, displayCity} = useCityLocation();
   const [isOpen, setIsOpen] = useState(false);
   const [expandedCities, setExpandedCities] = useState<Set<string>>(new Set());
 
@@ -70,7 +70,7 @@ export const CityPicker: React.FC<CityPickerProps> = ({
           <Text variant="h3" color="primary" style={styles.locationText}>
             Events Near{' '}
             <Text variant="h3" style={{ fontWeight: '700', color: theme.colors.text.primary }}>
-              {selectedCity}
+              {displayCity}
             </Text>
           </Text>
           <Text variant="body2" color="secondary" style={styles.arrow}>
