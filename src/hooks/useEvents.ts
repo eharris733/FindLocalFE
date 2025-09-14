@@ -110,7 +110,11 @@ interface UseEventsResult {
   venuesLoading: boolean;
 }
 
-export const useEvents = (): UseEventsResult => {
+interface UseEventsProps {
+  selectedCity?: string;
+}
+
+export const useEvents = ({ selectedCity }: UseEventsProps = {}): UseEventsResult => {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -120,11 +124,14 @@ export const useEvents = (): UseEventsResult => {
 
   useEffect(() => {
     const fetchEvents = async () => {
+      console.log('🎉 useEvents: fetchEvents called with selectedCity:', selectedCity);
       setLoading(true);
       setError(null);
       try {
-        const data = await getEvents();
+        // Fetch events filtered by city if provided
+        const data = await getEvents(selectedCity);
         setEvents(data || []); 
+        console.log(`🎉 Loaded ${data?.length || 0} events for city: ${selectedCity || 'all cities'}`);
       } catch (err) {
         setError("Failed to load events. Please try again.");
         console.error(err);
@@ -133,17 +140,20 @@ export const useEvents = (): UseEventsResult => {
       }
     };
     fetchEvents();
-  }, []);
+  }, [selectedCity]); // Re-fetch when selectedCity changes
 
   // Fetch venues for filtering
   useEffect(() => {
     const fetchVenues = async () => {
+      console.log('🏢 useEvents: fetchVenues called with selectedCity:', selectedCity);
       setVenuesLoading(true);
       try {
-        // For now, filter by brooklyn - later this can be dynamic based on user location
-        const venueData = await getVenuesByCity('brooklyn');
+        // Use selectedCity instead of hardcoded 'brooklyn'
+        const venueData = selectedCity 
+          ? await getVenuesByCity(selectedCity)
+          : await getAllVenues();
         setVenues(venueData);
-        console.log('Loaded venues for brooklyn:', venueData.length);
+        console.log(`🏢 Loaded ${venueData.length} venues for ${selectedCity || 'all cities'}`);
         
         // Debug: Log venue sizes
         const venueSizes = venueData.map(v => v.venue_size).filter(Boolean);
@@ -160,7 +170,7 @@ export const useEvents = (): UseEventsResult => {
       }
     };
     fetchVenues();
-  }, []);
+  }, [selectedCity]); // Re-fetch when selectedCity changes
 
   const { availableCategories, availableLocations } = useMemo(() => {
     const categories = new Set(['all']); // Use lowercase 'all' instead of 'ALL'

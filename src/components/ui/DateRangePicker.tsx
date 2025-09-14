@@ -203,14 +203,13 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
         >
           <SafeAreaView style={[styles.modal, { backgroundColor: theme.colors.background.primary }]}>
             <View style={[styles.modalHeader, { borderBottomColor: theme.colors.border.light }]}>
-              <Text variant="h3">Select Date Range</Text>
+              <View style={{ flex: 1 }} />
               <TouchableOpacity onPress={handleClose}>
                 <Text variant="h3" color="secondary">✕</Text>
               </TouchableOpacity>
             </View>
             
             <View style={styles.modalContent}>
-              <Text variant="h4" style={{ marginBottom: 16 }}>Quick Select</Text>
               {quickOptions.map((option) => (
                 <TouchableOpacity
                   key={option.label}
@@ -293,56 +292,41 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
               ]}
               onStartShouldSetResponder={() => true}
             >
-              {/* Close button */}
-              <View style={[styles.dropdownHeader, { borderBottomColor: theme.colors.border.light }]}>
-                <Text variant="body1" style={{ fontWeight: '600', flex: 1 }}>
-                  Select Date Range
-                </Text>
-                <TouchableOpacity 
-                  style={styles.closeButton}
-                  onPress={handleClose}
-                >
-                  <Text variant="body1" color="secondary" style={{ fontSize: 18, fontWeight: 'bold' }}>
-                    ✕
-                  </Text>
-                </TouchableOpacity>
-              </View>
-
-              {/* Quick Select Buttons */}
+              {/* Quick Select Buttons with Close Button */}
               <View style={[styles.quickSelectContainer, { 
                 borderBottomColor: theme.colors.border.light,
                 padding: 16,
               }]}>
-                <Text variant="body1" style={{ marginBottom: 12, fontWeight: '600' }}>
-                  Quick Select
-                </Text>
-                <View style={styles.quickGrid}>
-                  {quickOptions.map((option) => (
-                    <TouchableOpacity
-                      key={option.label}
-                      style={[styles.quickChip, {
-                        backgroundColor: theme.colors.background.primary,
-                        borderColor: theme.colors.border.light,
-                      }]}
-                      onPress={() => handleQuickSelect(option)}
-                    >
-                      <Text variant="caption">
-                        {option.label}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                  <View style={styles.quickGrid}>
+                    {quickOptions.map((option) => (
+                      <TouchableOpacity
+                        key={option.label}
+                        style={[styles.quickChip, {
+                          backgroundColor: theme.colors.background.primary,
+                          borderColor: theme.colors.border.light,
+                        }]}
+                        onPress={() => handleQuickSelect(option)}
+                      >
+                        <Text variant="caption">
+                          {option.label}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                  <TouchableOpacity 
+                    style={styles.closeButton}
+                    onPress={handleClose}
+                  >
+                    <Text variant="body1" color="secondary" style={{ fontSize: 18, fontWeight: 'bold' }}>
+                      ✕
+                    </Text>
+                  </TouchableOpacity>
                 </View>
               </View>
 
               {/* Calendar */}
               <View style={{ padding: 16 }}>
-                <Text variant="body1" style={{ marginBottom: 12, fontWeight: '600' }}>
-                  {selectingEnd && tempStart 
-                    ? 'Select end date (or click same date for single day)' 
-                    : tempStart 
-                    ? 'Select end date' 
-                    : 'Select start date'}
-                </Text>
                 <Calendar
                   startDate={tempStart || value.start}
                   endDate={selectingEnd ? null : value.end}
