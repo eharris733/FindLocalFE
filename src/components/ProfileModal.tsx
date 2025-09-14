@@ -10,7 +10,7 @@ import {
 import { useTheme } from '../context/ThemeContext';
 import {Text, Card, Button, CityPicker} from './ui';
 import { ThemeToggle } from './ui/ThemeToggle';
-import {useCityLocation} from "../hooks/useCityLocation";
+import {useCityLocation} from "../context/CityContext";
 
 interface ProfileModalProps {
   visible: boolean;
@@ -19,7 +19,25 @@ interface ProfileModalProps {
 
 export default function ProfileModal({ visible, onClose }: ProfileModalProps) {
   const { theme } = useTheme();
-  const {selectedCity, onCityChange} = useCityLocation();
+  const {selectedCity, displayCity, onCityChange} = useCityLocation();
+  
+  // Format display city for the default location
+  const formatLocationDisplay = (city: string) => {
+    if (city === 'New York') return 'New York, NY';
+    if (city === 'Boston') return 'Boston, MA';
+    if (city === 'Brooklyn') return 'Brooklyn, NY';
+    if (city === 'Manhattan') return 'Manhattan, NY';
+    if (city === 'Queens') return 'Queens, NY';
+    if (city === 'Bronx') return 'Bronx, NY';
+    if (city === 'Staten Island') return 'Staten Island, NY';
+    if (city === 'Back Bay') return 'Back Bay, Boston, MA';
+    if (city === 'Cambridge') return 'Cambridge, MA';
+    if (city === 'Allston') return 'Allston, Boston, MA';
+    if (city === 'South End') return 'South End, Boston, MA';
+    if (city === 'North End') return 'North End, Boston, MA';
+    if (city === 'Fenway') return 'Fenway, Boston, MA';
+    return city; // fallback for other cities
+  };
 
   return (
     <Modal
@@ -66,7 +84,7 @@ export default function ProfileModal({ visible, onClose }: ProfileModalProps) {
               Select Your City
             </Text>
             <CityPicker
-                selectedCity={selectedCity}
+                selectedCity={displayCity}
                 onCityChange={onCityChange}
             />
           </Card>
@@ -95,7 +113,7 @@ export default function ProfileModal({ visible, onClose }: ProfileModalProps) {
             <View style={styles.preferenceItem}>
               <Text variant="body1">Default Location</Text>
               <Text variant="body2" color="secondary">
-                Brooklyn, NY
+                {formatLocationDisplay(displayCity)}
               </Text>
             </View>
             <View style={styles.preferenceItem}>

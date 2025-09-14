@@ -16,7 +16,7 @@ import {
 import type { FilterState, FilterAction } from '../hooks/useEvents';
 import type { Venue } from '../types/venues';
 import { screenshotMarker } from '../utils/screenshot';
-import {useCityLocation} from "../hooks/useCityLocation";
+import {useCityLocation} from "../context/CityContext";
 import {useDeviceInfo} from "../hooks/useDeviceInfo";
 
 interface FilterBarProps {
@@ -45,8 +45,8 @@ export default function FilterBar({
 }: FilterBarProps) {
   const { theme } = useTheme();
   const [showMore, setShowMore] = useState(false);
-  const {selectedCity} = useCityLocation();
   const {isMobile} = useDeviceInfo();
+  const { displayCity } = useCityLocation();
 
   // Screenshot marker for development
   React.useEffect(() => {
@@ -121,7 +121,7 @@ export default function FilterBar({
                 variant="body2"
                 style={[styles.resultsText, { color: theme.colors.text.secondary }]}
             >
-              {resultsCount} events found in {selectedCity}
+              {resultsCount} events found in {displayCity}
             </Text>
         )}
 

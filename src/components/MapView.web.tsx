@@ -16,7 +16,24 @@ interface MapViewWebProps {
   onEventPress: (event: Event) => void;
   onVenuePress?: (venue: Venue) => void;
   highlightedEventId?: string;
+  selectedCity?: string;
+  displayCity?: string;
 }
+
+const getCityCenter = (city?: string) => {
+  console.log('🎯 getCityCenter called with city:', city);
+  switch (city) {
+    case 'boston':
+      console.log('🎯 Returning Boston coordinates');
+      return { latitude: 42.3601, longitude: -71.0589 }; // Boston
+    case 'brooklyn':
+      console.log('🎯 Returning Brooklyn coordinates');
+      return { latitude: 40.6782, longitude: -73.9442 }; // Brooklyn
+    default:
+      console.log('🎯 Returning default Brooklyn coordinates for unknown city:', city);
+      return { latitude: 40.6782, longitude: -73.9442 }; // Default to Brooklyn
+  }
+};
 
 const fallbackCamera = {
   center: {
@@ -68,7 +85,9 @@ const MapViewWeb: React.FC<MapViewWebProps> = ({
   venuesLoading,
   onEventPress,
   onVenuePress,
-  highlightedEventId 
+  highlightedEventId,
+  selectedCity,
+  displayCity
 }) => {
   const { theme } = useTheme();
   const mapRef = useRef<any>(null);
@@ -85,59 +104,63 @@ const MapViewWeb: React.FC<MapViewWebProps> = ({
     });
   }, [activeCalloutId]);
 
-  // Calculate initial camera based on venue coordinates
+  // Calculate initial camera based on selected city (not venues)
   const getInitialCamera = () => {
-    if (venues.length === 0) {
-      // Default to Brooklyn if no venues
-      return fallbackCamera;
-    }
-
-    // Calculate bounds from venue coordinates
-    const latitudes = venues.map(v => Number(v.latitude)).filter(lat => !isNaN(lat));
-    const longitudes = venues.map(v => Number(v.longitude)).filter(lng => !isNaN(lng));
-
-    if (latitudes.length === 0 || longitudes.length === 0) {
-      // Fallback to Brooklyn
-      return fallbackCamera;
-    }
-
-    const minLat = Math.min(...latitudes);
-    const maxLat = Math.max(...latitudes);
-    const minLng = Math.min(...longitudes);
-    const maxLng = Math.max(...longitudes);
-
-    const centerLat = (minLat + maxLat) / 2;
-    const centerLng = (minLng + maxLng) / 2;
+    console.log('🗺️ getInitialCamera called with selectedCity:', selectedCity);
     
-    return {
-      center: {
-        latitude: centerLat,
-        longitude: centerLng,
-      },
-      zoom: 10,
+    // Always use city center for initial camera to avoid flashing
+    const cityCenter = getCityCenter(selectedCity);
+    console.log('🗺️ Using city center for initial camera:', cityCenter, 'for city:', selectedCity);
+    
+    const camera = {
+      center: cityCenter,
+      zoom: 12,
       heading: 0,
       pitch: 0,
     };
+    
+    console.log('🗺️ Final camera object:', camera);
+    return camera;
   };
 
+  const initialCamera = getInitialCamera();
+  console.log('🗺️ MapView initialCamera set to:', initialCamera);
+
+  // Add effect to force camera update when component mounts
   useEffect(() => {
+    if (mapRef.current) {
+      console.log('🗺️ Map mounted, forcing camera to:', initialCamera.center);
+      // Force immediate camera update after mount
+      setTimeout(() => {
+        mapRef.current?.animateCamera({
+          center: initialCamera.center,
+          zoom: initialCamera.zoom,
+        }, { duration: 0 });
+      }, 100);
+    }
+  }, []); // Run only on mount
+
+  useEffect(() => {
+    // Simple auto-fit to venues when venues are loaded
     if (!venuesLoading && venues.length > 0 && mapRef.current) {
       const coords = venues
         .map(v => ({ 
           latitude: Number(v.latitude), 
           longitude: Number(v.longitude) 
         }))
-        .filter(c => !Number.isNaN(c.latitude) && !Number.isNaN(c.longitude));
+        .filter(c => !Number.isNaN(c.latitude) && !Number.isNaN(c.longitude) && c.latitude !== 0 && c.longitude !== 0);
 
       if (coords.length > 0) {
-        // Use a small timeout to ensure map is fully loaded
+        console.log('🗺️ Fitting map to venue coordinates:', coords);
+        // Simple timeout then fit to coordinates - no padding
         setTimeout(() => {
           mapRef.current?.fitToCoordinates(coords, {
-            edgePadding: { top: 50, right: 50, bottom: 50, left: 50 }, // Tight padding
-            animated: false,
+            animated: true,
           });
-        }, 100);
+        }, 500);
       }
+    } else {
+      console.log('🗺️ Not fitting to venues. Venues count:', venues.length, 'Loading:', venuesLoading);
     }
   }, [venuesLoading, venues]);
 
@@ -170,8 +193,6 @@ const MapViewWeb: React.FC<MapViewWebProps> = ({
       return venueId;
     });
   };
-
-  const initialCamera = getInitialCamera();
 
   const handleMapClick = (e: any) => {
     const now = Date.now();
