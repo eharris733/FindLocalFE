@@ -9,6 +9,7 @@ import type { Event } from '../types/events';
 import type { FilterState, FilterAction } from '../hooks/useEvents';
 import type { Venue } from '../types/venues';
 import {useDeviceInfo} from "../hooks/useDeviceInfo";
+import {useRouter} from "expo-router";
 
 interface MainLayoutProps {
   events: Event[];
@@ -32,6 +33,7 @@ export default function MainLayout({
   onEventPress,
 }: MainLayoutProps) {
   const { theme } = useTheme();
+  const router = useRouter();
   const {isMobile, isTablet} = useDeviceInfo();
   const [activeTab, setActiveTab] = useState<'list' | 'map'>('list');
   const [highlightedEventId, setHighlightedEventId] = useState<string | undefined>();
@@ -49,9 +51,7 @@ export default function MainLayout({
   };
 
   const handleNavLinkPress = (link: string) => {
-    // Handle navigation link presses
-    console.log('Nav link pressed:', link);
-    // TODO: Implement navigation logic
+    router.navigate(`/${link.toLowerCase()}`);
   };
 
   const handleViewModeChange = (mode: 'list' | 'map') => {
