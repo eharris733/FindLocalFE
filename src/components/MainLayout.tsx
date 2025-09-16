@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, Platform } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
-import TopNavigation from './TopNavigation';
 import FilterBar from './FilterBar';
 import SidebarEventList from './SidebarEventList';
 import MapPanel from './MapPanel';
@@ -9,7 +8,6 @@ import type { Event } from '../types/events';
 import type { FilterState, FilterAction } from '../hooks/useEvents';
 import type { Venue } from '../types/venues';
 import {useDeviceInfo} from "../hooks/useDeviceInfo";
-import {useRouter} from "expo-router";
 
 interface MainLayoutProps {
   events: Event[];
@@ -33,7 +31,6 @@ export default function MainLayout({
   onEventPress,
 }: MainLayoutProps) {
   const { theme } = useTheme();
-  const router = useRouter();
   const {isMobile, isTablet} = useDeviceInfo();
   const [activeTab, setActiveTab] = useState<'list' | 'map'>('list');
   const [highlightedEventId, setHighlightedEventId] = useState<string | undefined>();
@@ -50,10 +47,6 @@ export default function MainLayout({
     }
   };
 
-  const handleNavLinkPress = (link: string) => {
-    router.navigate(`/${link.toLowerCase()}`);
-  };
-
   const handleViewModeChange = (mode: 'list' | 'map') => {
     setActiveTab(mode);
   };
@@ -62,8 +55,7 @@ export default function MainLayout({
     // Mobile layout with tabs
     return (
       <View style={[styles.container, { backgroundColor: theme.colors.background.secondary }]}>
-        <TopNavigation onNavLinkPress={handleNavLinkPress} />
-        
+
         <FilterBar
           filters={filters}
           dispatchFilters={dispatchFilters}
@@ -95,14 +87,9 @@ export default function MainLayout({
     );
   }
 
-  // Desktop/Tablet layout with split view or single view based on toggle
-  const sidebarWidth = isTablet ? '45%' : '40%';
-  const mapWidth = isTablet ? '55%' : '60%';
-
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background.secondary }]}>
-      <TopNavigation onNavLinkPress={handleNavLinkPress} />
-      
+
       <FilterBar
         filters={filters}
         dispatchFilters={dispatchFilters}
