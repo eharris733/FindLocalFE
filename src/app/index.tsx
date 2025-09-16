@@ -36,7 +36,8 @@ export default function IndexRoute() {
         setSelectedEvent(null);
     };
 
-    return (    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background.secondary }]}>
+    return (
+        <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background.secondary }]}>
         <StatusBar
             barStyle={isDark ? "light-content" : "dark-content"}
             backgroundColor={theme.colors.background.primary}

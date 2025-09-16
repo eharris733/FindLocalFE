@@ -82,7 +82,7 @@ export default function TopNavigation({ onNavLinkPress }: TopNavigationProps) {
           </View>
           
           <View style={styles.centerSection}>
-            <Logo isMobile={isMobile}/>
+            <Pressable onPress={() => handleNavLinkPress('')}> <Logo isMobile={isMobile}/></Pressable>
           </View>
           
           {/* Right section with nav links and profile */}

@@ -10,6 +10,7 @@ import {
 } from "@expo-google-fonts/work-sans";
 import {CityProvider} from "../context/CityContext";
 import {ThemeProvider} from "../context/ThemeContext";
+import Header from "../components/Header";
 
 
 SplashScreen.preventAutoHideAsync();
@@ -53,5 +54,5 @@ export default function RootLayout() {
 
 // Separate this into a new component so it can access the SessionProvider context later
 function RootNavigator() {
-    return <Stack screenOptions={{ headerShown: false }} initialRouteName="index"/>
+    return <Stack screenOptions={{ header: Header }} initialRouteName="index"/>
 }
