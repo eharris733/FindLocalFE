@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, Platform } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
-import TopNavigation from './TopNavigation';
 import FilterBar from './FilterBar';
 import SidebarEventList from './SidebarEventList';
 import MapPanel from './MapPanel';
@@ -48,12 +47,6 @@ export default function MainLayout({
     }
   };
 
-  const handleNavLinkPress = (link: string) => {
-    // Handle navigation link presses
-    console.log('Nav link pressed:', link);
-    // TODO: Implement navigation logic
-  };
-
   const handleViewModeChange = (mode: 'list' | 'map') => {
     setActiveTab(mode);
   };
@@ -62,8 +55,7 @@ export default function MainLayout({
     // Mobile layout with tabs
     return (
       <View style={[styles.container, { backgroundColor: theme.colors.background.secondary }]}>
-        <TopNavigation onNavLinkPress={handleNavLinkPress} />
-        
+
         <FilterBar
           filters={filters}
           dispatchFilters={dispatchFilters}
@@ -95,14 +87,9 @@ export default function MainLayout({
     );
   }
 
-  // Desktop/Tablet layout with split view or single view based on toggle
-  const sidebarWidth = isTablet ? '45%' : '40%';
-  const mapWidth = isTablet ? '55%' : '60%';
-
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background.secondary }]}>
-      <TopNavigation onNavLinkPress={handleNavLinkPress} />
-      
+
       <FilterBar
         filters={filters}
         dispatchFilters={dispatchFilters}
