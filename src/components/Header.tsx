@@ -10,7 +10,6 @@ export default function Header() {
         router.navigate(`/${link.toLowerCase()}`);
     };
 
-    return (<View>
-        <TopNavigation onNavLinkPress={handleNavLinkPress} />
+    return (<View><TopNavigation onNavLinkPress={handleNavLinkPress} />
     </View>)
 }
