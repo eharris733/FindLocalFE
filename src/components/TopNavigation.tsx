@@ -17,7 +17,7 @@ export default function TopNavigation({ onNavLinkPress }: TopNavigationProps) {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [slideAnim] = useState(new Animated.Value(-250)); // Start off-screen
 
-  const navLinks = ['About', 'Friends', 'Support'];
+  const navLinks = ['About', 'Friends'];
 
   useEffect(() => {
     if (showMobileMenu) {
