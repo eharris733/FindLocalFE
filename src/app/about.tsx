@@ -1,4 +1,4 @@
-import {View, ScrollView} from "react-native";
+import {View, ScrollView, Linking} from "react-native";
 import {Text} from '../components/ui';
 import { useTheme } from '../context/ThemeContext';
 
@@ -32,7 +32,7 @@ export default function AboutRoute() {
         But How?
       </Text>
       <Text variant="body1" style={{ marginBottom: theme.spacing.md, lineHeight: 22 }}>
-        FindLocal utilizes modern web application technology, combined with AI assisted gathering of data from public calendars to give you a one-stop shop for any event you can possibly think of. If it's not on here yet, but it is on the internet, you can email findlocalinternal@gmail.com and it will be added promptly.
+        FindLocal utilizes modern web application technology, combined with AI-assisted gathering of data from public calendars to give you a one-stop shop for any event you can possibly think of. If it's not on here yet, but it is on the internet, you can email <Text style={{ textDecorationLine: 'underline', color: theme.colors.primary[500] }} onPress={() => Linking.openURL('mailto:findlocalinternal@gmail.com')}>findlocalinternal@gmail.com</Text> and it will be added promptly.
       </Text>
       <Text variant="h3" style={{ marginTop: theme.spacing.xl, marginBottom: theme.spacing.md }}>
         The team:
@@ -56,13 +56,13 @@ export default function AboutRoute() {
         Q: But would you be open to making money?
       </Text>
       <Text variant="body1" style={{ marginBottom: theme.spacing.md, lineHeight: 22 }}>
-        A: Of course, more money would allow us to broaden the scope and speed at which we can operate. If you have any business inquiries (affiliate links, advertising, partnering, etc.), please email findlocalinternal@gmail.com
+        A: Of course, more money would allow us to broaden the scope and speed at which we can operate. If you have any business inquiries (affiliate links, advertising, partnering, etc.), please email <Text style={{ textDecorationLine: 'underline', color: theme.colors.primary[500] }} onPress={() => Linking.openURL('mailto:findlocalinternal@gmail.com')}>findlocalinternal@gmail.com</Text>.
       </Text>
       <Text variant="h4" style={{ marginTop: theme.spacing.lg, marginBottom: theme.spacing.sm }}>
         Q: I want to help, how can I help?
       </Text>
       <Text variant="body1" style={{ marginBottom: theme.spacing.md, lineHeight: 22 }}>
-        A: The best way is by filling out this form to become a Beta tester. If you are interested in helping out in a more committal and serious way, please email findlocalinternal@gmail.com and give a brief synopsis of your skills and interest.
+        A: The best way is by filling out <Text style={{ textDecorationLine: 'underline', color: theme.colors.primary[500] }} onPress={() => Linking.openURL('https://forms.gle/diBZKyejuUXsdQu46')}>this form</Text> to become a beta tester. If you are interested in helping out in a more committal and serious way, please email <Text style={{ textDecorationLine: 'underline', color: theme.colors.primary[500] }} onPress={() => Linking.openURL('mailto:findlocalinternal@gmail.com')}>findlocalinternal@gmail.com</Text> and give a brief synopsis of your skills and interest.
       </Text>
       <Text variant="h4" style={{ marginTop: theme.spacing.lg, marginBottom: theme.spacing.sm }}>
         Q: Why not just ask ChatGPT what events are happening?
@@ -74,7 +74,7 @@ export default function AboutRoute() {
         Q: I want to report a bug, request a feature, or request a city or event be added to FindLocal.
       </Text>
       <Text variant="body1" style={{ marginBottom: theme.spacing.xl, lineHeight: 22 }}>
-        A: First of all, that's not a question. But please email findlocalinternal@gmail.com with all the details needed for your inquiry or report and we thank you for your engagement!
+        A: First of all, that's not a question. But please email <Text style={{ textDecorationLine: 'underline', color: theme.colors.primary[500] }} onPress={() => Linking.openURL('mailto:findlocalinternal@gmail.com')}>findlocalinternal@gmail.com</Text> with all the details needed for your inquiry or report and we thank you for your engagement!
       </Text>
     </ScrollView>
   );
