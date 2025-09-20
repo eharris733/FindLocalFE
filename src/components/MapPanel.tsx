@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, StyleSheet, Platform } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import MapViewComponent from './MapViewComponent';
-import EventBottomSheet from './EventBottomSheet';
 import type { Event } from '../types/events';
 
 interface MapPanelProps {
@@ -19,24 +18,11 @@ export default function MapPanel({
   onMarkerPress 
 }: MapPanelProps) {
   const { theme } = useTheme();
-  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
-  const [showBottomSheet, setShowBottomSheet] = useState(false);
 
   const handleMarkerPress = (event: Event) => {
-    setSelectedEvent(event);
-    setShowBottomSheet(true);
-    onMarkerPress?.(event);
-  };
-
-  const handleBottomSheetEventPress = (event: Event) => {
-    setShowBottomSheet(false);
-    setSelectedEvent(null);
+    // Directly call onEventPress to open the EventModal
     onEventPress(event);
-  };
-
-  const handleCloseBottomSheet = () => {
-    setShowBottomSheet(false);
-    setSelectedEvent(null);
+    onMarkerPress?.(event);
   };
 
   return (
@@ -45,14 +31,6 @@ export default function MapPanel({
         events={events}
         onEventPress={handleMarkerPress}
         highlightedEventId={highlightedEventId}
-      />
-      
-      {/* Event Bottom Sheet / Tooltip */}
-      <EventBottomSheet
-        visible={showBottomSheet}
-        event={selectedEvent}
-        onEventPress={handleBottomSheetEventPress}
-        onClose={handleCloseBottomSheet}
       />
     </View>
   );
