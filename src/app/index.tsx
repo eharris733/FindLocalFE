@@ -3,7 +3,7 @@ import {useEvents} from "../hooks/useEvents";
 import {Text} from "../components/ui";
 import {SafeAreaView, StatusBar, StyleSheet} from "react-native";
 import MainLayout from "../components/MainLayout";
-import VenueModal from "../components/VenueModal";
+import EventModal from "../components/EventModal";
 import React, {useState} from "react";
 import {useTheme} from "../context/ThemeContext";
 import type {Event} from "../types/events";
@@ -12,7 +12,7 @@ export default function IndexRoute() {
     const { theme, isDark } = useTheme();
     const { selectedCity} = useCityLocation();
     const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
-    const [showVenueModal, setShowVenueModal] = useState(false);
+    const [showEventModal, setShowEventModal] = useState(false);
 
     const {
         loading,
@@ -28,11 +28,11 @@ export default function IndexRoute() {
 
     const handleEventPress = (event: Event) => {
         setSelectedEvent(event);
-        setShowVenueModal(true);
+        setShowEventModal(true);
     };
 
-    const handleCloseVenueModal = () => {
-        setShowVenueModal(false);
+    const handleCloseEventModal = () => {
+        setShowEventModal(false);
         setSelectedEvent(null);
     };
 
@@ -53,11 +53,11 @@ export default function IndexRoute() {
             onEventPress={handleEventPress}
         />
 
-        {/* Venue Modal */}
-        <VenueModal
-            visible={showVenueModal}
+        {/* Event Modal */}
+        <EventModal
+            visible={showEventModal}
             event={selectedEvent}
-            onClose={handleCloseVenueModal}
+            onClose={handleCloseEventModal}
         />
     </SafeAreaView>);
 }
