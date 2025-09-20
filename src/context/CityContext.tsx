@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { getAvailableCities } from '../api/events';
+import { getDisplayCityName } from '../utils/cityUtils';
 
 interface CityData {
     name: string;
@@ -47,12 +48,12 @@ export const CityProvider: React.FC<CityProviderProps> = ({ children }) => {
             // For neighborhoods, show the neighborhood name but use the parent city's database name
             if (['Brooklyn', 'Manhattan', 'Queens', 'Bronx', 'Staten Island'].includes(city)) {
                 dbCityName = 'brooklyn';
-                setDisplayCity(city); // Show the neighborhood name
+                setDisplayCity(getDisplayCityName(city)); // Show the neighborhood name
             } else if (['Back Bay', 'Cambridge', 'Allston', 'South End', 'North End', 'Fenway'].includes(city)) {
                 dbCityName = 'boston';
-                setDisplayCity(city); // Show the neighborhood name
+                setDisplayCity(getDisplayCityName(city)); // Show the neighborhood name
             } else {
-                setDisplayCity(city);
+                setDisplayCity(getDisplayCityName(city));
             }
         }
         

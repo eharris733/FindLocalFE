@@ -11,6 +11,7 @@ import {
 import { useTheme } from '../../context/ThemeContext';
 import { Text } from '../ui';
 import { getVenuesByCity } from '../../api/venues';
+import { getDisplayCityName } from '../../utils/cityUtils';
 import type { Venue } from '../../types/venues';
 
 interface VenueSelectionModalProps {
@@ -273,7 +274,7 @@ export default function VenueSelectionModal({
                     {venue.name}
                   </Text>
                   <Text variant="caption" color="secondary" style={styles.venueLocation}>
-                    📍 {venue.city}
+                    📍 {getDisplayCityName(venue.city)}
                     {venue.type && ` • ${venue.type}`}
                   </Text>
                 </View>

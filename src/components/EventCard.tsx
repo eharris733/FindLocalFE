@@ -6,6 +6,7 @@ import type { Venue } from '../types/venues';
 import { useTheme } from '../context/ThemeContext';
 import { Text, Card } from './ui';
 import { getVenueById } from '../api/venues';
+import { getDisplayCityName } from '../utils/cityUtils';
 
 interface EventCardProps {
   event: Event;
@@ -82,7 +83,7 @@ const EventCard: React.FC<EventCardProps> = ({ event, onPress, variant = 'defaul
     
     return {
       name: venue?.name || null,
-      address: venue?.address || event.city,
+      address: venue?.address || getDisplayCityName(event.city),
       size: venue?.venue_size || null,
       sizeLabel: venue?.venue_size ? getSizeLabel(venue.venue_size) : null,
       type: venue?.type || null,

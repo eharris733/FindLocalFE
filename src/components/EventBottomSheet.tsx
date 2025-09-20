@@ -12,6 +12,7 @@ import { format } from 'date-fns';
 import type { Event } from '../types/events';
 import { useTheme } from '../context/ThemeContext';
 import { Text } from './ui';
+import { getDisplayCityName } from '../utils/cityUtils';
 
 interface EventBottomSheetProps {
   visible: boolean;
