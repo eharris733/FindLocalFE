@@ -15,6 +15,7 @@ import type { Event } from '../types/events';
 import { getVenueByName, getVenueById, getVenuesByCity } from '../api/venues';
 import { useTheme } from '../context/ThemeContext';
 import { Text } from './ui';
+import { getDisplayCityName } from '../utils/cityUtils';
 
 interface EventModalProps {
   visible: boolean;
@@ -271,7 +272,7 @@ const EventModal: React.FC<EventModalProps> = ({ visible, event, onClose }) => {
                         color: theme.colors.text.secondary,
                         fontWeight: '500',
                       }}>
-                        {event.city}
+                        {getDisplayCityName(event.city)}
                       </Text>
                     </View>
                   )}
