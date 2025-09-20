@@ -6,6 +6,7 @@ import {
   StyleSheet,
   SafeAreaView,
   ScrollView,
+  Linking,
 } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import {Text, Card, Button, CityPicker} from './ui';
@@ -59,6 +60,7 @@ export default function ProfileModal({ visible, onClose }: ProfileModalProps) {
         </View>
 
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          {/* Commented out Profile section - not needed for beta
           <Card style={styles.section}>
             <Text variant="h4" style={styles.sectionTitle}>
               Profile
@@ -78,6 +80,7 @@ export default function ProfileModal({ visible, onClose }: ProfileModalProps) {
             </View>
             <Button variant="primary" style={styles.signInButton} title="Sign In" />
           </Card>
+          */}
 
           <Card style={styles.section}>
             <Text variant="h4" style={styles.sectionTitle}>
@@ -105,7 +108,7 @@ export default function ProfileModal({ visible, onClose }: ProfileModalProps) {
             </View>
           </Card>
 
-          {/* Preferences Section */}
+          {/* Preferences Section - Only keeping Default Location */}
           <Card style={styles.section}>
             <Text variant="h4" style={styles.sectionTitle}>
               Preferences
@@ -116,15 +119,38 @@ export default function ProfileModal({ visible, onClose }: ProfileModalProps) {
                 {formatLocationDisplay(displayCity)}
               </Text>
             </View>
+            {/* Commented out Notification Settings - not implemented yet
             <View style={styles.preferenceItem}>
               <Text variant="body1">Notification Settings</Text>
               <Text variant="body2" color="secondary">
                 Get notified about new events
               </Text>
             </View>
+            */}
           </Card>
 
-          {/* Support Section */}
+          {/* Beta Tester Section */}
+          <Card style={styles.section}>
+            <Text variant="h4" style={styles.sectionTitle}>
+              Help Us Improve
+            </Text>
+            <View style={styles.betaSection}>
+              <Text variant="body1" style={styles.betaTitle}>
+                Become a Beta Tester
+              </Text>
+              <Text variant="body2" color="secondary" style={styles.betaDescription}>
+                Fill out this form to get on the email list and get notified about updates and perks for beta testers!
+              </Text>
+              <Button 
+                variant="primary" 
+                style={styles.betaButton} 
+                title="Sign Up for Beta Testing"
+                onPress={() => Linking.openURL('https://forms.gle/diBZKyejuUXsdQu46')}
+              />
+            </View>
+          </Card>
+
+          {/* Commented out Support Section - not needed for beta
           <Card style={styles.section}>
             <Text variant="h4" style={styles.sectionTitle}>
               Support
@@ -148,6 +174,7 @@ export default function ProfileModal({ visible, onClose }: ProfileModalProps) {
               </Text>
             </TouchableOpacity>
           </Card>
+          */}
         </ScrollView>
       </SafeAreaView>
     </Modal>
@@ -223,5 +250,18 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: 12,
+  },
+  betaSection: {
+    alignItems: 'flex-start',
+  },
+  betaTitle: {
+    marginBottom: 8,
+  },
+  betaDescription: {
+    marginBottom: 16,
+    lineHeight: 20,
+  },
+  betaButton: {
+    alignSelf: 'stretch',
   },
 });
