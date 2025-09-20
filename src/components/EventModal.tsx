@@ -16,6 +16,8 @@ import { getVenueByName, getVenueById, getVenuesByCity } from '../api/venues';
 import { useTheme } from '../context/ThemeContext';
 import { Text } from './ui';
 import { getDisplayCityName } from '../utils/cityUtils';
+import { getVenueSizeLabel } from '../utils/venueUtils';
+import { EVENT_NO_DESCRIPTION_FALLBACK } from '../utils/eventUtils';
 
 interface EventModalProps {
   visible: boolean;
@@ -121,16 +123,6 @@ const EventModal: React.FC<EventModalProps> = ({ visible, event, onClose }) => {
       }
     }
     return null;
-  };
-
-  // Get venue size label
-  const getVenueSizeLabel = (size: string) => {
-    switch (size?.toLowerCase()) {
-      case 'small': return 'Small Venue (< 50 people)';
-      case 'medium': return 'Medium Venue (50-200 people)';
-      case 'large': return 'Large Venue (200+ people)';
-      default: return size ? `${size} Venue` : null;
-    }
   };
 
   const displayGenre = getDisplayGenre();
@@ -314,8 +306,9 @@ const EventModal: React.FC<EventModalProps> = ({ visible, event, onClose }) => {
                     color: theme.colors.text.secondary,
                     lineHeight: 24,
                     fontSize: 16,
+                    fontStyle: event.description ? 'normal' : 'italic',
                   }} numberOfLines={showFullDescription ? undefined : 6}>
-                    {event.description || 'A magical theatrical experience for the whole family featuring beloved characters and enchanting performances. Join us for an unforgettable evening of entertainment that will leave you spellbound and amazed.'}
+                    {event.description || EVENT_NO_DESCRIPTION_FALLBACK}
                   </Text>
                   {(event.description && event.description.length > 300) && (
                     <TouchableOpacity 

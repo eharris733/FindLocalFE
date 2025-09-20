@@ -7,6 +7,8 @@ import { useTheme } from '../context/ThemeContext';
 import { Text, Card } from './ui';
 import { getVenueById } from '../api/venues';
 import { getDisplayCityName } from '../utils/cityUtils';
+import { getCompactVenueSizeLabel } from '../utils/venueUtils';
+import { EVENT_NO_DESCRIPTION_FALLBACK } from '../utils/eventUtils';
 
 interface EventCardProps {
   event: Event;
@@ -72,20 +74,11 @@ const EventCard: React.FC<EventCardProps> = ({ event, onPress, variant = 'defaul
 
   // Get the venue information for display
   const getVenueInfo = () => {
-    const getSizeLabel = (size: string) => {
-      switch (size?.toLowerCase()) {
-        case 'small': return 'Small (< 50)';
-        case 'medium': return 'Medium (50-200)';
-        case 'large': return 'Large (200+)';
-        default: return size || '';
-      }
-    };
-    
     return {
       name: venue?.name || null,
       address: venue?.address || getDisplayCityName(event.city),
       size: venue?.venue_size || null,
-      sizeLabel: venue?.venue_size ? getSizeLabel(venue.venue_size) : null,
+      sizeLabel: venue?.venue_size ? getCompactVenueSizeLabel(venue.venue_size) : null,
       type: venue?.type || null,
       image: venue?.image || null
     };
@@ -232,8 +225,11 @@ const EventCard: React.FC<EventCardProps> = ({ event, onPress, variant = 'defaul
             {event.title || 'Untitled Event'}
           </Text>
           
-          <Text style={[styles.mockupDescription, { color: theme.colors.text.secondary }]} numberOfLines={2}>
-            {event.description || 'A magical theatrical experience for the whole family featuring beloved characters.'}
+          <Text style={[styles.mockupDescription, { 
+            color: theme.colors.text.secondary,
+            fontStyle: event.description ? 'normal' : 'italic',
+          }]} numberOfLines={2}>
+            {event.description || EVENT_NO_DESCRIPTION_FALLBACK}
           </Text>
           
           <View style={styles.mockupVenueRow}>
