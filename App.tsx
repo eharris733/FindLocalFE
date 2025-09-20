@@ -19,14 +19,14 @@ import { CityProvider } from './src/context/CityContext';
 import { useEvents } from './src/hooks/useEvents';
 import { useCityLocation } from './src/context/CityContext';
 import MainLayout from './src/components/MainLayout';
-import VenueModal from './src/components/VenueModal';
+import EventModal from './src/components/EventModal';
 import { Text } from './src/components/ui';
 import type { Event } from './src/types/events';
 
 function AppContent() {
   const { theme, isDark } = useTheme();
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
-  const [showVenueModal, setShowVenueModal] = useState(false);
+  const [showEventModal, setShowEventModal] = useState(false);
   const [fontTimeout, setFontTimeout] = useState(false);
   
   // Get city location data
@@ -75,11 +75,11 @@ function AppContent() {
 
   const handleEventPress = (event: Event) => {
     setSelectedEvent(event);
-    setShowVenueModal(true);
+    setShowEventModal(true);
   };
 
-  const handleCloseVenueModal = () => {
-    setShowVenueModal(false);
+  const handleCloseEventModal = () => {
+    setShowEventModal(false);
     setSelectedEvent(null);
   };
 
@@ -155,11 +155,11 @@ function AppContent() {
         onEventPress={handleEventPress}
       />
 
-      {/* Venue Modal */}
-      <VenueModal
-        visible={showVenueModal}
+      {/* Event Modal */}
+      <EventModal
+        visible={showEventModal}
         event={selectedEvent}
-        onClose={handleCloseVenueModal}
+        onClose={handleCloseEventModal}
       />
     </SafeAreaView>
   );
