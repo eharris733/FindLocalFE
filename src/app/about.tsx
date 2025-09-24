@@ -1,7 +1,7 @@
 import {View, ScrollView, Linking} from "react-native";
 import {Text} from '../components/ui';
 import { useTheme } from '../context/ThemeContext';
-
+// adding this to trigger a deployment for now
 export default function AboutRoute() {
   const { theme } = useTheme();
   
