@@ -22,6 +22,8 @@
     "expo": "~53.0.19",
     "expo-constants": "~17.1.7",
     "expo-font": "~13.3.2",
+    "expo-linking": "~7.1.7",
+    "expo-router": "~5.1.6",
     "expo-splash-screen": "~0.30.10",
     "expo-status-bar": "~2.2.3",
     "react": "19.1.0",
@@ -29,13 +31,12 @@
     "react-native": "0.80.1",
     "react-native-safe-area-context": "5.5.2",
     "react-native-screens": "4.11.1",
-    "react-native-web": "~0.20.0",
-    "expo-router": "~5.1.6",
-    "expo-linking": "~7.1.7"
+    "react-native-web": "~0.20.0"
   },
   "devDependencies": {
     "@babel/core": "^7.28.0",
     "@types/react": "~19.1.8",
+    "dotenv": "^17.2.2",
     "typescript": "~5.8.3"
   }
 }
