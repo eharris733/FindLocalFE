@@ -4,7 +4,7 @@ import {Button, Text} from "../ui";
 import {supabase} from "../../supabase";
 import React, {useState} from "react";
 import Input from "../ui/Input";
-import {Link} from "expo-router";
+import {Link, useRouter} from "expo-router";
 import * as Linking from "expo-linking";
 import {styles} from "./styles";
 
@@ -20,6 +20,7 @@ export default function SignIn() {
     const [feedback, setFeedback] = useState<string | null>(null);
     const [forgotMode, setForgotMode] = useState(false);
     const [linkMode, setLinkMode] = useState(false);
+    const router = useRouter();
     const {
         control,
         handleSubmit,
@@ -42,7 +43,9 @@ export default function SignIn() {
                 email: values.email,
                 password: values.password,
             });
-            if (error) setFeedback(error.message);
+            error
+                ? setFeedback(error.message)
+                : router.push('/');
         } catch (err: any) {
             setFeedback(`Reset failed ${err?.message || 'Unknown error'}`);
         }
