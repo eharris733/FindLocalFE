@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Image, TouchableOpacity, Modal, Animated, Pressable } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Modal, Animated, Pressable } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import { Text } from './ui';
 import ProfileModal from './ProfileModal';
 import {useDeviceInfo} from "../hooks/useDeviceInfo";
 import {Logo} from "./ui/Logo";
+import {useAuth} from "../hooks/useAuth";
+import {Link} from "expo-router";
+import {theme} from "../theme";
 
 interface TopNavigationProps {
   onNavLinkPress?: (link: string) => void;
@@ -12,6 +15,7 @@ interface TopNavigationProps {
 
 export default function TopNavigation({ onNavLinkPress }: TopNavigationProps) {
   const { theme } = useTheme();
+  const { isLoggedIn } = useAuth();
   const {isMobile} = useDeviceInfo();
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
@@ -102,7 +106,8 @@ export default function TopNavigation({ onNavLinkPress }: TopNavigationProps) {
                 ))}
               </View>
             )}
-            
+            <View >{isLoggedIn ? <Link href="/profile">Profile</Link>: <Link href="/user/signin">Sign in</Link>}</View>
+
             <TouchableOpacity
               style={[styles.profileButton, { backgroundColor: theme.colors.background.secondary }]}
               onPress={handleProfilePress}
@@ -189,6 +194,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderBottomWidth: 1,
     zIndex: 1000,
+  },
+  button: {
+    backgroundColor: theme.colors.primary[500],
+    borderRadius: 10,
+    color: '#ffffff',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
   },
   roomy: {
     paddingVertical: 16,
