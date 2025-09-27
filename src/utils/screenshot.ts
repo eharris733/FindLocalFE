@@ -11,6 +11,6 @@ export const takeScreenshot = async (filename?: string) => {
 
 // Export a marker function for development tracking
 export const screenshotMarker = (description: string) => {
-  console.log(`📸 SCREENSHOT POINT: ${description}`);
-  console.log('Current timestamp:', new Date().toISOString());
+  // console.log(`📸 SCREENSHOT POINT: ${description}`);
+  // console.log('Current timestamp:', new Date().toISOString());
 };
