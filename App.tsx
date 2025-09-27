@@ -32,10 +32,10 @@ function AppContent() {
   // Get city location data
   const { selectedCity, onCityChange } = useCityLocation();
   
-  // Debug: Log when selectedCity changes in App component
-  React.useEffect(() => {
-    console.log('🚀 App component: selectedCity changed to:', selectedCity);
-  }, [selectedCity]);
+  // // Debug: Log when selectedCity changes in App component
+  // React.useEffect(() => {
+  //   console.log('🚀 App component: selectedCity changed to:', selectedCity);
+  // }, [selectedCity]);
   
   // Load Work Sans fonts with error handling
   const [fontsLoaded, fontError] = useFonts({
@@ -58,8 +58,8 @@ function AppContent() {
     return () => clearTimeout(timeout);
   }, [fontsLoaded, fontError]);
   
-  // Debug: Log what we're about to pass to useEvents
-  console.log('🚀 App component: About to call useEvents with selectedCity:', selectedCity);
+  // // Debug: Log what we're about to pass to useEvents
+  // console.log('🚀 App component: About to call useEvents with selectedCity:', selectedCity);
   
   const {
     loading,
@@ -146,6 +146,7 @@ function AppContent() {
       
       <MainLayout
         events={filteredEvents}
+        loading={loading}
         filters={filters}
         dispatchFilters={dispatchFilters}
         availableCategories={availableCategories}
