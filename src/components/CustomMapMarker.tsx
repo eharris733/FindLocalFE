@@ -44,6 +44,18 @@ const CustomMapMarker: React.FC<CustomMapMarkerProps> = ({
   const [isHovered, setHovered] = useState(false);
   const [currentEventIndex, setCurrentEventIndex] = useState(0);
 
+  // Get the image URL with fallback hierarchy: event image -> venue image -> record.png
+  const getImageUrl = (event: Event) => {
+    if (event?.image_url) {
+      return event.image_url;
+    }
+    if (venue?.image) {
+      return venue.image;
+    }
+    // Return the record.png as fallback
+    return require('../../assets/record.png');
+  };
+
   if (isNaN(latitude) || isNaN(longitude)) {
     return null;
   }
@@ -112,14 +124,16 @@ const CustomMapMarker: React.FC<CustomMapMarkerProps> = ({
             }]}>
               {hasEvents && (
                 <>
-                  {/* Event Image */}
-                  {venueEvents[currentEventIndex]?.image_url && (
-                    <Image
-                      source={{ uri: venueEvents[currentEventIndex].image_url }}
-                      style={styles.calloutImage}
-                      resizeMode="cover"
-                    />
-                  )}
+                  {/* Event Image with fallback */}
+                  <Image
+                    source={
+                      typeof getImageUrl(venueEvents[currentEventIndex]) === 'string' 
+                        ? { uri: getImageUrl(venueEvents[currentEventIndex]) }
+                        : getImageUrl(venueEvents[currentEventIndex])
+                    }
+                    style={styles.calloutImage}
+                    resizeMode="cover"
+                  />
 
                   {/* Close button */}
                   <TouchableOpacity
@@ -283,6 +297,7 @@ const styles = StyleSheet.create({
     height: 100,
     borderTopLeftRadius: 12,
     borderTopRightRadius: 12,
+    backgroundColor: '#f0f0f0', // Add background color in case image fails to load
   },
   
   // Close button
@@ -307,14 +322,18 @@ const styles = StyleSheet.create({
   // Navigation arrows
   navArrow: {
     position: 'absolute',
-    top: 40,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    top: 38, // Fixed position relative to image top
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 20,
-    opacity: 0.8,
+    opacity: 0.9,
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    shadowOffset: { width: 0, height: 1 },
   },
   navArrowLeft: {
     left: 8,
