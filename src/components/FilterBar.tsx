@@ -29,6 +29,7 @@ interface FilterBarProps {
   viewMode?: 'list' | 'map';
   onViewModeChange?: (mode: 'list' | 'map') => void;
   resultsCount?: number;
+  loading?: boolean;
 }
 
 interface DateRange {
@@ -41,7 +42,8 @@ export default function FilterBar({
   dispatchFilters,
   viewMode = 'list',
   onViewModeChange,
-  resultsCount = 0
+  resultsCount = 0,
+  loading = false
 }: FilterBarProps) {
   const { theme } = useTheme();
   const [showMore, setShowMore] = useState(false);
@@ -136,7 +138,7 @@ export default function FilterBar({
                 variant="body2"
                 style={[styles.resultsText, { color: theme.colors.text.secondary }]}
             >
-              {resultsCount} events found in {displayCity}
+              {loading ? `Loading events in ${displayCity}...` : `${resultsCount} events found in ${displayCity}`}
             </Text>
         )}
 

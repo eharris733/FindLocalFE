@@ -146,6 +146,7 @@ function AppContent() {
       
       <MainLayout
         events={filteredEvents}
+        loading={loading}
         filters={filters}
         dispatchFilters={dispatchFilters}
         availableCategories={availableCategories}

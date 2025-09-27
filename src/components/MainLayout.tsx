@@ -11,6 +11,7 @@ import {useDeviceInfo} from "../hooks/useDeviceInfo";
 
 interface MainLayoutProps {
   events: Event[];
+  loading: boolean;
   filters: FilterState;
   dispatchFilters: React.Dispatch<FilterAction>;
   availableCategories: string[];
@@ -22,6 +23,7 @@ interface MainLayoutProps {
 
 export default function MainLayout({
   events,
+  loading,
   filters,
   dispatchFilters,
   availableCategories,
@@ -66,11 +68,13 @@ export default function MainLayout({
           viewMode={activeTab}
           onViewModeChange={handleViewModeChange}
           resultsCount={events.length}
+          loading={loading}
         />
         
         {activeTab === 'list' ? (
           <SidebarEventList
             events={events}
+            loading={loading}
             onEventPress={onEventPress}
             highlightedEventId={highlightedEventId}
             venues={venues}
@@ -100,12 +104,14 @@ export default function MainLayout({
         viewMode={activeTab}
         onViewModeChange={handleViewModeChange}
         resultsCount={events.length}
+        loading={loading}
       />
       
       {activeTab === 'list' ? (
         <View style={styles.fullContainer}>
           <SidebarEventList
             events={events}
+            loading={loading}
             onEventPress={onEventPress}
             onEventHover={handleEventHover}
             highlightedEventId={highlightedEventId}

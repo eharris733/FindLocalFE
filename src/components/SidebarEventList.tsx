@@ -8,6 +8,7 @@ import type { Venue } from '../types/venues';
 
 interface SidebarEventListProps {
   events: Event[];
+  loading?: boolean;
   onEventPress: (event: Event) => void;
   onEventHover?: (event: Event | null) => void;
   highlightedEventId?: string;
@@ -16,6 +17,7 @@ interface SidebarEventListProps {
 
 export default function SidebarEventList({ 
   events, 
+  loading = false,
   onEventPress, 
   onEventHover,
   highlightedEventId,
@@ -59,6 +61,28 @@ export default function SidebarEventList({
     </View>
   );
 
+  // Show loading indicator when loading and no events
+  if (loading && events.length === 0) {
+    return (
+      <View style={[styles.container, styles.loadingContainer, { backgroundColor: theme.colors.background.primary }]}>
+        <Text variant="body1" style={{ color: theme.colors.text.secondary }}>
+          Loading events...
+        </Text>
+      </View>
+    );
+  }
+
+  // Show empty state when not loading and no events
+  if (!loading && events.length === 0) {
+    return (
+      <View style={[styles.container, styles.loadingContainer, { backgroundColor: theme.colors.background.primary }]}>
+        <Text variant="body1" style={{ color: theme.colors.text.secondary }}>
+          No events found
+        </Text>
+      </View>
+    );
+  }
+
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background.primary }]}>
       <FlatList
@@ -90,5 +114,10 @@ const styles = StyleSheet.create({
     flex: 1,
     margin: 8,
     maxWidth: '100%',
+  },
+  loadingContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 32,
   },
 });
