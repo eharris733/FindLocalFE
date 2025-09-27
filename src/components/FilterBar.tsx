@@ -78,7 +78,7 @@ export default function FilterBar({
     dispatchFilters({ type: 'SET_PRICE', payload: price });
   };
 
-  const handleSizeChange = (size: string) => {
+  const handleSizeChange = (size: string | string[]) => {
     dispatchFilters({ type: 'SET_SIZE', payload: size });
   };
 

@@ -24,7 +24,7 @@ export interface FilterState {
   location: string; // Changed from 'venue' to 'location' for consistency (cities)
   venues: string[]; // New field for multi-select venues
   price: string; // New field for price filtering
-  size: string; // New field for venue size filtering
+  size: string | string[]; // New field for venue size filtering - supports multi-select
 }
 
 // Backwards compatibility
@@ -39,6 +39,6 @@ export type FilterAction =
   | { type: 'SET_LOCATION'; payload: string }
   | { type: 'SET_VENUES'; payload: string[] }
   | { type: 'SET_PRICE'; payload: string }
-  | { type: 'SET_SIZE'; payload: string }
+  | { type: 'SET_SIZE'; payload: string | string[] }
   | { type: 'CLEAR_ALL' } // Added clear all action
   | { type: 'RESET_FILTERS' }; // Keep for backwards compatibility

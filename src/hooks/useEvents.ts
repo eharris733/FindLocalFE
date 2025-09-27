@@ -26,7 +26,7 @@ const initialFilterState: FilterState = {
   location: 'all',
   venues: [], // Initialize as empty array
   price: 'All prices',
-  size: 'All sizes',
+  size: ['All sizes'], // Initialize as array
 };
 
 const getDateRangeFromSelection = (dateRange: FilterState['dateRange']): { start: Date | null; end: Date | null } => {
@@ -323,8 +323,9 @@ export const useEvents = ({ selectedCity }: UseEventsProps = {}): UseEventsResul
         }
       }
 
-      // Size filter - filter by venue size
-      if (filters.size !== 'All sizes' && event.venue_id) {
+      // Size filter - supports both single string and multi-select array
+      const sizeFilter = Array.isArray(filters.size) ? filters.size : [filters.size];
+      if (!sizeFilter.includes('All sizes') && event.venue_id) {
         const venue = venues.find(v => v.id === event.venue_id);
         if (venue && venue.venue_size) {
           let sizeMatches = false;
@@ -332,29 +333,37 @@ export const useEvents = ({ selectedCity }: UseEventsProps = {}): UseEventsResul
           // Convert venue_size to lowercase for comparison
           const venueSize = venue.venue_size.toLowerCase();
           
-          switch (filters.size) {
-            case 'Small (< 50)':
-              sizeMatches = venueSize.includes('small');
-              break;
-            case 'Medium (50-200)':
-              sizeMatches = venueSize.includes('medium');
-              break;
-            case 'Large (200+)':
-              sizeMatches = venueSize.includes('large');
-              break;
+          // Check if venue matches any of the selected sizes
+          for (const selectedSize of sizeFilter) {
+            switch (selectedSize) {
+              case 'Small':
+                if (venueSize.includes('small')) {
+                  sizeMatches = true;
+                }
+                break;
+              case 'Medium':
+                if (venueSize.includes('medium')) {
+                  sizeMatches = true;
+                }
+                break;
+              case 'Large':
+                if (venueSize.includes('large')) {
+                  sizeMatches = true;
+                }
+                break;
+            }
+            if (sizeMatches) break; // Exit early if we found a match
           }
           
           // Debug logging
-          if (filters.size !== 'All sizes') {
-            console.log(`Size filter: ${filters.size}, venue: ${venue.name}, venue_size: "${venue.venue_size}", matches: ${sizeMatches}`);
-          }
+          console.log(`Size filter: ${JSON.stringify(sizeFilter)}, venue: ${venue.name}, venue_size: "${venue.venue_size}", matches: ${sizeMatches}`);
           
           if (!sizeMatches) {
             return false;
           }
         } else {
           // If venue has no size data, exclude it from size filtering
-          console.log(`Size filter: ${filters.size}, venue: ${venue?.name || 'unknown'}, no venue_size data`);
+          console.log(`Size filter: ${JSON.stringify(sizeFilter)}, venue: ${venue?.name || 'unknown'}, no venue_size data`);
           return false;
         }
       }
