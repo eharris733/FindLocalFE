@@ -21,29 +21,19 @@ interface MapViewWebProps {
 }
 
 const getCityCenter = (city?: string) => {
-  console.log('🎯 getCityCenter called with city:', city);
+  //console.log('🎯 getCityCenter called with city:', city);
   switch (city) {
     case 'boston':
-      console.log('🎯 Returning Boston coordinates');
+      //console.log('🎯 Returning Boston coordinates');
       return { latitude: 42.3601, longitude: -71.0589 }; // Boston
     case 'brooklyn':
-      console.log('🎯 Returning Brooklyn coordinates');
+      //console.log('🎯 Returning Brooklyn coordinates');
       return { latitude: 40.6782, longitude: -73.9442 }; // Brooklyn
     default:
-      console.log('🎯 Returning default Brooklyn coordinates for unknown city:', city);
+      //console.log('🎯 Returning default Brooklyn coordinates for unknown city:', city);
       return { latitude: 40.6782, longitude: -73.9442 }; // Default to Brooklyn
   }
 };
-
-const fallbackCamera = {
-  center: {
-    latitude: 40.6782,
-    longitude: -73.9442,
-  },
-  zoom: 10,
-  heading: 0,
-  pitch: 0,
-}
 
 const customMapStyle = [
   // Keep text labels visible but hide label icons globally
@@ -85,39 +75,39 @@ const MapViewWeb: React.FC<MapViewWebProps> = ({
 
   // Debug activeCalloutId changes
   useEffect(() => {
-    console.log('🔄 activeCalloutId STATE CHANGED:', { 
-      previous: 'see prev log', 
-      current: activeCalloutId,
-      timestamp: new Date().toISOString()
-    });
+    // console.log('🔄 activeCalloutId STATE CHANGED:', { 
+    //   previous: 'see prev log', 
+    //   current: activeCalloutId,
+    //   timestamp: new Date().toISOString()
+    // });
   }, [activeCalloutId]);
 
   // Calculate initial camera based on selected city (not venues)
   const getInitialCamera = () => {
-    console.log('🗺️ getInitialCamera called with selectedCity:', selectedCity);
+    // console.log('🗺️ getInitialCamera called with selectedCity:', selectedCity);
     
     // Always use city center for initial camera to avoid flashing
     const cityCenter = getCityCenter(selectedCity);
-    console.log('🗺️ Using city center for initial camera:', cityCenter, 'for city:', selectedCity);
-    
+    // console.log('🗺️ Using city center for initial camera:', cityCenter, 'for city:', selectedCity);
+
     const camera = {
       center: cityCenter,
       zoom: 12,
       heading: 0,
       pitch: 0,
     };
-    
-    console.log('🗺️ Final camera object:', camera);
+
+    // console.log('🗺️ Final camera object:', camera);
     return camera;
   };
 
   const initialCamera = getInitialCamera();
-  console.log('🗺️ MapView initialCamera set to:', initialCamera);
+  // console.log('🗺️ MapView initialCamera set to:', initialCamera);
 
   // Add effect to force camera update when component mounts
   useEffect(() => {
     if (mapRef.current) {
-      console.log('🗺️ Map mounted, forcing camera to:', initialCamera.center);
+      // console.log('🗺️ Map mounted, forcing camera to:', initialCamera.center);
       // Force immediate camera update after mount
       setTimeout(() => {
         mapRef.current?.animateCamera({
@@ -139,7 +129,7 @@ const MapViewWeb: React.FC<MapViewWebProps> = ({
         .filter(c => !Number.isNaN(c.latitude) && !Number.isNaN(c.longitude) && c.latitude !== 0 && c.longitude !== 0);
 
       if (coords.length > 0) {
-        console.log('🗺️ Fitting map to venue coordinates:', coords);
+        // console.log('🗺️ Fitting map to venue coordinates:', coords);
         // Simple timeout then fit to coordinates - no padding
         setTimeout(() => {
           mapRef.current?.fitToCoordinates(coords, {
@@ -148,7 +138,7 @@ const MapViewWeb: React.FC<MapViewWebProps> = ({
         }, 500);
       }
     } else {
-      console.log('🗺️ Not fitting to venues. Venues count:', venues.length, 'Loading:', venuesLoading);
+      // console.log('🗺️ Not fitting to venues. Venues count:', venues.length, 'Loading:', venuesLoading);
     }
   }, [venuesLoading, venues]);
 
@@ -169,26 +159,26 @@ const MapViewWeb: React.FC<MapViewWebProps> = ({
 
   // Handle callout toggle with logging
   const handleCalloutToggle = (venueId: string | null) => {
-    console.log('📍 Callout toggle requested:', { 
-      from: activeCalloutId, 
-      to: venueId,
-      isClosing: venueId === null,
-      isSwitching: activeCalloutId !== null && venueId !== null && activeCalloutId !== venueId,
-      timestamp: new Date().toISOString()
-    });
+    // console.log('📍 Callout toggle requested:', { 
+    //   from: activeCalloutId, 
+    //   to: venueId,
+    //   isClosing: venueId === null,
+    //   isSwitching: activeCalloutId !== null && venueId !== null && activeCalloutId !== venueId,
+    //   timestamp: new Date().toISOString()
+    // });
     
     // Use functional update to ensure we have the latest state
     setActiveCalloutId(prevState => {
-      console.log('📍 State update: prev =', prevState, ', new =', venueId);
+      // console.log('📍 State update: prev =', prevState, ', new =', venueId);
       return venueId;
     });
   };
 
   const handleMapClick = (e: any) => {
     const now = Date.now();
-    console.log('🗺️ Map clicked, markerClickedRef:', markerClickedRef.current);
-    console.log('🗺️ Last action:', lastActionRef.current);
-    
+    // console.log('🗺️ Map clicked, markerClickedRef:', markerClickedRef.current);
+    // console.log('🗺️ Last action:', lastActionRef.current);
+
     // If a marker was just clicked (within 500ms), don't close the callout
     const IGNORE_MS = 800; // slightly longer on mobile web to avoid flakiness
     if (
@@ -196,7 +186,7 @@ const MapViewWeb: React.FC<MapViewWebProps> = ({
       (lastActionRef.current?.type === 'marker' && now - lastActionRef.current.timestamp < IGNORE_MS) ||
       (lastActionRef.current?.type === 'callout' && now - lastActionRef.current.timestamp < IGNORE_MS)
     ) {
-      console.log('🗺️ Map click ignored - marker was recently clicked');
+      // console.log('🗺️ Map click ignored - marker was recently clicked');
       return;
     }
     lastActionRef.current = { type: 'map', timestamp: now };
@@ -204,10 +194,10 @@ const MapViewWeb: React.FC<MapViewWebProps> = ({
     // Close any active callout when clicking on the map
     setActiveCalloutId(prevState => {
       if (prevState) {
-        console.log('🗺️ Closing callout from map click, was:', prevState);
+        // console.log('🗺️ Closing callout from map click, was:', prevState);
         return null;
       } else {
-        console.log('🗺️ Map click - no active callout to close');
+        // console.log('🗺️ Map click - no active callout to close');
         return prevState;
       }
     });

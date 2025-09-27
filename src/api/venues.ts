@@ -64,7 +64,7 @@ export async function getVenuesByCity(city: string): Promise<Venue[]> {
 
 export async function getAllVenues(): Promise<Venue[]> {
   try {
-    console.log('🏢 Fetching all venues from database...');
+    //console.log('🏢 Fetching all venues from database...');
     
     const { data, error } = await supabase
       .from('venues')
@@ -77,13 +77,13 @@ export async function getAllVenues(): Promise<Venue[]> {
       return [];
     }
 
-    console.log(`🏢 Found ${data?.length || 0} venues in database`);
-    console.log('🏢 Sample venues:', data?.slice(0, 3).map(v => ({ 
-      id: v.id, 
-      name: v.name, 
-      city: v.city, 
-      is_active: v.is_active 
-    })));
+    // console.log(`🏢 Found ${data?.length || 0} venues in database`);
+    // console.log('🏢 Sample venues:', data?.slice(0, 3).map(v => ({ 
+    //   id: v.id, 
+    //   name: v.name, 
+    //   city: v.city, 
+    //   is_active: v.is_active 
+    // })));
 
     return data as Venue[];
   } catch (error: any) {
@@ -94,7 +94,7 @@ export async function getAllVenues(): Promise<Venue[]> {
 
 export async function getAvailableCities(): Promise<string[]> {
   try {
-    console.log('🏙️ Fetching available cities from database...');
+    // console.log('🏙️ Fetching available cities from database...');
     
     const { data, error } = await supabase
       .from('venues')
@@ -108,7 +108,7 @@ export async function getAvailableCities(): Promise<string[]> {
 
     // Get unique cities
     const cities = [...new Set(data.map(venue => venue.city))].filter(Boolean);
-    console.log(`🏙️ Found cities with venues:`, cities);
+    // console.log(`🏙️ Found cities with venues:`, cities);
 
     return cities;
   } catch (error: any) {

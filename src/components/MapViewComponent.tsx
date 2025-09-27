@@ -29,7 +29,7 @@ const MapViewComponent: React.FC<MapViewComponentProps> = ({
   useEffect(() => {
     const fetchVenues = async () => {
       try {
-        console.log('🗺️ MapViewComponent: Fetching venues for city:', selectedCity);
+        //console.log('🗺️ MapViewComponent: Fetching venues for city:', selectedCity);
         setVenuesLoading(true);
         
         // Use selectedCity to fetch city-specific venues
@@ -41,8 +41,8 @@ const MapViewComponent: React.FC<MapViewComponentProps> = ({
         const venuesWithCoords = venueData.filter(venue => 
           venue.latitude && venue.longitude && venue.is_active
         );
-        
-        console.log(`🗺️ MapViewComponent: Found ${venuesWithCoords.length} venues with coordinates for ${selectedCity}`);
+
+        //console.log(`🗺️ MapViewComponent: Found ${venuesWithCoords.length} venues with coordinates for ${selectedCity}`);
         setVenues(venuesWithCoords);
       } catch (error) {
         console.error('Failed to fetch venues for map:', error);

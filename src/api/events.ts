@@ -4,8 +4,8 @@ import { supabase } from '../supabase';
 
 export async function getEvents(city?: string): Promise<Event[]> {
     try {
-      console.log('Fetching events from events_gold table...');
-      console.log('Schema: public, Table: events_gold');
+      // console.log('Fetching events from events_gold table...');
+      // console.log('Schema: public, Table: events_gold');
       
       let query = supabase
         .from('events_gold')
@@ -19,13 +19,13 @@ export async function getEvents(city?: string): Promise<Event[]> {
 
       const { data, error, status, statusText } = await query;
   
-      console.log('Supabase Query Response:', {
-        data: data?.length || 0,
-        error: error?.message,
-        status,
-        statusText,
-        fullError: error
-      });
+      // console.log('Supabase Query Response:', {
+      //   data: data?.length || 0,
+      //   error: error?.message,
+      //   status,
+      //   statusText,
+      //   fullError: error
+      // });
 
       if (error) {
         console.error('Error fetching events from Supabase:', error);
@@ -34,15 +34,15 @@ export async function getEvents(city?: string): Promise<Event[]> {
       }
   
       if (data) {
-        console.log('Events fetched successfully from Supabase:', data.length, 'events');
-        if (data.length === 0) {
-          console.warn('⚠️ No events found in events_gold table. This could be a permissions issue if you know data exists.');
-        } else {
-          console.log('Sample event:', data[0]);
-        }
+        // console.log('Events fetched successfully from Supabase:', data.length, 'events');
+        // if (data.length === 0) {
+        //   console.warn('⚠️ No events found in events_gold table. This could be a permissions issue if you know data exists.');
+        // } else {
+        //   console.log('Sample event:', data[0]);
+        // }
         return data as Event[];
       } else {
-        console.warn('No events found in Supabase.');
+        // console.warn('No events found in Supabase.');
         return [];
       }
     } catch (error: any) {
@@ -82,7 +82,7 @@ export async function getEventsByDateRange(
     }
 
     if (data) {
-      console.log('Events fetched successfully by date range from Supabase:', data.length, 'events');
+      //console.log('Events fetched successfully by date range from Supabase:', data.length, 'events');
       return data as Event[];
     } else {
       console.warn('No events found in date range.');
@@ -96,7 +96,7 @@ export async function getEventsByDateRange(
 
 export async function getAvailableCities(): Promise<string[]> {
   try {
-    console.log('🏙️ Fetching available cities from events_gold table...');
+    //console.log('🏙️ Fetching available cities from events_gold table...');
     
     const { data, error } = await supabase
       .from('events_gold')
@@ -110,7 +110,7 @@ export async function getAvailableCities(): Promise<string[]> {
 
     // Get unique cities from events
     const cities = [...new Set(data.map(event => event.city).filter(Boolean))];
-    console.log(`🏙️ Found cities with events:`, cities);
+    //console.log(`🏙️ Found cities with events:`, cities);
 
     return cities;
   } catch (error: any) {

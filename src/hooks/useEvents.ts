@@ -124,14 +124,14 @@ export const useEvents = ({ selectedCity }: UseEventsProps = {}): UseEventsResul
 
   useEffect(() => {
     const fetchEvents = async () => {
-      console.log('🎉 useEvents: fetchEvents called with selectedCity:', selectedCity);
+      //console.log('🎉 useEvents: fetchEvents called with selectedCity:', selectedCity);
       setLoading(true);
       setError(null);
       try {
         // Fetch events filtered by city if provided
         const data = await getEvents(selectedCity);
         setEvents(data || []); 
-        console.log(`🎉 Loaded ${data?.length || 0} events for city: ${selectedCity || 'all cities'}`);
+        //console.log(`🎉 Loaded ${data?.length || 0} events for city: ${selectedCity || 'all cities'}`);
       } catch (err) {
         setError("Failed to load events. Please try again.");
         console.error(err);
@@ -145,7 +145,7 @@ export const useEvents = ({ selectedCity }: UseEventsProps = {}): UseEventsResul
   // Fetch venues for filtering
   useEffect(() => {
     const fetchVenues = async () => {
-      console.log('🏢 useEvents: fetchVenues called with selectedCity:', selectedCity);
+      //console.log('🏢 useEvents: fetchVenues called with selectedCity:', selectedCity);
       setVenuesLoading(true);
       try {
         // Use selectedCity instead of hardcoded 'brooklyn'
@@ -153,14 +153,14 @@ export const useEvents = ({ selectedCity }: UseEventsProps = {}): UseEventsResul
           ? await getVenuesByCity(selectedCity)
           : await getAllVenues();
         setVenues(venueData);
-        console.log(`🏢 Loaded ${venueData.length} venues for ${selectedCity || 'all cities'}`);
+        //console.log(`🏢 Loaded ${venueData.length} venues for ${selectedCity || 'all cities'}`);
         
         // Debug: Log venue sizes
         const venueSizes = venueData.map(v => v.venue_size).filter(Boolean);
-        console.log('Venue sizes found:', [...new Set(venueSizes)]);
+        //console.log('Venue sizes found:', [...new Set(venueSizes)]);
         venueData.slice(0, 5).forEach(v => {
           if (v.venue_size) {
-            console.log(`${v.name}: size="${v.venue_size}", type="${v.type}"`);
+            //console.log(`${v.name}: size="${v.venue_size}", type="${v.type}"`);
           }
         });
       } catch (err) {

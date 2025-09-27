@@ -65,7 +65,7 @@ const CustomMapMarker: React.FC<CustomMapMarkerProps> = ({
     if (!hasEvents) return;
     
     const now = Date.now();
-    console.log('🎯 Marker pressed, isActive:', isActive, 'venue:', venue.id, 'timestamp:', now);
+    //('🎯 Marker pressed, isActive:', isActive, 'venue:', venue.id, 'timestamp:', now);
     
     // Prevent map click from firing - set this immediately
     markerClickedRef.current = true;
@@ -76,10 +76,10 @@ const CustomMapMarker: React.FC<CustomMapMarkerProps> = ({
 
     // Toggle callout visibility immediately - no setTimeout needed
     if (isActive) {
-      console.log('🎯 Closing callout for venue:', venue.id);
+      //console.log('🎯 Closing callout for venue:', venue.id);
       onCalloutToggle(null);
     } else {
-      console.log('🎯 Opening callout for venue:', venue.id);
+      //console.log('🎯 Opening callout for venue:', venue.id);
       onCalloutToggle(venue.id);
     }
 
@@ -103,7 +103,7 @@ const CustomMapMarker: React.FC<CustomMapMarkerProps> = ({
       }}
       onPress={(e: any) => {
         handleMarkerPress(e);
-        console.log('Marker pressed', venue.id);
+        //console.log('Marker pressed', venue.id);
       }}
       hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
     >

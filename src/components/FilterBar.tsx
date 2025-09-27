@@ -71,7 +71,7 @@ export default function FilterBar({
     // Dispatch actions to update the filter state in useEvents
     dispatchFilters({ type: 'SET_START_DATE', payload: range.start });
     dispatchFilters({ type: 'SET_END_DATE', payload: range.end });
-    console.log('Date range changed to:', range);
+    //console.log('Date range changed to:', range);
   };
 
   const handlePriceChange = (price: string) => {
