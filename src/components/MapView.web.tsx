@@ -93,7 +93,7 @@ const MapViewWeb: React.FC<MapViewWebProps> = ({
   const mapRef = useRef<any>(null);
   const [activeCalloutId, setActiveCalloutId] = useState<string | null>(null);
   const markerClickedRef = useRef<boolean>(false);
-  const lastActionRef = useRef<{ type: 'marker' | 'map', timestamp: number } | null>(null);
+  const lastActionRef = useRef<{ type: 'marker' | 'map' | 'callout', timestamp: number } | null>(null);
 
   // Debug activeCalloutId changes
   useEffect(() => {
@@ -169,6 +169,8 @@ const MapViewWeb: React.FC<MapViewWebProps> = ({
     setActiveCalloutId(null);
   }, [highlightedEventId]);
 
+  // No forced remount; rely on render order and zIndex
+
   // Get events for a specific venue
   const getEventsForVenue = (venue: Venue): Event[] => {
     return events.filter(event => 
@@ -200,12 +202,15 @@ const MapViewWeb: React.FC<MapViewWebProps> = ({
     console.log('🗺️ Last action:', lastActionRef.current);
     
     // If a marker was just clicked (within 500ms), don't close the callout
-    if (markerClickedRef.current || 
-        (lastActionRef.current?.type === 'marker' && now - lastActionRef.current.timestamp < 500)) {
+    const IGNORE_MS = 800; // slightly longer on mobile web to avoid flakiness
+    if (
+      markerClickedRef.current ||
+      (lastActionRef.current?.type === 'marker' && now - lastActionRef.current.timestamp < IGNORE_MS) ||
+      (lastActionRef.current?.type === 'callout' && now - lastActionRef.current.timestamp < IGNORE_MS)
+    ) {
       console.log('🗺️ Map click ignored - marker was recently clicked');
       return;
     }
-    
     lastActionRef.current = { type: 'map', timestamp: now };
     
     // Close any active callout when clicking on the map
@@ -229,6 +234,23 @@ const MapViewWeb: React.FC<MapViewWebProps> = ({
   //   sampleVenue: venues[0]
   // });
 
+  // Prepare venue entries and ensure the active marker renders last (on top)
+  const venueEntries = (!venuesLoading ? venues.map((venue) => {
+    const venueEvents = getEventsForVenue(venue);
+    const isHighlighted = venueEvents.some(event => event.id === highlightedEventId);
+    const isActive = activeCalloutId === venue.id;
+    return { venue, venueEvents, isHighlighted, isActive };
+  }).filter(entry => entry.venueEvents.length > 0) : []);
+
+  const sortedVenueEntries = venueEntries.sort((a, b) => {
+    // Non-active first, active last
+    if (a.isActive === b.isActive) return 0;
+    return a.isActive ? 1 : -1;
+  });
+
+  // Get the active venue entry for overlay
+  // No overlay; we rely on in-map callouts
+
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background.secondary }]}>
       <MapView
@@ -245,11 +267,7 @@ const MapViewWeb: React.FC<MapViewWebProps> = ({
         customMapStyle={customMapStyle}
         onPress={handleMapClick}
       >
-        {!venuesLoading && venues.map((venue) => {
-          const venueEvents = getEventsForVenue(venue);
-          const isHighlighted = venueEvents.some(event => event.id === highlightedEventId);
-          const isActive = activeCalloutId === venue.id;
-          
+  {!venuesLoading && sortedVenueEntries.map(({ venue, venueEvents, isHighlighted, isActive }) => {
           // Debug logging for active state
           if (venue.id === activeCalloutId || isActive) {
             console.log('🏢 Venue render debug:', {
@@ -259,12 +277,7 @@ const MapViewWeb: React.FC<MapViewWebProps> = ({
               venueEvents: venueEvents.length
             });
           }
-          
-          // Only render markers for venues that have events
-          if (venueEvents.length === 0) {
-            return null;
-          }
-          
+
           return (
             <CustomMapMarker
               key={venue.id}

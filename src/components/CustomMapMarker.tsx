@@ -1,9 +1,8 @@
 import React, { useRef, useState } from 'react';
-import { View, StyleSheet, Image, Pressable, Platform, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, Image, Platform, TouchableOpacity } from 'react-native';
 import { Event } from '../types/events';
 import { Venue } from '../types/venues';
 import { Text } from './ui/Text';
-import { set } from 'date-fns';
 import { useTheme } from '../context/ThemeContext';
 
 // Import using require to bypass TypeScript issues with this library
@@ -16,7 +15,7 @@ interface CustomMapMarkerProps {
   isHighlighted: boolean;
   isActive: boolean;
   markerClickedRef: React.RefObject<boolean>;
-  lastActionRef: React.RefObject<{ type: 'marker' | 'map', timestamp: number } | null>;
+  lastActionRef: React.RefObject<{ type: 'marker' | 'map' | 'callout', timestamp: number } | null>;
   onCalloutToggle: (venueId: string | null) => void;
   onEventPress: (event: Event) => void;
   onVenuePress?: (venue: Venue) => void;
@@ -87,7 +86,7 @@ const CustomMapMarker: React.FC<CustomMapMarkerProps> = ({
     // Reset the marker clicked flag after a reasonable delay
     setTimeout(() => {
       markerClickedRef.current = false;
-    }, 200);
+    }, 800);
   };
 
   return (
@@ -96,6 +95,12 @@ const CustomMapMarker: React.FC<CustomMapMarkerProps> = ({
       coordinate={{ latitude, longitude }}
       anchor={{ x: 0.5, y: 0.5 }}
       calloutAnchor={{ x: 0.5, y: 1 }}
+      onPressIn={() => {
+        // Preempt the map's onPress as early as possible
+        markerClickedRef.current = true;
+        lastActionRef.current = { type: 'marker', timestamp: Date.now() };
+        setTimeout(() => (markerClickedRef.current = false), 800);
+      }}
       onPress={(e: any) => {
         handleMarkerPress(e);
         console.log('Marker pressed', venue.id);
@@ -141,9 +146,16 @@ const CustomMapMarker: React.FC<CustomMapMarkerProps> = ({
                   {/* Close button */}
                   <TouchableOpacity
                     style={[styles.closeButton, { backgroundColor: theme.colors.background.secondary }]}
+                    onPressIn={() => {
+                      // Preempt map click by marking as callout interaction immediately
+                      markerClickedRef.current = true;
+                      lastActionRef.current = { type: 'callout', timestamp: Date.now() };
+                      setTimeout(() => (markerClickedRef.current = false), 800);
+                    }}
                     onPress={(e) => {
                       e?.stopPropagation?.();
                       e?.preventDefault?.();
+                      lastActionRef.current = { type: 'callout', timestamp: Date.now() };
                       onCalloutToggle(null);
                     }}
                     hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
@@ -157,9 +169,15 @@ const CustomMapMarker: React.FC<CustomMapMarkerProps> = ({
                     <>
                       <TouchableOpacity
                         style={[styles.navArrow, styles.navArrowLeft, { backgroundColor: theme.colors.background.secondary }]}
+                        onPressIn={() => {
+                          markerClickedRef.current = true;
+                          lastActionRef.current = { type: 'callout', timestamp: Date.now() };
+                          setTimeout(() => (markerClickedRef.current = false), 800);
+                        }}
                         onPress={(e) => {
                           e?.stopPropagation?.();
                           e?.preventDefault?.();
+                          lastActionRef.current = { type: 'callout', timestamp: Date.now() };
                           setCurrentEventIndex(prev => prev === 0 ? limitedEvents.length - 1 : prev - 1);
                         }}
                         hitSlop={{ top: 25, bottom: 25, left: 25, right: 25 }}
@@ -169,9 +187,15 @@ const CustomMapMarker: React.FC<CustomMapMarkerProps> = ({
                       </TouchableOpacity>
                       <TouchableOpacity
                         style={[styles.navArrow, styles.navArrowRight, { backgroundColor: theme.colors.background.secondary }]}
+                        onPressIn={() => {
+                          markerClickedRef.current = true;
+                          lastActionRef.current = { type: 'callout', timestamp: Date.now() };
+                          setTimeout(() => (markerClickedRef.current = false), 800);
+                        }}
                         onPress={(e) => {
                           e?.stopPropagation?.();
                           e?.preventDefault?.();
+                          lastActionRef.current = { type: 'callout', timestamp: Date.now() };
                           setCurrentEventIndex(prev => prev === limitedEvents.length - 1 ? 0 : prev + 1);
                         }}
                         hitSlop={{ top: 25, bottom: 25, left: 25, right: 25 }}
@@ -206,7 +230,17 @@ const CustomMapMarker: React.FC<CustomMapMarkerProps> = ({
                   <View style={styles.actionButtons}>
                     <TouchableOpacity
                       style={[styles.actionButton, { backgroundColor: theme.colors.primary[500] }]}
-                      onPress={() => onEventPress(limitedEvents[currentEventIndex])}
+                      onPressIn={() => {
+                        markerClickedRef.current = true;
+                        lastActionRef.current = { type: 'callout', timestamp: Date.now() };
+                        setTimeout(() => (markerClickedRef.current = false), 800);
+                      }}
+                      onPress={(e) => {
+                        e?.stopPropagation?.();
+                        e?.preventDefault?.();
+                        lastActionRef.current = { type: 'callout', timestamp: Date.now() };
+                        onEventPress(limitedEvents[currentEventIndex]);
+                      }}
                     >
                       <Text variant="caption" style={[styles.buttonText, { color: theme.colors.text.inverse }]}>
                         See Event
@@ -215,7 +249,17 @@ const CustomMapMarker: React.FC<CustomMapMarkerProps> = ({
                     {onVenuePress && (
                       <TouchableOpacity
                         style={[styles.actionButton, styles.venueButton, { backgroundColor: theme.colors.background.secondary, borderColor: theme.colors.border.medium }]}
-                        onPress={() => onVenuePress(venue)}
+                        onPressIn={() => {
+                          markerClickedRef.current = true;
+                          lastActionRef.current = { type: 'callout', timestamp: Date.now() };
+                          setTimeout(() => (markerClickedRef.current = false), 800);
+                        }}
+                        onPress={(e) => {
+                          e?.stopPropagation?.();
+                          e?.preventDefault?.();
+                          lastActionRef.current = { type: 'callout', timestamp: Date.now() };
+                          onVenuePress(venue);
+                        }}
                       >
                         <Text variant="caption" style={[styles.buttonText, { color: theme.colors.text.primary }]}>
                           See Venue
