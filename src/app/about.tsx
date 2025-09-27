@@ -1,6 +1,7 @@
-import {View, ScrollView, Linking} from "react-native";
-import {Text} from '../components/ui';
+import { ScrollView, Linking } from "react-native";
+import { Text } from '../components/ui';
 import { useTheme } from '../context/ThemeContext';
+
 export default function AboutRoute() {
   const { theme } = useTheme();
   
