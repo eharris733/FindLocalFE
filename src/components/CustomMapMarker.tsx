@@ -37,10 +37,10 @@ const CustomMapMarker: React.FC<CustomMapMarkerProps> = ({
   const { theme } = useTheme();
   const latitude = Number(venue.latitude);
   const longitude = Number(venue.longitude);
-  // Limit to maximum 9 events to prevent user frustration
+  // Limit callout to first 9 events; badge should reflect total count
   const limitedEvents = venueEvents.slice(0, 9);
-  const hasEvents = limitedEvents.length > 0;
-  const eventCount = limitedEvents.length;
+  const totalEvents = venueEvents.length;
+  const hasEvents = totalEvents > 0;
 
   const [isHovered, setHovered] = useState(false);
   const [currentEventIndex, setCurrentEventIndex] = useState(0);
@@ -105,7 +105,7 @@ const CustomMapMarker: React.FC<CustomMapMarkerProps> = ({
         handleMarkerPress(e);
         console.log('Marker pressed', venue.id);
       }}
-      hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
+      hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
     >
       <View  
       style={[
@@ -114,10 +114,10 @@ const CustomMapMarker: React.FC<CustomMapMarkerProps> = ({
             (isHighlighted || isHovered) && [styles.dotHighlighted, { backgroundColor: theme.colors.primary[700] }],
           ]}
         >
-        {hasEvents && eventCount > 0 && (
+        {hasEvents && totalEvents > 0 && (
           <View style={[styles.eventCountBadge, { backgroundColor: theme.colors.secondary[500] }]}>
             <Text variant="caption" style={[styles.eventCountText, { color: theme.colors.text.primary }]}>
-              {eventCount > 9 ? '9+' : eventCount}
+              {totalEvents > 9 ? '9+' : totalEvents}
             </Text>
           </View>
         )}
@@ -317,8 +317,8 @@ const styles = StyleSheet.create({
   },
   eventCountBadge: {
     position: 'absolute',
-    top: -12,
-    right: -12,
+    top: -13,
+    right: -13,
     minWidth: 16,
     height: 16,
     borderRadius: 8,
