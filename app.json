@@ -17,7 +17,7 @@
       }
     },
     "web": {
-      "favicon": "./assets/icon.png",
+      "favicon": "./assets/monocle.png",
       "bundler": "metro",
       "build": {
         "babel": {
