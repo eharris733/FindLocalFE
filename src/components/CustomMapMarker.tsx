@@ -287,9 +287,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   dotBase: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
     borderWidth: 2,
     borderColor: '#FFFFFF',
     shadowColor: '#000',

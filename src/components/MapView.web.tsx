@@ -46,36 +46,24 @@ const fallbackCamera = {
 }
 
 const customMapStyle = [
-  // Hide all points of interest
-  { featureType: 'poi', stylers: [{ visibility: 'off' }] },
-  { featureType: 'poi.business', stylers: [{ visibility: 'off' }] },
-  { featureType: 'poi.attraction', stylers: [{ visibility: 'off' }] },
-  { featureType: 'poi.government', stylers: [{ visibility: 'off' }] },
-  { featureType: 'poi.medical', stylers: [{ visibility: 'off' }] },
-  { featureType: 'poi.park', stylers: [{ visibility: 'off' }] },
-  { featureType: 'poi.place_of_worship', stylers: [{ visibility: 'off' }] },
-  { featureType: 'poi.school', stylers: [{ visibility: 'off' }] },
-  { featureType: 'poi.sports_complex', stylers: [{ visibility: 'off' }] },
-  
-  // Hide transit elements
+  // Keep text labels visible but hide label icons globally
+  { elementType: 'labels.icon', stylers: [{ visibility: 'off' }] },
+
+  // Keep POI text but hide POI icons specifically
+  { featureType: 'poi', elementType: 'labels.icon', stylers: [{ visibility: 'off' }] },
+  { featureType: 'poi', elementType: 'labels.text', stylers: [{ visibility: 'on' }] },
+
+  // Optionally hide transit features (kept from previous config)
   { featureType: 'transit', stylers: [{ visibility: 'off' }] },
   { featureType: 'transit.line', stylers: [{ visibility: 'off' }] },
   { featureType: 'transit.station', stylers: [{ visibility: 'off' }] },
-  
-  // Hide all label icons and text
-  { elementType: 'labels.icon', stylers: [{ visibility: 'off' }] },
-  { elementType: 'labels.text', stylers: [{ visibility: 'off' }] },
-  { elementType: 'labels.text.fill', stylers: [{ visibility: 'off' }] },
-  { elementType: 'labels.text.stroke', stylers: [{ visibility: 'off' }] },
-  
-  // Clean up roads - keep geometry but remove labels
-  { featureType: 'road', elementType: 'labels', stylers: [{ visibility: 'off' }] },
-  { featureType: 'road', elementType: 'labels.text', stylers: [{ visibility: 'off' }] },
-  { featureType: 'road.highway', elementType: 'labels', stylers: [{ visibility: 'off' }] },
-  { featureType: 'road.arterial', elementType: 'labels', stylers: [{ visibility: 'off' }] },
-  { featureType: 'road.local', elementType: 'labels', stylers: [{ visibility: 'off' }] },
-  
-  // Hide administrative labels (city names, etc.)
+
+  // Ensure road and administrative labels remain visible
+  { featureType: 'road', elementType: 'labels', stylers: [{ visibility: 'on' }] },
+  { featureType: 'road', elementType: 'labels.text', stylers: [{ visibility: 'on' }] },
+  { featureType: 'road.highway', elementType: 'labels', stylers: [{ visibility: 'on' }] },
+  { featureType: 'road.arterial', elementType: 'labels', stylers: [{ visibility: 'on' }] },
+  { featureType: 'road.local', elementType: 'labels', stylers: [{ visibility: 'on' }] },
   { featureType: 'administrative', elementType: 'labels', stylers: [{ visibility: 'on' }] },
 ];
 
@@ -259,6 +247,8 @@ const MapViewWeb: React.FC<MapViewWebProps> = ({
         provider="google"
         initialCamera={initialCamera}
         googleMapsApiKey={process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY}
+        // Disable clicking on default Google POI/label icons, while showing text via customMapStyle
+        options={{ clickableIcons: false }}
         showsUserLocation={false}
         showsMyLocationButton={false}
         zoomEnabled={true}
