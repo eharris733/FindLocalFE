@@ -92,29 +92,29 @@ export const FilterDropdown: React.FC<FilterDropdownProps> = ({
                                     }
                                 ]}
                                 onPress={() => {
-                                    console.log('FilterDropdown: option clicked:', option, 'multiSelect:', multiSelect, 'selectedValue:', selectedValue);
+                                    
                                     if (multiSelect) {
                                         // Ensure we're working with an array
                                         const currentSelected = Array.isArray(selectedValue) 
                                             ? selectedValue 
                                             : [selectedValue];
                                         
-                                        console.log('FilterDropdown: currentSelected:', currentSelected);
+                                            
                                             
                                         if (option === 'All sizes') {
-                                            console.log('FilterDropdown: selecting All sizes');
+                                            
                                             onValueChange(['All sizes']);
                                         } else {
                                             let newSelected = currentSelected.filter(v => v !== 'All sizes');
                                             if (newSelected.includes(option)) {
                                                 newSelected = newSelected.filter(v => v !== option);
-                                                console.log('FilterDropdown: removing option, new selection:', newSelected);
+                                                
                                             } else {
                                                 newSelected = [...newSelected, option];
-                                                console.log('FilterDropdown: adding option, new selection:', newSelected);
+                                                
                                             }
                                             const finalSelection = newSelected.length === 0 ? ['All sizes'] : newSelected;
-                                            console.log('FilterDropdown: final selection:', finalSelection);
+                                            
                                             onValueChange(finalSelection);
                                         }
                                     } else {
