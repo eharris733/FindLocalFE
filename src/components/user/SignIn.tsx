@@ -1,12 +1,12 @@
 import { Controller, useForm} from "react-hook-form";
-import {View, Platform, ActivityIndicator} from "react-native";
+import {View, Platform, ActivityIndicator, StyleSheet, TouchableOpacity} from "react-native";
 import {Button, Text} from "../ui";
 import {supabase} from "../../supabase";
 import React, {useState} from "react";
 import Input from "../ui/Input";
-import {Link} from "expo-router";
+import {useRouter} from "expo-router";
 import * as Linking from "expo-linking";
-import {styles} from "./styles";
+import { useTheme } from "../../context/ThemeContext";
 
 type LoginFormValues = {
     email: string;
@@ -16,6 +16,8 @@ type LoginFormValues = {
 }
 
 export default function SignIn() {
+    const { theme } = useTheme();
+    const router = useRouter();
     const [loading, setLoading] = useState(false);
     const [feedback, setFeedback] = useState<string | null>(null);
     const [forgotMode, setForgotMode] = useState(false);
@@ -34,6 +36,79 @@ export default function SignIn() {
     });
 
     const email = watch('email');
+
+    const styles = StyleSheet.create({
+        container: {
+            gap: 16,
+        },
+        loadingOverlay: {
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            justifyContent: 'center',
+            alignItems: 'center',
+            backgroundColor: theme.colors.background.primary,
+            opacity: 0.8,
+            zIndex: 1000,
+        },
+        feedbackContainer: {
+            padding: 12,
+            borderRadius: 8,
+            backgroundColor: theme.colors.background.secondary,
+            borderLeftWidth: 4,
+            borderLeftColor: theme.colors.info,
+            marginBottom: 8,
+        },
+        feedbackText: {
+            color: theme.colors.text.primary,
+        },
+        buttonContainer: {
+            gap: 12,
+            marginTop: 8,
+        },
+        linkContainer: {
+            flexDirection: 'row',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: 8,
+            marginTop: 16,
+        },
+        infoBox: {
+            padding: 12,
+            borderRadius: 8,
+            backgroundColor: theme.colors.background.secondary,
+            borderWidth: 1,
+            borderColor: theme.colors.border.light,
+            marginBottom: 12,
+        },
+        linkText: {
+            color: theme.colors.primary[500],
+            fontWeight: '600' as const,
+        },
+        guestContainer: {
+            marginTop: 24,
+            gap: 16,
+        },
+        divider: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            marginVertical: 8,
+        },
+        dividerLine: {
+            flex: 1,
+            height: 1,
+            backgroundColor: theme.colors.border.light,
+        },
+        dividerText: {
+            marginHorizontal: 16,
+        },
+        forgotPasswordSection: {
+            marginTop: 24,
+            gap: 12,
+        },
+    });
 
     async function signInWithEmail(values: LoginFormValues) {
         setLoading(true);
@@ -119,22 +194,40 @@ export default function SignIn() {
     }
 
     return (
-        <>
+        <View style={styles.container}>
             {loading && (
                 <View style={styles.loadingOverlay} pointerEvents="none">
-                    <ActivityIndicator size="large" />
+                    <ActivityIndicator size="large" color={theme.colors.primary[500]} />
                 </View>
             )}
-            {feedback && <Text variant="body2" color="info">{feedback}</Text>}
+            
+            {feedback && (
+                <View style={styles.feedbackContainer}>
+                    <Text variant="body2" style={styles.feedbackText}>
+                        {feedback}
+                    </Text>
+                </View>
+            )}
+
+            <View style={styles.infoBox}>
+                <Text variant="body2" color="secondary">
+                    Sign in to access your saved events and personalized recommendations.
+                </Text>
+            </View>
+
             <Controller
                 control={control}
                 rules={{
-                    required: true,
+                    required: 'Email is required',
+                    pattern: {
+                        value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                        message: 'Invalid email address',
+                    },
                 }}
                 render={({ field: { onChange, onBlur, value } }) => (
                     <Input
                         label="Email"
-                        placeholder="Email"
+                        placeholder="email@address.com"
                         onBlur={onBlur}
                         onChangeText={onChange}
                         value={value}
@@ -145,84 +238,129 @@ export default function SignIn() {
                 name="email"
             />
 
-            <Controller
-                control={control}
-                rules={{
-                    maxLength: 100,
-                }}
-                render={({ field: { onChange, onBlur, value } }) => (
-                    <Input
-                        label="Password"
-                        placeholder="Password"
-                        onBlur={onBlur}
-                        onChangeText={onChange}
-                        value={value}
-                        autoCapitalize='none'
-                        secureTextEntry
-                        error={errors.password?.message}
-                    />
-                )}
-                name="password"
-            />
+            {!forgotMode && (
+                <Controller
+                    control={control}
+                    rules={{
+                        required: 'Password is required',
+                    }}
+                    render={({ field: { onChange, onBlur, value } }) => (
+                        <Input
+                            label="Password"
+                            placeholder="Enter your password"
+                            onBlur={onBlur}
+                            onChangeText={onChange}
+                            value={value}
+                            autoCapitalize='none'
+                            secureTextEntry
+                            error={errors.password?.message}
+                        />
+                    )}
+                    name="password"
+                />
+            )}
 
-            <View style={[styles.verticallySpaced, styles.mt20]}>
-                <Button title="Sign in" disabled={loading} onPress={handleSubmit(signInWithEmail)} />
-            </View>
-            <View style={styles.verticallySpaced}>
-                <Button title="Continue with Google" variant="outline" onPress={() => signInWithGoogle()} />
-            </View>
-            <View style={styles.verticallySpaced}>
-                <Link href='/user/signup'>Need to Register?</Link>
+            {!forgotMode && !linkMode && (
+                <View style={styles.buttonContainer}>
+                    <Button 
+                        title="Sign In" 
+                        disabled={loading} 
+                        onPress={handleSubmit(signInWithEmail)}
+                        fullWidth
+                        loading={loading}
+                    />
+
+                    <View style={styles.divider}>
+                        <View style={styles.dividerLine} />
+                        <Text variant="body2" color="secondary" style={styles.dividerText}>
+                            or
+                        </Text>
+                        <View style={styles.dividerLine} />
+                    </View>
+
+                    <Button 
+                        title="Continue with Google" 
+                        variant="outline" 
+                        onPress={signInWithGoogle}
+                        fullWidth
+                    />
+
+                    <TouchableOpacity onPress={() => setForgotMode(true)}>
+                        <Text variant="body2" style={[styles.linkText, { textAlign: 'center', marginTop: 8 }]}>
+                            Forgot Password?
+                        </Text>
+                    </TouchableOpacity>
+                </View>
+            )}
+
+            <View style={styles.linkContainer}>
+                <Text variant="body2" color="secondary">
+                    Don't have an account?
+                </Text>
+                <TouchableOpacity onPress={() => router.push('/user/signup')}>
+                    <Text variant="body2" style={styles.linkText}>
+                        Sign Up
+                    </Text>
+                </TouchableOpacity>
             </View>
 
             {forgotMode && (
-                <View style={[styles.verticallySpaced, styles.mt20]}>
-                    <Controller
-                        control={control}
-                        render={({field: {onChange, onBlur, value}}) => (
-                            <Input
-                                label="Email for reset"
-                                value={email || value}
-                                onBlur={onBlur}
-                                onChangeText={onChange}
-                                placeholder="email@address.com"
-                                autoCapitalize='none'
-                            />
-                        )}
-                        name="resetEmail"
-                    />
-                    <View style={[styles.verticallySpaced, styles.mt20]}>
-                        <Button
-                            title="Send reset link"
-                            variant="primary"
-                            onPress={handleSubmit(sendPasswordReset)}
-                        />
+                <View style={styles.forgotPasswordSection}>
+                    <View style={styles.infoBox}>
+                        <Text variant="body2" color="secondary">
+                            Enter your email address and we'll send you a link to reset your password.
+                        </Text>
                     </View>
-                </View>)
-            }
+                    <Button
+                        title="Send Reset Link"
+                        variant="primary"
+                        onPress={handleSubmit(sendPasswordReset)}
+                        fullWidth
+                        loading={loading}
+                    />
+                    <Button
+                        title="Back to Sign In"
+                        variant="outline"
+                        onPress={() => setForgotMode(false)}
+                        fullWidth
+                    />
+                </View>
+            )}
 
             {linkMode && (
-                <View style={styles.verticallySpaced}>
-                    <Text variant="body2">It looks like a Google account already exists with this email. Enter that email below to receive a sign-in link and then link your Google account from your profile.</Text>
-                    <Controller
-                        control={control}
-                        render={({field: {onChange, onBlur, value}}) => (
-                            <Input
-                                label="Email associated with Google"
-                                value={email || value}
-                                onBlur={onBlur}
-                                onChangeText={onChange}
-                                placeholder="email@address.com"
-                                autoCapitalize='none'
-                            />
-                        )}
-                        name="linkEmail"
-                    />
-                    <View style={[styles.verticallySpaced, styles.mt20]}>
-                        <Button title="Send sign-in link" variant="primary" onPress={handleSubmit(sendMagicLinkForLinking)} loading={loading} />
+                <View style={styles.forgotPasswordSection}>
+                    <View style={styles.infoBox}>
+                        <Text variant="body2" color="secondary">
+                            It looks like a Google account already exists with this email. Enter that email below to receive a sign-in link and then link your Google account from your profile.
+                        </Text>
                     </View>
-                </View>)
-            }
-        </>
+                    <Button 
+                        title="Send Sign-In Link" 
+                        variant="primary" 
+                        onPress={handleSubmit(sendMagicLinkForLinking)} 
+                        fullWidth
+                        loading={loading} 
+                    />
+                    <Button
+                        title="Back to Sign In"
+                        variant="outline"
+                        onPress={() => setLinkMode(false)}
+                        fullWidth
+                    />
+                </View>
+            )}
+
+            <View style={styles.guestContainer}>
+                <View style={styles.divider}>
+                    <View style={styles.dividerLine} />
+                </View>
+                <Button 
+                    title="Continue as Guest" 
+                    variant="ghost" 
+                    onPress={() => router.push('/')}
+                    fullWidth
+                />
+            </View>
+        </View>
     )
 }
