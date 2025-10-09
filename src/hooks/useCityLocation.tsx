@@ -16,7 +16,7 @@ export const useCityLocation = () => {
     const [displayCity, setDisplayCity] = useState('Boston'); // Display city name
 
     const onCityChange = (city: string) => {
-        console.log('🏙️ onCityChange called with:', city);
+        //console.log('🏙️ onCityChange called with:', city);
         
         // Map display names to database city names
         let dbCityName = city.toLowerCase();
@@ -40,11 +40,11 @@ export const useCityLocation = () => {
                 setDisplayCity(city);
             }
         }
-        
-        console.log('🏙️ Setting selectedCity from:', selectedCity, 'to:', dbCityName);
-        console.log('🏙️ Setting displayCity to:', city);
+
+        //console.log('🏙️ Setting selectedCity from:', selectedCity, 'to:', dbCityName);
+        //console.log('🏙️ Setting displayCity to:', city);
         setSelectedCity(dbCityName);
-        console.log('🏙️ City changed from display name:', city, 'to database name:', dbCityName, 'display will be:', city);
+        //console.log('🏙️ City changed from display name:', city, 'to database name:', dbCityName, 'display will be:', city);
     };
 
 
@@ -54,8 +54,8 @@ export const useCityLocation = () => {
             try {
                 setLoading(true);
                 const availableCities = await getAvailableCities();
-                console.log('Available cities with events:', availableCities);
-                console.log('Individual cities:', availableCities.map((city, index) => `${index}: "${city}"`));
+                //console.log('Available cities with events:', availableCities);
+                //console.log('Individual cities:', availableCities.map((city, index) => `${index}: "${city}"`));
 
                 // Store available cities for neighborhood checking
                 setAvailableCitiesFromDB(availableCities);
@@ -64,7 +64,7 @@ export const useCityLocation = () => {
                 const cityHasVenues = (cityName: string, neighborhoods?: string[]) => {
                     // Check exact match (case-insensitive)
                     const exactMatch = availableCities.some(city => city.toLowerCase() === cityName.toLowerCase());
-                    console.log(`Checking ${cityName}: exact match = ${exactMatch}`);
+                    //console.log(`Checking ${cityName}: exact match = ${exactMatch}`);
 
                     if (exactMatch) {
                         return true;
@@ -74,12 +74,12 @@ export const useCityLocation = () => {
                     if (neighborhoods) {
                         const neighborhoodMatch = neighborhoods.some(neighborhood => {
                             const match = availableCities.some(city => city.toLowerCase() === neighborhood.toLowerCase());
-                            if (match) {
-                                console.log(`${cityName}: found match for neighborhood ${neighborhood}`);
-                            }
+                            // if (match) {
+                            //     console.log(`${cityName}: found match for neighborhood ${neighborhood}`);
+                            // }
                             return match;
                         });
-                        console.log(`${cityName}: neighborhood match = ${neighborhoodMatch}`);
+                        // console.log(`${cityName}: neighborhood match = ${neighborhoodMatch}`);
                         return neighborhoodMatch;
                     }
 

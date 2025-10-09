@@ -1,9 +1,8 @@
 import React, { useRef, useState } from 'react';
-import { View, StyleSheet, Image, Pressable, Platform, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, Image, Platform, TouchableOpacity } from 'react-native';
 import { Event } from '../types/events';
 import { Venue } from '../types/venues';
 import { Text } from './ui/Text';
-import { set } from 'date-fns';
 import { useTheme } from '../context/ThemeContext';
 
 // Import using require to bypass TypeScript issues with this library
@@ -16,7 +15,7 @@ interface CustomMapMarkerProps {
   isHighlighted: boolean;
   isActive: boolean;
   markerClickedRef: React.RefObject<boolean>;
-  lastActionRef: React.RefObject<{ type: 'marker' | 'map', timestamp: number } | null>;
+  lastActionRef: React.RefObject<{ type: 'marker' | 'map' | 'callout', timestamp: number } | null>;
   onCalloutToggle: (venueId: string | null) => void;
   onEventPress: (event: Event) => void;
   onVenuePress?: (venue: Venue) => void;
@@ -38,11 +37,25 @@ const CustomMapMarker: React.FC<CustomMapMarkerProps> = ({
   const { theme } = useTheme();
   const latitude = Number(venue.latitude);
   const longitude = Number(venue.longitude);
-  const hasEvents = venueEvents.length > 0;
-  const eventCount = venueEvents.length;
+  // Limit callout to first 9 events; badge should reflect total count
+  const limitedEvents = venueEvents.slice(0, 9);
+  const totalEvents = venueEvents.length;
+  const hasEvents = totalEvents > 0;
 
   const [isHovered, setHovered] = useState(false);
   const [currentEventIndex, setCurrentEventIndex] = useState(0);
+
+  // Get the image URL with fallback hierarchy: event image -> venue image -> record.png
+  const getImageUrl = (event: Event) => {
+    if (event?.image_url) {
+      return event.image_url;
+    }
+    if (venue?.image) {
+      return venue.image;
+    }
+    // Return the record.png as fallback
+    return require('../../assets/record.png');
+  };
 
   if (isNaN(latitude) || isNaN(longitude)) {
     return null;
@@ -52,7 +65,7 @@ const CustomMapMarker: React.FC<CustomMapMarkerProps> = ({
     if (!hasEvents) return;
     
     const now = Date.now();
-    console.log('🎯 Marker pressed, isActive:', isActive, 'venue:', venue.id, 'timestamp:', now);
+    //('🎯 Marker pressed, isActive:', isActive, 'venue:', venue.id, 'timestamp:', now);
     
     // Prevent map click from firing - set this immediately
     markerClickedRef.current = true;
@@ -63,17 +76,17 @@ const CustomMapMarker: React.FC<CustomMapMarkerProps> = ({
 
     // Toggle callout visibility immediately - no setTimeout needed
     if (isActive) {
-      console.log('🎯 Closing callout for venue:', venue.id);
+      //console.log('🎯 Closing callout for venue:', venue.id);
       onCalloutToggle(null);
     } else {
-      console.log('🎯 Opening callout for venue:', venue.id);
+      //console.log('🎯 Opening callout for venue:', venue.id);
       onCalloutToggle(venue.id);
     }
 
     // Reset the marker clicked flag after a reasonable delay
     setTimeout(() => {
       markerClickedRef.current = false;
-    }, 200);
+    }, 800);
   };
 
   return (
@@ -82,10 +95,17 @@ const CustomMapMarker: React.FC<CustomMapMarkerProps> = ({
       coordinate={{ latitude, longitude }}
       anchor={{ x: 0.5, y: 0.5 }}
       calloutAnchor={{ x: 0.5, y: 1 }}
+      onPressIn={() => {
+        // Preempt the map's onPress as early as possible
+        markerClickedRef.current = true;
+        lastActionRef.current = { type: 'marker', timestamp: Date.now() };
+        setTimeout(() => (markerClickedRef.current = false), 800);
+      }}
       onPress={(e: any) => {
         handleMarkerPress(e);
-        console.log('Marker pressed', venue.id);
+        //console.log('Marker pressed', venue.id);
       }}
+      hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
     >
       <View  
       style={[
@@ -94,10 +114,10 @@ const CustomMapMarker: React.FC<CustomMapMarkerProps> = ({
             (isHighlighted || isHovered) && [styles.dotHighlighted, { backgroundColor: theme.colors.primary[700] }],
           ]}
         >
-        {hasEvents && eventCount > 0 && (
+        {hasEvents && totalEvents > 0 && (
           <View style={[styles.eventCountBadge, { backgroundColor: theme.colors.secondary[500] }]}>
             <Text variant="caption" style={[styles.eventCountText, { color: theme.colors.text.primary }]}>
-              {eventCount > 9 ? '9+' : eventCount}
+              {totalEvents > 9 ? '9+' : totalEvents}
             </Text>
           </View>
         )}
@@ -112,35 +132,74 @@ const CustomMapMarker: React.FC<CustomMapMarkerProps> = ({
             }]}>
               {hasEvents && (
                 <>
-                  {/* Event Image */}
-                  {venueEvents[currentEventIndex]?.image_url && (
-                    <Image
-                      source={{ uri: venueEvents[currentEventIndex].image_url }}
-                      style={styles.calloutImage}
-                      resizeMode="cover"
-                    />
-                  )}
+                  {/* Event Image with fallback */}
+                  <Image
+                    source={
+                      typeof getImageUrl(limitedEvents[currentEventIndex]) === 'string' 
+                        ? { uri: getImageUrl(limitedEvents[currentEventIndex]) }
+                        : getImageUrl(limitedEvents[currentEventIndex])
+                    }
+                    style={styles.calloutImage}
+                    resizeMode="cover"
+                  />
 
                   {/* Close button */}
                   <TouchableOpacity
                     style={[styles.closeButton, { backgroundColor: theme.colors.background.secondary }]}
-                    onPress={() => onCalloutToggle(null)}
+                    onPressIn={() => {
+                      // Preempt map click by marking as callout interaction immediately
+                      markerClickedRef.current = true;
+                      lastActionRef.current = { type: 'callout', timestamp: Date.now() };
+                      setTimeout(() => (markerClickedRef.current = false), 800);
+                    }}
+                    onPress={(e) => {
+                      e?.stopPropagation?.();
+                      e?.preventDefault?.();
+                      lastActionRef.current = { type: 'callout', timestamp: Date.now() };
+                      onCalloutToggle(null);
+                    }}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                    activeOpacity={0.7}
                   >
                     <Text style={[styles.closeButtonText, { color: theme.colors.text.primary }]}>×</Text>
                   </TouchableOpacity>
                   
                   {/* Navigation arrows for multiple events */}
-                  {venueEvents.length > 1 && (
+                  {limitedEvents.length > 1 && (
                     <>
                       <TouchableOpacity
                         style={[styles.navArrow, styles.navArrowLeft, { backgroundColor: theme.colors.background.secondary }]}
-                        onPress={() => setCurrentEventIndex(prev => prev === 0 ? venueEvents.length - 1 : prev - 1)}
+                        onPressIn={() => {
+                          markerClickedRef.current = true;
+                          lastActionRef.current = { type: 'callout', timestamp: Date.now() };
+                          setTimeout(() => (markerClickedRef.current = false), 800);
+                        }}
+                        onPress={(e) => {
+                          e?.stopPropagation?.();
+                          e?.preventDefault?.();
+                          lastActionRef.current = { type: 'callout', timestamp: Date.now() };
+                          setCurrentEventIndex(prev => prev === 0 ? limitedEvents.length - 1 : prev - 1);
+                        }}
+                        hitSlop={{ top: 25, bottom: 25, left: 25, right: 25 }}
+                        activeOpacity={0.7}
                       >
                         <Text style={[styles.arrowText, { color: theme.colors.text.primary }]}>‹</Text>
                       </TouchableOpacity>
                       <TouchableOpacity
                         style={[styles.navArrow, styles.navArrowRight, { backgroundColor: theme.colors.background.secondary }]}
-                        onPress={() => setCurrentEventIndex(prev => prev === venueEvents.length - 1 ? 0 : prev + 1)}
+                        onPressIn={() => {
+                          markerClickedRef.current = true;
+                          lastActionRef.current = { type: 'callout', timestamp: Date.now() };
+                          setTimeout(() => (markerClickedRef.current = false), 800);
+                        }}
+                        onPress={(e) => {
+                          e?.stopPropagation?.();
+                          e?.preventDefault?.();
+                          lastActionRef.current = { type: 'callout', timestamp: Date.now() };
+                          setCurrentEventIndex(prev => prev === limitedEvents.length - 1 ? 0 : prev + 1);
+                        }}
+                        hitSlop={{ top: 25, bottom: 25, left: 25, right: 25 }}
+                        activeOpacity={0.7}
                       >
                         <Text style={[styles.arrowText, { color: theme.colors.text.primary }]}>›</Text>
                       </TouchableOpacity>
@@ -149,7 +208,7 @@ const CustomMapMarker: React.FC<CustomMapMarkerProps> = ({
 
                   {/* Event Name */}
                   <Text variant="h6" style={[styles.eventName, { color: theme.colors.text.primary }]} numberOfLines={2}>
-                    {venueEvents[currentEventIndex]?.title}
+                    {limitedEvents[currentEventIndex]?.title}
                   </Text>
 
                   {/* Venue Name */}
@@ -157,10 +216,13 @@ const CustomMapMarker: React.FC<CustomMapMarkerProps> = ({
                     {venue.name}
                   </Text>
 
+                  {/* Spacer to push content to bottom */}
+                  <View style={{ flex: 1 }} />
+
                   {/* Event indicator for multiple events */}
-                  {venueEvents.length > 1 && (
+                  {limitedEvents.length > 1 && (
                     <Text variant="caption" style={[styles.eventIndicator, { color: theme.colors.text.tertiary }]}>
-                      {currentEventIndex + 1} of {venueEvents.length}
+                      {currentEventIndex + 1} of {limitedEvents.length}{venueEvents.length > 9 ? ' (showing first 9)' : ''}
                     </Text>
                   )}
 
@@ -168,7 +230,17 @@ const CustomMapMarker: React.FC<CustomMapMarkerProps> = ({
                   <View style={styles.actionButtons}>
                     <TouchableOpacity
                       style={[styles.actionButton, { backgroundColor: theme.colors.primary[500] }]}
-                      onPress={() => onEventPress(venueEvents[currentEventIndex])}
+                      onPressIn={() => {
+                        markerClickedRef.current = true;
+                        lastActionRef.current = { type: 'callout', timestamp: Date.now() };
+                        setTimeout(() => (markerClickedRef.current = false), 800);
+                      }}
+                      onPress={(e) => {
+                        e?.stopPropagation?.();
+                        e?.preventDefault?.();
+                        lastActionRef.current = { type: 'callout', timestamp: Date.now() };
+                        onEventPress(limitedEvents[currentEventIndex]);
+                      }}
                     >
                       <Text variant="caption" style={[styles.buttonText, { color: theme.colors.text.inverse }]}>
                         See Event
@@ -177,7 +249,17 @@ const CustomMapMarker: React.FC<CustomMapMarkerProps> = ({
                     {onVenuePress && (
                       <TouchableOpacity
                         style={[styles.actionButton, styles.venueButton, { backgroundColor: theme.colors.background.secondary, borderColor: theme.colors.border.medium }]}
-                        onPress={() => onVenuePress(venue)}
+                        onPressIn={() => {
+                          markerClickedRef.current = true;
+                          lastActionRef.current = { type: 'callout', timestamp: Date.now() };
+                          setTimeout(() => (markerClickedRef.current = false), 800);
+                        }}
+                        onPress={(e) => {
+                          e?.stopPropagation?.();
+                          e?.preventDefault?.();
+                          lastActionRef.current = { type: 'callout', timestamp: Date.now() };
+                          onVenuePress(venue);
+                        }}
                       >
                         <Text variant="caption" style={[styles.buttonText, { color: theme.colors.text.primary }]}>
                           See Venue
@@ -205,9 +287,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   dotBase: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
     borderWidth: 2,
     borderColor: '#FFFFFF',
     shadowColor: '#000',
@@ -235,8 +317,8 @@ const styles = StyleSheet.create({
   },
   eventCountBadge: {
     position: 'absolute',
-    top: -12,
-    right: -12,
+    top: -13,
+    right: -13,
     minWidth: 16,
     height: 16,
     borderRadius: 8,
@@ -260,6 +342,7 @@ const styles = StyleSheet.create({
   },
   calloutBubble: {
     width: 200,
+    height: 280, // Increased height for better layout
     borderRadius: 12,
     flexDirection: 'column',
     alignItems: 'center',
@@ -280,9 +363,10 @@ const styles = StyleSheet.create({
   },
   calloutImage: {
     width: '100%',
-    height: 100,
+    height: 100, // Restored to proper size
     borderTopLeftRadius: 12,
     borderTopRightRadius: 12,
+    backgroundColor: '#f0f0f0', // Add background color in case image fails to load
   },
   
   // Close button
@@ -307,14 +391,18 @@ const styles = StyleSheet.create({
   // Navigation arrows
   navArrow: {
     position: 'absolute',
-    top: 40,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    top: 50, // Moved down to avoid close button overlap
+    width: 32, // Slightly larger for better mobile touch
+    height: 32,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 20,
-    opacity: 0.8,
+    opacity: 0.9,
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    shadowOffset: { width: 0, height: 1 },
   },
   navArrowLeft: {
     left: 8,
@@ -346,7 +434,7 @@ const styles = StyleSheet.create({
   eventIndicator: {
     fontSize: 10,
     textAlign: 'center',
-    marginBottom: 12,
+    marginBottom: 4, // Small gap before buttons
   },
 
   // Action buttons
@@ -356,6 +444,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingBottom: 12,
     gap: 8,
+    marginTop: 'auto', // Push buttons to bottom
   },
   actionButton: {
     flex: 1,

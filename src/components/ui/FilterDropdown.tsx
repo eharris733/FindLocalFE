@@ -5,13 +5,15 @@ import {Text} from "./Text";
 
 interface FilterDropdownProps {
     label: string;
-    selectedValue: string;
+    selectedValue: string | string[];
     options: string[];
-    onValueChange: (value: string) => void;
+    onValueChange: (value: string | string[]) => void;
     isOpen: boolean;
     onToggle: () => void;
     icon?: string;
     disabled?: boolean;
+    keepOpen?: boolean;
+    multiSelect?: boolean;
 }
 
 export const FilterDropdown: React.FC<FilterDropdownProps> = ({
@@ -23,6 +25,8 @@ export const FilterDropdown: React.FC<FilterDropdownProps> = ({
                                                            onToggle,
                                                            icon,
                                                            disabled = false,
+                                                           keepOpen = false,
+                                                           multiSelect = false,
                                                        }) => {
     const { theme } = useTheme();
 
@@ -47,7 +51,12 @@ export const FilterDropdown: React.FC<FilterDropdownProps> = ({
                         </Text>
                     )}
                     <Text variant="body2" color="primary" style={styles.dropdownText} numberOfLines={1}>
-                        {selectedValue}
+                        {multiSelect && Array.isArray(selectedValue) 
+                            ? selectedValue.length > 1 
+                                ? `${selectedValue.length} selected`
+                                : selectedValue[0] || 'All sizes'
+                            : selectedValue
+                        }
                     </Text>
                 </View>
                 <Text variant="body2" color="secondary" style={styles.arrow}>
@@ -64,34 +73,75 @@ export const FilterDropdown: React.FC<FilterDropdownProps> = ({
                         ...theme.shadows.medium,
                     }
                 ]}>
-                    {options.map((option) => (
-                        <TouchableOpacity
-                            key={option}
-                            style={[
-                                styles.option,
-                                {
-                                    backgroundColor: option === selectedValue
-                                        ? theme.colors.primary[50]
-                                        : 'transparent',
-                                }
-                            ]}
-                            onPress={() => {
-                                onValueChange(option);
-                                onToggle(); // Close the dropdown
-                            }}
-                        >
-                            <Text
-                                variant="body2"
-                                color={option === selectedValue ? 'primary' : 'secondary'}
-                                style={{ fontWeight: option === selectedValue ? '600' : '400' }}
+                    {options.map((option) => {
+                        const isSelected = multiSelect
+                            ? Array.isArray(selectedValue) 
+                                ? selectedValue.includes(option)
+                                : selectedValue === option
+                            : option === selectedValue;
+                        
+                        return (
+                            <TouchableOpacity
+                                key={option}
+                                style={[
+                                    styles.option,
+                                    {
+                                        backgroundColor: isSelected
+                                            ? theme.colors.primary[50]
+                                            : 'transparent',
+                                    }
+                                ]}
+                                onPress={() => {
+                                    
+                                    if (multiSelect) {
+                                        // Ensure we're working with an array
+                                        const currentSelected = Array.isArray(selectedValue) 
+                                            ? selectedValue 
+                                            : [selectedValue];
+                                        
+                                            
+                                            
+                                        if (option === 'All sizes') {
+                                            
+                                            onValueChange(['All sizes']);
+                                        } else {
+                                            let newSelected = currentSelected.filter(v => v !== 'All sizes');
+                                            if (newSelected.includes(option)) {
+                                                newSelected = newSelected.filter(v => v !== option);
+                                                
+                                            } else {
+                                                newSelected = [...newSelected, option];
+                                                
+                                            }
+                                            const finalSelection = newSelected.length === 0 ? ['All sizes'] : newSelected;
+                                            
+                                            onValueChange(finalSelection);
+                                        }
+                                    } else {
+                                        onValueChange(option);
+                                    }
+                                    if (!keepOpen) {
+                                        onToggle(); // Close the dropdown
+                                    }
+                                }}
                             >
-                                {option}
-                            </Text>
-                            {option === selectedValue && (
-                                <Text variant="body2" color="primary">✓</Text>
-                            )}
-                        </TouchableOpacity>
-                    ))}
+                                <Text
+                                    variant="body2"
+                                    color={isSelected ? 'primary' : 'secondary'}
+                                    style={{ fontWeight: isSelected ? '600' : '400' }}
+                                >
+                                    {option}
+                                </Text>
+                                {multiSelect ? (
+                                    <Text variant="body2" color={isSelected ? 'primary' : 'secondary'}>
+                                        {isSelected ? '☑️' : '☐'}
+                                    </Text>
+                                ) : (
+                                    isSelected && <Text variant="body2" color="primary">✓</Text>
+                                )}
+                            </TouchableOpacity>
+                        );
+                    })}
                 </View>
             )}
         </View>

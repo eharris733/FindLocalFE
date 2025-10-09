@@ -32,7 +32,7 @@ export const CityProvider: React.FC<CityProviderProps> = ({ children }) => {
     const [displayCity, setDisplayCity] = useState('Boston'); // Display city name
 
     const onCityChange = (city: string) => {
-        console.log('🏙️ CityContext onCityChange called with:', city);
+        //console.log('🏙️ CityContext onCityChange called with:', city);
         
         // Map display names to database city names
         let dbCityName = city.toLowerCase();
@@ -56,11 +56,11 @@ export const CityProvider: React.FC<CityProviderProps> = ({ children }) => {
                 setDisplayCity(getDisplayCityName(city));
             }
         }
-        
-        console.log('🏙️ CityContext Setting selectedCity from:', selectedCity, 'to:', dbCityName);
-        console.log('🏙️ CityContext Setting displayCity to:', city);
+
+        //console.log('🏙️ CityContext Setting selectedCity from:', selectedCity, 'to:', dbCityName);
+        //console.log('🏙️ CityContext Setting displayCity to:', city);
         setSelectedCity(dbCityName);
-        console.log('🏙️ CityContext City changed from display name:', city, 'to database name:', dbCityName);
+        //console.log('🏙️ CityContext City changed from display name:', city, 'to database name:', dbCityName);
     };
 
     // Load cities from database on component mount
@@ -69,8 +69,8 @@ export const CityProvider: React.FC<CityProviderProps> = ({ children }) => {
             try {
                 setLoading(true);
                 const availableCities = await getAvailableCities();
-                console.log('Available cities with events:', availableCities);
-                console.log('Individual cities:', availableCities.map((city, index) => `${index}: "${city}"`));
+                //console.log('Available cities with events:', availableCities);
+                //console.log('Individual cities:', availableCities.map((city, index) => `${index}: "${city}"`));
 
                 // Store available cities for neighborhood checking
                 setAvailableCitiesFromDB(availableCities);
@@ -79,7 +79,7 @@ export const CityProvider: React.FC<CityProviderProps> = ({ children }) => {
                 const cityHasVenues = (cityName: string, neighborhoods?: string[]) => {
                     // Check exact match (case-insensitive)
                     const exactMatch = availableCities.some(city => city.toLowerCase() === cityName.toLowerCase());
-                    console.log(`Checking ${cityName}: exact match = ${exactMatch}`);
+                    //console.log(`Checking ${cityName}: exact match = ${exactMatch}`);
 
                     if (exactMatch) {
                         return true;
@@ -89,12 +89,12 @@ export const CityProvider: React.FC<CityProviderProps> = ({ children }) => {
                     if (neighborhoods) {
                         const neighborhoodMatch = neighborhoods.some(neighborhood => {
                             const match = availableCities.some(city => city.toLowerCase() === neighborhood.toLowerCase());
-                            if (match) {
-                                console.log(`${cityName}: found match for neighborhood ${neighborhood}`);
-                            }
+                                    // if (match) {
+                                    //     console.log(`${cityName}: found match for neighborhood ${neighborhood}`);
+                                    // }
                             return match;
                         });
-                        console.log(`${cityName}: neighborhood match = ${neighborhoodMatch}`);
+                        // console.log(`${cityName}: neighborhood match = ${neighborhoodMatch}`);
                         return neighborhoodMatch;
                     }
 

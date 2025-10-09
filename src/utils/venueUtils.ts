@@ -12,11 +12,11 @@ export function getVenueSizeLabel(size: string): string {
   
   switch (size.toLowerCase()) {
     case 'small': 
-      return 'Small Venue (< 50 people)';
+      return 'Small Venue';
     case 'medium': 
-      return 'Medium Venue (50-200 people)';
+      return 'Medium Venue';
     case 'large': 
-      return 'Large Venue (200+ people)';
+      return 'Large Venue';
     default: 
       return `${size} Venue`;
   }
@@ -32,11 +32,11 @@ export function getCompactVenueSizeLabel(size: string): string {
   
   switch (size.toLowerCase()) {
     case 'small': 
-      return 'Small (< 50)';
+      return 'Small';
     case 'medium': 
-      return 'Medium (50-200)';
+      return 'Medium';
     case 'large': 
-      return 'Large (200+)';
+      return 'Large';
     default: 
       return size;
   }
