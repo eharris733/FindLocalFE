@@ -13,7 +13,15 @@ export function Input({ label, error, style, ...rest }: InputProps) {
 
   return (
     <View style={styles.container}>
-      {label && <Text variant="label" style={styles.label}>{label}</Text>}
+      {label && (
+        <Text 
+          variant="label" 
+          color="primary"
+          style={[styles.label, { color: theme.colors.text.primary }]}
+        >
+          {label}
+        </Text>
+      )}
       <TextInput
         style={[
           styles.input,
@@ -24,7 +32,7 @@ export function Input({ label, error, style, ...rest }: InputProps) {
           },
           style,
         ]}
-        placeholderTextColor={theme.colors.text.secondary}
+        placeholderTextColor={theme.colors.text.tertiary}
         {...rest}
       />
       {error && <Text variant="caption" color="error" style={styles.error}>{error}</Text>}

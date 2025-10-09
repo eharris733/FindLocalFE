@@ -9,9 +9,12 @@ import {
   Linking,
 } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
-import {Text, Card, Button, CityPicker} from './ui';
+import { Text, Card, Button, CityPicker } from './ui';
 import { ThemeToggle } from './ui/ThemeToggle';
-import {useCityLocation} from "../context/CityContext";
+import { useCityLocation } from "../context/CityContext";
+import { useAuth } from "../hooks/useAuth";
+import { useRouter } from 'expo-router';
+import SignOutButton from './user/SignOutButton';
 
 interface ProfileModalProps {
   visible: boolean;
@@ -20,8 +23,10 @@ interface ProfileModalProps {
 
 export default function ProfileModal({ visible, onClose }: ProfileModalProps) {
   const { theme } = useTheme();
-  const {selectedCity, displayCity, onCityChange} = useCityLocation();
-  
+  const { selectedCity, displayCity, onCityChange } = useCityLocation();
+  const { isLoggedIn, profile, session } = useAuth();
+  const router = useRouter();
+
   // Format display city for the default location
   const formatLocationDisplay = (city: string) => {
     if (city === 'New York') return 'New York, NY';
@@ -38,6 +43,16 @@ export default function ProfileModal({ visible, onClose }: ProfileModalProps) {
     if (city === 'North End') return 'North End, Boston, MA';
     if (city === 'Fenway') return 'Fenway, Boston, MA';
     return city; // fallback for other cities
+  };
+
+  const handleSignInPress = () => {
+    onClose();
+    router.push('/user/signin');
+  };
+
+  const handleSignUpPress = () => {
+    onClose();
+    router.push('/user/signup');
   };
 
   return (
@@ -60,7 +75,7 @@ export default function ProfileModal({ visible, onClose }: ProfileModalProps) {
         </View>
 
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-          {/* Commented out Profile section - not needed for beta
+          {/* Profile Section - Show based on auth state */}
           <Card style={styles.section}>
             <Text variant="h4" style={styles.sectionTitle}>
               Profile
@@ -68,27 +83,56 @@ export default function ProfileModal({ visible, onClose }: ProfileModalProps) {
             <View style={styles.profileInfo}>
               <View style={[styles.avatar, { backgroundColor: theme.colors.primary[100] }]}>
                 <Text variant="h2" color="primary">
-                  👤
+                  {isLoggedIn ? '👤' : '🔓'}
                 </Text>
               </View>
               <View style={styles.profileText}>
-                <Text variant="h5">Guest User</Text>
-                <Text variant="body2" color="secondary">
-                  Sign in to save favorites and get personalized recommendations
-                </Text>
+                {isLoggedIn ? (
+                  <>
+                    <Text variant="h5">{profile?.full_name || 'User'}</Text>
+                    <Text variant="body2" color="secondary">
+                      {session?.user?.email}
+                    </Text>
+                  </>
+                ) : (
+                  <>
+                    <Text variant="h5">Guest User</Text>
+                    <Text variant="body2" color="secondary">
+                      Sign in to save favorites and get personalized recommendations
+                    </Text>
+                  </>
+                )}
               </View>
             </View>
-            <Button variant="primary" style={styles.signInButton} title="Sign In" />
+            {isLoggedIn ? (
+              <View style={styles.authButtonContainer}>
+                <SignOutButton />
+              </View>
+            ) : (
+              <View style={styles.authButtonContainer}>
+                <Button 
+                  variant="primary" 
+                  style={styles.authButton} 
+                  title="Sign In" 
+                  onPress={handleSignInPress}
+                />
+                <Button 
+                  variant="outline" 
+                  style={styles.authButton} 
+                  title="Sign Up" 
+                  onPress={handleSignUpPress}
+                />
+              </View>
+            )}
           </Card>
-          */}
 
           <Card style={styles.section}>
             <Text variant="h4" style={styles.sectionTitle}>
               Select Your City
             </Text>
             <CityPicker
-                selectedCity={displayCity}
-                onCityChange={onCityChange}
+              selectedCity={displayCity}
+              onCityChange={onCityChange}
             />
           </Card>
 
@@ -119,14 +163,6 @@ export default function ProfileModal({ visible, onClose }: ProfileModalProps) {
                 {formatLocationDisplay(displayCity)}
               </Text>
             </View>
-            {/* Commented out Notification Settings - not implemented yet
-            <View style={styles.preferenceItem}>
-              <Text variant="body1">Notification Settings</Text>
-              <Text variant="body2" color="secondary">
-                Get notified about new events
-              </Text>
-            </View>
-            */}
           </Card>
 
           {/* Beta Tester Section */}
@@ -141,40 +177,14 @@ export default function ProfileModal({ visible, onClose }: ProfileModalProps) {
               <Text variant="body2" color="secondary" style={styles.betaDescription}>
                 Fill out this form to get on the email list and get notified about updates and perks for beta testers!
               </Text>
-              <Button 
-                variant="primary" 
-                style={styles.betaButton} 
+              <Button
+                variant="primary"
+                style={styles.betaButton}
                 title="Sign Up for Beta Testing"
                 onPress={() => Linking.openURL('https://forms.gle/diBZKyejuUXsdQu46')}
               />
             </View>
           </Card>
-
-          {/* Commented out Support Section - not needed for beta
-          <Card style={styles.section}>
-            <Text variant="h4" style={styles.sectionTitle}>
-              Support
-            </Text>
-            <TouchableOpacity style={styles.supportItem}>
-              <Text variant="body1">Help & FAQ</Text>
-              <Text variant="body2" color="secondary">
-                →
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.supportItem}>
-              <Text variant="body1">Contact Us</Text>
-              <Text variant="body2" color="secondary">
-                →
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.supportItem}>
-              <Text variant="body1">Privacy Policy</Text>
-              <Text variant="body2" color="secondary">
-                →
-              </Text>
-            </TouchableOpacity>
-          </Card>
-          */}
         </ScrollView>
       </SafeAreaView>
     </Modal>
@@ -225,8 +235,11 @@ const styles = StyleSheet.create({
   profileText: {
     flex: 1,
   },
-  signInButton: {
-    marginTop: 8,
+  authButtonContainer: {
+    gap: 8,
+  },
+  authButton: {
+    marginTop: 4,
   },
   themeSection: {
     flexDirection: 'row',

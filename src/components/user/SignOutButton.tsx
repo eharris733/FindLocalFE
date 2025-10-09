@@ -1,6 +1,6 @@
 import * as React from 'react';
-import { Button } from 'react-native';
-import {supabase} from "../../supabase";
+import { supabase } from "../../supabase";
+import { Button } from '../ui';
 
 async function onSignOutButtonPress() {
     const { error } = await supabase.auth.signOut()
@@ -10,5 +10,11 @@ async function onSignOutButtonPress() {
 }
 
 export default function SignOutButton() {
-    return <Button title="Sign out" onPress={onSignOutButtonPress} />
+    return (
+        <Button 
+            title="Sign Out" 
+            variant="secondary"
+            onPress={onSignOutButtonPress} 
+        />
+    )
 }
