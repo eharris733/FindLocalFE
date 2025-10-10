@@ -1,6 +1,10 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getAvailableCities } from '../api/events';
 import { getDisplayCityName } from '../utils/cityUtils';
+import { STORAGE_KEYS } from '../constants/storage-keys';
+import { updatePreferredCity } from '../api/profiles';
+import { AuthContext } from '../providers/auth-provider';
 
 interface CityData {
     name: string;
@@ -30,8 +34,11 @@ export const CityProvider: React.FC<CityProviderProps> = ({ children }) => {
     const [error, setError] = useState(true);
     const [selectedCity, setSelectedCity] = useState('boston'); // Database city name
     const [displayCity, setDisplayCity] = useState('Boston'); // Display city name
+    const [hasLoadedPreference, setHasLoadedPreference] = useState(false);
+    const authContext = useContext(AuthContext);
+    const { profile, session } = authContext || { profile: null, session: null };
 
-    const onCityChange = (city: string) => {
+    const onCityChange = async (city: string) => {
         //console.log('🏙️ CityContext onCityChange called with:', city);
         
         // Map display names to database city names
@@ -61,7 +68,77 @@ export const CityProvider: React.FC<CityProviderProps> = ({ children }) => {
         //console.log('🏙️ CityContext Setting displayCity to:', city);
         setSelectedCity(dbCityName);
         //console.log('🏙️ CityContext City changed from display name:', city, 'to database name:', dbCityName);
+        
+        // Save to AsyncStorage
+        try {
+            await AsyncStorage.setItem(STORAGE_KEYS.PREFERRED_CITY, dbCityName);
+        } catch (error) {
+            console.error('Error saving city preference to storage:', error);
+        }
+        
+        // If user is authenticated, sync to Supabase
+        if (session?.user?.id) {
+            try {
+                await updatePreferredCity(session.user.id, dbCityName);
+            } catch (error) {
+                console.error('Error syncing city preference to Supabase:', error);
+            }
+        }
     };
+
+    // Load saved city preference on mount
+    useEffect(() => {
+        const loadPreferredCity = async () => {
+            try {
+                const savedCity = await AsyncStorage.getItem(STORAGE_KEYS.PREFERRED_CITY);
+                if (savedCity) {
+                    setSelectedCity(savedCity);
+                    setDisplayCity(getDisplayCityName(savedCity));
+                    console.log('✅ Loaded saved city preference:', savedCity);
+                }
+            } catch (error) {
+                console.error('Error loading city preference:', error);
+            } finally {
+                setHasLoadedPreference(true);
+            }
+        };
+
+        loadPreferredCity();
+    }, []);
+
+    // Sync with user's profile preference (cloud wins if different)
+    useEffect(() => {
+        const syncCityWithProfile = async () => {
+            if (!profile || !hasLoadedPreference) {
+                return;
+            }
+
+            const profileCity = profile.preferred_city;
+            if (profileCity && profileCity !== selectedCity) {
+                // Cloud preference exists and differs from local - cloud wins
+                setSelectedCity(profileCity);
+                setDisplayCity(getDisplayCityName(profileCity));
+                
+                // Update local storage to match cloud
+                try {
+                    await AsyncStorage.setItem(STORAGE_KEYS.PREFERRED_CITY, profileCity);
+                    console.log('✅ Synced city preference from profile:', profileCity);
+                } catch (error) {
+                    console.error('Error syncing city from profile:', error);
+                }
+            } else if (!profileCity && session?.user?.id) {
+                // No cloud preference exists - save current selection to cloud
+                try {
+                    await updatePreferredCity(session.user.id, selectedCity);
+                    console.log('✅ Saved current city to profile:', selectedCity);
+                } catch (error) {
+                    console.error('Error saving city to profile:', error);
+                }
+            }
+        };
+
+        syncCityWithProfile();
+    }, [profile, hasLoadedPreference, session]);
 
     // Load cities from database on component mount
     useEffect(() => {

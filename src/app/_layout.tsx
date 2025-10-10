@@ -10,6 +10,7 @@ import {
 } from "@expo-google-fonts/work-sans";
 import {CityProvider} from "../context/CityContext";
 import {ThemeProvider} from "../context/ThemeContext";
+import {FavoritesProvider} from "../context/FavoritesContext";
 import Header from "../components/Header";
 import {useAuth} from "../hooks/useAuth";
 import AuthProvider from "../providers/auth-provider";
@@ -50,8 +51,10 @@ export default function RootLayout() {
         <ThemeProvider>
             <AuthProvider>
                 <CityProvider>
-                    <SplashScreenController />
-                    <RootNavigator />
+                    <FavoritesProvider>
+                        <SplashScreenController />
+                        <RootNavigator />
+                    </FavoritesProvider>
                 </CityProvider>
             </AuthProvider>
         </ThemeProvider>

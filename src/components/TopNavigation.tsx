@@ -3,9 +3,11 @@ import { View, StyleSheet, TouchableOpacity, Modal, Animated, Pressable } from '
 import { useTheme } from '../context/ThemeContext';
 import { Text } from './ui';
 import ProfileModal from './ProfileModal';
+import { CityPicker } from './ui/CityPicker';
 import {useDeviceInfo} from "../hooks/useDeviceInfo";
 import {Logo} from "./ui/Logo";
 import { useAuth } from '../hooks/useAuth';
+import { useCityLocation } from '../context/CityContext';
 import { useRouter } from 'expo-router';
 
 interface TopNavigationProps {
@@ -16,8 +18,10 @@ export default function TopNavigation({ onNavLinkPress }: TopNavigationProps) {
   const { theme } = useTheme();
   const {isMobile} = useDeviceInfo();
   const { isLoggedIn } = useAuth();
+  const { displayCity, selectedCity, onCityChange } = useCityLocation();
   const router = useRouter();
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showCityPicker, setShowCityPicker] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [slideAnim] = useState(new Animated.Value(-250)); // Start off-screen
 
@@ -64,6 +68,19 @@ export default function TopNavigation({ onNavLinkPress }: TopNavigationProps) {
     setShowMobileMenu(false);
   };
 
+  const handleCityPickerOpen = () => {
+    setShowCityPicker(true);
+  };
+
+  const handleCityChange = (city: string) => {
+    onCityChange(city);
+    // Modal will close itself and call handleCityPickerClose via onClose
+  };
+
+  const handleCityPickerClose = () => {
+    setShowCityPicker(false);
+  };
+
   return (
     <>
       <View style={[
@@ -75,9 +92,9 @@ export default function TopNavigation({ onNavLinkPress }: TopNavigationProps) {
         ...theme.shadows.small,
       }]}>
         <View style={styles.content}>
-          {/* Left section - Mobile menu button */}
+          {/* Left section - Mobile menu button + Desktop city badge */}
           <View style={styles.leftSection}>
-            {isMobile && (
+            {isMobile ? (
               <TouchableOpacity
                 style={[styles.menuButton, { backgroundColor: theme.colors.background.secondary }]}
                 onPress={handleMobileMenuPress}
@@ -85,6 +102,20 @@ export default function TopNavigation({ onNavLinkPress }: TopNavigationProps) {
                 <Text variant="body1" color="primary" style={styles.menuIcon}>
                   {showMobileMenu ? '✕' : '☰'}
                 </Text>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                style={[styles.cityBadge, { 
+                  backgroundColor: theme.colors.background.secondary,
+                  borderColor: theme.colors.border.light,
+                }]}
+                onPress={handleCityPickerOpen}
+              >
+                <Text variant="caption" style={styles.cityEmoji}>📍</Text>
+                <Text variant="body2" color="primary" style={styles.cityText}>
+                  {displayCity}
+                </Text>
+                <Text variant="caption" color="secondary" style={styles.cityArrow}>▼</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -158,6 +189,28 @@ export default function TopNavigation({ onNavLinkPress }: TopNavigationProps) {
 
               {/* Menu links */}
               <View style={styles.menuLinks}>
+                {/* City Selector for Mobile */}
+                <TouchableOpacity
+                  style={[styles.sideNavLinkRow, {
+                    borderBottomColor: theme.colors.border.light,
+                  }]}
+                  onPress={handleCityPickerOpen}
+                >
+                  <View style={styles.cityMenuRow}>
+                    <Text variant="caption" style={styles.cityMenuEmoji}>📍</Text>
+                    <Text 
+                      variant="body1" 
+                      color="primary" 
+                      style={styles.cityMenuText}
+                      numberOfLines={1}
+                      ellipsizeMode="tail"
+                    >
+                      {displayCity}
+                    </Text>
+                  </View>
+                  <Text variant="body2" color="secondary" style={styles.chevron}>›</Text>
+                </TouchableOpacity>
+                
                 {navLinks.map((link) => (
                   <TouchableOpacity
                     key={link}
@@ -187,6 +240,17 @@ export default function TopNavigation({ onNavLinkPress }: TopNavigationProps) {
         visible={showProfileModal}
         onClose={handleCloseProfile}
       />
+
+      {/* City Picker Modal - Available to all users */}
+      {showCityPicker && (
+        <CityPicker
+          selectedCity={selectedCity}
+          onCityChange={handleCityChange}
+          onClose={handleCityPickerClose}
+          initiallyOpen={true}
+          showTrigger={false}
+        />
+      )}
     </>
   );
 }
@@ -315,9 +379,63 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderBottomWidth: 1,
   },
+  sideNavLinkRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+  },
   sideNavLinkText: {
     fontWeight: '500',
     fontSize: 16,
+  },
+  // City Badge Styles
+  cityBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 1,
+    gap: 4,
+  },
+  cityEmoji: {
+    fontSize: 12,
+  },
+  cityText: {
+    fontWeight: '600',
+    fontSize: 13,
+  },
+  cityArrow: {
+    fontSize: 10,
+  },
+  // City Menu Styles (Mobile)
+  cityMenuRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flex: 1,
+    minWidth: 0, // Allow flex shrinking
+    overflow: 'hidden', // Prevent content from expanding
+  },
+  cityMenuEmoji: {
+    fontSize: 16,
+    flexShrink: 0, // Don't shrink the emoji
+    width: 20, // Fixed width to prevent layout shifts
+  },
+  cityMenuText: {
+    fontWeight: '500',
+    fontSize: 16,
+    flex: 1,
+    minWidth: 0, // Allow text to shrink
+  },
+  chevron: {
+    flexShrink: 0, // Don't shrink the chevron
+    marginLeft: 8,
+    width: 20, // Fixed width for chevron
+    textAlign: 'right',
   },
   // Deprecated mobile menu styles (keeping for now in case of rollback)
   mobileMenu: {
