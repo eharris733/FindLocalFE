@@ -127,7 +127,9 @@ export default function SignIn() {
     async function signInWithGoogle() {
         setLoading(true);
         try {
-            const redirectTo = Platform.OS === 'web' ? window.location.origin : Linking.createURL('/');
+            const redirectTo = Platform.OS === 'web' 
+                ? `${window.location.origin}/auth/callback`
+                : Linking.createURL('/auth/callback');
             const { data, error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
                 options: { redirectTo },
@@ -163,7 +165,9 @@ export default function SignIn() {
         setLoading(true);
         const targetEmail = (values.resetEmail || email).trim();
         try {
-            const redirectTo = Platform.OS === 'web' ? window.location.origin : Linking.createURL('/');
+            const redirectTo = Platform.OS === 'web' 
+                ? `${window.location.origin}/auth/callback`
+                : Linking.createURL('/auth/callback');
             const { error } = await supabase.auth.resetPasswordForEmail(targetEmail, { redirectTo });
             setFeedback(
                 error
@@ -181,8 +185,13 @@ export default function SignIn() {
     async function sendMagicLinkForLinking(values: LoginFormValues) {
         try {
             setLoading(true);
-            const redirectTo = Platform.OS === 'web' ? window.location.origin : Linking.createURL('/');
-            const { data, error } = await supabase.auth.signInWithOtp({ email: values.email.trim(), options: { emailRedirectTo: redirectTo } });
+            const redirectTo = Platform.OS === 'web' 
+                ? `${window.location.origin}/auth/callback`
+                : Linking.createURL('/auth/callback');
+            const { data, error } = await supabase.auth.signInWithOtp({ 
+                email: values.email.trim(), 
+                options: { emailRedirectTo: redirectTo } 
+            });
             setFeedback(error
                 ? `Failed to send sign-in link - ${error.message}`
             : `A sign-in link has been sent to ${values.email.trim()}. Use it to link your Google account.`);

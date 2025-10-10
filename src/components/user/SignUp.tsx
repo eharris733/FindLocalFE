@@ -110,22 +110,64 @@ export default function SignUp() {
         },
     });
 
+    async function checkEmailExists(email: string): Promise<boolean> {
+        try {
+            // Call the Supabase function to check if email exists
+            const { data, error } = await supabase.rpc('check_email_exists', { 
+                email_to_check: email.trim().toLowerCase() 
+            });
+            
+            if (error) {
+                console.error('Error checking email:', error);
+                return false; // Fail open - allow signup attempt
+            }
+            
+            return data === true;
+        } catch (err) {
+            console.error('Error in checkEmailExists:', err);
+            return false; // Fail open - allow signup attempt
+        }
+    }
+
     async function signUpWithEmail(values: LoginFormValues) {
         setLoading(true);
         try {
+            // First, check if email already exists
+            const emailExists = await checkEmailExists(values.email);
+            
+            if (emailExists) {
+                setFeedback('An account with this email already exists. Please sign in instead.');
+                setShowResend(false);
+                setLoading(false);
+                return;
+            }
+
+            const redirectTo = Platform.OS === 'web' 
+                ? `${window.location.origin}/auth/callback`
+                : Linking.createURL('/auth/callback');
+
             const {
                 data: { session },
                 error,
             } = await supabase.auth.signUp({
-                email: values.email,
+                email: values.email.trim(),
                 password: values.password,
+                options: {
+                    emailRedirectTo: redirectTo,
+                }
             });
             
             if (error) {
                 setFeedback(error.message);
+                setShowResend(false);
             } else if (!session) {
-                setFeedback('Success! Please check your inbox for email verification.');
+                setFeedback('Success! Please check your inbox (and spam folder) for a verification email.');
                 setShowResend(true);
+            } else {
+                // Auto-logged in (if email confirmation is disabled in Supabase)
+                setFeedback('Account created successfully!');
+                setShowResend(false);
+                setTimeout(() => router.replace('/'), 1500);
             }
         } catch (err: any) {
             setFeedback(`Sign up failed: ${err?.message || 'Unknown error'}`);
@@ -137,7 +179,9 @@ export default function SignUp() {
     async function signUpWithGoogle() {
         setLoading(true);
         try {
-            const redirectTo = Platform.OS === 'web' ? window.location.origin : Linking.createURL('/');
+            const redirectTo = Platform.OS === 'web' 
+                ? `${window.location.origin}/auth/callback`
+                : Linking.createURL('/auth/callback');
             const { data, error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
                 options: { redirectTo },
@@ -165,7 +209,9 @@ export default function SignUp() {
     async function resendConfirmationEmail(values: LoginFormValues) {
         try {
             setLoading(true);
-            const redirectTo = Platform.OS === 'web' ? window.location.origin : Linking.createURL('/');
+            const redirectTo = Platform.OS === 'web' 
+                ? `${window.location.origin}/auth/callback`
+                : Linking.createURL('/auth/callback');
             const { error } = await (supabase.auth as any).resend({
                 type: 'signup',
                 email: values.email.trim(),

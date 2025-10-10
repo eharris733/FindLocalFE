@@ -24,8 +24,9 @@ export const supabase = createClient(supabaseUrl, supabasePublishableKey, {
   auth: {
     ...(Platform.OS !== 'web' ? { storage: ExpoWebSecureStoreAdapter } : {}),
     autoRefreshToken: true,
+    flowType: 'pkce',
     persistSession: true,
-    detectSessionInUrl: false,
+    detectSessionInUrl: true, // TODO: NEED TO TEST
   },
   db: { schema: 'public' },
 });
