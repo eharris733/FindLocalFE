@@ -18,12 +18,12 @@ export const Logo = ({isMobile = false, isMenu = false}: LogoProps) => <Image
 
 const styles = StyleSheet.create({
     logo: {
-        height: 60,
-        width: 240,
+        height: 80,
+        width: 320,
     },
     logoMobile: {
-        height: 40,
-        width: 140, // Even smaller on mobile to ensure no overlap
+        height: 50,
+        width: 180,
     },
     menuLogo: {
         height: 30,

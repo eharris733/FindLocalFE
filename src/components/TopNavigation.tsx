@@ -193,22 +193,22 @@ export default function TopNavigation({ onNavLinkPress }: TopNavigationProps) {
 
 const styles = StyleSheet.create({
   container: {
-    paddingVertical: 16,
+    paddingVertical: 8,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
     zIndex: 1000,
   },
   roomy: {
-    paddingVertical: 16,
+    paddingVertical: 8,
   },
   condensed: {
-    paddingVertical: 2,
+    paddingVertical: 4,
   },
   content: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    minHeight: 60,
+    minHeight: 48,
   },
   leftSection: {
     flex: 1,
