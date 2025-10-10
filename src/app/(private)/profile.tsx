@@ -8,7 +8,7 @@ import SignOutButton from "../../components/user/SignOutButton";
 export default function ProfileRoute() {
     const { profile } = useAuth()
     return (
-        <PageView title="Profile &amp; Settings">
+        <PageView title="Profile & Settings">
             <View style={styles.titleContainer}>
                 <Text>Welcome!</Text>
             </View>

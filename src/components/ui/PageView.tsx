@@ -34,13 +34,4 @@ const styles = StyleSheet.create({
         flexDirection: 'column',
         padding: 20,
     },
-    title: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        marginBottom: 20,
-    },
-    subtitle: {
-        fontSize: 16,
-        marginBottom: 20,
-    },
 })

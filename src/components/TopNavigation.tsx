@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Image, TouchableOpacity, Modal, Animated, Pressable } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Modal, Animated, Pressable } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import { Text } from './ui';
 import ProfileModal from './ProfileModal';
