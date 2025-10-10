@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Image, TouchableOpacity, Modal, Animated, Pressable } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Modal, Animated, Pressable } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import { Text } from './ui';
 import ProfileModal from './ProfileModal';
 import {useDeviceInfo} from "../hooks/useDeviceInfo";
 import {Logo} from "./ui/Logo";
+import { useAuth } from '../hooks/useAuth';
+import { useRouter } from 'expo-router';
 
 interface TopNavigationProps {
   onNavLinkPress?: (link: string) => void;
@@ -13,6 +15,8 @@ interface TopNavigationProps {
 export default function TopNavigation({ onNavLinkPress }: TopNavigationProps) {
   const { theme } = useTheme();
   const {isMobile} = useDeviceInfo();
+  const { isLoggedIn } = useAuth();
+  const router = useRouter();
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [slideAnim] = useState(new Animated.Value(-250)); // Start off-screen
@@ -36,7 +40,11 @@ export default function TopNavigation({ onNavLinkPress }: TopNavigationProps) {
   }, [showMobileMenu, slideAnim]);
 
   const handleProfilePress = () => {
-    setShowProfileModal(true);
+    if (isLoggedIn) {
+      setShowProfileModal(true);
+    } else {
+      router.push('/user/signin');
+    }
   };
 
   const handleCloseProfile = () => {
@@ -108,7 +116,7 @@ export default function TopNavigation({ onNavLinkPress }: TopNavigationProps) {
               onPress={handleProfilePress}
             >
               <Text variant="body2" color="primary" style={styles.profileText}>
-                Account
+                {isLoggedIn ? 'Account' : 'Sign In'}
               </Text>
             </TouchableOpacity>
           </View>
@@ -185,22 +193,22 @@ export default function TopNavigation({ onNavLinkPress }: TopNavigationProps) {
 
 const styles = StyleSheet.create({
   container: {
-    paddingVertical: 16,
+    paddingVertical: 8,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
     zIndex: 1000,
   },
   roomy: {
-    paddingVertical: 16,
+    paddingVertical: 8,
   },
   condensed: {
-    paddingVertical: 2,
+    paddingVertical: 4,
   },
   content: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    minHeight: 60,
+    minHeight: 48,
   },
   leftSection: {
     flex: 1,
