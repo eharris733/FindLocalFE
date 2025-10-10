@@ -14,15 +14,21 @@ interface CityData {
 interface CityPickerProps {
   selectedCity: string;
   onCityChange: (city: string) => void;
+  initiallyOpen?: boolean; // For external control - opens immediately if true
+  showTrigger?: boolean; // Show the trigger button or just the modal
+  onClose?: () => void; // Callback when modal is closed
 }
 
 export const CityPicker: React.FC<CityPickerProps> = ({
   selectedCity,
   onCityChange,
+  initiallyOpen = false,
+  showTrigger = true,
+  onClose,
 }) => {
   const { theme } = useTheme();
   const {loading, allCityData, displayCity} = useCityLocation();
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(initiallyOpen);
   const [expandedCities, setExpandedCities] = useState<Set<string>>(new Set());
 
 
@@ -40,6 +46,13 @@ export const CityPicker: React.FC<CityPickerProps> = ({
     onCityChange(selection);
     setIsOpen(false);
     setExpandedCities(new Set()); // Reset expanded state
+    onClose?.(); // Call external close handler if provided
+  };
+
+  const handleModalClose = () => {
+    setIsOpen(false);
+    setExpandedCities(new Set());
+    onClose?.(); // Call external close handler if provided
   };
 
   const isMainCitySelected = (cityName: string) => {
@@ -52,38 +65,40 @@ export const CityPicker: React.FC<CityPickerProps> = ({
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity
-        style={[
-          styles.picker,
-          {
-            backgroundColor: 'transparent',
-            borderColor: 'transparent',
-          }
-        ]}
-        onPress={() => setIsOpen(true)}
-      >
-        <View style={styles.locationRow}>
-          <Image 
-            source={require('../../../assets/monocle.png')} 
-            style={styles.locationIcon}
-          />
-          <Text variant="h3" color="primary" style={styles.locationText}>
-            Events Near{' '}
-            <Text variant="h3" style={{ fontWeight: '700', color: theme.colors.text.primary }}>
-              {displayCity}
+      {showTrigger && (
+        <TouchableOpacity
+          style={[
+            styles.picker,
+            {
+              backgroundColor: 'transparent',
+              borderColor: 'transparent',
+            }
+          ]}
+          onPress={() => setIsOpen(true)}
+        >
+          <View style={styles.locationRow}>
+            <Image 
+              source={require('../../../assets/monocle.png')} 
+              style={styles.locationIcon}
+            />
+            <Text variant="h3" color="primary" style={styles.locationText}>
+              Events Near{' '}
+              <Text variant="h3" style={{ fontWeight: '700', color: theme.colors.text.primary }}>
+                {displayCity}
+              </Text>
             </Text>
-          </Text>
-          <Text variant="body2" color="secondary" style={styles.arrow}>
-            ▼
-          </Text>
-        </View>
-      </TouchableOpacity>
+            <Text variant="body2" color="secondary" style={styles.arrow}>
+              ▼
+            </Text>
+          </View>
+        </TouchableOpacity>
+      )}
 
       <Modal
         visible={isOpen}
         animationType="slide"
         transparent={true}
-        onRequestClose={() => setIsOpen(false)}
+        onRequestClose={handleModalClose}
       >
         <View style={styles.modalOverlay}>
           <View style={[
@@ -102,7 +117,7 @@ export const CityPicker: React.FC<CityPickerProps> = ({
               </Text>
               <TouchableOpacity
                 style={styles.closeButton}
-                onPress={() => setIsOpen(false)}
+                onPress={handleModalClose}
               >
                 <Text variant="h3" color="secondary">✕</Text>
               </TouchableOpacity>

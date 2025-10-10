@@ -203,6 +203,17 @@ const MapViewWeb: React.FC<MapViewWebProps> = ({
     });
   };
 
+  // Function to center map on a specific coordinate
+  const centerMapOnMarker = (latitude: number, longitude: number) => {
+    if (mapRef.current) {
+      // console.log('🎯 Centering map on marker:', { latitude, longitude });
+      mapRef.current.animateCamera({
+        center: { latitude, longitude },
+        zoom: 15, // Zoom in closer when focusing on a marker
+      }, { duration: 500 }); // Smooth 500ms animation
+    }
+  };
+
   // Debug logging
   // console.log('MapView.web.tsx - Debug info:', {
   //   venuesCount: venues.length,
@@ -270,6 +281,7 @@ const MapViewWeb: React.FC<MapViewWebProps> = ({
               onCalloutToggle={handleCalloutToggle}
               onEventPress={onEventPress}
               onVenuePress={onVenuePress}
+              onMarkerPress={centerMapOnMarker}
             />
           );
         })}

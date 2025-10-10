@@ -112,9 +112,10 @@ interface UseEventsResult {
 
 interface UseEventsProps {
   selectedCity?: string;
+  favoriteEventIds?: string[]; // Array of favorited event IDs
 }
 
-export const useEvents = ({ selectedCity }: UseEventsProps = {}): UseEventsResult => {
+export const useEvents = ({ selectedCity, favoriteEventIds = [] }: UseEventsProps = {}): UseEventsResult => {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -201,11 +202,20 @@ export const useEvents = ({ selectedCity }: UseEventsProps = {}): UseEventsResul
   }, [events]);
 
   const filteredEvents = useMemo(() => {
-    return events.filter(event => {
+    let filtered = events.filter(event => {
       // Skip events without valid date
       if (!event.event_date) return false;
       
       const eventDate = new Date(event.event_date);
+
+      // Favorites filter - show only favorited events
+      if (filters.category === 'favorites') {
+        if (!favoriteEventIds.includes(event.id)) {
+          return false;
+        }
+        // If filtering by favorites, skip other category checks
+        return true;
+      }
 
       // Category filter - check music_info.genres and venue type/event_types
       if (filters.category !== 'all') {
@@ -415,7 +425,24 @@ export const useEvents = ({ selectedCity }: UseEventsProps = {}): UseEventsResul
 
       return true;
     });
-  }, [events, filters, venues]);
+
+    // Sort favorited events to the top (except when filtering by favorites category)
+    if (filters.category !== 'favorites' && favoriteEventIds.length > 0) {
+      filtered = filtered.sort((a, b) => {
+        const aIsFavorite = favoriteEventIds.includes(a.id);
+        const bIsFavorite = favoriteEventIds.includes(b.id);
+        
+        // Favorites first
+        if (aIsFavorite && !bIsFavorite) return -1;
+        if (!aIsFavorite && bIsFavorite) return 1;
+        
+        // If both are favorites or both are not, maintain original order (by date)
+        return 0;
+      });
+    }
+
+    return filtered;
+  }, [events, filters, venues, favoriteEventIds]);
 
   return {
     events,
