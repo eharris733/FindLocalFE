@@ -4,7 +4,7 @@ import { lightTheme, darkTheme, Theme } from '../theme';
 
 export type ThemeMode = 'light' | 'dark' | 'system';
 
-interface ThemeContextType {
+export interface ThemeContextType {
   theme: Theme;
   themeMode: ThemeMode;
   setThemeMode: (mode: ThemeMode) => void;

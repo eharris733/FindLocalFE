@@ -4,6 +4,7 @@ import { format } from 'date-fns';
 import type { Event } from '../types/events';
 import type { Venue } from '../types/venues';
 import { useTheme } from '../context/ThemeContext';
+import { useFavorites } from '../context/FavoritesContext';
 import { Text, Card } from './ui';
 import { getVenueById } from '../api/venues';
 import { getDisplayCityName } from '../utils/cityUtils';
@@ -39,8 +40,17 @@ function formatMilitaryTime(time: string): string {
 
 const EventCard: React.FC<EventCardProps> = ({ event, onPress, variant = 'default', venues }) => {
   const { theme } = useTheme();
+  const { isFavorite, toggleFavorite } = useFavorites();
   const [venue, setVenue] = useState<Venue | null>(null);
   const [showTooltip, setShowTooltip] = useState(false);
+  
+  const isEventFavorited = isFavorite(event.id);
+  
+  const handleToggleFavorite = async (e: any) => {
+    // Stop propagation to prevent opening the event modal
+    e.stopPropagation();
+    await toggleFavorite(event.id);
+  };
   
   // Look up venue information if event has a venue_id
   useEffect(() => {
@@ -135,6 +145,18 @@ const EventCard: React.FC<EventCardProps> = ({ event, onPress, variant = 'defaul
           />
           
           <View style={styles.compactContent}>
+            {/* Favorite heart icon */}
+            <TouchableOpacity 
+              onPress={handleToggleFavorite}
+              style={styles.compactFavoriteButton}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <Text style={[styles.compactFavoriteIcon, { 
+                color: isEventFavorited ? theme.colors.error : theme.colors.gray[400] 
+              }]}>
+                {isEventFavorited ? '❤️' : '🤍'}
+              </Text>
+            </TouchableOpacity>
             <Text variant="body1" numberOfLines={2} style={styles.compactTitle}>
               {event.title || 'Untitled Event'}
             </Text>
@@ -203,6 +225,18 @@ const EventCard: React.FC<EventCardProps> = ({ event, onPress, variant = 'defaul
             style={[styles.mockupImage, { backgroundColor: theme.colors.gray[100] }]}
             resizeMode="cover"
           />
+          {/* Favorite heart icon in top-left */}
+          <TouchableOpacity 
+            onPress={handleToggleFavorite}
+            style={[styles.favoriteButton, { backgroundColor: theme.colors.background.primary }]}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Text style={[styles.favoriteIcon, { 
+              color: isEventFavorited ? theme.colors.error : theme.colors.gray[400] 
+            }]}>
+              {isEventFavorited ? '❤️' : '🤍'}
+            </Text>
+          </TouchableOpacity>
           {/* Price tag in top-right corner - COMMENTED OUT until we have real price data */}
           {/* <View style={[styles.mockupPriceTag, { backgroundColor: theme.colors.background.primary }]}>
             <Text style={[styles.mockupPriceText, { color: theme.colors.text.primary }]}>
@@ -770,6 +804,35 @@ const styles = StyleSheet.create({
     borderTopWidth: 5,
     borderLeftColor: 'transparent',
     borderRightColor: 'transparent',
+  },
+  
+  // Favorite button styles
+  favoriteButton: {
+    position: 'absolute',
+    top: 8,
+    left: 8,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  favoriteIcon: {
+    fontSize: 18,
+  },
+  compactFavoriteButton: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    padding: 4,
+  },
+  compactFavoriteIcon: {
+    fontSize: 16,
   },
 });
 
