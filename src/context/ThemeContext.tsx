@@ -1,10 +1,10 @@
-import React, { createContext, useContext, ReactNode, useState } from 'react';
+import React, { createContext, useContext, ReactNode, useState, useEffect } from 'react';
 import { useColorScheme } from 'react-native';
 import { lightTheme, darkTheme, Theme } from '../theme';
 
 export type ThemeMode = 'light' | 'dark' | 'system';
 
-export interface ThemeContextType {
+interface ThemeContextType {
   theme: Theme;
   themeMode: ThemeMode;
   setThemeMode: (mode: ThemeMode) => void;

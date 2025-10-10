@@ -12,8 +12,6 @@ import { useTheme } from '../context/ThemeContext';
 import {Text, Card, Button, CityPicker} from './ui';
 import { ThemeToggle } from './ui/ThemeToggle';
 import {useCityLocation} from "../context/CityContext";
-import {useAuth} from "../hooks/useAuth";
-import {Link} from "expo-router";
 
 interface ProfileModalProps {
   visible: boolean;
@@ -21,7 +19,6 @@ interface ProfileModalProps {
 }
 
 export default function ProfileModal({ visible, onClose }: ProfileModalProps) {
-  const { isLoggedIn, profile } = useAuth();
   const { theme } = useTheme();
   const {selectedCity, displayCity, onCityChange} = useCityLocation();
   
@@ -63,7 +60,8 @@ export default function ProfileModal({ visible, onClose }: ProfileModalProps) {
         </View>
 
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-          {!isLoggedIn && (<Card style={styles.section}>
+          {/* Commented out Profile section - not needed for beta
+          <Card style={styles.section}>
             <Text variant="h4" style={styles.sectionTitle}>
               Profile
             </Text>
@@ -74,17 +72,15 @@ export default function ProfileModal({ visible, onClose }: ProfileModalProps) {
                 </Text>
               </View>
               <View style={styles.profileText}>
-                <Text variant="h5">{profile?.email}</Text>
+                <Text variant="h5">Guest User</Text>
                 <Text variant="body2" color="secondary">
                   Sign in to save favorites and get personalized recommendations
                 </Text>
               </View>
             </View>
-            <Link href="/user/signin">
-              <Button variant="primary" style={styles.signInButton} title="Sign In" />
-            </Link>
-          </Card>)
-          }
+            <Button variant="primary" style={styles.signInButton} title="Sign In" />
+          </Card>
+          */}
 
           <Card style={styles.section}>
             <Text variant="h4" style={styles.sectionTitle}>
