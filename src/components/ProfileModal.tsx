@@ -55,6 +55,16 @@ export default function ProfileModal({ visible, onClose }: ProfileModalProps) {
     router.push('/user/signup');
   };
 
+  const handleTermsPress = () => {
+    onClose();
+    router.push('/terms');
+  };
+
+  const handlePrivacyPress = () => {
+    onClose();
+    router.push('/privacy');
+  };
+
   return (
     <Modal
       visible={visible}
@@ -185,6 +195,27 @@ export default function ProfileModal({ visible, onClose }: ProfileModalProps) {
               />
             </View>
           </Card>
+
+          {/* Legal Section */}
+          <Card style={styles.section}>
+            <Text variant="h4" style={styles.sectionTitle}>
+              Legal
+            </Text>
+            <TouchableOpacity 
+              style={[styles.legalItem, { borderBottomColor: theme.colors.border.light }]}
+              onPress={handleTermsPress}
+            >
+              <Text variant="body1">Terms of Service</Text>
+              <Text variant="body2" color="secondary">›</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.legalItem}
+              onPress={handlePrivacyPress}
+            >
+              <Text variant="body1">Privacy Policy</Text>
+              <Text variant="body2" color="secondary">›</Text>
+            </TouchableOpacity>
+          </Card>
         </ScrollView>
       </SafeAreaView>
     </Modal>
@@ -276,5 +307,12 @@ const styles = StyleSheet.create({
   },
   betaButton: {
     alignSelf: 'stretch',
+  },
+  legalItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
   },
 });

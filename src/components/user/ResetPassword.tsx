@@ -18,6 +18,7 @@ export default function ResetPassword() {
     const [loading, setLoading] = useState<boolean>(false);
     const [feedback, setFeedback] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
+    const [hasSession, setHasSession] = useState<boolean | null>(null);
     const {
         control,
         handleSubmit,
@@ -31,6 +32,18 @@ export default function ResetPassword() {
     });
 
     const password = watch('newPassword');
+
+    // Check if user has a valid session on mount
+    React.useEffect(() => {
+        const checkSession = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            setHasSession(!!session);
+            if (!session) {
+                setFeedback('Your password reset link has expired or is invalid. Please request a new one.');
+            }
+        };
+        checkSession();
+    }, []);
 
     const styles = StyleSheet.create({
         container: {
@@ -95,6 +108,16 @@ export default function ResetPassword() {
     async function passwordReset(values: RestFormValues) {
         try {
             setLoading(true);
+            
+            // Verify we still have a valid session
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) {
+                setFeedback('Your session has expired. Please request a new password reset link.');
+                setSuccess(false);
+                setHasSession(false);
+                return;
+            }
+            
             const { data, error } = await supabase.auth.updateUser({ password: values.newPassword });
             if (error) {
                 setFeedback(error.message);
@@ -103,6 +126,11 @@ export default function ResetPassword() {
             }
             setFeedback('Password updated successfully! You can now sign in with your new password.');
             setSuccess(true);
+            
+            // Auto-redirect after 2 seconds
+            setTimeout(() => {
+                router.push('/user/signin');
+            }, 2000);
         } catch (e: any) {
             setFeedback(e?.message || 'Failed to update password');
             setSuccess(false);
@@ -127,13 +155,28 @@ export default function ResetPassword() {
                 </View>
             )}
 
-            <View style={styles.infoBox}>
-                <Text variant="body2" color="secondary">
-                    Enter your new password below. Make sure it's at least 6 characters long.
-                </Text>
-            </View>
+            {hasSession === null ? (
+                <View style={styles.loadingOverlay}>
+                    <ActivityIndicator size="large" color={theme.colors.primary[500]} />
+                </View>
+            ) : hasSession === false ? (
+                <View style={styles.buttonContainer}>
+                    <Button 
+                        title="Request New Reset Link" 
+                        variant="primary" 
+                        onPress={() => router.push('/user/signin')}
+                        fullWidth
+                    />
+                </View>
+            ) : (
+                <>
+                    <View style={styles.infoBox}>
+                        <Text variant="body2" color="secondary">
+                            Enter your new password below. Make sure it's at least 6 characters long.
+                        </Text>
+                    </View>
 
-            <Controller
+                    <Controller
                 control={control}
                 rules={{
                     required: 'Password is required',
@@ -178,32 +221,34 @@ export default function ResetPassword() {
                 name="confirmPassword"
             />
 
-            <View style={styles.buttonContainer}>
-                <Button 
-                    title="Update Password" 
-                    variant="primary" 
-                    onPress={handleSubmit(passwordReset)}
-                    loading={loading}
-                    fullWidth
-                />
-                {success && (
-                    <Button 
-                        title="Go to Sign In" 
-                        variant="outline" 
-                        onPress={() => router.push('/user/signin')}
-                        fullWidth
-                    />
-                )}
-            </View>
+                    <View style={styles.buttonContainer}>
+                        <Button 
+                            title="Update Password" 
+                            variant="primary" 
+                            onPress={handleSubmit(passwordReset)}
+                            loading={loading}
+                            fullWidth
+                        />
+                        {success && (
+                            <Button 
+                                title="Go to Sign In" 
+                                variant="outline" 
+                                onPress={() => router.push('/user/signin')}
+                                fullWidth
+                            />
+                        )}
+                    </View>
 
-            {!success && (
-                <View style={styles.linkContainer}>
-                    <TouchableOpacity onPress={() => router.push('/user/signin')}>
-                        <Text variant="body2" style={styles.linkText}>
-                            Back to Sign In
-                        </Text>
-                    </TouchableOpacity>
-                </View>
+                    {!success && (
+                        <View style={styles.linkContainer}>
+                            <TouchableOpacity onPress={() => router.push('/user/signin')}>
+                                <Text variant="body2" style={styles.linkText}>
+                                    Back to Sign In
+                                </Text>
+                            </TouchableOpacity>
+                        </View>
+                    )}
+                </>
             )}
         </View>
     )

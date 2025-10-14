@@ -64,7 +64,7 @@ export default function AuthCallback() {
           if (errorStr === 'access_denied') {
             setError('Email verification link has expired or has already been used. Please request a new one.');
           } else if (errorStr.includes('expired')) {
-            setError('This link has expired. Please request a new verification email.');
+            setError('This link has expired. Please request a new link.');
           } else {
             setError(error_description 
               ? String(error_description) 
@@ -75,6 +75,17 @@ export default function AuthCallback() {
           // Redirect to sign in after showing error
           setTimeout(() => router.replace('/user/signin'), 4000);
           return;
+        }
+
+        // Special handling for password recovery without tokens (session-based)
+        if (type === 'recovery' && !access_token) {
+          // Check if we have an existing session (some flows set the session automatically)
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session) {
+            console.log('Recovery session found, redirecting to reset page');
+            setTimeout(() => router.replace('/user/reset'), 500);
+            return;
+          }
         }
 
         // Handle token-based authentication (email confirmation, magic links)
@@ -101,6 +112,13 @@ export default function AuthCallback() {
           }
 
           console.log('Session established successfully for user:', session.user.email);
+          
+          // Check if this is a password recovery flow
+          if (type === 'recovery') {
+            console.log('Password recovery detected, redirecting to reset page');
+            setTimeout(() => router.replace('/user/reset'), 500);
+            return;
+          }
           
           // Success! Redirect to home
           setTimeout(() => router.replace('/'), 500);

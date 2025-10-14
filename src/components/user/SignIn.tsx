@@ -108,6 +108,17 @@ export default function SignIn() {
             marginTop: 24,
             gap: 12,
         },
+        legalLinksContainer: {
+            flexDirection: 'row',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: 8,
+            marginTop: 16,
+        },
+        legalLink: {
+            color: theme.colors.primary[500],
+            textDecorationLine: 'underline',
+        },
     });
 
     async function signInWithEmail(values: LoginFormValues) {
@@ -169,12 +180,12 @@ export default function SignIn() {
                 ? `${window.location.origin}/auth/callback`
                 : Linking.createURL('/auth/callback');
             const { error } = await supabase.auth.resetPasswordForEmail(targetEmail, { redirectTo });
-            setFeedback(
-                error
-                    ? `Reset failed: ${error.message}`
-                    : `If you have an account, a reset email will be sent to ${targetEmail}`
-            );
-            setForgotMode(false);
+            if (error) {
+                setFeedback(`Reset failed: ${error.message}`);
+            } else {
+                setFeedback(`Password reset link sent! Check your email at ${targetEmail} for a link to reset your password. The link will expire in 1 hour.`);
+                setForgotMode(false);
+            }
         } catch (err: any) {
             setFeedback(`Reset failed ${err?.message || 'Unknown error'}`);
         } finally {
@@ -369,6 +380,20 @@ export default function SignIn() {
                     onPress={() => router.push('/')}
                     fullWidth
                 />
+            </View>
+
+            <View style={styles.legalLinksContainer}>
+                <TouchableOpacity onPress={() => router.push('/terms')}>
+                    <Text variant="body2" style={styles.legalLink}>
+                        Terms of Service
+                    </Text>
+                </TouchableOpacity>
+                <Text variant="body2" color="secondary">•</Text>
+                <TouchableOpacity onPress={() => router.push('/privacy')}>
+                    <Text variant="body2" style={styles.legalLink}>
+                        Privacy Policy
+                    </Text>
+                </TouchableOpacity>
             </View>
         </View>
     )

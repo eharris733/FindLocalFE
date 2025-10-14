@@ -108,6 +108,17 @@ export default function SignUp() {
         dividerText: {
             marginHorizontal: 16,
         },
+        legalLinksContainer: {
+            flexDirection: 'row',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: 8,
+            marginTop: 16,
+        },
+        legalLink: {
+            color: theme.colors.primary[500],
+            textDecorationLine: 'underline',
+        },
     });
 
     async function checkEmailExists(email: string): Promise<boolean> {
@@ -353,6 +364,20 @@ export default function SignUp() {
                     onPress={() => router.push('/')}
                     fullWidth
                 />
+            </View>
+
+            <View style={styles.legalLinksContainer}>
+                <TouchableOpacity onPress={() => router.push('/terms')}>
+                    <Text variant="body2" style={styles.legalLink}>
+                        Terms of Service
+                    </Text>
+                </TouchableOpacity>
+                <Text variant="body2" color="secondary">•</Text>
+                <TouchableOpacity onPress={() => router.push('/privacy')}>
+                    <Text variant="body2" style={styles.legalLink}>
+                        Privacy Policy
+                    </Text>
+                </TouchableOpacity>
             </View>
         </View>
     )
