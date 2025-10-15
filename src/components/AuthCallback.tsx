@@ -4,6 +4,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { supabase } from '../supabase';
 import { Text } from './ui';
 import { useTheme } from '../context/ThemeContext';
+import { upsertProfile } from '../api/profiles';
 
 export default function AuthCallback() {
   const { theme } = useTheme();
@@ -39,6 +40,40 @@ export default function AuthCallback() {
       marginTop: 16,
     },
   });
+
+  // Helper function to sync user metadata to profiles table
+  const syncUserMetadataToProfile = async (userId: string) => {
+    try {
+      // Get the user with their metadata
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
+      if (userError || !user) {
+        console.error('Error fetching user for metadata sync:', userError);
+        return;
+      }
+
+      console.log('User metadata:', user.user_metadata);
+
+      // Extract marketing_opt_in from user_metadata
+      const marketingOptIn = user.user_metadata?.marketing_opt_in;
+      
+      // Only update if the metadata exists
+      if (marketingOptIn !== undefined) {
+        console.log('Syncing marketing_opt_in to profile:', marketingOptIn);
+        
+        await upsertProfile({
+          id: userId,
+          marketing_opt_in: marketingOptIn,
+          email: user.email,
+        });
+        
+        console.log('Successfully synced marketing_opt_in to profile');
+      }
+    } catch (err) {
+      console.error('Error syncing user metadata to profile:', err);
+      // Don't throw - this shouldn't block the auth flow
+    }
+  };
 
   useEffect(() => {
     const handleAuthCallback = async () => {
@@ -147,6 +182,9 @@ export default function AuthCallback() {
           if (data?.session) {
             console.log('Session established via PKCE for user:', data.session.user.email);
             
+            // Sync user metadata to profile (for new signups)
+            await syncUserMetadataToProfile(data.session.user.id);
+            
             // Regular sign-in/sign-up
             console.log('Regular auth flow, redirecting to home');
             setTimeout(() => router.replace('/'), 500);
@@ -194,6 +232,9 @@ export default function AuthCallback() {
           }
 
           console.log('Session established successfully for user:', session.user.email);
+          
+          // Sync user metadata to profile (for new signups)
+          await syncUserMetadataToProfile(session.user.id);
           
           // Check if this is a password recovery flow
           // Check both the type param and the URL itself
