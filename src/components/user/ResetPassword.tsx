@@ -124,12 +124,12 @@ export default function ResetPassword() {
                 setSuccess(false);
                 return;
             }
-            setFeedback('Password updated successfully! You can now sign in with your new password.');
+            setFeedback('Password updated successfully! You are now signed in with your new password.');
             setSuccess(true);
             
-            // Auto-redirect after 2 seconds
+            // Auto-redirect to home after 2 seconds (user is already authenticated)
             setTimeout(() => {
-                router.push('/user/signin');
+                router.replace('/');
             }, 2000);
         } catch (e: any) {
             setFeedback(e?.message || 'Failed to update password');
@@ -191,7 +191,7 @@ export default function ResetPassword() {
                         value={value}
                         onBlur={onBlur}
                         onChangeText={onChange}
-                        secureTextEntry
+                        showPasswordToggle
                         placeholder="Enter new password (min. 6 characters)"
                         autoCapitalize='none'
                         error={errors.newPassword?.message}
@@ -212,7 +212,7 @@ export default function ResetPassword() {
                         value={value}
                         onBlur={onBlur}
                         onChangeText={onChange}
-                        secureTextEntry
+                        showPasswordToggle
                         placeholder="Re-enter your new password"
                         autoCapitalize='none'
                         error={errors.confirmPassword?.message}
@@ -229,14 +229,6 @@ export default function ResetPassword() {
                             loading={loading}
                             fullWidth
                         />
-                        {success && (
-                            <Button 
-                                title="Go to Sign In" 
-                                variant="outline" 
-                                onPress={() => router.push('/user/signin')}
-                                fullWidth
-                            />
-                        )}
                     </View>
 
                     {!success && (

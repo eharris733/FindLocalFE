@@ -7,10 +7,13 @@ import Input from "../ui/Input";
 import {useRouter} from "expo-router";
 import * as Linking from "expo-linking";
 import { useTheme } from "../../context/ThemeContext";
+import { AntDesign } from '@expo/vector-icons';
 
 type LoginFormValues = {
     email: string;
     password: string;
+    agreedToTerms: boolean;
+    marketingOptIn: boolean;
 }
 
 export default function SignUp() {
@@ -28,6 +31,8 @@ export default function SignUp() {
         defaultValues: {
             email: "",
             password: "",
+            agreedToTerms: false,
+            marketingOptIn: false,
         },
     });
 
@@ -119,6 +124,44 @@ export default function SignUp() {
             color: theme.colors.primary[500],
             textDecorationLine: 'underline',
         },
+        checkboxContainer: {
+            gap: 12,
+            marginTop: 8,
+        },
+        checkboxRow: {
+            flexDirection: 'row',
+            alignItems: 'flex-start',
+            gap: 12,
+        },
+        checkbox: {
+            width: 20,
+            height: 20,
+            borderWidth: 2,
+            borderColor: theme.colors.border.medium,
+            borderRadius: 4,
+            justifyContent: 'center',
+            alignItems: 'center',
+            marginTop: 2,
+        },
+        checkboxChecked: {
+            backgroundColor: theme.colors.primary[500],
+            borderColor: theme.colors.primary[500],
+        },
+        checkboxInner: {
+            width: 12,
+            height: 12,
+            backgroundColor: 'white',
+        },
+        checkboxLabel: {
+            flex: 1,
+            lineHeight: 20,
+        },
+        checkboxError: {
+            color: theme.colors.error,
+            fontSize: 12,
+            marginTop: 4,
+            marginLeft: 32,
+        },
     });
 
     async function checkEmailExists(email: string): Promise<boolean> {
@@ -165,6 +208,11 @@ export default function SignUp() {
                 password: values.password,
                 options: {
                     emailRedirectTo: redirectTo,
+                    data: {
+                        marketing_opt_in: values.marketingOptIn,
+                        agreed_to_terms: values.agreedToTerms,
+                        agreed_to_terms_date: new Date().toISOString(),
+                    }
                 }
             });
             
@@ -302,12 +350,89 @@ export default function SignUp() {
                         onChangeText={onChange}
                         value={value}
                         autoCapitalize='none'
-                        secureTextEntry
+                        showPasswordToggle
                         error={errors.password?.message}
                     />
                 )}
                 name="password"
             />
+
+            <View style={styles.checkboxContainer}>
+                <Controller
+                    control={control}
+                    rules={{
+                        required: 'You must agree to the Terms of Service to create an account',
+                    }}
+                    render={({ field: { onChange, value } }) => (
+                        <View>
+                            <TouchableOpacity 
+                                style={styles.checkboxRow}
+                                onPress={() => onChange(!value)}
+                                activeOpacity={0.7}
+                            >
+                                <View style={[styles.checkbox, value && styles.checkboxChecked]}>
+                                    {value && <View style={styles.checkboxInner} />}
+                                </View>
+                                <Text variant="body2" style={styles.checkboxLabel}>
+                                    I agree to the{' '}
+                                    <Text 
+                                        style={styles.legalLink}
+                                        onPress={(e) => {
+                                            e.stopPropagation();
+                                            if (Platform.OS === 'web') {
+                                                window.open('/terms', '_blank');
+                                            } else {
+                                                router.push('/terms');
+                                            }
+                                        }}
+                                    >
+                                        Terms of Service
+                                    </Text>
+                                    {' '}and{' '}
+                                    <Text 
+                                        style={styles.legalLink}
+                                        onPress={(e) => {
+                                            e.stopPropagation();
+                                            if (Platform.OS === 'web') {
+                                                window.open('/privacy', '_blank');
+                                            } else {
+                                                router.push('/privacy');
+                                            }
+                                        }}
+                                    >
+                                        Privacy Policy
+                                    </Text>
+                                </Text>
+                            </TouchableOpacity>
+                            {errors.agreedToTerms && (
+                                <Text style={styles.checkboxError}>
+                                    {errors.agreedToTerms.message}
+                                </Text>
+                            )}
+                        </View>
+                    )}
+                    name="agreedToTerms"
+                />
+
+                <Controller
+                    control={control}
+                    render={({ field: { onChange, value } }) => (
+                        <TouchableOpacity 
+                            style={styles.checkboxRow}
+                            onPress={() => onChange(!value)}
+                            activeOpacity={0.7}
+                        >
+                            <View style={[styles.checkbox, value && styles.checkboxChecked]}>
+                                {value && <View style={styles.checkboxInner} />}
+                            </View>
+                            <Text variant="body2" style={styles.checkboxLabel}>
+                                Send me personalized event recommendations and FindLocal updates (optional)
+                            </Text>
+                        </TouchableOpacity>
+                    )}
+                    name="marketingOptIn"
+                />
+            </View>
 
             <View style={styles.buttonContainer}>
                 <Button 
@@ -331,6 +456,7 @@ export default function SignUp() {
                     variant="outline" 
                     onPress={signUpWithGoogle}
                     fullWidth
+                    icon={<AntDesign name="google" size={20} color={theme.colors.text.primary} />}
                 />
                 
                 {showResend && (
@@ -343,27 +469,28 @@ export default function SignUp() {
                 )}
             </View>
 
-            <View style={styles.linkContainer}>
-                <Text variant="body2" color="secondary">
-                    Already have an account?
-                </Text>
-                <TouchableOpacity onPress={() => router.push('/user/signin')}>
-                    <Text variant="body2" style={styles.linkText}>
-                        Sign In
-                    </Text>
-                </TouchableOpacity>
-            </View>
-
             <View style={styles.guestContainer}>
-                <View style={styles.divider}>
-                    <View style={styles.dividerLine} />
+                <View style={styles.linkContainer}>
+                    <Text variant="body2" color="secondary">
+                        Already have an account?
+                    </Text>
+                    <TouchableOpacity onPress={() => router.push('/user/signin')}>
+                        <Text variant="body2" style={styles.linkText}>
+                            Sign In
+                        </Text>
+                    </TouchableOpacity>
                 </View>
-                <Button 
-                    title="Continue as Guest" 
-                    variant="ghost" 
-                    onPress={() => router.push('/')}
-                    fullWidth
-                />
+                
+                <View style={[styles.linkContainer, { marginTop: 8, justifyContent: 'center' }]}>
+                    <Text variant="body2" color="secondary">
+                        Don't want to make an account?
+                    </Text>
+                    <TouchableOpacity onPress={() => router.push('/')}>
+                        <Text variant="body2" style={styles.linkText}>
+                            Continue as Guest
+                        </Text>
+                    </TouchableOpacity>
+                </View>
             </View>
 
             <View style={styles.legalLinksContainer}>
