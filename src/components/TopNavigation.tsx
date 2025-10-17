@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, TouchableOpacity, Modal, Animated, Pressable } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { Text } from './ui';
 import ProfileModal from './ProfileModal';
@@ -111,7 +112,7 @@ export default function TopNavigation({ onNavLinkPress }: TopNavigationProps) {
                 }]}
                 onPress={handleCityPickerOpen}
               >
-                <Text variant="caption" style={styles.cityEmoji}>📍</Text>
+                <Ionicons name="location-outline" size={16} color={theme.colors.primary[600]} />
                 <Text variant="body2" color="primary" style={styles.cityText}>
                   {displayCity}
                 </Text>
@@ -399,10 +400,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 16,
     borderWidth: 1,
-    gap: 4,
-  },
-  cityEmoji: {
-    fontSize: 12,
+    gap: 6,
   },
   cityText: {
     fontWeight: '600',

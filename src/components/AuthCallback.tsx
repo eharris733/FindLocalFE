@@ -4,12 +4,15 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { supabase } from '../supabase';
 import { Text } from './ui';
 import { useTheme } from '../context/ThemeContext';
+import { upsertProfile } from '../api/profiles';
 
 export default function AuthCallback() {
   const { theme } = useTheme();
   const router = useRouter();
   const params = useLocalSearchParams();
   const [error, setError] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [hasProcessed, setHasProcessed] = useState(false);
 
   const styles = StyleSheet.create({
     container: {
@@ -38,11 +41,63 @@ export default function AuthCallback() {
     },
   });
 
+  // Helper function to sync user metadata to profiles table
+  const syncUserMetadataToProfile = async (userId: string) => {
+    try {
+      // Get the user with their metadata
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
+      if (userError || !user) {
+        console.error('Error fetching user for metadata sync:', userError);
+        return;
+      }
+
+      console.log('User metadata:', user.user_metadata);
+
+      // Extract marketing_opt_in from user_metadata
+      const marketingOptIn = user.user_metadata?.marketing_opt_in;
+      
+      // Only update if the metadata exists
+      if (marketingOptIn !== undefined) {
+        console.log('Syncing marketing_opt_in to profile:', marketingOptIn);
+        
+        await upsertProfile({
+          id: userId,
+          marketing_opt_in: marketingOptIn,
+          email: user.email,
+        });
+        
+        console.log('Successfully synced marketing_opt_in to profile');
+      }
+    } catch (err) {
+      console.error('Error syncing user metadata to profile:', err);
+      // Don't throw - this shouldn't block the auth flow
+    }
+  };
+
   useEffect(() => {
     const handleAuthCallback = async () => {
+      // Prevent multiple simultaneous executions
+      if (isProcessing || hasProcessed) {
+        console.log('Already processing auth callback, skipping...');
+        return;
+      }
+      
+      setIsProcessing(true);
+      setHasProcessed(true);
+      
       try {
-        // Check if we have auth tokens in the URL
+        // Log all params for debugging
+        console.log('=== AUTH CALLBACK DEBUG ===');
+        console.log('All URL params:', params);
+        const fullUrl = typeof window !== 'undefined' ? window.location.href : 'N/A';
+        console.log('Full URL:', fullUrl);
+        console.log('URL search params:', typeof window !== 'undefined' ? window.location.search : 'N/A');
+        console.log('URL hash:', typeof window !== 'undefined' ? window.location.hash : 'N/A');
+        
+        // Check if we have auth tokens or code in the URL
         const { 
+          code,
           access_token, 
           refresh_token, 
           error: urlError, 
@@ -50,11 +105,20 @@ export default function AuthCallback() {
           type 
         } = params;
 
-        console.log('Auth callback params:', { 
+        // Also check if 'type=recovery' is in the URL string directly
+        // (in case it's not parsed into params correctly)
+        const urlHasRecovery = typeof window !== 'undefined' && 
+          (window.location.href.includes('type=recovery') || 
+           window.location.href.includes('type%3Drecovery') ||
+           window.location.hash.includes('type=recovery'));
+
+        console.log('Parsed auth params:', { 
+          hasCode: !!code,
           hasAccessToken: !!access_token, 
           hasRefreshToken: !!refresh_token, 
           error: urlError,
-          type 
+          type,
+          urlHasRecovery
         });
 
         // Handle error cases from URL
@@ -64,7 +128,7 @@ export default function AuthCallback() {
           if (errorStr === 'access_denied') {
             setError('Email verification link has expired or has already been used. Please request a new one.');
           } else if (errorStr.includes('expired')) {
-            setError('This link has expired. Please request a new verification email.');
+            setError('This link has expired. Please request a new link.');
           } else {
             setError(error_description 
               ? String(error_description) 
@@ -77,7 +141,74 @@ export default function AuthCallback() {
           return;
         }
 
+        // Determine if this is a password recovery flow
+        const isPasswordRecovery = type === 'recovery' || urlHasRecovery;
+        
+        // Password Recovery Flow: The session is automatically established by Supabase
+        // when the user clicks the reset link. We just need to verify the session exists.
+        if (code && isPasswordRecovery && !access_token) {
+          console.log('Password recovery link detected, checking session...');
+          
+          // Supabase automatically sets the session when user clicks password reset link
+          // We just need to verify it exists
+          const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+          
+          if (sessionError || !session) {
+            console.error('Recovery session error:', sessionError);
+            setError('Failed to verify reset link. The link may have expired. Please request a new one.');
+            setTimeout(() => router.replace('/user/signin'), 3000);
+            return;
+          }
+
+          console.log('Recovery session established for user:', session.user.email);
+          setTimeout(() => router.replace('/user/reset'), 500);
+          return;
+        }
+
+        // PKCE Flow: Exchange code for session (OAuth, social logins, email confirmation)
+        if (code && !isPasswordRecovery && !access_token) {
+          console.log('PKCE code detected, exchanging for session...');
+          
+          // Try to exchange the code for a session
+          const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(String(code));
+          
+          if (exchangeError) {
+            console.error('Code exchange error:', exchangeError);
+            setError('Authentication failed. Please try signing in again.');
+            setTimeout(() => router.replace('/user/signin'), 3000);
+            return;
+          }
+
+          if (data?.session) {
+            console.log('Session established via PKCE for user:', data.session.user.email);
+            
+            // Sync user metadata to profile (for new signups)
+            await syncUserMetadataToProfile(data.session.user.id);
+            
+            // Regular sign-in/sign-up
+            console.log('Regular auth flow, redirecting to home');
+            setTimeout(() => router.replace('/'), 500);
+            return;
+          } else {
+            setError('Could not establish session. Please try again.');
+            setTimeout(() => router.replace('/user/signin'), 3000);
+            return;
+          }
+        }
+
+        // Special handling for password recovery without tokens (session-based)
+        if (type === 'recovery' && !access_token && !code) {
+          // Check if we have an existing session (some flows set the session automatically)
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session) {
+            console.log('Recovery session found, redirecting to reset page');
+            setTimeout(() => router.replace('/user/reset'), 500);
+            return;
+          }
+        }
+
         // Handle token-based authentication (email confirmation, magic links)
+        // This is the older flow, but we still support it
         if (access_token && refresh_token) {
           const { error: sessionError } = await supabase.auth.setSession({
             access_token: String(access_token),
@@ -102,6 +233,17 @@ export default function AuthCallback() {
 
           console.log('Session established successfully for user:', session.user.email);
           
+          // Sync user metadata to profile (for new signups)
+          await syncUserMetadataToProfile(session.user.id);
+          
+          // Check if this is a password recovery flow
+          // Check both the type param and the URL itself
+          if (type === 'recovery' || urlHasRecovery) {
+            console.log('Password recovery detected, redirecting to reset page');
+            setTimeout(() => router.replace('/user/reset'), 500);
+            return;
+          }
+          
           // Success! Redirect to home
           setTimeout(() => router.replace('/'), 500);
         } else {
@@ -120,11 +262,18 @@ export default function AuthCallback() {
         console.error('Auth callback error:', err);
         setError('An unexpected error occurred. Please try signing in again.');
         setTimeout(() => router.replace('/user/signin'), 3000);
+      } finally {
+        setIsProcessing(false);
       }
     };
 
-    handleAuthCallback();
-  }, [params, router]);
+    // Only run when params are available AND we haven't processed yet
+    if (!hasProcessed && (Object.keys(params).length > 0 || (typeof window !== 'undefined' && (window.location.search || window.location.hash)))) {
+      handleAuthCallback();
+    } else if (!hasProcessed) {
+      console.log('Waiting for params...');
+    }
+  }, [params, router, hasProcessed]);
 
   if (error) {
     return (

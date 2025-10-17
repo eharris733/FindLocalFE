@@ -1,5 +1,5 @@
 import React from 'react';
-import { TouchableOpacity, TouchableOpacityProps, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import { TouchableOpacity, TouchableOpacityProps, Text, StyleSheet, ActivityIndicator, View } from 'react-native';
 import { useTheme } from '../../context/ThemeContext';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost';
@@ -11,6 +11,7 @@ interface ButtonProps extends Omit<TouchableOpacityProps, 'style'> {
   size?: ButtonSize;
   loading?: boolean;
   fullWidth?: boolean;
+  icon?: React.ReactNode;
   style?: TouchableOpacityProps['style'];
 }
 
@@ -21,6 +22,7 @@ export const Button: React.FC<ButtonProps> = ({
   loading = false,
   fullWidth = false,
   disabled,
+  icon,
   style,
   ...props
 }) => {
@@ -140,7 +142,10 @@ export const Button: React.FC<ButtonProps> = ({
           }
         />
       ) : (
-        <Text style={getTextStyles()}>{title}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          {icon}
+          <Text style={getTextStyles()}>{title}</Text>
+        </View>
       )}
     </TouchableOpacity>
   );
