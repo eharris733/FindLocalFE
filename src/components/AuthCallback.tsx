@@ -96,14 +96,24 @@ export default function AuthCallback() {
       setHasProcessed(true);
       
       try {
+        // For web, extract type from URL directly before Supabase processes it
+        let authType = params.type as string | undefined;
+        
+        // On web, also check the URL hash/search params directly
+        if (typeof window !== 'undefined' && !authType) {
+          const urlParams = new URLSearchParams(window.location.search);
+          const hashParams = new URLSearchParams(window.location.hash.substring(1));
+          authType = urlParams.get('type') || hashParams.get('type') || undefined;
+        }
+
         // Check for URL errors first
         const { 
           error: urlError, 
           error_description,
-          type,
         } = params;
 
         logger.debug('Auth callback initialized with params:', params);
+        logger.debug('Detected auth type:', authType);
 
         // Handle error cases from URL
         if (urlError) {
@@ -139,7 +149,7 @@ export default function AuthCallback() {
           logger.info('Session found for user:', session.user.email);
           
           // Check if this is a password recovery flow
-          if (type === 'recovery') {
+          if (authType === 'recovery') {
             logger.info('Password recovery flow detected, redirecting to reset page...');
             // For password recovery, redirect to the reset password page
             router.replace('/user/reset');

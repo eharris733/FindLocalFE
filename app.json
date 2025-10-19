@@ -31,16 +31,8 @@
       }
     },
     "plugins": [
-      [
-        "expo-font",
-        {
-          "fonts": [
-            "node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Ionicons.ttf",
-            "node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/AntDesign.ttf"
-          ]
-        }
-      ],
-      "expo-router"
+      "expo-router",
+      "expo-secure-store"
     ]
   }
 }
