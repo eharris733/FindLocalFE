@@ -211,7 +211,8 @@ export default function SignUp() {
                     data: {
                         marketing_opt_in: values.marketingOptIn,
                         agreed_to_terms: values.agreedToTerms,
-                        agreed_to_terms_date: new Date().toISOString(),
+                        // Note: agreed_to_terms_date is set server-side in database trigger
+                        // for legal compliance (cannot be manipulated by client)
                     }
                 }
             });
