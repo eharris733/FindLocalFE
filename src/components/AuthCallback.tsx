@@ -100,6 +100,7 @@ export default function AuthCallback() {
         const { 
           error: urlError, 
           error_description,
+          type,
         } = params;
 
         logger.debug('Auth callback initialized with params:', params);
@@ -136,6 +137,14 @@ export default function AuthCallback() {
 
         if (session) {
           logger.info('Session found for user:', session.user.email);
+          
+          // Check if this is a password recovery flow
+          if (type === 'recovery') {
+            logger.info('Password recovery flow detected, redirecting to reset page...');
+            // For password recovery, redirect to the reset password page
+            router.replace('/user/reset');
+            return;
+          }
           
           // Sync user metadata to profile
           await syncUserMetadataToProfile(session.user.id);
