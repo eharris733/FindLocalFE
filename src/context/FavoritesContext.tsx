@@ -6,6 +6,7 @@ import {
   syncFavoritesToSupabase,
   mergeFavorites 
 } from '../api/favorites';
+import { logger } from '../utils/logger';
 
 interface FavoritesContextType {
   favoriteEventIds: string[];
@@ -34,7 +35,7 @@ export const FavoritesProvider: React.FC<FavoritesProviderProps> = ({ children }
         const localFavorites = await loadFavoritesFromStorage();
         setFavoriteEventIds(localFavorites);
       } catch (error) {
-        console.error('Error loading initial favorites:', error);
+        logger.error('Error loading initial favorites:', error);
       } finally {
         setLoading(false);
       }
@@ -69,9 +70,9 @@ export const FavoritesProvider: React.FC<FavoritesProviderProps> = ({ children }
         await syncFavoritesToSupabase(session.user.id, mergedFavorites);
         
         setHasLoadedFromCloud(true);
-        console.log('✅ Favorites synced with cloud:', mergedFavorites.length, 'total favorites');
+        logger.info('✅ Favorites synced with cloud:', mergedFavorites.length, 'total favorites');
       } catch (error) {
-        console.error('Error syncing favorites with cloud:', error);
+        logger.error('Error syncing favorites with cloud:', error);
       }
     };
 
@@ -112,7 +113,7 @@ export const FavoritesProvider: React.FC<FavoritesProviderProps> = ({ children }
         await syncFavoritesToSupabase(session.user.id, newFavorites);
       }
     } catch (error) {
-      console.error('Error toggling favorite:', error);
+      logger.error('Error toggling favorite:', error);
       // Revert state on error
       const currentFavorites = await loadFavoritesFromStorage();
       setFavoriteEventIds(currentFavorites);

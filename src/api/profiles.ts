@@ -1,4 +1,5 @@
 import { supabase } from '../supabase';
+import { logger } from '../utils/logger';
 
 export interface Profile {
   id: string;
@@ -63,7 +64,7 @@ export async function deleteUserAccount(userId: string): Promise<{ success: bool
     });
 
     if (error) {
-      console.error('Error deleting user account:', error);
+      logger.error('Error deleting user account:', error);
       return { success: false, error };
     }
 
@@ -72,7 +73,7 @@ export async function deleteUserAccount(userId: string): Promise<{ success: bool
 
     return { success: true, error: null };
   } catch (err) {
-    console.error('Error in deleteUserAccount:', err);
+    logger.error('Error in deleteUserAccount:', err);
     return { success: false, error: err };
   }
 }

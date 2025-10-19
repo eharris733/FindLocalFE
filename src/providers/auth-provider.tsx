@@ -2,6 +2,7 @@ import {createContext, PropsWithChildren, useEffect, useState} from "react";
 import {Session} from "@supabase/supabase-js";
 import {supabase} from "../supabase";
 import {AuthData} from "../hooks/useAuth";
+import { logger } from "../utils/logger";
 
 export const AuthContext = createContext<AuthData>({
     session: undefined,
@@ -23,7 +24,7 @@ export default function AuthProvider({ children }: PropsWithChildren) {
                 error,
             } = await supabase.auth.getSession()
             if (error) {
-                console.error('Error fetching session:', error)
+                logger.error('Error fetching session:', error)
             }
             setSession(session)
             setIsLoading(false)
@@ -32,7 +33,7 @@ export default function AuthProvider({ children }: PropsWithChildren) {
         const {
             data: { subscription },
         } = supabase.auth.onAuthStateChange((_event, session) => {
-            console.log('Auth state changed:', { event: _event, session })
+            logger.debug('Auth state changed:', { event: _event, session })
             setSession(session)
         })
         // Cleanup subscription on unmount

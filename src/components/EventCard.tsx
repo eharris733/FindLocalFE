@@ -10,6 +10,7 @@ import { getVenueById } from '../api/venues';
 import { getDisplayCityName } from '../utils/cityUtils';
 import { getCompactVenueSizeLabel } from '../utils/venueUtils';
 import { EVENT_NO_DESCRIPTION_FALLBACK } from '../utils/eventUtils';
+import { logger } from '../utils/logger';
 
 interface EventCardProps {
   event: Event;
@@ -74,7 +75,7 @@ const EventCard: React.FC<EventCardProps> = ({ event, onPress, variant = 'defaul
         const venueData = await getVenueById(event.venue_id);
         setVenue(venueData);
       } catch (error) {
-        console.error('Error fetching venue:', error);
+        logger.error('Error fetching venue:', error);
         setVenue(null);
       }
     };

@@ -8,6 +8,7 @@ import {useRouter} from "expo-router";
 import * as Linking from "expo-linking";
 import { useTheme } from "../../context/ThemeContext";
 import { AntDesign } from '@expo/vector-icons';
+import { logger } from "../../utils/logger";
 
 type LoginFormValues = {
     email: string;
@@ -156,7 +157,7 @@ export default function SignIn() {
                 }
             }
         } catch (err: any) {
-            console.error('Unexpected sign in error:', err);
+            logger.error('Unexpected sign in error:', err);
             setFeedback('An unexpected error occurred. Please try again.');
             setNeedsConfirmation(false);
         } finally {
@@ -189,7 +190,7 @@ export default function SignIn() {
                 setNeedsConfirmation(false);
             }
         } catch (err: any) {
-            console.error('Unexpected resend error:', err);
+            logger.error('Unexpected resend error:', err);
             setFeedback('An unexpected error occurred. Please try again.');
         } finally {
             setLoading(false);
@@ -225,12 +226,12 @@ export default function SignIn() {
                 if (supported) {
                     await Linking.openURL(data.url);
                 } else {
-                    console.warn('Cannot open URL from Supabase OAuth', data.url);
+                    logger.warn('Cannot open URL from Supabase OAuth', data.url);
                     setFeedback('Unable to open sign-in page. Please try again.');
                 }
             }
         } catch (err: any) {
-            console.error('Unexpected Google sign-in error:', err);
+            logger.error('Unexpected Google sign-in error:', err);
             setFeedback('An unexpected error occurred. Please try again.');
         } finally {
             setLoading(false);
@@ -262,7 +263,7 @@ export default function SignIn() {
                 setForgotMode(false);
             }
         } catch (err: any) {
-            console.error('Unexpected password reset error:', err);
+            logger.error('Unexpected password reset error:', err);
             setFeedback('An unexpected error occurred. Please try again.');
         } finally {
             setLoading(false);
@@ -294,7 +295,7 @@ export default function SignIn() {
                 setLinkMode(false);
             }
         } catch (err: any) {
-            console.error('Unexpected magic link error:', err);
+            logger.error('Unexpected magic link error:', err);
             setFeedback('An unexpected error occurred. Please try again.');
         } finally {
             setLoading(false);

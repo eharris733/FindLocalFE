@@ -20,6 +20,7 @@ import { useAuth } from "../hooks/useAuth";
 import { useRouter } from 'expo-router';
 import SignOutButton from './user/SignOutButton';
 import { updateMarketingOptIn, deleteUserAccount } from '../api/profiles';
+import { logger } from '../utils/logger';
 
 // Account deletion confirmation messages
 const DELETE_ACCOUNT_MESSAGES = {
@@ -131,12 +132,12 @@ export default function ProfileModal({ visible, onClose }: ProfileModalProps) {
     try {
       const { error } = await updateMarketingOptIn(session.user.id, newValue);
       if (error) {
-        console.error('Error updating marketing opt-in:', error);
+        logger.error('Error updating marketing opt-in:', error);
         // Revert on error
         setMarketingOptIn(!newValue);
       }
     } catch (err) {
-      console.error('Error updating marketing opt-in:', err);
+      logger.error('Error updating marketing opt-in:', err);
       // Revert on error
       setMarketingOptIn(!newValue);
     } finally {
@@ -184,7 +185,7 @@ export default function ProfileModal({ visible, onClose }: ProfileModalProps) {
       const { success, error } = await deleteUserAccount(session.user.id);
 
       if (error || !success) {
-        console.error('Error deleting account:', error);
+        logger.error('Error deleting account:', error);
         
         if (Platform.OS === 'web') {
           window.alert(DELETE_ACCOUNT_MESSAGES.errorMessage);
@@ -213,7 +214,7 @@ export default function ProfileModal({ visible, onClose }: ProfileModalProps) {
       onClose();
       router.replace('/');
     } catch (err) {
-      console.error('Error in confirmDeleteAccount:', err);
+      logger.error('Error in confirmDeleteAccount:', err);
       
       if (Platform.OS === 'web') {
         window.alert(DELETE_ACCOUNT_MESSAGES.unexpectedErrorMessage);

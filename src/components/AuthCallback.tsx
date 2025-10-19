@@ -4,6 +4,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { supabase } from '../supabase';
 import { Text } from './ui';
 import { useTheme } from '../context/ThemeContext';
+import { logger } from '../utils/logger';
 
 export default function AuthCallback() {
   const { theme } = useTheme();
@@ -73,13 +74,13 @@ export default function AuthCallback() {
           .eq('id', userId);
 
         if (updateError) {
-          console.error('Error syncing metadata to profile:', updateError);
+          logger.error('Error syncing metadata to profile:', updateError);
         } else {
-          console.log('Successfully synced metadata to profile');
+          logger.info('Successfully synced metadata to profile');
         }
       }
     } catch (error) {
-      console.error('Error in syncUserMetadataToProfile:', error);
+      logger.error('Error in syncUserMetadataToProfile:', error);
     }
   };
 
@@ -87,7 +88,7 @@ export default function AuthCallback() {
     const handleAuthCallback = async () => {
       // Prevent multiple simultaneous executions
       if (isProcessing || hasProcessed) {
-        console.log('Already processing auth callback, skipping...');
+        logger.debug('Already processing auth callback, skipping...');
         return;
       }
       
@@ -101,7 +102,7 @@ export default function AuthCallback() {
           error_description,
         } = params;
 
-        console.log('Auth callback initialized with params:', params);
+        logger.debug('Auth callback initialized with params:', params);
 
         // Handle error cases from URL
         if (urlError) {
@@ -127,29 +128,29 @@ export default function AuthCallback() {
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
         if (sessionError) {
-          console.error('Auth callback error:', sessionError);
+          logger.error('Auth callback error:', sessionError);
           setError(sessionError.message);
           router.replace('/user/signin');
           return;
         }
 
         if (session) {
-          console.log('Session found:', session.user.email);
+          logger.info('Session found for user:', session.user.email);
           
           // Sync user metadata to profile
           await syncUserMetadataToProfile(session.user.id);
           
-          console.log('Redirecting to home...');
+          logger.info('Redirecting to home...');
           
           // Success! Redirect to home
           router.replace('/');
         } else {
-          console.error('No session found after callback');
+          logger.warn('No session found after callback');
           setError('Authentication failed. Please try again.');
           router.replace('/user/signin');
         }
       } catch (err: any) {
-        console.error('Auth callback error:', err);
+        logger.error('Auth callback error:', err);
         setError('An unexpected error occurred. Please try signing in again.');
         router.replace('/user/signin');
       } finally {
@@ -161,7 +162,7 @@ export default function AuthCallback() {
     if (!hasProcessed && (Object.keys(params).length > 0 || (globalThis.window !== undefined && (globalThis.window.location.search || globalThis.window.location.hash)))) {
       handleAuthCallback();
     } else if (!hasProcessed) {
-      console.log('Waiting for params...');
+      logger.debug('Waiting for params...');
     }
   }, [params, router, hasProcessed]);
 

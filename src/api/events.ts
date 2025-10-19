@@ -1,6 +1,7 @@
 // src/api/events.ts
 import type { Event } from '../types/events';
 import { supabase } from '../supabase';
+import { logger } from '../utils/logger';
 
 export async function getEvents(city?: string): Promise<Event[]> {
     try {
@@ -28,8 +29,8 @@ export async function getEvents(city?: string): Promise<Event[]> {
       // });
 
       if (error) {
-        console.error('Error fetching events from Supabase:', error);
-        console.error('Error details:', JSON.stringify(error, null, 2));
+        logger.error('Error fetching events from Supabase:', error);
+        logger.error('Error details:', JSON.stringify(error, null, 2));
         throw new Error(`Supabase error: ${error.message}`);
       }
   
@@ -46,8 +47,8 @@ export async function getEvents(city?: string): Promise<Event[]> {
         return [];
       }
     } catch (error: any) {
-      console.error('Error fetching events:', error);
-      console.error('Full error object:', JSON.stringify(error, null, 2));
+      logger.error('Error fetching events:', error);
+      logger.error('Full error object:', JSON.stringify(error, null, 2));
       throw new Error(`Failed to fetch events: ${error.message}`);
     }
 }
@@ -77,7 +78,7 @@ export async function getEventsByDateRange(
     const { data, error } = await query;
 
     if (error) {
-      console.error('Error fetching events by date range from Supabase:', error);
+      logger.error('Error fetching events by date range from Supabase:', error);
       throw new Error(`Supabase error: ${error.message}`);
     }
 
@@ -85,11 +86,11 @@ export async function getEventsByDateRange(
       //console.log('Events fetched successfully by date range from Supabase:', data.length, 'events');
       return data as Event[];
     } else {
-      console.warn('No events found in date range.');
+      logger.warn('No events found in date range.');
       return [];
     }
   } catch (error: any) {
-    console.error('Error fetching events by date range:', error);
+    logger.error('Error fetching events by date range:', error);
     throw new Error(`Failed to fetch events by date range: ${error.message}`);
   }
 }
@@ -104,7 +105,7 @@ export async function getAvailableCities(): Promise<string[]> {
       .not('city', 'is', null);
 
     if (error) {
-      console.error('Error fetching cities from events_gold:', error);
+      logger.error('Error fetching cities from events_gold:', error);
       return [];
     }
 
@@ -114,7 +115,7 @@ export async function getAvailableCities(): Promise<string[]> {
 
     return cities;
   } catch (error: any) {
-    console.error('Error fetching cities from events:', error);
+    logger.error('Error fetching cities from events:', error);
     return [];
   }
 }

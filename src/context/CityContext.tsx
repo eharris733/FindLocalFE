@@ -5,6 +5,7 @@ import { getDisplayCityName } from '../utils/cityUtils';
 import { STORAGE_KEYS } from '../constants/storage-keys';
 import { updatePreferredCity } from '../api/profiles';
 import { AuthContext } from '../providers/auth-provider';
+import { logger } from '../utils/logger';
 
 interface CityData {
     name: string;
@@ -73,7 +74,7 @@ export const CityProvider: React.FC<CityProviderProps> = ({ children }) => {
         try {
             await AsyncStorage.setItem(STORAGE_KEYS.PREFERRED_CITY, dbCityName);
         } catch (error) {
-            console.error('Error saving city preference to storage:', error);
+            logger.error('Error saving city preference to storage:', error);
         }
         
         // If user is authenticated, sync to Supabase
@@ -81,7 +82,7 @@ export const CityProvider: React.FC<CityProviderProps> = ({ children }) => {
             try {
                 await updatePreferredCity(session.user.id, dbCityName);
             } catch (error) {
-                console.error('Error syncing city preference to Supabase:', error);
+                logger.error('Error syncing city preference to Supabase:', error);
             }
         }
     };
@@ -94,10 +95,10 @@ export const CityProvider: React.FC<CityProviderProps> = ({ children }) => {
                 if (savedCity) {
                     setSelectedCity(savedCity);
                     setDisplayCity(getDisplayCityName(savedCity));
-                    console.log('✅ Loaded saved city preference:', savedCity);
+                    logger.info('✅ Loaded saved city preference:', savedCity);
                 }
             } catch (error) {
-                console.error('Error loading city preference:', error);
+                logger.error('Error loading city preference:', error);
             } finally {
                 setHasLoadedPreference(true);
             }
@@ -122,17 +123,17 @@ export const CityProvider: React.FC<CityProviderProps> = ({ children }) => {
                 // Update local storage to match cloud
                 try {
                     await AsyncStorage.setItem(STORAGE_KEYS.PREFERRED_CITY, profileCity);
-                    console.log('✅ Synced city preference from profile:', profileCity);
+                    logger.info('✅ Synced city preference from profile:', profileCity);
                 } catch (error) {
-                    console.error('Error syncing city from profile:', error);
+                    logger.error('Error syncing city from profile:', error);
                 }
             } else if (!profileCity && session?.user?.id) {
                 // No cloud preference exists - save current selection to cloud
                 try {
                     await updatePreferredCity(session.user.id, selectedCity);
-                    console.log('✅ Saved current city to profile:', selectedCity);
+                    logger.info('✅ Saved current city to profile:', selectedCity);
                 } catch (error) {
-                    console.error('Error saving city to profile:', error);
+                    logger.error('Error saving city to profile:', error);
                 }
             }
         };
@@ -234,7 +235,7 @@ export const CityProvider: React.FC<CityProviderProps> = ({ children }) => {
 
                 setAllCityData(cityData);
             } catch (error) {
-                console.error('Error loading cities:', error);
+                logger.error('Error loading cities:', error);
                 // Fallback to cities without hasVenues data
                 setAllCityData([
                     { name: 'New York', neighborhoods: ['Manhattan', 'Brooklyn', 'Queens', 'Bronx', 'Staten Island'], hasVenues: false },

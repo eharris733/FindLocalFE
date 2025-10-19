@@ -16,6 +16,7 @@ import {
   endOfMonth,
   isSameDay
 } from 'date-fns';
+import { logger } from '../utils/logger';
 
 const initialFilterState: FilterState = {
   category: 'all',
@@ -135,7 +136,7 @@ export const useEvents = ({ selectedCity, favoriteEventIds = [] }: UseEventsProp
         //console.log(`🎉 Loaded ${data?.length || 0} events for city: ${selectedCity || 'all cities'}`);
       } catch (err) {
         setError("Failed to load events. Please try again.");
-        console.error(err);
+        logger.error(err);
       } finally {
         setLoading(false);
       }
@@ -165,7 +166,7 @@ export const useEvents = ({ selectedCity, favoriteEventIds = [] }: UseEventsProp
           }
         });
       } catch (err) {
-        console.error('Failed to fetch venues:', err);
+        logger.error('Failed to fetch venues:', err);
       } finally {
         setVenuesLoading(false);
       }
@@ -366,14 +367,14 @@ export const useEvents = ({ selectedCity, favoriteEventIds = [] }: UseEventsProp
           }
           
           // Debug logging
-          console.log(`Size filter: ${JSON.stringify(sizeFilter)}, venue: ${venue.name}, venue_size: "${venue.venue_size}", matches: ${sizeMatches}`);
+          logger.debug(`Size filter: ${JSON.stringify(sizeFilter)}, venue: ${venue.name}, venue_size: "${venue.venue_size}", matches: ${sizeMatches}`);
           
           if (!sizeMatches) {
             return false;
           }
         } else {
           // If venue has no size data, exclude it from size filtering
-          console.log(`Size filter: ${JSON.stringify(sizeFilter)}, venue: ${venue?.name || 'unknown'}, no venue_size data`);
+          logger.debug(`Size filter: ${JSON.stringify(sizeFilter)}, venue: ${venue?.name || 'unknown'}, no venue_size data`);
           return false;
         }
       }

@@ -18,6 +18,7 @@ import { Text } from './ui';
 import { getDisplayCityName } from '../utils/cityUtils';
 import { getVenueSizeLabel } from '../utils/venueUtils';
 import { EVENT_NO_DESCRIPTION_FALLBACK } from '../utils/eventUtils';
+import { logger } from '../utils/logger';
 
 interface EventModalProps {
   visible: boolean;
@@ -79,7 +80,7 @@ const EventModal: React.FC<EventModalProps> = ({ visible, event, onClose }) => {
         setError('No venues found in this city');
       }
     } catch (err) {
-      console.error('Error fetching venues:', err);
+      logger.error('Error fetching venues:', err);
       setError('Failed to load venue information');
     } finally {
       setLoading(false);

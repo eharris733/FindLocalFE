@@ -1,11 +1,12 @@
 import * as React from 'react';
 import { supabase } from "../../supabase";
 import { Button } from '../ui';
+import { logger } from '../../utils/logger';
 
 async function onSignOutButtonPress() {
     const { error } = await supabase.auth.signOut()
     if (error) {
-        console.error('Error signing out:', error)
+        logger.error('Error signing out:', error)
     }
 }
 

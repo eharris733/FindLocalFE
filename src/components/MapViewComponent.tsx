@@ -6,6 +6,7 @@ import { getAllVenues, getVenuesByCity } from '../api/venues';
 import { useTheme } from '../context/ThemeContext';
 import { useCityLocation } from '../context/CityContext';
 import { Text } from './ui';
+import { logger } from '../utils/logger';
 
 interface MapViewComponentProps {
   events: Event[];
@@ -45,7 +46,7 @@ const MapViewComponent: React.FC<MapViewComponentProps> = ({
         //console.log(`🗺️ MapViewComponent: Found ${venuesWithCoords.length} venues with coordinates for ${selectedCity}`);
         setVenues(venuesWithCoords);
       } catch (error) {
-        console.error('Failed to fetch venues for map:', error);
+        logger.error('Failed to fetch venues for map:', error);
       } finally {
         setVenuesLoading(false);
       }

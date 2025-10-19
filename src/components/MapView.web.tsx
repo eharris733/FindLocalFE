@@ -4,6 +4,7 @@ import { Event } from '../types/events';
 import { Venue } from '../types/venues';
 import { useTheme } from '../context/ThemeContext';
 import CustomMapMarker from './CustomMapMarker';
+import { logger } from '../utils/logger';
 
 
 // Import using require to bypass TypeScript issues with this library
@@ -261,7 +262,7 @@ const MapViewWeb: React.FC<MapViewWebProps> = ({
   {!venuesLoading && sortedVenueEntries.map(({ venue, venueEvents, isHighlighted, isActive }) => {
           // Debug logging for active state
           if (venue.id === activeCalloutId || isActive) {
-            console.log('🏢 Venue render debug:', {
+            logger.debug('🏢 Venue render debug:', {
               venueId: venue.id,
               activeCalloutId,
               isActive,

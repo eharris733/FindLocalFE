@@ -8,6 +8,7 @@ import {useRouter} from "expo-router";
 import * as Linking from "expo-linking";
 import { useTheme } from "../../context/ThemeContext";
 import { AntDesign } from '@expo/vector-icons';
+import { logger } from "../../utils/logger";
 
 type LoginFormValues = {
     email: string;
@@ -172,13 +173,13 @@ export default function SignUp() {
             });
             
             if (error) {
-                console.error('Error checking email:', error);
+                logger.error('Error checking email:', error);
                 return false; // Fail open - allow signup attempt
             }
             
             return data === true;
         } catch (err) {
-            console.error('Error in checkEmailExists:', err);
+            logger.error('Error in checkEmailExists:', err);
             return false; // Fail open - allow signup attempt
         }
     }
@@ -239,7 +240,7 @@ export default function SignUp() {
                 setTimeout(() => router.replace('/'), 1500);
             }
         } catch (err: any) {
-            console.error('Unexpected sign up error:', err);
+            logger.error('Unexpected sign up error:', err);
             setFeedback('An unexpected error occurred. Please try again.');
         } finally {
             setLoading(false);
@@ -273,12 +274,12 @@ export default function SignUp() {
                 if (supported) {
                     await Linking.openURL(data.url);
                 } else {
-                    console.warn('Cannot open URL from Supabase OAuth', data.url);
+                    logger.warn('Cannot open URL from Supabase OAuth', data.url);
                     setFeedback('Unable to open sign-up page. Please try again.');
                 }
             }
         } catch (err: any) {
-            console.error('Unexpected Google sign-up error:', err);
+            logger.error('Unexpected Google sign-up error:', err);
             setFeedback('An unexpected error occurred. Please try again.');
         } finally {
             setLoading(false);
@@ -310,7 +311,7 @@ export default function SignUp() {
             }
             setFeedback('Confirmation email resent. Please check your inbox and spam folder.');
         } catch (e: any) {
-            console.error('Unexpected resend error:', e);
+            logger.error('Unexpected resend error:', e);
             setFeedback('An unexpected error occurred. Please try again.');
         } finally {
             setLoading(false);

@@ -15,6 +15,7 @@ import Header from "../components/Header";
 import {useAuth} from "../hooks/useAuth";
 import AuthProvider from "../providers/auth-provider";
 import {SplashScreenController} from "../components/SplashScreenController";
+import { logger } from "../utils/logger";
 
 
 SplashScreen.preventAutoHideAsync();
@@ -34,7 +35,7 @@ export default function RootLayout() {
     useEffect(() => {
         const timeout = setTimeout(() => {
             if (!fontsLoaded && !fontError) {
-                console.warn('Font loading timeout - proceeding with fallback fonts');
+                logger.warn('Font loading timeout - proceeding with fallback fonts');
                 setFontTimeout(true);
             }
         }, 10000); // 10 second timeout

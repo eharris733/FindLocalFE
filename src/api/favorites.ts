@@ -2,6 +2,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { STORAGE_KEYS } from '../constants/storage-keys';
 import { updateFavoriteEvents } from './profiles';
+import { logger } from '../utils/logger';
 
 /**
  * Load favorite event IDs from AsyncStorage
@@ -15,7 +16,7 @@ export async function loadFavoritesFromStorage(): Promise<string[]> {
     }
     return [];
   } catch (error) {
-    console.error('Error loading favorites from storage:', error);
+    logger.error('Error loading favorites from storage:', error);
     return [];
   }
 }
@@ -27,7 +28,7 @@ export async function saveFavoritesToStorage(favoriteEventIds: string[]): Promis
   try {
     await AsyncStorage.setItem(STORAGE_KEYS.FAVORITE_EVENTS, JSON.stringify(favoriteEventIds));
   } catch (error) {
-    console.error('Error saving favorites to storage:', error);
+    logger.error('Error saving favorites to storage:', error);
   }
 }
 
@@ -38,10 +39,10 @@ export async function syncFavoritesToSupabase(userId: string, favoriteEventIds: 
   try {
     const { error } = await updateFavoriteEvents(userId, favoriteEventIds);
     if (error) {
-      console.error('Error syncing favorites to Supabase:', error);
+      logger.error('Error syncing favorites to Supabase:', error);
     }
   } catch (error) {
-    console.error('Error syncing favorites to Supabase:', error);
+    logger.error('Error syncing favorites to Supabase:', error);
   }
 }
 
