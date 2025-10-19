@@ -29,7 +29,8 @@ BEGIN
   VALUES (
     NEW.id,
     NEW.email,
-    COALESCE((NEW.raw_user_meta_data->>'marketing_opt_in')::boolean, false),
+    -- NULL means "never asked", false means "explicitly declined", true means "opted in"
+    (NEW.raw_user_meta_data->>'marketing_opt_in')::boolean,
     user_agreed_to_terms,
     -- Set timestamp server-side when user agrees to terms
     CASE WHEN user_agreed_to_terms THEN NOW() ELSE NULL END,
@@ -37,7 +38,12 @@ BEGIN
   )
   ON CONFLICT (id) DO UPDATE SET
     email = EXCLUDED.email,
-    marketing_opt_in = COALESCE((NEW.raw_user_meta_data->>'marketing_opt_in')::boolean, profiles.marketing_opt_in),
+    -- Only update if explicitly provided in metadata (preserve NULL if not present)
+    marketing_opt_in = CASE 
+      WHEN NEW.raw_user_meta_data ? 'marketing_opt_in' 
+      THEN (NEW.raw_user_meta_data->>'marketing_opt_in')::boolean
+      ELSE profiles.marketing_opt_in
+    END,
     agreed_to_terms = EXCLUDED.agreed_to_terms,
     agreed_to_terms_date = EXCLUDED.agreed_to_terms_date,
     updated_at = NOW();
@@ -60,7 +66,12 @@ BEGIN
   -- Only update if metadata has changed
   IF NEW.raw_user_meta_data IS DISTINCT FROM OLD.raw_user_meta_data THEN
     UPDATE public.profiles SET
-      marketing_opt_in = COALESCE((NEW.raw_user_meta_data->>'marketing_opt_in')::boolean, marketing_opt_in),
+      -- Only update if explicitly provided in metadata (preserve NULL if not present)
+      marketing_opt_in = CASE 
+        WHEN NEW.raw_user_meta_data ? 'marketing_opt_in' 
+        THEN (NEW.raw_user_meta_data->>'marketing_opt_in')::boolean
+        ELSE marketing_opt_in
+      END,
       updated_at = NOW()
     WHERE id = NEW.id;
   END IF;

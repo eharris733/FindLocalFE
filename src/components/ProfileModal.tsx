@@ -21,6 +21,24 @@ import { useRouter } from 'expo-router';
 import SignOutButton from './user/SignOutButton';
 import { updateMarketingOptIn, deleteUserAccount } from '../api/profiles';
 
+// Account deletion confirmation messages
+const DELETE_ACCOUNT_MESSAGES = {
+  title: 'Delete Account',
+  confirmationMessage: 
+    'Are you absolutely sure you want to delete your account?\n\n' +
+    'This action cannot be undone. All your data including:\n' +
+    '• Your profile information\n' +
+    '• Saved favorites\n' +
+    '• Preferences and settings\n\n' +
+    'will be permanently deleted.',
+  webConfirmationSuffix: '\n\nDo you want to continue?',
+  successTitle: 'Account Deleted',
+  successMessage: 'Your account has been successfully deleted.',
+  errorTitle: 'Error',
+  errorMessage: 'Failed to delete account. Please try again or contact support.',
+  unexpectedErrorMessage: 'An unexpected error occurred. Please try again.',
+};
+
 interface ProfileModalProps {
   visible: boolean;
   onClose: () => void;
@@ -130,14 +148,7 @@ export default function ProfileModal({ visible, onClose }: ProfileModalProps) {
     if (Platform.OS === 'web') {
       // Use browser confirm dialog on web
       const confirmed = window.confirm(
-        'Delete Account\n\n' +
-        'Are you absolutely sure you want to delete your account?\n\n' +
-        'This action cannot be undone. All your data including:\n' +
-        '• Your profile information\n' +
-        '• Saved favorites\n' +
-        '• Preferences and settings\n\n' +
-        'will be permanently deleted.\n\n' +
-        'Do you want to continue?'
+        `${DELETE_ACCOUNT_MESSAGES.title}\n\n${DELETE_ACCOUNT_MESSAGES.confirmationMessage}${DELETE_ACCOUNT_MESSAGES.webConfirmationSuffix}`
       );
       
       if (confirmed) {
@@ -146,20 +157,15 @@ export default function ProfileModal({ visible, onClose }: ProfileModalProps) {
     } else {
       // Use React Native Alert on mobile
       Alert.alert(
-        'Delete Account',
-        'Are you absolutely sure you want to delete your account?\n\n' +
-        'This action cannot be undone. All your data including:\n' +
-        '• Your profile information\n' +
-        '• Saved favorites\n' +
-        '• Preferences and settings\n\n' +
-        'will be permanently deleted.',
+        DELETE_ACCOUNT_MESSAGES.title,
+        DELETE_ACCOUNT_MESSAGES.confirmationMessage,
         [
           {
             text: 'Cancel',
             style: 'cancel',
           },
           {
-            text: 'Delete Account',
+            text: DELETE_ACCOUNT_MESSAGES.title,
             style: 'destructive',
             onPress: confirmDeleteAccount,
           },
@@ -181,11 +187,11 @@ export default function ProfileModal({ visible, onClose }: ProfileModalProps) {
         console.error('Error deleting account:', error);
         
         if (Platform.OS === 'web') {
-          window.alert('Failed to delete account. Please try again or contact support.');
+          window.alert(DELETE_ACCOUNT_MESSAGES.errorMessage);
         } else {
           Alert.alert(
-            'Error',
-            'Failed to delete account. Please try again or contact support.',
+            DELETE_ACCOUNT_MESSAGES.errorTitle,
+            DELETE_ACCOUNT_MESSAGES.errorMessage,
             [{ text: 'OK' }]
           );
         }
@@ -194,11 +200,11 @@ export default function ProfileModal({ visible, onClose }: ProfileModalProps) {
 
       // Success - user is signed out and redirected by the deleteUserAccount function
       if (Platform.OS === 'web') {
-        window.alert('Your account has been successfully deleted.');
+        window.alert(DELETE_ACCOUNT_MESSAGES.successMessage);
       } else {
         Alert.alert(
-          'Account Deleted',
-          'Your account has been successfully deleted.',
+          DELETE_ACCOUNT_MESSAGES.successTitle,
+          DELETE_ACCOUNT_MESSAGES.successMessage,
           [{ text: 'OK', onPress: () => router.replace('/') }]
         );
       }
@@ -210,11 +216,11 @@ export default function ProfileModal({ visible, onClose }: ProfileModalProps) {
       console.error('Error in confirmDeleteAccount:', err);
       
       if (Platform.OS === 'web') {
-        window.alert('An unexpected error occurred. Please try again.');
+        window.alert(DELETE_ACCOUNT_MESSAGES.unexpectedErrorMessage);
       } else {
         Alert.alert(
-          'Error',
-          'An unexpected error occurred. Please try again.',
+          DELETE_ACCOUNT_MESSAGES.errorTitle,
+          DELETE_ACCOUNT_MESSAGES.unexpectedErrorMessage,
           [{ text: 'OK' }]
         );
       }

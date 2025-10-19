@@ -10,6 +10,19 @@ interface InputProps extends TextInputProps {
   showPasswordToggle?: boolean;
 }
 
+// Constants for eye icon dimensions and spacing
+const EYE_ICON_SIZE = 24;
+const EYE_ICON_RIGHT_POSITION = 12;
+const EYE_ICON_HORIZONTAL_PADDING = 4;
+const INPUT_PADDING_BUFFER = 8; // Extra buffer space between text and icon
+
+// Calculate total padding needed when eye icon is visible
+const PASSWORD_TOGGLE_PADDING = 
+  EYE_ICON_SIZE + 
+  EYE_ICON_RIGHT_POSITION + 
+  EYE_ICON_HORIZONTAL_PADDING + 
+  INPUT_PADDING_BUFFER;
+
 export function Input({ label, error, style, showPasswordToggle = false, secureTextEntry, ...rest }: InputProps) {
   const { theme } = useTheme();
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
@@ -44,7 +57,7 @@ export function Input({ label, error, style, showPasswordToggle = false, secureT
               backgroundColor: theme.colors.background.secondary,
               color: theme.colors.text.primary,
               borderColor: error ? theme.colors.error : theme.colors.border.medium,
-              paddingRight: showPasswordToggle ? 48 : 16,
+              paddingRight: showPasswordToggle ? PASSWORD_TOGGLE_PADDING : 16,
             },
             style,
           ] as any}
@@ -62,7 +75,7 @@ export function Input({ label, error, style, showPasswordToggle = false, secureT
           >
             <Ionicons 
               name={isPasswordVisible ? "eye-off-outline" : "eye-outline"} 
-              size={24} 
+              size={EYE_ICON_SIZE} 
               color={theme.colors.primary[500]} 
             />
           </TouchableOpacity>
@@ -96,12 +109,12 @@ const styles = StyleSheet.create({
   },
   eyeIcon: {
     position: 'absolute',
-    right: 12,
+    right: EYE_ICON_RIGHT_POSITION,
     top: 0,
     bottom: 0,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 4,
+    paddingHorizontal: EYE_ICON_HORIZONTAL_PADDING,
   },
   error: {
     marginTop: 4,

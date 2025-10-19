@@ -57,8 +57,8 @@ export default function AuthCallback() {
       // Extract marketing_opt_in from user_metadata
       const marketingOptIn = user.user_metadata?.marketing_opt_in;
       
-      // Only update if the metadata exists
-      if (marketingOptIn !== undefined) {
+      // Only update if the property exists in metadata (including explicit false values)
+      if ('marketing_opt_in' in (user.user_metadata || {})) {
         console.log('Syncing marketing_opt_in to profile:', marketingOptIn);
         
         await upsertProfile({
