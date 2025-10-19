@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AppState, Platform } from 'react-native';
+import * as Linking from 'expo-linking';
 
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL as string;
 const supabasePublishableKey = process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY as string;
@@ -26,10 +27,20 @@ export const supabase = createClient(supabaseUrl, supabasePublishableKey, {
     autoRefreshToken: true,
     flowType: 'pkce',
     persistSession: true,
-    detectSessionInUrl: true, // TODO: NEED TO TEST
+    detectSessionInUrl: Platform.OS === 'web', // Only detect on web, mobile uses deep links
   },
   db: { schema: 'public' },
 });
+
+// Helper function to get the correct redirect URL for auth flows
+export const getAuthRedirectUrl = (path: string = '/auth/callback') => {
+  if (Platform.OS === 'web') {
+    return `${window.location.origin}${path}`;
+  }
+  
+  // For mobile, use the custom scheme
+  return Linking.createURL(path);
+};
 
 // Tells Supabase Auth to continuously refresh the session automatically
 // if the app is in the foreground. When this is added, you will continue

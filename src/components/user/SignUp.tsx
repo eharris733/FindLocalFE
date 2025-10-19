@@ -1,7 +1,7 @@
 import {Controller, useForm} from "react-hook-form";
 import {View, Alert, Platform, ActivityIndicator, StyleSheet, TouchableOpacity} from "react-native";
 import {Button, Text} from "../ui";
-import {supabase} from "../../supabase";
+import {supabase, getAuthRedirectUrl} from "../../supabase";
 import React, {useState} from "react";
 import Input from "../ui/Input";
 import {useRouter} from "expo-router";
@@ -197,9 +197,7 @@ export default function SignUp() {
                 return;
             }
 
-            const redirectTo = Platform.OS === 'web' 
-                ? `${globalThis.window.location.origin}/auth/callback`
-                : Linking.createURL('/auth/callback');
+            const redirectTo = getAuthRedirectUrl('/auth/callback');
 
             const {
                 data: { session },
@@ -250,9 +248,7 @@ export default function SignUp() {
     async function signUpWithGoogle() {
         setLoading(true);
         try {
-            const redirectTo = Platform.OS === 'web' 
-                ? `${globalThis.window.location.origin}/auth/callback`
-                : Linking.createURL('/auth/callback');
+            const redirectTo = getAuthRedirectUrl('/auth/callback');
             const { data, error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
                 options: { redirectTo },
@@ -289,9 +285,7 @@ export default function SignUp() {
     async function resendConfirmationEmail(values: LoginFormValues) {
         setLoading(true);
         try {
-            const redirectTo = Platform.OS === 'web' 
-                ? `${globalThis.window.location.origin}/auth/callback`
-                : Linking.createURL('/auth/callback');
+            const redirectTo = getAuthRedirectUrl('/auth/callback');
             const { error } = await (supabase.auth as any).resend({
                 type: 'signup',
                 email: values.email.trim(),

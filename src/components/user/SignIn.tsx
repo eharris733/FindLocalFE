@@ -1,7 +1,7 @@
 import { Controller, useForm} from "react-hook-form";
 import {View, Platform, ActivityIndicator, StyleSheet, TouchableOpacity} from "react-native";
 import {Button, Text} from "../ui";
-import {supabase} from "../../supabase";
+import {supabase, getAuthRedirectUrl} from "../../supabase";
 import React, {useState} from "react";
 import Input from "../ui/Input";
 import {useRouter} from "expo-router";
@@ -168,9 +168,7 @@ export default function SignIn() {
     async function resendConfirmationEmail(values: LoginFormValues) {
         setLoading(true);
         try {
-            const redirectTo = Platform.OS === 'web' 
-                ? `${window.location.origin}/auth/callback`
-                : Linking.createURL('/auth/callback');
+            const redirectTo = getAuthRedirectUrl('/auth/callback');
             const { error } = await supabase.auth.resend({
                 type: 'signup',
                 email: values.email.trim(),
@@ -242,9 +240,7 @@ export default function SignIn() {
         setLoading(true);
         const targetEmail = (values.resetEmail || email).trim();
         try {
-            const redirectTo = Platform.OS === 'web' 
-                ? `${window.location.origin}/auth/callback?type=recovery`
-                : Linking.createURL('/auth/callback?type=recovery');
+            const redirectTo = getAuthRedirectUrl('/auth/callback?type=recovery');
             const { error } = await supabase.auth.resetPasswordForEmail(targetEmail, { redirectTo });
             if (error) {
                 // Handle password reset errors
@@ -273,9 +269,7 @@ export default function SignIn() {
     async function sendMagicLinkForLinking(values: LoginFormValues) {
         setLoading(true);
         try {
-            const redirectTo = Platform.OS === 'web' 
-                ? `${window.location.origin}/auth/callback`
-                : Linking.createURL('/auth/callback');
+            const redirectTo = getAuthRedirectUrl('/auth/callback');
             const { data, error } = await supabase.auth.signInWithOtp({ 
                 email: values.email.trim(), 
                 options: { emailRedirectTo: redirectTo } 
