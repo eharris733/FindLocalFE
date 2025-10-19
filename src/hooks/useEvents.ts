@@ -136,7 +136,7 @@ export const useEvents = ({ selectedCity, favoriteEventIds = [] }: UseEventsProp
         //console.log(`🎉 Loaded ${data?.length || 0} events for city: ${selectedCity || 'all cities'}`);
       } catch (err) {
         setError("Failed to load events. Please try again.");
-        logger.error(err);
+        logger.error('Failed to fetch events:', err);
       } finally {
         setLoading(false);
       }

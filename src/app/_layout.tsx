@@ -16,6 +16,7 @@ import {useAuth} from "../hooks/useAuth";
 import AuthProvider from "../providers/auth-provider";
 import {SplashScreenController} from "../components/SplashScreenController";
 import { logger } from "../utils/logger";
+import { Ionicons, AntDesign } from '@expo/vector-icons';
 
 
 SplashScreen.preventAutoHideAsync();
@@ -28,6 +29,9 @@ export default function RootLayout() {
         WorkSans_500Medium,
         WorkSans_600SemiBold,
         WorkSans_700Bold,
+        // Load icon fonts explicitly for preview/production builds
+        ...Ionicons.font,
+        ...AntDesign.font,
     });
 
     const isLoading = (!fontsLoaded && !fontError && !fontTimeout);
