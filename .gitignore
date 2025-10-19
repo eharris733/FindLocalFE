@@ -101,3 +101,7 @@ temp/
 screenshots/*.png
 screenshots/*.jpg
 screenshots/*.jpeg
+
+#build artifacts for ios and android
+ios/
+android/

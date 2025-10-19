@@ -9,12 +9,14 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.anonymous.findlocalmobile"
     },
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#006B5E"
-      }
+      },
+      "package": "com.anonymous.findlocalmobile"
     },
     "web": {
       "favicon": "./assets/monocle.png",
