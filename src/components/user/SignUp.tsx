@@ -197,7 +197,7 @@ export default function SignUp() {
             }
 
             const redirectTo = Platform.OS === 'web' 
-                ? `${window.location.origin}/auth/callback`
+                ? `${globalThis.window.location.origin}/auth/callback`
                 : Linking.createURL('/auth/callback');
 
             const {
@@ -218,9 +218,18 @@ export default function SignUp() {
             });
             
             if (error) {
-                setFeedback(error.message);
+                // Handle sign-up specific errors
+                if (error.status === 422) {
+                    // Validation error - weak password, invalid email format, etc.
+                    setFeedback(`Sign up failed: ${error.message || 'Please check your email and password.'}`);
+                } else if (error.status === 429) {
+                    setFeedback('Too many sign-up attempts. Please wait a moment and try again.');
+                } else {
+                    setFeedback(error.message || 'Sign up failed. Please try again.');
+                }
                 setShowResend(false);
             } else if (!session) {
+                // Email confirmation required
                 setFeedback('Success! Please check your inbox (and spam folder) for a verification email.');
                 setShowResend(true);
             } else {
@@ -230,7 +239,8 @@ export default function SignUp() {
                 setTimeout(() => router.replace('/'), 1500);
             }
         } catch (err: any) {
-            setFeedback(`Sign up failed: ${err?.message || 'Unknown error'}`);
+            console.error('Unexpected sign up error:', err);
+            setFeedback('An unexpected error occurred. Please try again.');
         } finally {
             setLoading(false);
         }
@@ -240,7 +250,7 @@ export default function SignUp() {
         setLoading(true);
         try {
             const redirectTo = Platform.OS === 'web' 
-                ? `${window.location.origin}/auth/callback`
+                ? `${globalThis.window.location.origin}/auth/callback`
                 : Linking.createURL('/auth/callback');
             const { data, error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
@@ -248,7 +258,14 @@ export default function SignUp() {
             });
 
             if (error) {
-                setFeedback(`Google sign-up failed: ${error.message}`);
+                // Handle OAuth sign-up errors
+                if (error.status === 422) {
+                    setFeedback('Unable to sign up with Google. The account may already exist. Try signing in instead.');
+                } else if (error.status === 429) {
+                    setFeedback('Too many requests. Please wait a moment and try again.');
+                } else {
+                    setFeedback(`Google sign-up failed: ${error.message || 'Please try again.'}`);
+                }
             }
 
             if (data?.url && Platform.OS !== 'web') {
@@ -257,33 +274,44 @@ export default function SignUp() {
                     await Linking.openURL(data.url);
                 } else {
                     console.warn('Cannot open URL from Supabase OAuth', data.url);
+                    setFeedback('Unable to open sign-up page. Please try again.');
                 }
             }
         } catch (err: any) {
-            setFeedback(`Google sign-up failed: ${err?.message || 'Unknown error'}`);
+            console.error('Unexpected Google sign-up error:', err);
+            setFeedback('An unexpected error occurred. Please try again.');
         } finally {
             setLoading(false);
         }
     }
 
     async function resendConfirmationEmail(values: LoginFormValues) {
+        setLoading(true);
         try {
-            setLoading(true);
             const redirectTo = Platform.OS === 'web' 
-                ? `${window.location.origin}/auth/callback`
+                ? `${globalThis.window.location.origin}/auth/callback`
                 : Linking.createURL('/auth/callback');
             const { error } = await (supabase.auth as any).resend({
                 type: 'signup',
                 email: values.email.trim(),
                 options: { emailRedirectTo: redirectTo },
             });
+            
             if (error) {
-                setFeedback(`Resend failed - ${error.message}`);
+                // Handle resend errors
+                if (error.status === 429) {
+                    setFeedback('Too many requests. Please wait a moment before requesting another confirmation email.');
+                } else if (error.status === 422) {
+                    setFeedback('Invalid email address. Please check and try again.');
+                } else {
+                    setFeedback(`Failed to resend: ${error.message || 'Please try again.'}`);
+                }
                 return;
             }
-            setFeedback('Confirmation email resent. Please check your inbox (and spam).');
+            setFeedback('Confirmation email resent. Please check your inbox and spam folder.');
         } catch (e: any) {
-            setFeedback(`Failed to resend confirmation email - ${e?.message || 'Unknown error'}`);
+            console.error('Unexpected resend error:', e);
+            setFeedback('An unexpected error occurred. Please try again.');
         } finally {
             setLoading(false);
         }

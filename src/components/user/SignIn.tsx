@@ -132,23 +132,36 @@ export default function SignIn() {
                 password: values.password,
             });
             if (error) {
-                const errorMsg = error.message.toLowerCase();
-                // Check if error is due to unconfirmed email
-                if (errorMsg.includes('email not confirmed') || 
-                    errorMsg.includes('not confirmed') ||
-                    errorMsg.includes('confirm your email')) {
-                    setFeedback('Your email address has not been verified. Please check your inbox for a confirmation email, or request a new one below.');
-                    setNeedsConfirmation(true);
+                // Use status codes for more reliable error handling
+                // Status 400: Bad Request (wrong password, unconfirmed email, etc.)
+                if (error.status === 400) {
+                    // Check if it's specifically an unconfirmed email
+                    // Note: We still check message as a fallback since status alone isn't specific enough
+                    if (error.message.includes('Email not confirmed')) {
+                        setFeedback('Your email address has not been verified. Please check your inbox for a confirmation email, or request a new one below.');
+                        setNeedsConfirmation(true);
+                    } else {
+                        // Likely invalid email or password
+                        setFeedback('Invalid email or password. Please check your credentials and try again.');
+                    }
+                } else if (error.status === 422) {
+                    // Unprocessable Entity - validation error
+                    setFeedback('Please check your email and password format.');
+                } else if (error.status === 429) {
+                    // Too Many Requests - rate limit
+                    setFeedback('Too many sign-in attempts. Please wait a moment and try again.');
                 } else {
-                    setFeedback(error.message);
-                    setNeedsConfirmation(false);
+                    // Fallback to the error message for other cases
+                    setFeedback(error.message || 'Sign in failed. Please try again.');
                 }
             }
         } catch (err: any) {
-            setFeedback(`Sign in failed ${err?.message || 'Unknown error'}`);
+            console.error('Unexpected sign in error:', err);
+            setFeedback('An unexpected error occurred. Please try again.');
             setNeedsConfirmation(false);
+        } finally {
+            setLoading(false);
         }
-        setLoading(false);
     }
 
     async function resendConfirmationEmail(values: LoginFormValues) {
@@ -163,13 +176,21 @@ export default function SignIn() {
                 options: { emailRedirectTo: redirectTo },
             });
             if (error) {
-                setFeedback(`Failed to resend confirmation email: ${error.message}`);
+                // Handle specific error cases
+                if (error.status === 429) {
+                    setFeedback('Too many requests. Please wait a moment before requesting another confirmation email.');
+                } else if (error.status === 422) {
+                    setFeedback('Invalid email address. Please check and try again.');
+                } else {
+                    setFeedback(`Failed to resend confirmation email: ${error.message || 'Please try again.'}`);
+                }
             } else {
                 setFeedback(`Confirmation email sent to ${values.email.trim()}. Please check your inbox and spam folder. The link will expire in 24 hours.`);
                 setNeedsConfirmation(false);
             }
         } catch (err: any) {
-            setFeedback(`Failed to resend confirmation email: ${err?.message || 'Unknown error'}`);
+            console.error('Unexpected resend error:', err);
+            setFeedback('An unexpected error occurred. Please try again.');
         } finally {
             setLoading(false);
         }
@@ -187,14 +208,16 @@ export default function SignIn() {
             });
 
             if (error) {
-                const msg = (error.message || '').toLowerCase();
-                if (msg.includes('already')
-                    || msg.includes('duplicate')
-                    || msg.includes('account exists')
-                ) {
+                // Handle OAuth-specific errors
+                if (error.status === 422) {
+                    // Validation error - possibly account already exists with email/password
+                    setFeedback('An account with this email already exists. Try signing in with email and password, or use the "Forgot Password" option.');
                     setLinkMode(true);
+                } else if (error.status === 429) {
+                    setFeedback('Too many requests. Please wait a moment and try again.');
+                } else {
+                    setFeedback(`Google sign-in failed: ${error.message || 'Please try again.'}`);
                 }
-                setFeedback(`Google sign-in failed ${error.message}`);
             }
 
             if (data?.url && Platform.OS !== 'web') {
@@ -203,10 +226,12 @@ export default function SignIn() {
                     await Linking.openURL(data.url);
                 } else {
                     console.warn('Cannot open URL from Supabase OAuth', data.url);
+                    setFeedback('Unable to open sign-in page. Please try again.');
                 }
             }
         } catch (err: any) {
-            setFeedback(`Google sign-in failed ${err?.message || 'Unknown error'}`);
+            console.error('Unexpected Google sign-in error:', err);
+            setFeedback('An unexpected error occurred. Please try again.');
         } finally {
             setLoading(false);
         }
@@ -221,21 +246,32 @@ export default function SignIn() {
                 : Linking.createURL('/auth/callback?type=recovery');
             const { error } = await supabase.auth.resetPasswordForEmail(targetEmail, { redirectTo });
             if (error) {
-                setFeedback(`Reset failed: ${error.message}`);
+                // Handle password reset errors
+                if (error.status === 429) {
+                    setFeedback('Too many requests. Please wait a moment before requesting another password reset.');
+                } else if (error.status === 422) {
+                    setFeedback('Invalid email address. Please check and try again.');
+                } else {
+                    // For security, we don't reveal if email exists or not
+                    // But we still show other errors that might occur
+                    setFeedback(`Reset failed: ${error.message || 'Please try again.'}`);
+                }
             } else {
-                setFeedback(`Password reset link sent! Check your email at ${targetEmail} for a link to reset your password. The link will expire in 1 hour.`);
+                // Generic success message (don't reveal if email exists)
+                setFeedback(`If an account exists with ${targetEmail}, a password reset link has been sent. Please check your email and spam folder. The link will expire in 1 hour.`);
                 setForgotMode(false);
             }
         } catch (err: any) {
-            setFeedback(`Reset failed ${err?.message || 'Unknown error'}`);
+            console.error('Unexpected password reset error:', err);
+            setFeedback('An unexpected error occurred. Please try again.');
         } finally {
             setLoading(false);
         }
     }
 
     async function sendMagicLinkForLinking(values: LoginFormValues) {
+        setLoading(true);
         try {
-            setLoading(true);
             const redirectTo = Platform.OS === 'web' 
                 ? `${window.location.origin}/auth/callback`
                 : Linking.createURL('/auth/callback');
@@ -243,14 +279,26 @@ export default function SignIn() {
                 email: values.email.trim(), 
                 options: { emailRedirectTo: redirectTo } 
             });
-            setFeedback(error
-                ? `Failed to send sign-in link - ${error.message}`
-            : `A sign-in link has been sent to ${values.email.trim()}. Use it to link your Google account.`);
-            setLinkMode(false);
+            
+            if (error) {
+                // Handle magic link errors
+                if (error.status === 429) {
+                    setFeedback('Too many requests. Please wait a moment before requesting another sign-in link.');
+                } else if (error.status === 422) {
+                    setFeedback('Invalid email address. Please check and try again.');
+                } else {
+                    setFeedback(`Failed to send sign-in link: ${error.message || 'Please try again.'}`);
+                }
+            } else {
+                setFeedback(`A sign-in link has been sent to ${values.email.trim()}. Please check your inbox and spam folder.`);
+                setLinkMode(false);
+            }
         } catch (err: any) {
-            setFeedback(`Failed to send link - ${err?.message || 'Unknown error'}`);
+            console.error('Unexpected magic link error:', err);
+            setFeedback('An unexpected error occurred. Please try again.');
+        } finally {
+            setLoading(false);
         }
-        setLoading(false);
     }
 
     return (
