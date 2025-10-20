@@ -64,7 +64,7 @@ function main() {
   if (fs.existsSync(indexHtml)) {
     let html = fs.readFileSync(indexHtml, 'utf8');
     const headEnd = '</head>';
-    const preload = `\n<link rel="preload" href="/fonts/ionicons.ttf" as="font" type="font/ttf" crossorigin>\n<link rel="preload" href="/fonts/antdesign.ttf" as="font" type="font/ttf" crossorigin>\n<style>\n@font-face{font-family:Ionicons;src:url('/fonts/ionicons.ttf') format('truetype');font-style:normal;font-weight:400;font-display:swap;}\n@font-face{font-family:anticon;src:url('/fonts/antdesign.ttf') format('truetype');font-style:normal;font-weight:400;font-display:swap;}\n</style>\n`;
+  const preload = `\n<link rel="preload" href="/fonts/ionicons.ttf" as="font" type="font/ttf" crossorigin>\n<style>\n@font-face{font-family:Ionicons;src:url('/fonts/ionicons.ttf') format('truetype');font-style:normal;font-weight:400;font-display:swap;}\n@font-face{font-family:anticon;src:url('/fonts/antdesign.ttf') format('truetype');font-style:normal;font-weight:400;font-display:swap;}\n</style>\n`;
     if (!html.includes('/fonts/ionicons.ttf')) {
       html = html.replace(headEnd, preload + headEnd);
       fs.writeFileSync(indexHtml, html);
