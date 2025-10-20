@@ -54,9 +54,6 @@ function AppContent() {
     WorkSans_700Bold,
     ...Ionicons.font,
     ...AntDesign.font,
-    // Explicitly load icon fonts for web
-    'Ionicons': require('@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Ionicons.ttf'),
-    'AntDesign': require('@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/AntDesign.ttf'),
   });
 
   // Set a timeout to prevent infinite loading on font failure
