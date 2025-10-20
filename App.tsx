@@ -23,10 +23,6 @@ import { useEvents } from './src/hooks/useEvents';
 import { useCityLocation } from './src/context/CityContext';
 import { useFavorites } from './src/context/FavoritesContext';
 import MainLayout from './src/components/MainLayout';
-import { loadIconFonts } from './src/utils/loadIconFonts';
-
-// Load icon fonts for web (injects @font-face CSS)
-loadIconFonts();
 import EventModal from './src/components/EventModal';
 import { Text } from './src/components/ui';
 import type { Event } from './src/types/events';

@@ -18,11 +18,6 @@ import {SplashScreenController} from "../components/SplashScreenController";
 import { logger } from "../utils/logger";
 import Ionicons from '@expo/vector-icons/Ionicons';
 import AntDesign from '@expo/vector-icons/AntDesign';
-import { loadIconFonts } from "../utils/loadIconFonts";
-
-// Load icon fonts for web (injects @font-face CSS)
-loadIconFonts();
-
 
 SplashScreen.preventAutoHideAsync();
 
