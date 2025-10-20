@@ -28,7 +28,7 @@ export function loadIconFonts() {
 
     @font-face {
       src: url(${AntDesignFont});
-      font-family: AntDesign;
+      font-family: anticon;
     }
   `;
 
