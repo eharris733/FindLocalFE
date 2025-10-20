@@ -16,6 +16,8 @@ import {useAuth} from "../hooks/useAuth";
 import AuthProvider from "../providers/auth-provider";
 import {SplashScreenController} from "../components/SplashScreenController";
 import { logger } from "../utils/logger";
+import Ionicons from '@expo/vector-icons/Ionicons';
+import AntDesign from '@expo/vector-icons/AntDesign';
 
 
 SplashScreen.preventAutoHideAsync();
@@ -28,6 +30,8 @@ export default function RootLayout() {
         WorkSans_500Medium,
         WorkSans_600SemiBold,
         WorkSans_700Bold,
+        ...Ionicons.font,
+        ...AntDesign.font,
     });
 
     const isLoading = (!fontsLoaded && !fontError && !fontTimeout);
