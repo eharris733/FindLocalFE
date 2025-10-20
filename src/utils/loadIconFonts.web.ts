@@ -20,7 +20,7 @@ export function loadIconFonts() {
   const css = `
     @font-face {
       font-family: Ionicons;
-      src: url(${IoniconsFontUrl}) format('truetype');
+      src: url('/fonts/ionicons.ttf') format('truetype'), url(${IoniconsFontUrl}) format('truetype');
       font-style: normal;
       font-weight: 400;
       font-display: swap;
@@ -28,7 +28,7 @@ export function loadIconFonts() {
 
     @font-face {
       font-family: anticon;
-      src: url(${AntDesignFontUrl}) format('truetype');
+      src: url('/fonts/antdesign.ttf') format('truetype'), url(${AntDesignFontUrl}) format('truetype');
       font-style: normal;
       font-weight: 400;
       font-display: swap;

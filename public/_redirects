@@ -1,2 +1,6 @@
-# SPA routing - serve index.html for all routes
+# Static assets should not be routed to SPA
+/assets/*  /assets/:splat  200
+/fonts/*   /fonts/:splat   200
+
+# SPA routing - serve index.html for all other routes
 /*    /index.html   200
