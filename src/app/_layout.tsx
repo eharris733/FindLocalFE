@@ -28,8 +28,6 @@ export default function RootLayout() {
         WorkSans_500Medium,
         WorkSans_600SemiBold,
         WorkSans_700Bold,
-        'Ionicons': require('@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Ionicons.ttf'),
-        'AntDesign': require('@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/AntDesign.ttf'),
     });
 
     const isLoading = (!fontsLoaded && !fontError && !fontTimeout);

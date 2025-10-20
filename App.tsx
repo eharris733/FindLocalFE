@@ -14,7 +14,6 @@ import {
   WorkSans_600SemiBold,
   WorkSans_700Bold,
 } from '@expo-google-fonts/work-sans';
-import { Ionicons, AntDesign } from '@expo/vector-icons';
 import { ThemeProvider, useTheme } from './src/context/ThemeContext';
 import { CityProvider } from './src/context/CityContext';
 import { FavoritesProvider } from './src/context/FavoritesContext';
@@ -50,8 +49,6 @@ function AppContent() {
     WorkSans_500Medium,
     WorkSans_600SemiBold,
     WorkSans_700Bold,
-    ...Ionicons.font,
-    ...AntDesign.font,
   });
 
   // Set a timeout to prevent infinite loading on font failure
