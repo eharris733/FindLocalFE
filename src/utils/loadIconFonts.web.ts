@@ -1,50 +1,42 @@
-/**
- * Web-specific icon font loader
- * Injects @font-face CSS declarations for vector icons
- * Required for react-native-vector-icons web compatibility
- */
+// Inject @font-face rules for vector icon fonts on web builds.
+// This helps when deploying to CDNs like Cloudflare where MIME/CORS can block auto-loading.
 
-// Import the actual font files to get their bundled URLs
-// @ts-ignore - These imports work at build time
-import IoniconsFont from '@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Ionicons.ttf';
-// @ts-ignore
-import AntDesignFont from '@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/AntDesign.ttf';
+// Import TTFs directly so the bundler emits them to /assets and we can reference the URLs.
+// These paths are stable within @expo/vector-icons.
+// If these ever change, adjust to the new vendor path or switch to explicit asset copies.
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore - allow importing .ttf as a string URL
+import IoniconsFontUrl from '@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Ionicons.ttf';
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore - allow importing .ttf as a string URL
+import AntDesignFontUrl from '@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/AntDesign.ttf';
+
+const STYLE_ELEMENT_ID = 'icon-fonts-style';
 
 export function loadIconFonts() {
-  if (typeof document === 'undefined') {
-    return; // Not in a browser environment
-  }
+  if (typeof document === 'undefined') return; // SSR safety
+  if (document.getElementById(STYLE_ELEMENT_ID)) return; // already injected
 
-  // Check if fonts are already loaded
-  if (document.getElementById('vector-icon-fonts')) {
-    return;
-  }
-
-  const iconFontStyles = `
+  const css = `
     @font-face {
-      src: url(${IoniconsFont});
       font-family: Ionicons;
+      src: url(${IoniconsFontUrl}) format('truetype');
+      font-style: normal;
+      font-weight: 400;
+      font-display: swap;
     }
 
     @font-face {
-      src: url(${AntDesignFont});
       font-family: anticon;
+      src: url(${AntDesignFontUrl}) format('truetype');
+      font-style: normal;
+      font-weight: 400;
+      font-display: swap;
     }
   `;
 
-  // Create a stylesheet
   const style = document.createElement('style');
-  style.id = 'vector-icon-fonts';
-  style.type = 'text/css';
-
-  // Append the iconFontStyles to the stylesheet
-  if ('styleSheet' in style) {
-    // @ts-ignore - IE support
-    style.styleSheet.cssText = iconFontStyles;
-  } else {
-    style.appendChild(document.createTextNode(iconFontStyles));
-  }
-
-  // Inject the stylesheet into the document head
+  style.id = STYLE_ELEMENT_ID;
+  style.appendChild(document.createTextNode(css));
   document.head.appendChild(style);
 }

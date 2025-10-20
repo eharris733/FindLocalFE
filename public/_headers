@@ -1,4 +1,13 @@
-# Font files - serve with correct content-type and caching
+/*
+  Cross-Origin-Resource-Policy: cross-origin
+
+# Allow CORS and long caching for all exported assets (hashed paths)
+/assets/*
+  Access-Control-Allow-Origin: *
+  Cache-Control: public, max-age=31536000, immutable
+  Cross-Origin-Resource-Policy: cross-origin
+
+# Font files - serve with correct content-type and caching when extension is present
 /assets/**/*.ttf
   Content-Type: font/ttf
   Access-Control-Allow-Origin: *
@@ -9,7 +18,7 @@
   Access-Control-Allow-Origin: *
   Cache-Control: public, max-age=31536000, immutable
 
-# All WOFF/WOFF2 fonts  
+# All WOFF/WOFF2 fonts
 /*.woff
   Content-Type: font/woff
   Access-Control-Allow-Origin: *
