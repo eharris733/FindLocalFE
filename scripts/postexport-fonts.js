@@ -58,6 +58,19 @@ function main() {
   if (antdesign) copyIfExists(antdesign, path.join(FONTS_DIR, 'antdesign.ttf'));
 
   console.log('[postexport-fonts] Copied icon fonts to dist/fonts');
+
+  // Inject preload and @font-face into dist/index.html for earliest load
+  const indexHtml = path.join(DIST, 'index.html');
+  if (fs.existsSync(indexHtml)) {
+    let html = fs.readFileSync(indexHtml, 'utf8');
+    const headEnd = '</head>';
+    const preload = `\n<link rel="preload" href="/fonts/ionicons.ttf" as="font" type="font/ttf" crossorigin>\n<link rel="preload" href="/fonts/antdesign.ttf" as="font" type="font/ttf" crossorigin>\n<style>\n@font-face{font-family:Ionicons;src:url('/fonts/ionicons.ttf') format('truetype');font-style:normal;font-weight:400;font-display:swap;}\n@font-face{font-family:anticon;src:url('/fonts/antdesign.ttf') format('truetype');font-style:normal;font-weight:400;font-display:swap;}\n</style>\n`;
+    if (!html.includes('/fonts/ionicons.ttf')) {
+      html = html.replace(headEnd, preload + headEnd);
+      fs.writeFileSync(indexHtml, html);
+      console.log('[postexport-fonts] Injected font preloads and @font-face into index.html');
+    }
+  }
 }
 
 main();
