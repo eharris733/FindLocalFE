@@ -40,3 +40,12 @@ export function loadIconFonts() {
   style.appendChild(document.createTextNode(css));
   document.head.appendChild(style);
 }
+
+// Run injection as early as possible on module import (idempotent via STYLE_ELEMENT_ID)
+try {
+  if (typeof document !== 'undefined') {
+    loadIconFonts();
+  }
+} catch {
+  // noop
+}

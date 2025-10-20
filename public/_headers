@@ -1,5 +1,7 @@
 /*
   Cross-Origin-Resource-Policy: cross-origin
+  Link: </fonts/ionicons.ttf>; rel=preload; as=font; type="font/ttf"; crossorigin
+  Link: </fonts/antdesign.ttf>; rel=preload; as=font; type="font/ttf"; crossorigin
 
 # Allow CORS and long caching for all exported assets (hashed paths)
 /assets/*
