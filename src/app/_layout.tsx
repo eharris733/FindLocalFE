@@ -1,3 +1,4 @@
+import 'expo-font'; // Import expo-font at entry point
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -44,11 +45,13 @@ export default function RootLayout() {
             }
         }, 10000); // 10 second timeout
 
-        if (isLoading) {
-           SplashScreen.hide();
+        // Hide splash screen when fonts are loaded or on timeout/error
+        if (fontsLoaded || fontError || fontTimeout) {
+            SplashScreen.hideAsync();
         }
+        
         return () => clearTimeout(timeout);
-    }, [isLoading]);
+    }, [fontsLoaded, fontError, fontTimeout]);
 
     // error state
 

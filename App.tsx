@@ -1,3 +1,4 @@
+import 'expo-font'; // Import expo-font at entry point
 import React, { useState } from 'react';
 import { 
   View, 
