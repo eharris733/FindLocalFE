@@ -13,6 +13,7 @@ dist-ssr/
 
 # Editor settings
 .vscode/*
+.expo
 !.vscode/extensions.json
 .idea/
 .DS_Store

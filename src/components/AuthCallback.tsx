@@ -105,6 +105,11 @@ export default function AuthCallback() {
           const hashParams = new URLSearchParams(window.location.hash.substring(1));
           authType = urlParams.get('type') || hashParams.get('type') || undefined;
         }
+        logger.info('URL search:', window.location.search);
+        logger.info('URL hash:', window.location.hash);
+        logger.info('authType from params:', params.type);
+        logger.info('authType extracted:', authType);
+        logger.info('Full window location:', window.location.href);
 
         // Check for URL errors first
         const { 
@@ -112,8 +117,8 @@ export default function AuthCallback() {
           error_description,
         } = params;
 
-        logger.debug('Auth callback initialized with params:', params);
-        logger.debug('Detected auth type:', authType);
+        logger.info('Auth callback initialized with params:', params);
+        logger.info('Detected auth type:', authType);
 
         // Handle error cases from URL
         if (urlError) {
