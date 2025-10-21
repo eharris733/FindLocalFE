@@ -11,7 +11,6 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { Text, Card, Button, CityPicker } from './ui';
 import { ThemeToggle } from './ui/ThemeToggle';
@@ -243,7 +242,7 @@ export default function ProfileModal({ visible, onClose }: ProfileModalProps) {
             Account & Settings
           </Text>
           <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-            <Ionicons name="close" size={28} color={theme.colors.text.secondary} />
+            <Text variant="h3" color="secondary">×</Text>
           </TouchableOpacity>
         </View>
 
@@ -313,7 +312,6 @@ export default function ProfileModal({ visible, onClose }: ProfileModalProps) {
                 }]}
                 onPress={handleCityPickerOpen}
               >
-                <Ionicons name="location-outline" size={16} color={theme.colors.primary[600]} />
                 <Text variant="body2" color="primary" style={styles.cityText}>
                   {displayCity}
                 </Text>
@@ -411,14 +409,14 @@ export default function ProfileModal({ visible, onClose }: ProfileModalProps) {
               onPress={handleTermsPress}
             >
               <Text variant="body1">Terms of Service</Text>
-              <Ionicons name="chevron-forward" size={20} color={theme.colors.text.secondary} />
+              <Text variant="body2" color="secondary">›</Text>
             </TouchableOpacity>
             <TouchableOpacity 
               style={styles.legalItem}
               onPress={handlePrivacyPress}
             >
               <Text variant="body1">Privacy Policy</Text>
-              <Ionicons name="chevron-forward" size={20} color={theme.colors.text.secondary} />
+              <Text variant="body2" color="secondary">›</Text>
             </TouchableOpacity>
           </Card>
 

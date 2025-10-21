@@ -7,7 +7,6 @@ import Input from "../ui/Input";
 import {useRouter} from "expo-router";
 import * as Linking from "expo-linking";
 import { useTheme } from "../../context/ThemeContext";
-import { AntDesign } from '@expo/vector-icons';
 import { logger } from "../../utils/logger";
 
 type LoginFormValues = {
@@ -393,7 +392,6 @@ export default function SignIn() {
                         variant="outline" 
                         onPress={signInWithGoogle}
                         fullWidth
-                        icon={<AntDesign name="google" size={20} color={theme.colors.text.primary} />}
                     />
                 </View>
             )}

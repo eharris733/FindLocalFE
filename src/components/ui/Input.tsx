@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { TextInput, StyleSheet, View, TextInputProps, TouchableOpacity, Platform } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import { Text } from './Text';
 
@@ -73,11 +72,16 @@ export function Input({ label, error, style, showPasswordToggle = false, secureT
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             accessibilityLabel={isPasswordVisible ? "Hide password" : "Show password"}
           >
-            <Ionicons 
-              name={isPasswordVisible ? "eye-off-outline" : "eye-outline"} 
-              size={EYE_ICON_SIZE} 
-              color={theme.colors.primary[500]} 
-            />
+            <Text 
+              variant="caption" 
+              style={{ 
+                color: theme.colors.primary[500],
+                fontSize: 12,
+                fontWeight: '600',
+              }}
+            >
+              {isPasswordVisible ? "Hide" : "Show"}
+            </Text>
           </TouchableOpacity>
         )}
       </View>

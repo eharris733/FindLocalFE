@@ -6,25 +6,3 @@
   Access-Control-Allow-Origin: *
   Cache-Control: public, max-age=31536000, immutable
   Cross-Origin-Resource-Policy: cross-origin
-
-# Font files - serve with correct content-type and caching
-/assets/**/*.ttf
-  Content-Type: font/ttf
-  Access-Control-Allow-Origin: *
-  Cache-Control: public, max-age=31536000, immutable
-
-/*.ttf
-  Content-Type: font/ttf
-  Access-Control-Allow-Origin: *
-  Cache-Control: public, max-age=31536000, immutable
-
-# WOFF/WOFF2 fonts
-/*.woff
-  Content-Type: font/woff
-  Access-Control-Allow-Origin: *
-  Cache-Control: public, max-age=31536000, immutable
-
-/*.woff2
-  Content-Type: font/woff2
-  Access-Control-Allow-Origin: *
-  Cache-Control: public, max-age=31536000, immutable
