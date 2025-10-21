@@ -18,7 +18,6 @@ import {SplashScreenController} from "../components/SplashScreenController";
 import { logger } from "../utils/logger";
 import Ionicons from '@expo/vector-icons/Ionicons';
 import AntDesign from '@expo/vector-icons/AntDesign';
-import { loadIconFonts } from "../utils/loadIconFonts";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -35,8 +34,6 @@ export default function RootLayout() {
     });
 
     useEffect(() => {
-        // Inject @font-face on web early to ensure vector icons render on CDNs like Cloudflare
-        loadIconFonts();
         const timeout = setTimeout(() => {
             if (!fontsLoaded && !fontError) {
                 logger.warn('Font loading timeout - proceeding with fallback fonts');
