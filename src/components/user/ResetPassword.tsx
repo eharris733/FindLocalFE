@@ -36,11 +36,36 @@ export default function ResetPassword() {
     // Check if user has a valid session on mount
     React.useEffect(() => {
         const checkSession = async () => {
-            const { data: { session } } = await supabase.auth.getSession();
-            setHasSession(!!session);
-            if (!session) {
-                setFeedback('Your password reset link has expired or is invalid. Please request a new one.');
+            // Give detectSessionInUrl time to exchange the PKCE code for a session
+            // This is necessary because the component might mount before the exchange completes
+            let retries = 0;
+            const maxRetries = 5;
+            
+            while (retries < maxRetries) {
+                const { data: { session }, error } = await supabase.auth.getSession();
+                
+                if (error) {
+                    console.error('[ResetPassword] Session error:', error);
+                }
+                
+                if (session) {
+                    console.log('[ResetPassword] Session found:', session.user.email);
+                    setHasSession(true);
+                    return;
+                }
+                
+                // If no session yet, wait a bit and retry (detectSessionInUrl might still be processing)
+                retries++;
+                if (retries < maxRetries) {
+                    console.log(`[ResetPassword] No session yet, retry ${retries}/${maxRetries}...`);
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
             }
+            
+            // After all retries, still no session
+            console.error('[ResetPassword] No session found after retries');
+            setHasSession(false);
+            setFeedback('Your password reset link has expired or is invalid. Please request a new one.');
         };
         checkSession();
     }, []);

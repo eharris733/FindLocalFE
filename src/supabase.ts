@@ -25,12 +25,22 @@ export const supabase = createClient(supabaseUrl, supabasePublishableKey, {
   auth: {
     ...(Platform.OS !== 'web' ? { storage: ExpoWebSecureStoreAdapter } : {}),
     autoRefreshToken: true,
-    flowType: 'pkce',
+    flowType: Platform.OS === 'web' ? 'implicit' : 'pkce', // Use implicit flow for web to support cross-device password reset
     persistSession: true,
     detectSessionInUrl: Platform.OS === 'web', // Only detect on web, mobile uses deep links
   },
   db: { schema: 'public' },
 });
+
+// Add debug logging for auth state changes on web (for debugging PKCE flow)
+if (Platform.OS === 'web') {
+  supabase.auth.onAuthStateChange((event, session) => {
+    console.log('[Supabase Auth]', event, session ? `User: ${session.user.email}` : 'No session');
+    if (event === 'PASSWORD_RECOVERY') {
+      console.log('[Supabase Auth] Password recovery event detected');
+    }
+  });
+}
 
 // Helper function to get the correct redirect URL for auth flows
 export const getAuthRedirectUrl = (path: string = '/auth/callback') => {

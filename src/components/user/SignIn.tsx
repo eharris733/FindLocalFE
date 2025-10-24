@@ -239,7 +239,8 @@ export default function SignIn() {
         setLoading(true);
         const targetEmail = (values.resetEmail || email).trim();
         try {
-            const redirectTo = getAuthRedirectUrl('/auth/callback') + '?type=recovery';
+            // Redirect to a dedicated reset page that will handle the password change
+            const redirectTo = getAuthRedirectUrl('/user/reset');
             const { error } = await supabase.auth.resetPasswordForEmail(targetEmail, { redirectTo });
             if (error) {
                 // Handle password reset errors
