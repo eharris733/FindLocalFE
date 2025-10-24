@@ -3,6 +3,8 @@ import {Session} from "@supabase/supabase-js";
 import {supabase} from "../supabase";
 import {AuthData} from "../hooks/useAuth";
 import { logger } from "../utils/logger";
+import { Platform } from "react-native";
+import { router } from "expo-router";
 
 export const AuthContext = createContext<AuthData>({
     session: undefined,
@@ -32,8 +34,27 @@ export default function AuthProvider({ children }: PropsWithChildren) {
         fetchSession()
         const {
             data: { subscription },
-        } = supabase.auth.onAuthStateChange((_event, session) => {
-            logger.debug('Auth state changed:', { event: _event, session })
+        } = supabase.auth.onAuthStateChange((event, session) => {
+            logger.debug('Auth state changed:', { event, session })
+            
+            // Handle password recovery redirect on web
+            if (Platform.OS === 'web' && event === 'PASSWORD_RECOVERY') {
+                logger.info('Password recovery detected, redirecting to /user/reset');
+                // Check if we're not already on the reset page to avoid redirect loops
+                if (typeof window !== 'undefined') {
+                    const currentPath = window.location.pathname;
+                    if (!currentPath.endsWith('/user/reset')) {
+                        // Use router.replace to navigate within the app
+                        const hash = window.location.hash;
+                        logger.info('Redirecting with hash:', hash);
+                        // Use setTimeout to ensure the session is fully established first
+                        setTimeout(() => {
+                            router.replace('/user/reset');
+                        }, 100);
+                    }
+                }
+            }
+            
             setSession(session)
         })
         // Cleanup subscription on unmount
