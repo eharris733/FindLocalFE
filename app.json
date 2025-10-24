@@ -33,7 +33,18 @@
     "plugins": [
       "expo-router",
       "expo-secure-store",
-      "expo-font"
+      [
+        "expo-font",
+        {
+          "fonts": [
+            "node_modules/@expo-google-fonts/work-sans/WorkSans_300Light.ttf",
+            "node_modules/@expo-google-fonts/work-sans/WorkSans_400Regular.ttf",
+            "node_modules/@expo-google-fonts/work-sans/WorkSans_500Medium.ttf",
+            "node_modules/@expo-google-fonts/work-sans/WorkSans_600SemiBold.ttf",
+            "node_modules/@expo-google-fonts/work-sans/WorkSans_700Bold.ttf"
+          ]
+        }
+      ]
     ]
   }
 }
