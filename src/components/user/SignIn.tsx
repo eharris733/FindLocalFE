@@ -2,7 +2,7 @@ import { Controller, useForm} from "react-hook-form";
 import {View, Platform, ActivityIndicator, StyleSheet, TouchableOpacity} from "react-native";
 import {Button, Text} from "../ui";
 import {supabase, getAuthRedirectUrl} from "../../supabase";
-import React, {useState} from "react";
+import React, {useState, useEffect} from "react";
 import Input from "../ui/Input";
 import {useRouter} from "expo-router";
 import * as Linking from "expo-linking";
@@ -22,6 +22,9 @@ export default function SignIn() {
     const [loading, setLoading] = useState(false);
     const [feedback, setFeedback] = useState<string | null>(null);
     const [forgotMode, setForgotMode] = useState(false);
+    const [resetEmailSent, setResetEmailSent] = useState(false);
+    const [canResendReset, setCanResendReset] = useState(false);
+    const [resetCountdown, setResetCountdown] = useState(60);
     const [linkMode, setLinkMode] = useState(false);
     const [needsConfirmation, setNeedsConfirmation] = useState(false);
     const {
@@ -38,6 +41,18 @@ export default function SignIn() {
     });
 
     const email = watch('email');
+
+    // Countdown timer effect for password reset resend button
+    useEffect(() => {
+        if (resetEmailSent && !canResendReset && resetCountdown > 0) {
+            const timer = setTimeout(() => {
+                setResetCountdown(resetCountdown - 1);
+            }, 1000);
+            return () => clearTimeout(timer);
+        } else if (resetCountdown === 0) {
+            setCanResendReset(true);
+        }
+    }, [resetEmailSent, canResendReset, resetCountdown]);
 
     const styles = StyleSheet.create({
         container: {
@@ -120,6 +135,29 @@ export default function SignIn() {
         legalLink: {
             color: theme.colors.primary[500],
             textDecorationLine: 'underline',
+        },
+        emailSentContainer: {
+            alignItems: 'center',
+            paddingVertical: theme.spacing.xl,
+        },
+        successIconContainer: {
+            width: 80,
+            height: 80,
+            borderRadius: 40,
+            backgroundColor: theme.colors.success + '20',
+            justifyContent: 'center',
+            alignItems: 'center',
+            marginBottom: theme.spacing.lg,
+        },
+        successIcon: {
+            fontSize: 48,
+            color: theme.colors.success,
+        },
+        helpTextContainer: {
+            marginTop: theme.spacing.xl,
+            paddingTop: theme.spacing.lg,
+            borderTopWidth: 1,
+            borderTopColor: theme.colors.border.light,
         },
     });
 
@@ -253,14 +291,18 @@ export default function SignIn() {
                     // But we still show other errors that might occur
                     setFeedback(`Reset failed: ${error.message || 'Please try again.'}`);
                 }
+                setResetEmailSent(false);
             } else {
-                // Generic success message (don't reveal if email exists)
-                setFeedback(`If an account exists with ${targetEmail}, a password reset link has been sent. Please check your email and spam folder. The link will expire in 1 hour.`);
-                setForgotMode(false);
+                // Show success splash screen
+                setResetEmailSent(true);
+                setCanResendReset(false);
+                setResetCountdown(60);
+                setFeedback(null);
             }
         } catch (err: any) {
             logger.error('Unexpected password reset error:', err);
             setFeedback('An unexpected error occurred. Please try again.');
+            setResetEmailSent(false);
         } finally {
             setLoading(false);
         }
@@ -304,19 +346,80 @@ export default function SignIn() {
                 </View>
             )}
             
-            {feedback && (
-                <View style={styles.feedbackContainer}>
-                    <Text variant="body2" style={styles.feedbackText}>
-                        {feedback}
+            {resetEmailSent ? (
+                // Password reset email sent success screen
+                <View style={styles.emailSentContainer}>
+                    <View style={styles.successIconContainer}>
+                        <Text style={styles.successIcon}>✓</Text>
+                    </View>
+                    <Text variant="h3" style={{ marginBottom: theme.spacing.md, textAlign: 'center' }}>
+                        Reset Link Sent!
                     </Text>
-                </View>
-            )}
+                    <Text variant="body1" style={{ marginBottom: theme.spacing.lg, textAlign: 'center', lineHeight: 22 }}>
+                        If an account exists with{' '}
+                        <Text style={{ fontWeight: '600' }}>{email}</Text>
+                        {', '}a password reset link has been sent.
+                    </Text>
+                    <View style={styles.infoBox}>
+                        <Text variant="body2" color="secondary" style={{ textAlign: 'center', marginBottom: theme.spacing.sm }}>
+                            Please check your inbox and spam folder. The link will expire in 1 hour.
+                        </Text>
+                    </View>
+                    
+                    {feedback && (
+                        <View style={styles.feedbackContainer}>
+                            <Text variant="body2" style={styles.feedbackText}>
+                                {feedback}
+                            </Text>
+                        </View>
+                    )}
+                    
+                    <View style={{ marginTop: theme.spacing.xl, gap: 12, width: '100%' }}>
+                        <Button
+                            title={canResendReset ? "Resend Reset Link" : `Resend in ${resetCountdown}s`}
+                            variant="outline"
+                            onPress={handleSubmit(sendPasswordReset)}
+                            disabled={!canResendReset || loading}
+                            loading={loading}
+                            fullWidth
+                        />
+                        <Button
+                            title="Back to Sign In"
+                            variant="secondary"
+                            onPress={() => {
+                                setResetEmailSent(false);
+                                setForgotMode(false);
+                            }}
+                            fullWidth
+                        />
+                    </View>
 
-            <View style={styles.infoBox}>
-                <Text variant="body2" color="secondary">
-                    Sign in to access your saved events and personalized recommendations.
-                </Text>
-            </View>
+                    <View style={styles.helpTextContainer}>
+                        <Text variant="body2" color="secondary" style={{ textAlign: 'center', lineHeight: 20 }}>
+                            If the email you entered was not associated with a valid account, no email will be sent.{' '}
+                            <TouchableOpacity onPress={() => router.push('/user/signup')}>
+                                <Text variant="body2" style={styles.linkText}>
+                                    Try signing up for a new account here
+                                </Text>
+                            </TouchableOpacity>
+                        </Text>
+                    </View>
+                </View>
+            ) : (
+                <>
+                    {feedback && (
+                        <View style={styles.feedbackContainer}>
+                            <Text variant="body2" style={styles.feedbackText}>
+                                {feedback}
+                            </Text>
+                        </View>
+                    )}
+
+                    <View style={styles.infoBox}>
+                        <Text variant="body2" color="secondary">
+                            Sign in to access your saved events and personalized recommendations.
+                        </Text>
+                    </View>
 
             <Controller
                 control={control}
@@ -506,6 +609,8 @@ export default function SignIn() {
                     </Text>
                 </TouchableOpacity>
             </View>
+                </>
+            )}
         </View>
     )
 }

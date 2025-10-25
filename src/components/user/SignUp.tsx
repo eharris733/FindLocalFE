@@ -1,8 +1,8 @@
 import {Controller, useForm} from "react-hook-form";
-import {View, Alert, Platform, ActivityIndicator, StyleSheet, TouchableOpacity} from "react-native";
+import {View, Platform, ActivityIndicator, StyleSheet, TouchableOpacity} from "react-native";
 import {Button, Text} from "../ui";
 import {supabase, getAuthRedirectUrl} from "../../supabase";
-import React, {useState} from "react";
+import React, {useState, useEffect} from "react";
 import Input from "../ui/Input";
 import {useRouter} from "expo-router";
 import * as Linking from "expo-linking";
@@ -22,6 +22,8 @@ export default function SignUp() {
     const [loading, setLoading] = useState(false);
     const [feedback, setFeedback] = useState<string | null>(null);
     const [showResend, setShowResend] = useState(false);
+    const [canResend, setCanResend] = useState(false);
+    const [resendCountdown, setResendCountdown] = useState(60);
     const {
         control,
         handleSubmit,
@@ -37,6 +39,18 @@ export default function SignUp() {
     });
 
     const email = watch('email');
+
+    // Countdown timer effect for resend button
+    useEffect(() => {
+        if (showResend && !canResend && resendCountdown > 0) {
+            const timer = setTimeout(() => {
+                setResendCountdown(resendCountdown - 1);
+            }, 1000);
+            return () => clearTimeout(timer);
+        } else if (resendCountdown === 0) {
+            setCanResend(true);
+        }
+    }, [showResend, canResend, resendCountdown]);
 
     const styles = StyleSheet.create({
         container: {
@@ -162,6 +176,23 @@ export default function SignUp() {
             marginTop: 4,
             marginLeft: 32,
         },
+        emailSentContainer: {
+            alignItems: 'center',
+            paddingVertical: theme.spacing.xl,
+        },
+        successIconContainer: {
+            width: 80,
+            height: 80,
+            borderRadius: 40,
+            backgroundColor: theme.colors.success + '20',
+            justifyContent: 'center',
+            alignItems: 'center',
+            marginBottom: theme.spacing.lg,
+        },
+        successIcon: {
+            fontSize: 48,
+            color: theme.colors.success,
+        },
     });
 
     async function checkEmailExists(email: string): Promise<boolean> {
@@ -227,11 +258,12 @@ export default function SignUp() {
                 }
                 setShowResend(false);
             } else if (!session) {
-                // Email confirmation required
-                setFeedback('Success! Please check your inbox (and spam folder) for a verification email.');
+                // Email confirmation required - show success screen
+                setFeedback(null);
                 setShowResend(true);
+                setCanResend(false);
+                setResendCountdown(60);
             } else {
-                // Auto-logged in (if email confirmation is disabled in Supabase)
                 setFeedback('Account created successfully!');
                 setShowResend(false);
                 setTimeout(() => router.replace('/'), 1500);
@@ -283,6 +315,8 @@ export default function SignUp() {
 
     async function resendConfirmationEmail(values: LoginFormValues) {
         setLoading(true);
+        setCanResend(false);
+        setResendCountdown(60);
         try {
             const redirectTo = getAuthRedirectUrl('/auth/callback');
             const { error } = await (supabase.auth as any).resend({
@@ -302,7 +336,7 @@ export default function SignUp() {
                 }
                 return;
             }
-            setFeedback('Confirmation email resent. Please check your inbox and spam folder.');
+            setFeedback(null);
         } catch (e: any) {
             logger.error('Unexpected resend error:', e);
             setFeedback('An unexpected error occurred. Please try again.');
@@ -319,19 +353,66 @@ export default function SignUp() {
                 </View>
             )}
             
-            {feedback && (
-                <View style={showResend ? styles.successContainer : styles.feedbackContainer}>
-                    <Text variant="body2" style={styles.feedbackText}>
-                        {feedback}
+            {showResend ? (
+                // Email sent success screen
+                <View style={styles.emailSentContainer}>
+                    <View style={styles.successIconContainer}>
+                        <Text style={styles.successIcon}>✓</Text>
+                    </View>
+                    <Text variant="h3" style={{ marginBottom: theme.spacing.md, textAlign: 'center' }}>
+                        Email Successfully Sent!
                     </Text>
+                    <Text variant="body1" style={{ marginBottom: theme.spacing.lg, textAlign: 'center', lineHeight: 22 }}>
+                        Please check your inbox at{' '}
+                        <Text style={{ fontWeight: '600' }}>{email}</Text>
+                        {' '}for a verification email.
+                    </Text>
+                    <View style={styles.infoBox}>
+                        <Text variant="body2" color="secondary" style={{ textAlign: 'center' }}>
+                            Don't see it? Check your spam or other folders. The link will expire in 24 hours.
+                        </Text>
+                    </View>
+                    
+                    {feedback && (
+                        <View style={styles.feedbackContainer}>
+                            <Text variant="body2" style={styles.feedbackText}>
+                                {feedback}
+                            </Text>
+                        </View>
+                    )}
+                    
+                    <View style={{ marginTop: theme.spacing.xl, gap: 12, width: '100%' }}>
+                        <Button
+                            title={canResend ? "Resend Verification Email" : `Resend in ${resendCountdown}s`}
+                            variant="outline"
+                            onPress={handleSubmit(resendConfirmationEmail)}
+                            disabled={!canResend || loading}
+                            loading={loading}
+                            fullWidth
+                        />
+                        <Button
+                            title="Back to Sign In"
+                            variant="secondary"
+                            onPress={() => router.push('/user/signin')}
+                            fullWidth
+                        />
+                    </View>
                 </View>
-            )}
+            ) : (
+                <>
+                    {feedback && (
+                        <View style={styles.feedbackContainer}>
+                            <Text variant="body2" style={styles.feedbackText}>
+                                {feedback}
+                            </Text>
+                        </View>
+                    )}
 
-            <View style={styles.infoBox}>
-                <Text variant="body2" color="secondary">
-                    Create an account to save your favorite events and get personalized recommendations.
-                </Text>
-            </View>
+                    <View style={styles.infoBox}>
+                        <Text variant="body2" color="secondary">
+                            Create an account to save your favorite events and get personalized recommendations.
+                        </Text>
+                    </View>
 
             <Controller
                 control={control}
@@ -480,15 +561,6 @@ export default function SignUp() {
                     onPress={signUpWithGoogle}
                     fullWidth
                 />
-                
-                {showResend && (
-                    <Button 
-                        title="Resend Confirmation Email" 
-                        variant="outline" 
-                        onPress={handleSubmit(resendConfirmationEmail)}
-                        fullWidth
-                    />
-                )}
             </View>
 
             <View style={styles.guestContainer}>
@@ -528,6 +600,8 @@ export default function SignUp() {
                     </Text>
                 </TouchableOpacity>
             </View>
+                </>
+            )}
         </View>
     )
 }
