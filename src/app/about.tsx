@@ -72,8 +72,14 @@ export default function AboutRoute() {
       <Text variant="h4" style={{ marginTop: theme.spacing.lg, marginBottom: theme.spacing.sm }}>
         Q: I want to report a bug, request a feature, or request a city or event be added to FindLocal.
       </Text>
-      <Text variant="body1" style={{ marginBottom: theme.spacing.xl, lineHeight: 22 }}>
+      <Text variant="body1" style={{ marginBottom: theme.spacing.md, lineHeight: 22 }}>
         A: First of all, that's not a question. But please email <Text style={{ textDecorationLine: 'underline', color: theme.colors.primary[500] }} onPress={() => Linking.openURL('mailto:findlocalinternal@gmail.com')}>findlocalinternal@gmail.com</Text> with all the details needed for your inquiry or report and we thank you for your engagement!
+      </Text>
+      <Text variant="h4" style={{ marginTop: theme.spacing.lg, marginBottom: theme.spacing.sm }}>
+        Q: How can I stay updated on all things FindLocal?
+      </Text>
+      <Text variant="body1" style={{ marginBottom: theme.spacing.xl, lineHeight: 22 }}>
+        A: You can <Text style={{ textDecorationLine: 'underline', color: theme.colors.primary[500] }} onPress={() => Linking.openURL('https://www.instagram.com/findl0cal/')}>follow the gram</Text>! Also be sure to check the email preferences box to get updates on all new features and announcements.
       </Text>
     </ScrollView>
   );
