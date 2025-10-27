@@ -11,7 +11,11 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.findlocalmobile"
+      "bundleIdentifier": "com.anonymous.findlocalmobile",
+      "infoPlist": {
+        "CFBundleAllowMixedLocalizations": true
+      },
+      "usesAppleSignIn": true
     },
     "android": {
       "adaptiveIcon": {

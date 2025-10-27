@@ -8,6 +8,7 @@ import {useRouter} from "expo-router";
 import * as Linking from "expo-linking";
 import { useTheme } from "../../context/ThemeContext";
 import { logger } from "../../utils/logger";
+import AppleSignInButton from "./AppleSignInButton";
 
 type LoginFormValues = {
     email: string;
@@ -496,6 +497,12 @@ export default function SignIn() {
                         variant="outline" 
                         onPress={signInWithGoogle}
                         fullWidth
+                    />
+
+                    <AppleSignInButton
+                        onSuccess={() => router.replace('/')}
+                        onError={setFeedback}
+                        setLoading={setLoading}
                     />
                 </View>
             )}

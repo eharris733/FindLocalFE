@@ -57,6 +57,11 @@ export default function AuthCallback() {
         updateData.display_name = metadata.display_name;
       }
       
+      // Handle full_name from Apple Sign In or other OAuth providers
+      if (metadata.full_name) {
+        updateData.full_name = metadata.full_name;
+      }
+      
       if (metadata.agreed_to_terms !== undefined) {
         updateData.agreed_to_terms = metadata.agreed_to_terms;
       }
