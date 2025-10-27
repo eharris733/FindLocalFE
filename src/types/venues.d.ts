@@ -1,7 +1,8 @@
 export interface Venue {
   id: string; // uuid
   name: string;
-  city: string;
+  city: string; // "Boston" or "New York"
+  region: string; // "Brooklyn", "Cambridge", "Staten Island", etc.
   url: string | null;
   is_active: boolean | null;
   last_scraped_at: string | null; // timestamp with time zone

@@ -3,7 +3,8 @@ export interface Event {
   silver_event_id: string | null; // uuid, foreign key to events_silver
   venue_id: string | null;
   title: string | null;
-  city: string;
+  city: string; // "Boston" or "New York"
+  region: string | null; // "Brooklyn", "Cambridge", "Staten Island", etc.
   description: string | null;
   event_date: string | null; // date
   start_time: string | null; // time without time zone
@@ -12,6 +13,9 @@ export interface Event {
   root_url: string | null;
   image_url: string | null;
   music_info: any | null; // jsonb
+  ticket_page_url: string | null; // URL to external ticket purchase page
+  price: string | null; // Ticket price or price range (e.g., "$25", "$20-$30", "Free")
+  status: string | null; // Event status: "Sold Out", "Cancelled", "Postponed", etc.
   created_at: string | null; // timestamp with time zone
 }
 

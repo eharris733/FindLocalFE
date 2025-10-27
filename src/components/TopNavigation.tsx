@@ -18,7 +18,7 @@ export default function TopNavigation({ onNavLinkPress }: TopNavigationProps) {
   const { theme } = useTheme();
   const {isMobile} = useDeviceInfo();
   const { isLoggedIn } = useAuth();
-  const { displayCity, selectedCity, onCityChange } = useCityLocation();
+  const { selectedCity, onCityChange } = useCityLocation();
   const router = useRouter();
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showCityPicker, setShowCityPicker] = useState(false);
@@ -72,8 +72,8 @@ export default function TopNavigation({ onNavLinkPress }: TopNavigationProps) {
     setShowCityPicker(true);
   };
 
-  const handleCityChange = (city: string) => {
-    onCityChange(city);
+  const handleCityChange = async (city: string) => {
+    await onCityChange(city);
     // Modal will close itself and call handleCityPickerClose via onClose
   };
 
@@ -112,7 +112,7 @@ export default function TopNavigation({ onNavLinkPress }: TopNavigationProps) {
                 onPress={handleCityPickerOpen}
               >
                 <Text variant="body2" color="primary" style={styles.cityText}>
-                  {displayCity}
+                  {selectedCity}
                 </Text>
                 <Text variant="caption" color="secondary" style={styles.cityArrow}>▼</Text>
               </TouchableOpacity>
@@ -204,7 +204,7 @@ export default function TopNavigation({ onNavLinkPress }: TopNavigationProps) {
                       numberOfLines={1}
                       ellipsizeMode="tail"
                     >
-                      {displayCity}
+                      {selectedCity}
                     </Text>
                   </View>
                   <Text variant="body2" color="secondary" style={styles.chevron}>›</Text>

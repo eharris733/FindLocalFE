@@ -8,7 +8,7 @@ export interface Profile {
   email?: string | null;
   updated_at?: string | null;
   favorite_events?: string[] | null; // Array of event IDs
-  preferred_city?: string | null; // Database city name (e.g., 'boston', 'brooklyn')
+  preferred_city?: string | null; // "Boston" or "New York"
   marketing_opt_in?: boolean | null; // User consent for marketing emails
   agreed_to_terms?: boolean | null; // User agreed to Terms of Service
   agreed_to_terms_date?: string | null; // Server-side timestamp (ISO string) - cannot be manipulated by client

@@ -1,19 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { View, TouchableOpacity, StyleSheet, Modal, ScrollView, Dimensions, ActivityIndicator, Image } from 'react-native';
+import React, { useState } from 'react';
+import { View, TouchableOpacity, StyleSheet, Modal, ScrollView, ActivityIndicator, Image } from 'react-native';
 import { useTheme } from '../../context/ThemeContext';
 import { Text } from './Text';
-import { getAvailableCities } from '../../api/events';
-import {useCityLocation} from "../../context/CityContext";
-
-interface CityData {
-  name: string;
-  neighborhoods?: string[];
-  hasVenues?: boolean;
-}
+import { useCityLocation } from "../../context/CityContext";
 
 interface CityPickerProps {
   selectedCity: string;
-  onCityChange: (city: string) => void;
+  onCityChange: (city: string) => Promise<void>;
   initiallyOpen?: boolean; // For external control - opens immediately if true
   showTrigger?: boolean; // Show the trigger button or just the modal
   onClose?: () => void; // Callback when modal is closed
@@ -27,40 +20,22 @@ export const CityPicker: React.FC<CityPickerProps> = ({
   onClose,
 }) => {
   const { theme } = useTheme();
-  const {loading, allCityData, displayCity} = useCityLocation();
+  const { loading, allCityData } = useCityLocation();
   const [isOpen, setIsOpen] = useState(initiallyOpen);
-  const [expandedCities, setExpandedCities] = useState<Set<string>>(new Set());
 
-
-  const toggleCityExpansion = (cityName: string) => {
-    const newExpanded = new Set(expandedCities);
-    if (newExpanded.has(cityName)) {
-      newExpanded.delete(cityName);
-    } else {
-      newExpanded.add(cityName);
-    }
-    setExpandedCities(newExpanded);
-  };
-
-  const handleSelection = (selection: string) => {
-    onCityChange(selection);
+  const handleSelection = async (selection: string) => {
+    await onCityChange(selection);
     setIsOpen(false);
-    setExpandedCities(new Set()); // Reset expanded state
     onClose?.(); // Call external close handler if provided
   };
 
   const handleModalClose = () => {
     setIsOpen(false);
-    setExpandedCities(new Set());
     onClose?.(); // Call external close handler if provided
   };
 
-  const isMainCitySelected = (cityName: string) => {
+  const isCitySelected = (cityName: string) => {
     return selectedCity === cityName;
-  };
-
-  const isNeighborhoodSelected = (neighborhood: string) => {
-    return selectedCity === neighborhood;
   };
 
   return (
@@ -84,7 +59,7 @@ export const CityPicker: React.FC<CityPickerProps> = ({
             <Text variant="h3" color="primary" style={styles.locationText}>
               Events Near{' '}
               <Text variant="h3" style={{ fontWeight: '700', color: theme.colors.text.primary }}>
-                {displayCity}
+                {selectedCity}
               </Text>
             </Text>
             <Text variant="body2" color="secondary" style={styles.arrow}>
@@ -113,7 +88,7 @@ export const CityPicker: React.FC<CityPickerProps> = ({
               { borderBottomColor: theme.colors.border.light }
             ]}>
               <Text variant="h2" color="primary" style={styles.modalTitle}>
-                Select Location
+                Select City
               </Text>
               <TouchableOpacity
                 style={styles.closeButton}
@@ -134,93 +109,61 @@ export const CityPicker: React.FC<CityPickerProps> = ({
                 </View>
               ) : (
                 allCityData.map((cityInfo) => (
-                  <View key={cityInfo.name}>
-                    {/* Main City Row */}
-                    <View style={styles.cityRow}>
-                      <TouchableOpacity
-                        style={[
-                          styles.cityOption,
-                          {
-                            backgroundColor: isMainCitySelected(cityInfo.name)
-                              ? theme.colors.primary[50]
-                              : 'transparent',
-                            opacity: cityInfo.hasVenues ? 1 : 0.4,
-                          }
-                        ]}
-                        onPress={cityInfo.hasVenues ? () => handleSelection(cityInfo.name) : undefined}
-                        disabled={!cityInfo.hasVenues}
-                      >
+                  <View key={cityInfo.name} style={styles.citySection}>
+                    {/* City Option */}
+                    <TouchableOpacity
+                      style={[
+                        styles.cityOption,
+                        {
+                          backgroundColor: isCitySelected(cityInfo.name)
+                            ? theme.colors.primary[50]
+                            : 'transparent',
+                        }
+                      ]}
+                      onPress={() => handleSelection(cityInfo.name)}
+                    >
                       <Text 
                         variant="h4" 
-                        color={isMainCitySelected(cityInfo.name) ? 'primary' : cityInfo.hasVenues ? 'secondary' : 'tertiary'}
+                        color={isCitySelected(cityInfo.name) ? 'primary' : 'secondary'}
                         style={{ 
-                          fontWeight: isMainCitySelected(cityInfo.name) ? '700' : '600',
+                          fontWeight: isCitySelected(cityInfo.name) ? '700' : '600',
                         }}
                       >
                         {cityInfo.name}
                       </Text>
-                      {isMainCitySelected(cityInfo.name) && (
+                      {isCitySelected(cityInfo.name) && (
                         <Text variant="body1" color="primary">✓</Text>
                       )}
                     </TouchableOpacity>
-                    
-                    {/* Expand/Collapse Button */}
-                    {cityInfo.neighborhoods && cityInfo.neighborhoods.length > 0 && cityInfo.hasVenues && (
-                      <TouchableOpacity
-                        style={styles.expandButton}
-                        onPress={() => toggleCityExpansion(cityInfo.name)}
-                      >
-                        <Text variant="body1" color="secondary">
-                          {expandedCities.has(cityInfo.name) ? '−' : '+'}
+
+                    {/* Show available regions for this city */}
+                    {cityInfo.regions && cityInfo.regions.length > 0 && (
+                      <View style={styles.regionSection}>
+                        <Text variant="caption" color="tertiary" style={styles.regionHeader}>
+                          Available Regions:
                         </Text>
-                      </TouchableOpacity>
+                        <View style={styles.regionChips}>
+                          {cityInfo.regions.map((region) => (
+                            <View
+                              key={region}
+                              style={[
+                                styles.regionChip,
+                                { 
+                                  backgroundColor: theme.colors.background.secondary,
+                                  borderColor: theme.colors.border.light,
+                                }
+                              ]}
+                            >
+                              <Text variant="caption" color="secondary">
+                                {region}
+                              </Text>
+                            </View>
+                          ))}
+                        </View>
+                      </View>
                     )}
                   </View>
-
-                  {/* Neighborhoods (if expanded) */}
-                  {expandedCities.has(cityInfo.name) && cityInfo.neighborhoods && (
-                    <View style={styles.neighborhoodSection}>
-                      {cityInfo.neighborhoods.map((neighborhood) => {
-                        // Check if this specific neighborhood has venues in the database
-                        const neighborhoodHasVenues = allCityData.some((city) =>
-                          city.name.toLowerCase() === neighborhood.toLowerCase()
-                        );
-                        
-                        return (
-                          <TouchableOpacity
-                            key={neighborhood}
-                            style={[
-                              styles.neighborhoodOption,
-                              {
-                                backgroundColor: isNeighborhoodSelected(neighborhood)
-                                  ? theme.colors.primary[50]
-                                  : 'transparent',
-                                opacity: neighborhoodHasVenues ? 1 : 0.4,
-                              }
-                            ]}
-                            onPress={neighborhoodHasVenues ? () => handleSelection(neighborhood) : undefined}
-                            disabled={!neighborhoodHasVenues}
-                          >
-                            <Text 
-                              variant="body1" 
-                              color={isNeighborhoodSelected(neighborhood) ? 'primary' : neighborhoodHasVenues ? 'secondary' : 'tertiary'}
-                              style={{ 
-                                fontWeight: isNeighborhoodSelected(neighborhood) ? '600' : '400',
-                                marginLeft: 20,
-                              }}
-                            >
-                              {neighborhood}
-                            </Text>
-                            {isNeighborhoodSelected(neighborhood) && (
-                              <Text variant="body1" color="primary">✓</Text>
-                            )}
-                          </TouchableOpacity>
-                        );
-                      })}
-                    </View>
-                  )}
-                </View>
-              ))
+                ))
               )}
             </ScrollView>
           </View>
@@ -286,12 +229,10 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 20,
   },
-  cityRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  citySection: {
+    marginBottom: 16,
   },
   cityOption: {
-    flex: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -300,22 +241,24 @@ const styles = StyleSheet.create({
     marginVertical: 4,
     borderRadius: 12,
   },
-  expandButton: {
-    padding: 12,
-    marginLeft: 8,
-  },
-  neighborhoodSection: {
+  regionSection: {
+    marginTop: 8,
     marginLeft: 16,
-    marginBottom: 8,
   },
-  neighborhoodOption: {
+  regionHeader: {
+    marginBottom: 8,
+    marginLeft: 4,
+  },
+  regionChips: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    marginVertical: 2,
-    borderRadius: 8,
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  regionChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 1,
   },
   loadingContainer: {
     flex: 1,

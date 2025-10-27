@@ -3,7 +3,7 @@ import type { Event } from '../types/events';
 import { supabase } from '../supabase';
 import { logger } from '../utils/logger';
 
-export async function getEvents(city?: string): Promise<Event[]> {
+export async function getEvents(city?: string, region?: string): Promise<Event[]> {
     try {
       // console.log('Fetching events from events_gold table...');
       // console.log('Schema: public, Table: events_gold');
@@ -16,6 +16,11 @@ export async function getEvents(city?: string): Promise<Event[]> {
       // Filter by city if provided
       if (city) {
         query = query.eq('city', city);
+      }
+
+      // Filter by region if provided
+      if (region) {
+        query = query.eq('region', region);
       }
 
       const { data, error, status, statusText } = await query;
@@ -57,10 +62,19 @@ export async function getEventsByCity(city: string): Promise<Event[]> {
   return getEvents(city);
 }
 
+export async function getEventsByRegion(region: string): Promise<Event[]> {
+  return getEvents(undefined, region);
+}
+
+export async function getEventsByCityAndRegion(city: string, region?: string): Promise<Event[]> {
+  return getEvents(city, region);
+}
+
 export async function getEventsByDateRange(
   startDate: string, 
   endDate: string, 
-  city?: string
+  city?: string,
+  region?: string
 ): Promise<Event[]> {
   try {
     let query = supabase
@@ -73,6 +87,11 @@ export async function getEventsByDateRange(
     // Filter by city if provided
     if (city) {
       query = query.eq('city', city);
+    }
+
+    // Filter by region if provided
+    if (region) {
+      query = query.eq('region', region);
     }
 
     const { data, error } = await query;

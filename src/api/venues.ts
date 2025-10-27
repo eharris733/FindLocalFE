@@ -63,6 +63,54 @@ export async function getVenuesByCity(city: string): Promise<Venue[]> {
   }
 }
 
+export async function getVenuesByRegion(region: string): Promise<Venue[]> {
+  try {
+    const { data, error } = await supabase
+      .from('venues')
+      .select('*')
+      .eq('region', region)
+      .eq('is_active', true)
+      .order('name');
+
+    if (error) {
+      logger.error('Error fetching venues by region from Supabase:', error);
+      return [];
+    }
+
+    return data as Venue[];
+  } catch (error: any) {
+    logger.error('Error fetching venues by region:', error);
+    return [];
+  }
+}
+
+export async function getVenuesByCityAndRegion(city: string, region?: string): Promise<Venue[]> {
+  try {
+    let query = supabase
+      .from('venues')
+      .select('*')
+      .eq('city', city)
+      .eq('is_active', true);
+
+    // If region is provided, filter by region as well
+    if (region) {
+      query = query.eq('region', region);
+    }
+
+    const { data, error } = await query.order('name');
+
+    if (error) {
+      logger.error('Error fetching venues by city and region from Supabase:', error);
+      return [];
+    }
+
+    return data as Venue[];
+  } catch (error: any) {
+    logger.error('Error fetching venues by city and region:', error);
+    return [];
+  }
+}
+
 export async function getAllVenues(): Promise<Venue[]> {
   try {
     //console.log('🏢 Fetching all venues from database...');

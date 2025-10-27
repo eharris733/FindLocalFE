@@ -22,7 +22,7 @@ const MapViewComponent: React.FC<MapViewComponentProps> = ({
   highlightedEventId,
 }) => {
   const { theme } = useTheme();
-  const { selectedCity, displayCity } = useCityLocation();
+  const { selectedCity } = useCityLocation();
   const [venues, setVenues] = useState<Venue[]>([]);
   const [venuesLoading, setVenuesLoading] = useState(true);
 
@@ -68,7 +68,6 @@ const MapViewComponent: React.FC<MapViewComponentProps> = ({
         onVenuePress={onVenuePress}
         highlightedEventId={highlightedEventId}
         selectedCity={selectedCity}
-        displayCity={displayCity}
       />
     );
   }
@@ -92,7 +91,7 @@ const MapViewComponent: React.FC<MapViewComponentProps> = ({
         <Text variant="body2" style={[styles.placeholderSubtext, {
           color: theme.colors.text.tertiary,
         }]}>
-          {events.length} events • {venues.length} venues with coordinates in {displayCity}
+          {events.length} events • {venues.length} venues with coordinates in {selectedCity}
         </Text>
         {highlightedEventId && (
           <Text variant="caption" style={[styles.highlightText, {

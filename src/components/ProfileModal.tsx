@@ -46,7 +46,7 @@ interface ProfileModalProps {
 
 export default function ProfileModal({ visible, onClose }: ProfileModalProps) {
   const { theme } = useTheme();
-  const { selectedCity, displayCity, onCityChange } = useCityLocation();
+  const { selectedCity, onCityChange } = useCityLocation();
   const { isLoggedIn, profile, session } = useAuth();
   const router = useRouter();
 
@@ -54,17 +54,6 @@ export default function ProfileModal({ visible, onClose }: ProfileModalProps) {
   const formatLocationDisplay = (city: string) => {
     if (city === 'New York') return 'New York, NY';
     if (city === 'Boston') return 'Boston, MA';
-    if (city === 'Brooklyn') return 'Brooklyn, NY';
-    if (city === 'Manhattan') return 'Manhattan, NY';
-    if (city === 'Queens') return 'Queens, NY';
-    if (city === 'Bronx') return 'Bronx, NY';
-    if (city === 'Staten Island') return 'Staten Island, NY';
-    if (city === 'Back Bay') return 'Back Bay, Boston, MA';
-    if (city === 'Cambridge') return 'Cambridge, MA';
-    if (city === 'Allston') return 'Allston, Boston, MA';
-    if (city === 'South End') return 'South End, Boston, MA';
-    if (city === 'North End') return 'North End, Boston, MA';
-    if (city === 'Fenway') return 'Fenway, Boston, MA';
     return city; // fallback for other cities
   };
 
@@ -116,8 +105,8 @@ export default function ProfileModal({ visible, onClose }: ProfileModalProps) {
     setShowCityPicker(false);
   };
 
-  const handleCityChange = (city: string) => {
-    onCityChange(city);
+  const handleCityChange = async (city: string) => {
+    await onCityChange(city);
     setShowCityPicker(false);
   };
 
@@ -313,7 +302,7 @@ export default function ProfileModal({ visible, onClose }: ProfileModalProps) {
                 onPress={handleCityPickerOpen}
               >
                 <Text variant="body2" color="primary" style={styles.cityText}>
-                  {displayCity}
+                  {selectedCity}
                 </Text>
                 <Text variant="caption" color="secondary" style={styles.cityArrow}>▼</Text>
               </TouchableOpacity>
@@ -354,7 +343,7 @@ export default function ProfileModal({ visible, onClose }: ProfileModalProps) {
           {/* City Picker Modal */}
           {showCityPicker && (
             <CityPicker
-              selectedCity={displayCity}
+              selectedCity={selectedCity}
               onCityChange={handleCityChange}
               showTrigger={false}
               initiallyOpen={true}
