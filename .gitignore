@@ -13,6 +13,7 @@ dist-ssr/
 
 # Editor settings
 .vscode/*
+.expo
 !.vscode/extensions.json
 .idea/
 .DS_Store
@@ -101,3 +102,8 @@ temp/
 screenshots/*.png
 screenshots/*.jpg
 screenshots/*.jpeg
+
+#build artifacts for ios and android
+ios/
+android/
+AuthKey_7K24HXLYD5.p8

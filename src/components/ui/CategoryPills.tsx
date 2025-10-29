@@ -11,6 +11,7 @@ interface CategoryPillsProps {
 
 const categories = [
   { id: 'all', label: 'All', emoji: '🎭' },
+  { id: 'favorites', label: 'Favorites', emoji: '❤️' },
   { id: 'music', label: 'Music', emoji: '🎵' },
   { id: 'bar', label: 'Bar', emoji: '🍺' },
   { id: 'theater', label: 'Theater', emoji: '🎭' },

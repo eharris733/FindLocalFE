@@ -1,5 +1,6 @@
 import type { Venue } from '../types/venues';
 import { supabase } from '../supabase';
+import { logger } from '../utils/logger';
 
 export async function getVenueByName(venueName: string): Promise<Venue | null> {
   try {
@@ -10,13 +11,13 @@ export async function getVenueByName(venueName: string): Promise<Venue | null> {
       .single();
 
     if (error) {
-      console.error('Error fetching venue from Supabase:', error);
+      logger.error('Error fetching venue from Supabase:', error);
       return null;
     }
 
     return data as Venue;
   } catch (error: any) {
-    console.error('Error fetching venue:', error);
+    logger.error('Error fetching venue:', error);
     return null;
   }
 }
@@ -30,13 +31,13 @@ export async function getVenueById(venueId: string): Promise<Venue | null> {
       .single();
 
     if (error) {
-      console.error('Error fetching venue from Supabase:', error);
+      logger.error('Error fetching venue from Supabase:', error);
       return null;
     }
 
     return data as Venue;
   } catch (error: any) {
-    console.error('Error fetching venue:', error);
+    logger.error('Error fetching venue:', error);
     return null;
   }
 }
@@ -51,13 +52,61 @@ export async function getVenuesByCity(city: string): Promise<Venue[]> {
       .order('name');
 
     if (error) {
-      console.error('Error fetching venues by city from Supabase:', error);
+      logger.error('Error fetching venues by city from Supabase:', error);
       return [];
     }
 
     return data as Venue[];
   } catch (error: any) {
-    console.error('Error fetching venues by city:', error);
+    logger.error('Error fetching venues by city:', error);
+    return [];
+  }
+}
+
+export async function getVenuesByRegion(region: string): Promise<Venue[]> {
+  try {
+    const { data, error } = await supabase
+      .from('venues')
+      .select('*')
+      .eq('region', region)
+      .eq('is_active', true)
+      .order('name');
+
+    if (error) {
+      logger.error('Error fetching venues by region from Supabase:', error);
+      return [];
+    }
+
+    return data as Venue[];
+  } catch (error: any) {
+    logger.error('Error fetching venues by region:', error);
+    return [];
+  }
+}
+
+export async function getVenuesByCityAndRegion(city: string, region?: string): Promise<Venue[]> {
+  try {
+    let query = supabase
+      .from('venues')
+      .select('*')
+      .eq('city', city)
+      .eq('is_active', true);
+
+    // If region is provided, filter by region as well
+    if (region) {
+      query = query.eq('region', region);
+    }
+
+    const { data, error } = await query.order('name');
+
+    if (error) {
+      logger.error('Error fetching venues by city and region from Supabase:', error);
+      return [];
+    }
+
+    return data as Venue[];
+  } catch (error: any) {
+    logger.error('Error fetching venues by city and region:', error);
     return [];
   }
 }
@@ -73,7 +122,7 @@ export async function getAllVenues(): Promise<Venue[]> {
       .order('name');
 
     if (error) {
-      console.error('Error fetching all venues from Supabase:', error);
+      logger.error('Error fetching all venues from Supabase:', error);
       return [];
     }
 
@@ -87,7 +136,7 @@ export async function getAllVenues(): Promise<Venue[]> {
 
     return data as Venue[];
   } catch (error: any) {
-    console.error('Error fetching all venues:', error);
+    logger.error('Error fetching all venues:', error);
     return [];
   }
 }
@@ -102,7 +151,7 @@ export async function getAvailableCities(): Promise<string[]> {
       .eq('is_active', true);
 
     if (error) {
-      console.error('Error fetching cities from Supabase:', error);
+      logger.error('Error fetching cities from Supabase:', error);
       return [];
     }
 
@@ -112,7 +161,7 @@ export async function getAvailableCities(): Promise<string[]> {
 
     return cities;
   } catch (error: any) {
-    console.error('Error fetching cities:', error);
+    logger.error('Error fetching cities:', error);
     return [];
   }
 }

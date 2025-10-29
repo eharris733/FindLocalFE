@@ -4,17 +4,24 @@
     "slug": "find-local-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
+    "scheme": "findlocal",
     "userInterfaceStyle": "light",
     "assetBundlePatterns": [
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.anonymous.findlocalmobile",
+      "infoPlist": {
+        "CFBundleAllowMixedLocalizations": true
+      },
+      "usesAppleSignIn": true
     },
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#006B5E"
-      }
+      },
+      "package": "com.anonymous.findlocalmobile"
     },
     "web": {
       "favicon": "./assets/monocle.png",
@@ -27,6 +34,21 @@
         }
       }
     },
-    "plugins": []
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-font",
+        {
+          "fonts": [
+            "node_modules/@expo-google-fonts/work-sans/WorkSans_300Light.ttf",
+            "node_modules/@expo-google-fonts/work-sans/WorkSans_400Regular.ttf",
+            "node_modules/@expo-google-fonts/work-sans/WorkSans_500Medium.ttf",
+            "node_modules/@expo-google-fonts/work-sans/WorkSans_600SemiBold.ttf",
+            "node_modules/@expo-google-fonts/work-sans/WorkSans_700Bold.ttf"
+          ]
+        }
+      ]
+    ]
   }
 }

@@ -10,8 +10,12 @@ import {
 } from "@expo-google-fonts/work-sans";
 import {CityProvider} from "../context/CityContext";
 import {ThemeProvider} from "../context/ThemeContext";
+import {FavoritesProvider} from "../context/FavoritesContext";
 import Header from "../components/Header";
-
+import {useAuth} from "../hooks/useAuth";
+import AuthProvider from "../providers/auth-provider";
+import {SplashScreenController} from "../components/SplashScreenController";
+import { logger } from "../utils/logger";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -25,34 +29,48 @@ export default function RootLayout() {
         WorkSans_700Bold,
     });
 
-    const isLoading = (!fontsLoaded && !fontError && !fontTimeout);
-
     useEffect(() => {
         const timeout = setTimeout(() => {
             if (!fontsLoaded && !fontError) {
-                console.warn('Font loading timeout - proceeding with fallback fonts');
+                logger.warn('Font loading timeout - proceeding with fallback fonts');
                 setFontTimeout(true);
             }
         }, 10000); // 10 second timeout
 
-        if (isLoading) {
-           SplashScreen.hide();
+        // Hide splash screen when fonts are loaded or on timeout/error
+        if (fontsLoaded || fontError || fontTimeout) {
+            SplashScreen.hideAsync();
         }
+        
         return () => clearTimeout(timeout);
-    }, [isLoading]);
+    }, [fontsLoaded, fontError, fontTimeout]);
 
     // error state
 
     return (
-            <ThemeProvider>
+        <ThemeProvider>
+            <AuthProvider>
                 <CityProvider>
-                    <RootNavigator />
+                    <FavoritesProvider>
+                        <SplashScreenController />
+                        <RootNavigator />
+                    </FavoritesProvider>
                 </CityProvider>
-            </ThemeProvider>
+            </AuthProvider>
+        </ThemeProvider>
     );
 }
 
 // Separate this into a new component so it can access the SessionProvider context later
 function RootNavigator() {
-    return <Stack screenOptions={{ header: Header }} initialRouteName="index"/>
+    const { isLoggedIn } = useAuth()
+    return <Stack screenOptions={{ header: Header }} initialRouteName="index">
+        <Stack.Protected guard={isLoggedIn}>
+            <Stack.Screen name="(private)" options={{ headerShown: false }} />
+        </Stack.Protected>
+        <Stack.Protected guard={!isLoggedIn}>
+            <Stack.Screen name="user/signin" />
+        </Stack.Protected>
+        <Stack.Screen name="+not-found" />
+    </Stack>
 }

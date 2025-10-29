@@ -1,10 +1,11 @@
 import { Platform } from 'react-native';
+import { logger } from './logger';
 
 export const takeScreenshot = async (filename?: string) => {
   if (Platform.OS === 'web') {
     // For web, we can use browser screenshot APIs or manual testing
-    console.log('📸 Screenshot point:', filename || 'unnamed');
-    console.log('Please take manual screenshot for progress tracking');
+    logger.info('📸 Screenshot point:', filename || 'unnamed');
+    logger.info('Please take manual screenshot for progress tracking');
   }
   // For mobile, we could implement react-native-view-shot later
 };

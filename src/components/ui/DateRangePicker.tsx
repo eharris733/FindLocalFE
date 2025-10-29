@@ -11,7 +11,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { Text } from './Text';
 import { Portal } from './Portal';
 import { Calendar } from './Calendar';
-import { format, addDays, startOfWeek, endOfWeek } from 'date-fns';
+import { format, addDays, startOfWeek, endOfWeek, startOfDay, endOfDay, isSameDay } from 'date-fns';
 
 interface DateRange {
   start: Date | null;
@@ -41,13 +41,16 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
   const quickOptions = [
     { 
       label: 'Today', 
-      getValue: () => ({ start: new Date(), end: new Date() })
+      getValue: () => {
+        const today = new Date();
+        return { start: startOfDay(today), end: endOfDay(today) };
+      }
     },
     { 
       label: 'Tomorrow', 
       getValue: () => {
         const tomorrow = addDays(new Date(), 1);
-        return { start: tomorrow, end: tomorrow };
+        return { start: startOfDay(tomorrow), end: endOfDay(tomorrow) };
       }
     },
     { 
@@ -60,7 +63,8 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
     if (!value.start && !value.end) return 'Select dates';
     if (value.start && !value.end) return format(value.start, 'MMM dd');
     if (value.start && value.end) {
-      if (value.start.getTime() === value.end.getTime()) {
+      // Check if it's the same day (even if times are different)
+      if (isSameDay(value.start, value.end)) {
         return format(value.start, 'MMM dd, yyyy');
       }
       return `${format(value.start, 'MMM dd')} - ${format(value.end, 'MMM dd')}`;
@@ -84,8 +88,8 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
     } else if (tempStart && selectingEnd) {
       // Completing a range
       if (date.getTime() === tempStart.getTime()) {
-        // Same date selected, treat as single day
-        onChange({ start: date, end: date });
+        // Same date selected, treat as single day - use startOfDay and endOfDay
+        onChange({ start: startOfDay(date), end: endOfDay(date) });
         setTempStart(null);
         setSelectingEnd(false);
       } else if (date > tempStart) {
@@ -106,7 +110,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
           // Update end date
           if (date.getTime() === value.start.getTime()) {
             // Clicked on start date, treat as single day
-            onChange({ start: date, end: date });
+            onChange({ start: startOfDay(date), end: endOfDay(date) });
           } else {
             onChange({ start: value.start, end: date });
           }

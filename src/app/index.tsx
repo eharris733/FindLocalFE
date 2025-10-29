@@ -1,4 +1,5 @@
 import {useCityLocation} from "../context/CityContext";
+import {useFavorites} from "../context/FavoritesContext";
 import {useEvents} from "../hooks/useEvents";
 import {Text} from "../components/ui";
 import {SafeAreaView, StatusBar, StyleSheet} from "react-native";
@@ -11,6 +12,7 @@ import type {Event} from "../types/events";
 export default function IndexRoute() {
     const { theme, isDark } = useTheme();
     const { selectedCity} = useCityLocation();
+    const { favoriteEventIds } = useFavorites();
     const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
     const [showEventModal, setShowEventModal] = useState(false);
 
@@ -24,7 +26,7 @@ export default function IndexRoute() {
         availableLocations,
         venues,
         venuesLoading,
-    } = useEvents({ selectedCity });
+    } = useEvents({ selectedCity, favoriteEventIds });
 
     const handleEventPress = (event: Event) => {
         setSelectedEvent(event);

@@ -13,6 +13,7 @@ import { Text } from '../ui';
 import { getVenuesByCity } from '../../api/venues';
 import { getDisplayCityName } from '../../utils/cityUtils';
 import type { Venue } from '../../types/venues';
+import { logger } from '../../utils/logger';
 
 interface VenueSelectionModalProps {
   visible: boolean;
@@ -64,7 +65,7 @@ export default function VenueSelectionModal({
       setVenues(venueData);
       setFilteredVenues(venueData);
     } catch (err) {
-      console.error('Error fetching venues:', err);
+      logger.error('Error fetching venues:', err);
       setError('Failed to load venues');
       Alert.alert('Error', 'Failed to load venues. Please try again.');
     } finally {

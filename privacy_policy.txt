@@ -1,0 +1,65 @@
+Privacy Policy for findlocal.community
+
+Last Updated: October 14, 2025
+
+Welcome to FindLocal ("FindLocal," "we," "us," or "our"). We are committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website findlocal.community and use our services (collectively, the "Service"). Please read this privacy policy carefully.
+
+1. Information We Collect
+
+We may collect information about you in a variety of ways.
+
+- Personal Data You Provide to Us:
+    - Account Information: When you register for an account, we require a valid email address and a password. You may optionally provide additional information, such as a name, profile photos, general location (city), phone contact lists for friend invites, or social media handles. An account is required to access certain features like saving preferences, creating custom events, and inviting friends.
+    - Communications: If you contact us directly, we may receive additional information about you.
+
+- Data Collected Automatically:
+    - Log and Usage Data: We automatically collect technical information for analytics and security purposes when you access the Service. This data may include your IP address, browser type, operating system, referral URLs, and pages visited. This information is anonymized and used in aggregate.
+
+- Information from Third Parties:
+    - We may receive information about you from third-party services, such as Google or Apple, if you use them to sign in to our Service (OAuth).
+
+2. How We Use Your Information
+
+We use the information we collect to:
+- Provide, operate, and maintain our Service.
+- Create and manage your account, and verify your identity.
+- Send you technical notices, updates, security alerts, and administrative messages.
+- Send you customized lists of events and marketing communications, such as email newsletters or push notifications, should you opt-in. You may opt-out of receiving these communications at any time.
+- Personalize your experience by recommending events and content based on your interests and past activity (e.g., favorited or attended events).
+- Monitor and analyze trends, usage, and activities to improve the Service.
+
+3. How We Share Your Information
+
+We do not sell your personal data. We may share information in the following situations:
+
+- With Service Providers: We share information with third-party vendors and service providers that perform services for us, such as database management (Supabase) and authentication (Google, Apple). These providers only have access to your information to perform these tasks on our behalf and are obligated not to disclose or use it for any other purpose.
+- User-to-User Sharing: Your public profile, which may include your name and profile photo, is visible to other users. Sensitive information such as your password, email address, and phone number will never be shared with other users. If you are accepted as a friend by another user, they may see additional information, but not your sensitive contact or account details. Only friends who are invited to and attending the same event will be able to see user-specific details related to that event.
+- With Anonymized Data: We may use and share aggregated, anonymized data (e.g., "150 people are interested in this event") that does not identify you for analytical purposes.
+- For Legal Reasons: We may disclose your information if we are required to do so by law or in response to valid requests by public authorities (e.g., a court or a government agency).
+
+4. Your Rights and Data Control
+
+You have control over your personal information:
+- Access and Edit: You can view, edit, or delete your personal information at any time through your account settings on the website.
+- Account Deletion: You can delete your account at any time. Upon your request, we will take steps to delete all data directly associated with your account from our active databases as soon as possible. Please note that some information may be retained in our backups for a limited period or if it is linked to other users or data (e.g., an event you created may remain on the platform in an anonymized state). Your personal profile and connections to friends will be removed.
+
+5. Children's Privacy
+
+Our Service is not intended for use by children under the age of 13. We do not knowingly collect personal information from children under 13. Furthermore, users must be of the legal age required by their jurisdiction (e.g., 21+ in the United States) to attend events involving alcohol or other age-restricted substances.
+
+6. Your Privacy Rights for California and European Users
+
+If you are a resident of California or a data subject in the European Economic Area (EEA), you have additional rights regarding your personal data under the California Consumer Privacy Act (CCPA) and the General Data Protection Regulation (GDPR), respectively.
+
+- For Residents of the EEA (GDPR): You have the right to access, rectify, erase, restrict the processing of, and request the portability of your personal data. You may also object to the processing of your data in certain circumstances.
+- For Residents of California (CCPA): You have the right to request information about the categories of personal data we have collected and the right to request the deletion of your personal data. FindLocal does not sell your personal information.
+
+To exercise any of these rights, please contact us at the email address provided in the "Contact Us" section below. We will comply with all applicable laws and verifiable requests.
+
+7. Changes to This Privacy Policy
+
+We may update this Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page and updating the "Last Updated" date. For material changes, we will also provide notice to you via the email address associated with your account.
+
+8. Contact Us
+
+If you have any questions about this Privacy Policy, please contact us at: findlocalinternal@gmail.com

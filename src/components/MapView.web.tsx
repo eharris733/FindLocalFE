@@ -4,6 +4,7 @@ import { Event } from '../types/events';
 import { Venue } from '../types/venues';
 import { useTheme } from '../context/ThemeContext';
 import CustomMapMarker from './CustomMapMarker';
+import { logger } from '../utils/logger';
 
 
 // Import using require to bypass TypeScript issues with this library
@@ -17,21 +18,20 @@ interface MapViewWebProps {
   onVenuePress?: (venue: Venue) => void;
   highlightedEventId?: string;
   selectedCity?: string;
-  displayCity?: string;
 }
 
 const getCityCenter = (city?: string) => {
   //console.log('🎯 getCityCenter called with city:', city);
-  switch (city) {
+  switch (city?.toLowerCase()) {
     case 'boston':
       //console.log('🎯 Returning Boston coordinates');
       return { latitude: 42.3601, longitude: -71.0589 }; // Boston
-    case 'brooklyn':
-      //console.log('🎯 Returning Brooklyn coordinates');
-      return { latitude: 40.6782, longitude: -73.9442 }; // Brooklyn
+    case 'new york':
+      //console.log('🎯 Returning New York coordinates');
+      return { latitude: 40.6782, longitude: -73.9442 }; // New York
     default:
-      //console.log('🎯 Returning default Brooklyn coordinates for unknown city:', city);
-      return { latitude: 40.6782, longitude: -73.9442 }; // Default to Brooklyn
+      //console.log('🎯 Returning default New York coordinates for unknown city:', city);
+      return { latitude: 40.6782, longitude: -73.9442 }; // Default to New York
   }
 };
 
@@ -64,8 +64,7 @@ const MapViewWeb: React.FC<MapViewWebProps> = ({
   onEventPress,
   onVenuePress,
   highlightedEventId,
-  selectedCity,
-  displayCity
+  selectedCity
 }) => {
   const { theme } = useTheme();
   const mapRef = useRef<any>(null);
@@ -203,6 +202,17 @@ const MapViewWeb: React.FC<MapViewWebProps> = ({
     });
   };
 
+  // Function to center map on a specific coordinate
+  const centerMapOnMarker = (latitude: number, longitude: number) => {
+    if (mapRef.current) {
+      // console.log('🎯 Centering map on marker:', { latitude, longitude });
+      mapRef.current.animateCamera({
+        center: { latitude, longitude },
+        zoom: 15, // Zoom in closer when focusing on a marker
+      }, { duration: 500 }); // Smooth 500ms animation
+    }
+  };
+
   // Debug logging
   // console.log('MapView.web.tsx - Debug info:', {
   //   venuesCount: venues.length,
@@ -250,7 +260,7 @@ const MapViewWeb: React.FC<MapViewWebProps> = ({
   {!venuesLoading && sortedVenueEntries.map(({ venue, venueEvents, isHighlighted, isActive }) => {
           // Debug logging for active state
           if (venue.id === activeCalloutId || isActive) {
-            console.log('🏢 Venue render debug:', {
+            logger.debug('🏢 Venue render debug:', {
               venueId: venue.id,
               activeCalloutId,
               isActive,
@@ -270,6 +280,7 @@ const MapViewWeb: React.FC<MapViewWebProps> = ({
               onCalloutToggle={handleCalloutToggle}
               onEventPress={onEventPress}
               onVenuePress={onVenuePress}
+              onMarkerPress={centerMapOnMarker}
             />
           );
         })}

@@ -1,18 +1,26 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { getAvailableCities } from '../api/events';
-import { getDisplayCityName } from '../utils/cityUtils';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo, useCallback } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { supabase } from '../supabase';
+import { STORAGE_KEYS } from '../constants/storage-keys';
+import { updatePreferredCity } from '../api/profiles';
+import { AuthContext } from '../providers/auth-provider';
+import { logger } from '../utils/logger';
+
+interface RegionData {
+    region: string; // Region name (e.g., "Brooklyn", "Cambridge")
+    city: string;   // Parent city (e.g., "New York", "Boston")
+}
 
 interface CityData {
-    name: string;
-    neighborhoods?: string[];
-    hasVenues?: boolean;
+    name: string;     // City name (e.g., "Boston", "New York")
+    regions: string[]; // Array of region names
 }
 
 interface CityContextType {
-    selectedCity: string; // Database city name
-    displayCity: string;  // Display city name
-    onCityChange: (city: string) => void;
-    allCityData: CityData[];
+    selectedCity: string; // "Boston" or "New York"
+    availableRegions: string[]; // All regions for the selected city
+    allCityData: CityData[]; // All cities with their regions
+    onCityChange: (city: string) => Promise<void>;
     loading: boolean;
     error: boolean;
 }
@@ -24,153 +32,172 @@ interface CityProviderProps {
 }
 
 export const CityProvider: React.FC<CityProviderProps> = ({ children }) => {
-    const [availableCitiesFromDB, setAvailableCitiesFromDB] = useState<string[]>([]);
-    const [allCityData, setAllCityData] = useState<CityData[]>([]);
+    const [selectedCity, setSelectedCity] = useState('Boston'); // City preference: "Boston" or "New York"
+    const [availableRegions, setAvailableRegions] = useState<string[]>([]); // Regions for selected city
+    const [allCityData, setAllCityData] = useState<CityData[]>([]); // All cities with their regions
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(true);
-    const [selectedCity, setSelectedCity] = useState('boston'); // Database city name
-    const [displayCity, setDisplayCity] = useState('Boston'); // Display city name
+    const [error, setError] = useState(false);
+    const [hasLoadedPreference, setHasLoadedPreference] = useState(false);
+    const authContext = useContext(AuthContext);
+    const { profile, session } = authContext || { profile: null, session: null };
 
-    const onCityChange = (city: string) => {
-        //console.log('🏙️ CityContext onCityChange called with:', city);
-        
-        // Map display names to database city names
-        let dbCityName = city.toLowerCase();
-        
-        // Handle special cases where display name differs from database name
-        if (city === 'New York' || city === 'Brooklyn' || city === 'Manhattan' || city === 'Queens' || city === 'Bronx' || city === 'Staten Island') {
-            dbCityName = 'brooklyn'; // NYC venues are stored under 'brooklyn' in the database
-            setDisplayCity('New York'); // Show "New York" in UI
-        } else if (city === 'Boston' || city === 'Back Bay' || city === 'Cambridge' || city === 'Allston' || city === 'South End' || city === 'North End' || city === 'Fenway') {
-            dbCityName = 'boston'; // Boston venues are stored under 'boston' in the database
-            setDisplayCity('Boston'); // Show "Boston" in UI
-        } else {
-            // For neighborhoods, show the neighborhood name but use the parent city's database name
-            if (['Brooklyn', 'Manhattan', 'Queens', 'Bronx', 'Staten Island'].includes(city)) {
-                dbCityName = 'brooklyn';
-                setDisplayCity(getDisplayCityName(city)); // Show the neighborhood name
-            } else if (['Back Bay', 'Cambridge', 'Allston', 'South End', 'North End', 'Fenway'].includes(city)) {
-                dbCityName = 'boston';
-                setDisplayCity(getDisplayCityName(city)); // Show the neighborhood name
-            } else {
-                setDisplayCity(getDisplayCityName(city));
+    // Fetch all regions from the database
+    const fetchRegionsForCity = async (city: string): Promise<string[]> => {
+        try {
+            const { data, error } = await supabase
+                .from('venues')
+                .select('region')
+                .eq('city', city)
+                .eq('is_active', true);
+
+            if (error) {
+                logger.error('Error fetching regions from Supabase:', error);
+                return [];
             }
-        }
 
-        //console.log('🏙️ CityContext Setting selectedCity from:', selectedCity, 'to:', dbCityName);
-        //console.log('🏙️ CityContext Setting displayCity to:', city);
-        setSelectedCity(dbCityName);
-        //console.log('🏙️ CityContext City changed from display name:', city, 'to database name:', dbCityName);
+            // Get unique regions
+            const regions = [...new Set(data.map(venue => venue.region))].filter(Boolean) as string[];
+            return regions.sort((a, b) => a.localeCompare(b));
+        } catch (error) {
+            logger.error('Error fetching regions:', error);
+            return [];
+        }
     };
 
-    // Load cities from database on component mount
+    // Fetch all cities and their regions
+    const fetchAllCitiesAndRegions = async (): Promise<CityData[]> => {
+        try {
+            const { data, error } = await supabase
+                .from('venues')
+                .select('city, region')
+                .eq('is_active', true);
+
+            if (error) {
+                logger.error('Error fetching cities and regions from Supabase:', error);
+                return [];
+            }
+
+            // Group regions by city
+            const cityMap = new Map<string, Set<string>>();
+            for (const venue of data) {
+                if (venue.city && venue.region) {
+                    if (!cityMap.has(venue.city)) {
+                        cityMap.set(venue.city, new Set());
+                    }
+                    cityMap.get(venue.city)!.add(venue.region);
+                }
+            }
+
+            // Convert to array format
+            const cityData: CityData[] = Array.from(cityMap.entries()).map(([city, regions]) => ({
+                name: city,
+                regions: Array.from(regions).sort((a, b) => a.localeCompare(b))
+            }));
+
+            return cityData.sort((a, b) => a.name.localeCompare(b.name));
+        } catch (error) {
+            logger.error('Error fetching cities and regions:', error);
+            return [];
+        }
+    };
+
+    const onCityChange = useCallback(async (city: string) => {
+        logger.info('🏙️ CityContext onCityChange called with:', city);
+        
+        setSelectedCity(city);
+        
+        // Fetch regions for the new city
+        const regions = await fetchRegionsForCity(city);
+        setAvailableRegions(regions);
+        
+        // Save to AsyncStorage
+        try {
+            await AsyncStorage.setItem(STORAGE_KEYS.PREFERRED_CITY, city);
+        } catch (error) {
+            logger.error('Error saving city preference to storage:', error);
+        }
+        
+        // If user is authenticated, sync to Supabase
+        if (session?.user?.id) {
+            try {
+                await updatePreferredCity(session.user.id, city);
+            } catch (error) {
+                logger.error('Error syncing city preference to Supabase:', error);
+            }
+        }
+    }, [session]);
+
+    // Load saved city preference on mount
+    useEffect(() => {
+        const loadPreferredCity = async () => {
+            try {
+                const savedCity = await AsyncStorage.getItem(STORAGE_KEYS.PREFERRED_CITY);
+                if (savedCity) {
+                    setSelectedCity(savedCity);
+                    const regions = await fetchRegionsForCity(savedCity);
+                    setAvailableRegions(regions);
+                    logger.info('✅ Loaded saved city preference:', savedCity);
+                } else {
+                    // Default to Boston, fetch its regions
+                    const regions = await fetchRegionsForCity('Boston');
+                    setAvailableRegions(regions);
+                }
+            } catch (error) {
+                logger.error('Error loading city preference:', error);
+            } finally {
+                setHasLoadedPreference(true);
+            }
+        };
+
+        loadPreferredCity();
+    }, []);
+
+    // Sync with user's profile preference (cloud wins if different)
+    useEffect(() => {
+        const syncCityWithProfile = async () => {
+            if (!profile || !hasLoadedPreference) {
+                return;
+            }
+
+            const profileCity = profile.preferred_city;
+            if (profileCity && profileCity !== selectedCity) {
+                // Cloud preference exists and differs from local - cloud wins
+                setSelectedCity(profileCity);
+                const regions = await fetchRegionsForCity(profileCity);
+                setAvailableRegions(regions);
+                
+                // Update local storage to match cloud
+                try {
+                    await AsyncStorage.setItem(STORAGE_KEYS.PREFERRED_CITY, profileCity);
+                    logger.info('✅ Synced city preference from profile:', profileCity);
+                } catch (error) {
+                    logger.error('Error syncing city from profile:', error);
+                }
+            } else if (!profileCity && session?.user?.id) {
+                // No cloud preference exists - save current selection to cloud
+                try {
+                    await updatePreferredCity(session.user.id, selectedCity);
+                    logger.info('✅ Saved current city to profile:', selectedCity);
+                } catch (error) {
+                    logger.error('Error saving city to profile:', error);
+                }
+            }
+        };
+
+        syncCityWithProfile();
+    }, [profile, hasLoadedPreference, session]);
+
+    // Load cities and regions from database on component mount
     useEffect(() => {
         const loadCities = async () => {
             try {
                 setLoading(true);
-                const availableCities = await getAvailableCities();
-                //console.log('Available cities with events:', availableCities);
-                //console.log('Individual cities:', availableCities.map((city, index) => `${index}: "${city}"`));
-
-                // Store available cities for neighborhood checking
-                setAvailableCitiesFromDB(availableCities);
-
-                // Helper function to check if a city has venues (case-insensitive and neighborhood mapping)
-                const cityHasVenues = (cityName: string, neighborhoods?: string[]) => {
-                    // Check exact match (case-insensitive)
-                    const exactMatch = availableCities.some(city => city.toLowerCase() === cityName.toLowerCase());
-                    //console.log(`Checking ${cityName}: exact match = ${exactMatch}`);
-
-                    if (exactMatch) {
-                        return true;
-                    }
-
-                    // Check if any neighborhoods have venues
-                    if (neighborhoods) {
-                        const neighborhoodMatch = neighborhoods.some(neighborhood => {
-                            const match = availableCities.some(city => city.toLowerCase() === neighborhood.toLowerCase());
-                                    // if (match) {
-                                    //     console.log(`${cityName}: found match for neighborhood ${neighborhood}`);
-                                    // }
-                            return match;
-                        });
-                        // console.log(`${cityName}: neighborhood match = ${neighborhoodMatch}`);
-                        return neighborhoodMatch;
-                    }
-
-                    return false;
-                };
-
-                // Hardcoded city data with neighborhoods - merge with database data
-                const cityData: CityData[] = [
-                    {
-                        name: 'New York',
-                        neighborhoods: ['Manhattan', 'Brooklyn', 'Queens', 'Bronx', 'Staten Island'],
-                        hasVenues: cityHasVenues('New York', ['Manhattan', 'Brooklyn', 'Queens', 'Bronx', 'Staten Island'])
-                    },
-                    {
-                        name: 'Boston',
-                        neighborhoods: ['Back Bay', 'Cambridge', 'Allston', 'South End', 'North End', 'Fenway'],
-                        hasVenues: cityHasVenues('Boston', ['Back Bay', 'Cambridge', 'Allston', 'South End', 'North End', 'Fenway'])
-                    },
-                    {
-                        name: 'Los Angeles',
-                        neighborhoods: ['Hollywood', 'Beverly Hills', 'Santa Monica', 'Venice', 'West Hollywood'],
-                        hasVenues: cityHasVenues('Los Angeles', ['Hollywood', 'Beverly Hills', 'Santa Monica', 'Venice', 'West Hollywood'])
-                    },
-                    {
-                        name: 'Chicago',
-                        neighborhoods: ['Loop', 'Lincoln Park', 'Wicker Park', 'River North', 'Gold Coast'],
-                        hasVenues: cityHasVenues('Chicago', ['Loop', 'Lincoln Park', 'Wicker Park', 'River North', 'Gold Coast'])
-                    },
-                    {
-                        name: 'San Francisco',
-                        neighborhoods: ['SOMA', 'Mission', 'Castro', 'Haight', 'Pacific Heights'],
-                        hasVenues: cityHasVenues('San Francisco', ['SOMA', 'Mission', 'Castro', 'Haight', 'Pacific Heights'])
-                    },
-                    {
-                        name: 'Seattle',
-                        neighborhoods: ['Capitol Hill', 'Fremont', 'Ballard', 'Queen Anne', 'Belltown'],
-                        hasVenues: cityHasVenues('Seattle', ['Capitol Hill', 'Fremont', 'Ballard', 'Queen Anne', 'Belltown'])
-                    },
-                    {
-                        name: 'Washington, DC',
-                        neighborhoods: ['Dupont Circle', 'Georgetown', 'Adams Morgan', 'U Street', 'Capitol Hill'],
-                        hasVenues: cityHasVenues('Washington, DC', ['Dupont Circle', 'Georgetown', 'Adams Morgan', 'U Street', 'Capitol Hill'])
-                    },
-                    {
-                        name: 'Miami',
-                        neighborhoods: ['South Beach', 'Wynwood', 'Brickell', 'Little Havana', 'Coconut Grove'],
-                        hasVenues: cityHasVenues('Miami', ['South Beach', 'Wynwood', 'Brickell', 'Little Havana', 'Coconut Grove'])
-                    },
-                    {
-                        name: 'Austin',
-                        neighborhoods: ['Downtown', 'South by Southwest', 'East Austin', 'Zilker', 'The Domain'],
-                        hasVenues: cityHasVenues('Austin', ['Downtown', 'South by Southwest', 'East Austin', 'Zilker', 'The Domain'])
-                    },
-                    {
-                        name: 'Portland',
-                        neighborhoods: ['Pearl District', 'Hawthorne', 'Alberta', 'Nob Hill', 'Sellwood'],
-                        hasVenues: cityHasVenues('Portland', ['Pearl District', 'Hawthorne', 'Alberta', 'Nob Hill', 'Sellwood'])
-                    }
-                ];
-
+                const cityData = await fetchAllCitiesAndRegions();
                 setAllCityData(cityData);
+                setError(false);
             } catch (error) {
-                console.error('Error loading cities:', error);
-                // Fallback to cities without hasVenues data
-                setAllCityData([
-                    { name: 'New York', neighborhoods: ['Manhattan', 'Brooklyn', 'Queens', 'Bronx', 'Staten Island'], hasVenues: false },
-                    { name: 'Boston', neighborhoods: ['Back Bay', 'Cambridge', 'Allston', 'South End', 'North End', 'Fenway'], hasVenues: false },
-                    { name: 'Los Angeles', neighborhoods: ['Hollywood', 'Beverly Hills', 'Santa Monica', 'Venice', 'West Hollywood'], hasVenues: false },
-                    { name: 'Chicago', neighborhoods: ['Loop', 'Lincoln Park', 'Wicker Park', 'River North', 'Gold Coast'], hasVenues: false },
-                    { name: 'San Francisco', neighborhoods: ['SOMA', 'Mission', 'Castro', 'Haight', 'Pacific Heights'], hasVenues: false },
-                    { name: 'Seattle', neighborhoods: ['Capitol Hill', 'Fremont', 'Ballard', 'Queen Anne', 'Belltown'], hasVenues: false },
-                    { name: 'Washington, DC', neighborhoods: ['Dupont Circle', 'Georgetown', 'Adams Morgan', 'U Street', 'Capitol Hill'], hasVenues: false },
-                    { name: 'Miami', neighborhoods: ['South Beach', 'Wynwood', 'Brickell', 'Little Havana', 'Coconut Grove'], hasVenues: false },
-                    { name: 'Austin', neighborhoods: ['Downtown', 'South by Southwest', 'East Austin', 'Zilker', 'The Domain'], hasVenues: false },
-                    { name: 'Portland', neighborhoods: ['Pearl District', 'Hawthorne', 'Alberta', 'Nob Hill', 'Sellwood'], hasVenues: false }
-                ]);
+                logger.error('Error loading cities:', error);
+                setError(true);
             } finally {
                 setLoading(false);
             }
@@ -179,14 +206,14 @@ export const CityProvider: React.FC<CityProviderProps> = ({ children }) => {
         loadCities();
     }, []);
 
-    const value: CityContextType = {
+    const value: CityContextType = useMemo(() => ({
         selectedCity,
-        displayCity,
-        onCityChange,
+        availableRegions,
         allCityData,
+        onCityChange,
         loading,
         error
-    };
+    }), [selectedCity, availableRegions, allCityData, onCityChange, loading, error]);
 
     return (
         <CityContext.Provider value={value}>

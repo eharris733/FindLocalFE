@@ -1,5 +1,6 @@
 import {useEffect, useState} from "react";
 import {getAvailableCities} from "../api/events";
+import { logger } from "../utils/logger";
 
 interface CityData {
     name: string;
@@ -142,7 +143,7 @@ export const useCityLocation = () => {
 
                 setAllCityData(cityData);
             } catch (error) {
-                console.error('Error loading cities:', error);
+                logger.error('Error loading cities:', error);
                 // Fallback to cities without hasVenues data
                 setAllCityData([
                     { name: 'New York', neighborhoods: ['Manhattan', 'Brooklyn', 'Queens', 'Bronx', 'Staten Island'], hasVenues: false },

@@ -6,6 +6,7 @@ import { getAllVenues, getVenuesByCity } from '../api/venues';
 import { useTheme } from '../context/ThemeContext';
 import { useCityLocation } from '../context/CityContext';
 import { Text } from './ui';
+import { logger } from '../utils/logger';
 
 interface MapViewComponentProps {
   events: Event[];
@@ -21,7 +22,7 @@ const MapViewComponent: React.FC<MapViewComponentProps> = ({
   highlightedEventId,
 }) => {
   const { theme } = useTheme();
-  const { selectedCity, displayCity } = useCityLocation();
+  const { selectedCity } = useCityLocation();
   const [venues, setVenues] = useState<Venue[]>([]);
   const [venuesLoading, setVenuesLoading] = useState(true);
 
@@ -45,7 +46,7 @@ const MapViewComponent: React.FC<MapViewComponentProps> = ({
         //console.log(`🗺️ MapViewComponent: Found ${venuesWithCoords.length} venues with coordinates for ${selectedCity}`);
         setVenues(venuesWithCoords);
       } catch (error) {
-        console.error('Failed to fetch venues for map:', error);
+        logger.error('Failed to fetch venues for map:', error);
       } finally {
         setVenuesLoading(false);
       }
@@ -67,7 +68,6 @@ const MapViewComponent: React.FC<MapViewComponentProps> = ({
         onVenuePress={onVenuePress}
         highlightedEventId={highlightedEventId}
         selectedCity={selectedCity}
-        displayCity={displayCity}
       />
     );
   }
@@ -91,7 +91,7 @@ const MapViewComponent: React.FC<MapViewComponentProps> = ({
         <Text variant="body2" style={[styles.placeholderSubtext, {
           color: theme.colors.text.tertiary,
         }]}>
-          {events.length} events • {venues.length} venues with coordinates in {displayCity}
+          {events.length} events • {venues.length} venues with coordinates in {selectedCity}
         </Text>
         {highlightedEventId && (
           <Text variant="caption" style={[styles.highlightText, {

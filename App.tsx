@@ -16,8 +16,10 @@ import {
 } from '@expo-google-fonts/work-sans';
 import { ThemeProvider, useTheme } from './src/context/ThemeContext';
 import { CityProvider } from './src/context/CityContext';
+import { FavoritesProvider } from './src/context/FavoritesContext';
 import { useEvents } from './src/hooks/useEvents';
 import { useCityLocation } from './src/context/CityContext';
+import { useFavorites } from './src/context/FavoritesContext';
 import MainLayout from './src/components/MainLayout';
 import EventModal from './src/components/EventModal';
 import { Text } from './src/components/ui';
@@ -31,6 +33,9 @@ function AppContent() {
   
   // Get city location data
   const { selectedCity, onCityChange } = useCityLocation();
+  
+  // Get favorites data
+  const { favoriteEventIds } = useFavorites();
   
   // // Debug: Log when selectedCity changes in App component
   // React.useEffect(() => {
@@ -71,7 +76,7 @@ function AppContent() {
     availableLocations,
     venues,
     venuesLoading,
-  } = useEvents({ selectedCity });
+  } = useEvents({ selectedCity, favoriteEventIds });
 
   const handleEventPress = (event: Event) => {
     setSelectedEvent(event);
@@ -170,7 +175,9 @@ export default function App() {
   return (
     <ThemeProvider>
       <CityProvider>
-        <AppContent />
+        <FavoritesProvider>
+          <AppContent />
+        </FavoritesProvider>
       </CityProvider>
     </ThemeProvider>
   );

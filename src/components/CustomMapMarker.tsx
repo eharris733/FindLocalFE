@@ -19,6 +19,7 @@ interface CustomMapMarkerProps {
   onCalloutToggle: (venueId: string | null) => void;
   onEventPress: (event: Event) => void;
   onVenuePress?: (venue: Venue) => void;
+  onMarkerPress?: (latitude: number, longitude: number) => void; // Callback to center map
 }
 
 const isWeb = Platform.OS === 'web';
@@ -33,6 +34,7 @@ const CustomMapMarker: React.FC<CustomMapMarkerProps> = ({
   onCalloutToggle,
   onEventPress,
   onVenuePress,
+  onMarkerPress,
 }) => {
   const { theme } = useTheme();
   const latitude = Number(venue.latitude);
@@ -73,6 +75,11 @@ const CustomMapMarker: React.FC<CustomMapMarkerProps> = ({
     
     e?.stopPropagation?.();
     e?.preventDefault?.();
+
+    // Center the map on this marker when opening callout
+    if (!isActive && onMarkerPress) {
+      onMarkerPress(latitude, longitude);
+    }
 
     // Toggle callout visibility immediately - no setTimeout needed
     if (isActive) {

@@ -16,6 +16,7 @@ import {
   endOfMonth,
   isSameDay
 } from 'date-fns';
+import { logger } from '../utils/logger';
 
 const initialFilterState: FilterState = {
   category: 'all',
@@ -112,9 +113,10 @@ interface UseEventsResult {
 
 interface UseEventsProps {
   selectedCity?: string;
+  favoriteEventIds?: string[]; // Array of favorited event IDs
 }
 
-export const useEvents = ({ selectedCity }: UseEventsProps = {}): UseEventsResult => {
+export const useEvents = ({ selectedCity, favoriteEventIds = [] }: UseEventsProps = {}): UseEventsResult => {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -134,7 +136,7 @@ export const useEvents = ({ selectedCity }: UseEventsProps = {}): UseEventsResul
         //console.log(`🎉 Loaded ${data?.length || 0} events for city: ${selectedCity || 'all cities'}`);
       } catch (err) {
         setError("Failed to load events. Please try again.");
-        console.error(err);
+        logger.error('Failed to fetch events:', err);
       } finally {
         setLoading(false);
       }
@@ -164,7 +166,7 @@ export const useEvents = ({ selectedCity }: UseEventsProps = {}): UseEventsResul
           }
         });
       } catch (err) {
-        console.error('Failed to fetch venues:', err);
+        logger.error('Failed to fetch venues:', err);
       } finally {
         setVenuesLoading(false);
       }
@@ -201,11 +203,20 @@ export const useEvents = ({ selectedCity }: UseEventsProps = {}): UseEventsResul
   }, [events]);
 
   const filteredEvents = useMemo(() => {
-    return events.filter(event => {
+    let filtered = events.filter(event => {
       // Skip events without valid date
       if (!event.event_date) return false;
       
       const eventDate = new Date(event.event_date);
+
+      // Favorites filter - show only favorited events
+      if (filters.category === 'favorites') {
+        if (!favoriteEventIds.includes(event.id)) {
+          return false;
+        }
+        // If filtering by favorites, skip other category checks
+        return true;
+      }
 
       // Category filter - check music_info.genres and venue type/event_types
       if (filters.category !== 'all') {
@@ -356,14 +367,14 @@ export const useEvents = ({ selectedCity }: UseEventsProps = {}): UseEventsResul
           }
           
           // Debug logging
-          console.log(`Size filter: ${JSON.stringify(sizeFilter)}, venue: ${venue.name}, venue_size: "${venue.venue_size}", matches: ${sizeMatches}`);
+          logger.debug(`Size filter: ${JSON.stringify(sizeFilter)}, venue: ${venue.name}, venue_size: "${venue.venue_size}", matches: ${sizeMatches}`);
           
           if (!sizeMatches) {
             return false;
           }
         } else {
           // If venue has no size data, exclude it from size filtering
-          console.log(`Size filter: ${JSON.stringify(sizeFilter)}, venue: ${venue?.name || 'unknown'}, no venue_size data`);
+          logger.debug(`Size filter: ${JSON.stringify(sizeFilter)}, venue: ${venue?.name || 'unknown'}, no venue_size data`);
           return false;
         }
       }
@@ -415,7 +426,24 @@ export const useEvents = ({ selectedCity }: UseEventsProps = {}): UseEventsResul
 
       return true;
     });
-  }, [events, filters, venues]);
+
+    // Sort favorited events to the top (except when filtering by favorites category)
+    if (filters.category !== 'favorites' && favoriteEventIds.length > 0) {
+      filtered = filtered.sort((a, b) => {
+        const aIsFavorite = favoriteEventIds.includes(a.id);
+        const bIsFavorite = favoriteEventIds.includes(b.id);
+        
+        // Favorites first
+        if (aIsFavorite && !bIsFavorite) return -1;
+        if (!aIsFavorite && bIsFavorite) return 1;
+        
+        // If both are favorites or both are not, maintain original order (by date)
+        return 0;
+      });
+    }
+
+    return filtered;
+  }, [events, filters, venues, favoriteEventIds]);
 
   return {
     events,

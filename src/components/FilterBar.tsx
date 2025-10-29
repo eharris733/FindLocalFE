@@ -48,7 +48,7 @@ export default function FilterBar({
   const { theme } = useTheme();
   const [showMore, setShowMore] = useState(false);
   const {isMobile} = useDeviceInfo();
-  const { displayCity } = useCityLocation();
+  const { selectedCity } = useCityLocation();
 
   // Screenshot marker for development
   React.useEffect(() => {
@@ -138,7 +138,7 @@ export default function FilterBar({
                 variant="body2"
                 style={[styles.resultsText, { color: theme.colors.text.secondary }]}
             >
-              {loading ? `Loading events in ${displayCity}...` : `${resultsCount} events found in ${displayCity}`}
+              {loading ? `Loading events in ${selectedCity}...` : `${resultsCount} events found in ${selectedCity}`}
             </Text>
         )}
 
