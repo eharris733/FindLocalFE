@@ -5,52 +5,47 @@ import { logger } from '../utils/logger';
 
 export async function getEvents(city?: string, region?: string): Promise<Event[]> {
     try {
-      // console.log('Fetching events from events_gold table...');
-      // console.log('Schema: public, Table: events_gold');
-      
-      let query = supabase
-        .from('events_gold')
-        .select('*')
-        .order('event_date', { ascending: true });
+      const PAGE_SIZE = 1000;
+      let allEvents: Event[] = [];
+      let page = 0;
+      let hasMore = true;
 
-      // Filter by city if provided
-      if (city) {
-        query = query.eq('city', city);
+      while (hasMore) {
+        let query = supabase
+          .from('events_gold')
+          .select('*')
+          .order('event_date', { ascending: true })
+          .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
+
+        // Filter by city if provided
+        if (city) {
+          query = query.eq('city', city);
+        }
+
+        // Filter by region if provided
+        if (region) {
+          query = query.eq('region', region);
+        }
+
+        const { data, error, status, statusText } = await query;
+
+        if (error) {
+          logger.error('Error fetching events from Supabase:', error);
+          logger.error('Error details:', JSON.stringify(error, null, 2));
+          throw new Error(`Supabase error: ${error.message}`);
+        }
+
+        if (data && data.length > 0) {
+          allEvents = allEvents.concat(data as Event[]);
+          hasMore = data.length === PAGE_SIZE;
+          page++;
+        } else {
+          hasMore = false;
+        }
       }
 
-      // Filter by region if provided
-      if (region) {
-        query = query.eq('region', region);
-      }
-
-      const { data, error, status, statusText } = await query;
-  
-      // console.log('Supabase Query Response:', {
-      //   data: data?.length || 0,
-      //   error: error?.message,
-      //   status,
-      //   statusText,
-      //   fullError: error
-      // });
-
-      if (error) {
-        logger.error('Error fetching events from Supabase:', error);
-        logger.error('Error details:', JSON.stringify(error, null, 2));
-        throw new Error(`Supabase error: ${error.message}`);
-      }
-  
-      if (data) {
-        // console.log('Events fetched successfully from Supabase:', data.length, 'events');
-        // if (data.length === 0) {
-        //   console.warn('⚠️ No events found in events_gold table. This could be a permissions issue if you know data exists.');
-        // } else {
-        //   console.log('Sample event:', data[0]);
-        // }
-        return data as Event[];
-      } else {
-        // console.warn('No events found in Supabase.');
-        return [];
-      }
+      logger.info(`Fetched ${allEvents.length} events from Supabase`);
+      return allEvents;
     } catch (error: any) {
       logger.error('Error fetching events:', error);
       logger.error('Full error object:', JSON.stringify(error, null, 2));
@@ -77,33 +72,49 @@ export async function getEventsByDateRange(
   region?: string
 ): Promise<Event[]> {
   try {
-    let query = supabase
-      .from('events_gold')
-      .select('*')
-      .gte('event_date', startDate)
-      .lte('event_date', endDate)
-      .order('event_date', { ascending: true });
+    const PAGE_SIZE = 1000;
+    let allEvents: Event[] = [];
+    let page = 0;
+    let hasMore = true;
 
-    // Filter by city if provided
-    if (city) {
-      query = query.eq('city', city);
+    while (hasMore) {
+      let query = supabase
+        .from('events_gold')
+        .select('*')
+        .gte('event_date', startDate)
+        .lte('event_date', endDate)
+        .order('event_date', { ascending: true })
+        .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
+
+      // Filter by city if provided
+      if (city) {
+        query = query.eq('city', city);
+      }
+
+      // Filter by region if provided
+      if (region) {
+        query = query.eq('region', region);
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        logger.error('Error fetching events by date range from Supabase:', error);
+        throw new Error(`Supabase error: ${error.message}`);
+      }
+
+      if (data && data.length > 0) {
+        allEvents = allEvents.concat(data as Event[]);
+        hasMore = data.length === PAGE_SIZE;
+        page++;
+      } else {
+        hasMore = false;
+      }
     }
 
-    // Filter by region if provided
-    if (region) {
-      query = query.eq('region', region);
-    }
-
-    const { data, error } = await query;
-
-    if (error) {
-      logger.error('Error fetching events by date range from Supabase:', error);
-      throw new Error(`Supabase error: ${error.message}`);
-    }
-
-    if (data) {
-      //console.log('Events fetched successfully by date range from Supabase:', data.length, 'events');
-      return data as Event[];
+    if (allEvents.length > 0) {
+      logger.info(`Fetched ${allEvents.length} events by date range from Supabase`);
+      return allEvents as Event[];
     } else {
       logger.warn('No events found in date range.');
       return [];
