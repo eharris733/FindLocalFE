@@ -3,9 +3,10 @@ import type { Event } from '../types/events';
 import { supabase } from '../supabase';
 import { logger } from '../utils/logger';
 
+const PAGE_SIZE = 1000;
+
 export async function getEvents(city?: string, region?: string): Promise<Event[]> {
     try {
-      const PAGE_SIZE = 1000;
       let allEvents: Event[] = [];
       let page = 0;
       let hasMore = true;
@@ -27,7 +28,7 @@ export async function getEvents(city?: string, region?: string): Promise<Event[]
           query = query.eq('region', region);
         }
 
-        const { data, error, status, statusText } = await query;
+        const { data, error } = await query;
 
         if (error) {
           logger.error('Error fetching events from Supabase:', error);
@@ -36,7 +37,7 @@ export async function getEvents(city?: string, region?: string): Promise<Event[]
         }
 
         if (data && data.length > 0) {
-          allEvents = allEvents.concat(data as Event[]);
+          allEvents.push(...(data as Event[]));
           hasMore = data.length === PAGE_SIZE;
           page++;
         } else {
@@ -72,7 +73,6 @@ export async function getEventsByDateRange(
   region?: string
 ): Promise<Event[]> {
   try {
-    const PAGE_SIZE = 1000;
     let allEvents: Event[] = [];
     let page = 0;
     let hasMore = true;
@@ -104,7 +104,7 @@ export async function getEventsByDateRange(
       }
 
       if (data && data.length > 0) {
-        allEvents = allEvents.concat(data as Event[]);
+        allEvents.push(...(data as Event[]));
         hasMore = data.length === PAGE_SIZE;
         page++;
       } else {
@@ -114,7 +114,7 @@ export async function getEventsByDateRange(
 
     if (allEvents.length > 0) {
       logger.info(`Fetched ${allEvents.length} events by date range from Supabase`);
-      return allEvents as Event[];
+      return allEvents;
     } else {
       logger.warn('No events found in date range.');
       return [];
