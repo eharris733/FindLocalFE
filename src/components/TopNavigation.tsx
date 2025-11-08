@@ -11,10 +11,11 @@ import { useCityLocation } from '../context/CityContext';
 import { useRouter } from 'expo-router';
 
 interface TopNavigationProps {
-  onNavLinkPress?: (link: string) => void;
+  readonly onNavLinkPress?: (link: string) => void;
+  readonly onFeedbackPress?: () => void;
 }
 
-export default function TopNavigation({ onNavLinkPress }: TopNavigationProps) {
+export default function TopNavigation({ onNavLinkPress, onFeedbackPress }: TopNavigationProps) {
   const { theme } = useTheme();
   const {isMobile} = useDeviceInfo();
   const { isLoggedIn } = useAuth();
@@ -238,6 +239,7 @@ export default function TopNavigation({ onNavLinkPress }: TopNavigationProps) {
       <ProfileModal
         visible={showProfileModal}
         onClose={handleCloseProfile}
+        onFeedbackPress={onFeedbackPress}
       />
 
       {/* City Picker Modal - Available to all users */}

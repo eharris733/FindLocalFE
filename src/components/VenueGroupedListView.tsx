@@ -6,8 +6,9 @@ import EventCard from './EventCard';
 import { Text } from './ui';
 import type { Event } from '../types/events';
 import type { Venue } from '../types/venues';
+import { useDeviceInfo } from '../hooks/useDeviceInfo';
 
-const INITIAL_EVENTS_PER_VENUE = 10;
+const INITIAL_EVENTS_PER_VENUE = 5;
 
 // Helper function to get venue size icon and label with capacity
 const getVenueSizeDisplay = (size: string | null): { icon: string; label: string } => {
@@ -49,6 +50,7 @@ export default function VenueGroupedListView({
 }: VenueGroupedListViewProps) {
   const { theme } = useTheme();
   const { favoriteEventIds } = useFavorites();
+  const { isMobile } = useDeviceInfo();
   const [expandedVenues, setExpandedVenues] = useState<Set<string>>(new Set());
 
   // Group events by venue
@@ -158,32 +160,34 @@ export default function VenueGroupedListView({
                 </Text>
               </View>
               
-              {/* Venue tags */}
-              <View style={styles.venueTags}>
-                {venueSize && (
-                  <View style={[styles.venueTag, { 
-                    backgroundColor: theme.colors.primary[100],
-                    borderColor: theme.colors.primary[200],
-                  }]}>
-                    <Text style={[styles.venueTagIcon, { color: theme.colors.primary[700] }]}>
-                      {sizeDisplay.icon}
-                    </Text>
-                    <Text style={[styles.venueTagText, { color: theme.colors.primary[700] }]}>
-                      {sizeDisplay.label}
-                    </Text>
-                  </View>
-                )}
-                {venueType && (
-                  <View style={[styles.venueTag, { 
-                    backgroundColor: theme.colors.secondary[100],
-                    borderColor: theme.colors.secondary[200],
-                  }]}>
-                    <Text style={[styles.venueTagText, { color: theme.colors.secondary[700] }]}>
-                      {venueType}
-                    </Text>
-                  </View>
-                )}
-              </View>
+              {/* Venue tags - hide on mobile */}
+              {!isMobile && (
+                <View style={styles.venueTags}>
+                  {venueSize && (
+                    <View style={[styles.venueTag, { 
+                      backgroundColor: theme.colors.primary[100],
+                      borderColor: theme.colors.primary[200],
+                    }]}>
+                      <Text style={[styles.venueTagIcon, { color: theme.colors.primary[700] }]}>
+                        {sizeDisplay.icon}
+                      </Text>
+                      <Text style={[styles.venueTagText, { color: theme.colors.primary[700] }]}>
+                        {sizeDisplay.label}
+                      </Text>
+                    </View>
+                  )}
+                  {venueType && (
+                    <View style={[styles.venueTag, { 
+                      backgroundColor: theme.colors.secondary[100],
+                      borderColor: theme.colors.secondary[200],
+                    }]}>
+                      <Text style={[styles.venueTagText, { color: theme.colors.secondary[700] }]}>
+                        {venueType}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              )}
             </TouchableOpacity>
 
             {/* Events in this venue - Card container */}
@@ -195,6 +199,7 @@ export default function VenueGroupedListView({
                   onPress={onEventPress}
                   variant="grouped"
                   venues={venues}
+                  isMobile={isMobile}
                 />
               ))}
               

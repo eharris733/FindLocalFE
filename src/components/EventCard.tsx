@@ -19,6 +19,7 @@ interface EventCardProps {
   variant?: 'default' | 'compact' | 'grouped';
   venues?: Venue[]; // Optional venue list for faster lookup
   onVenuePress?: (venue: Venue) => void; // Optional callback for venue press
+  isMobile?: boolean; // Optional mobile flag for grouped variant
 }
 
 function formatMilitaryTime(time: string): string {
@@ -41,11 +42,14 @@ function formatMilitaryTime(time: string): string {
   return `${formattedHours}:${formattedMinutes} ${isPM ? 'PM' : 'AM'}`;
 }
 
-const EventCard: React.FC<EventCardProps> = ({ event, onPress, variant = 'default', venues }) => {
+const EventCard: React.FC<EventCardProps> = ({ event, onPress, variant = 'default', venues, isMobile: isMobileProp }) => {
   const { theme } = useTheme();
   const { isFavorite, toggleFavorite } = useFavorites();
-  const { isMobile } = useDeviceInfo();
+  const { isMobile: isDeviceMobile } = useDeviceInfo();
   const [showTooltip, setShowTooltip] = useState(false);
+  
+  // Use prop if provided, otherwise use device info
+  const isMobile = isMobileProp !== undefined ? isMobileProp : isDeviceMobile;
   
   const isEventFavorited = isFavorite(event.id);
   
@@ -207,43 +211,49 @@ const EventCard: React.FC<EventCardProps> = ({ event, onPress, variant = 'defaul
           {/* Event details */}
           <View style={styles.groupedContent}>
             <View style={styles.groupedTitleRow}>
-              <Text variant="body2" numberOfLines={1} style={[styles.groupedTitle, { color: theme.colors.text.primary }]}>
+              <Text variant="body2" numberOfLines={1} style={[
+                styles.groupedTitle,
+                isMobile && styles.groupedTitleMobile,
+                { color: theme.colors.text.primary }
+              ]}>
                 {event.title || 'Untitled Event'}
               </Text>
               
-              {/* Metadata tags - to the left of favorite */}
-              <View style={styles.groupedMetaTags}>
-                {displayGenre && (
-                  <View style={[styles.groupedTag, { 
-                    backgroundColor: theme.colors.primary[100],
-                    borderColor: theme.colors.primary[200],
-                  }]}>
-                    <Text variant="caption" style={[styles.groupedTagText, { color: theme.colors.primary[700] }]} numberOfLines={1}>
-                      {isMobile && displayGenre.length > 8 ? displayGenre.substring(0, 8) : displayGenre}
-                    </Text>
-                  </View>
-                )}
-                {event.status && (
-                  <View style={[styles.groupedTag, { 
-                    backgroundColor: theme.colors.success[100],
-                    borderColor: theme.colors.success[200],
-                  }]}>
-                    <Text variant="caption" style={[styles.groupedTagText, { color: theme.colors.success[700] }]} numberOfLines={1}>
-                      {isMobile && event.status.length > 8 ? event.status.substring(0, 8) : event.status}
-                    </Text>
-                  </View>
-                )}
-                {event.price && (
-                  <View style={[styles.groupedTag, { 
-                    backgroundColor: theme.colors.accent[100],
-                    borderColor: theme.colors.accent[200],
-                  }]}>
-                    <Text variant="caption" style={[styles.groupedTagText, { color: theme.colors.accent[700] }]} numberOfLines={1}>
-                      {event.price}
-                    </Text>
-                  </View>
-                )}
-              </View>
+              {/* Metadata tags - hide on mobile */}
+              {!isMobile && (
+                <View style={styles.groupedMetaTags}>
+                  {displayGenre && (
+                    <View style={[styles.groupedTag, { 
+                      backgroundColor: theme.colors.primary[100],
+                      borderColor: theme.colors.primary[200],
+                    }]}>
+                      <Text variant="caption" style={[styles.groupedTagText, { color: theme.colors.primary[700] }]} numberOfLines={1}>
+                        {displayGenre}
+                      </Text>
+                    </View>
+                  )}
+                  {event.status && (
+                    <View style={[styles.groupedTag, { 
+                      backgroundColor: theme.colors.success[100],
+                      borderColor: theme.colors.success[200],
+                    }]}>
+                      <Text variant="caption" style={[styles.groupedTagText, { color: theme.colors.success[700] }]} numberOfLines={1}>
+                        {event.status}
+                      </Text>
+                    </View>
+                  )}
+                  {event.price && (
+                    <View style={[styles.groupedTag, { 
+                      backgroundColor: theme.colors.accent[100],
+                      borderColor: theme.colors.accent[200],
+                    }]}>
+                      <Text variant="caption" style={[styles.groupedTagText, { color: theme.colors.accent[700] }]} numberOfLines={1}>
+                        {event.price}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              )}
               
               <TouchableOpacity 
                 onPress={handleToggleFavorite}
@@ -262,7 +272,7 @@ const EventCard: React.FC<EventCardProps> = ({ event, onPress, variant = 'defaul
           
           {/* Action buttons */}
           <View style={styles.groupedActions}>
-            {/* Share button - with tooltip */}
+            {/* Share button - with tooltip - hide on mobile */}
             {!isMobile && (
               <View style={{ position: 'relative' }}>
                 <Pressable
@@ -296,9 +306,13 @@ const EventCard: React.FC<EventCardProps> = ({ event, onPress, variant = 'defaul
               </View>
             )}
             
-            {/* View Details button */}
+            {/* View Details button - less padding on mobile */}
             <TouchableOpacity 
-              style={[styles.groupedButton, { backgroundColor: theme.colors.primary[500] }]}
+              style={[
+                styles.groupedButton,
+                isMobile && styles.groupedButtonMobile,
+                { backgroundColor: theme.colors.primary[500] }
+              ]}
               onPress={handleCardPress}
             >
               <Text variant="caption" style={{ color: theme.colors.text.inverse, fontWeight: '600' }}>
@@ -938,7 +952,7 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   groupedDateMobile: {
-    fontSize: 13,
+    fontSize: 12,
   },
   groupedTime: {
     fontSize: 12,
@@ -961,6 +975,10 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontSize: 14,
     lineHeight: 16,
+  },
+  groupedTitleMobile: {
+    fontSize: 13,
+    lineHeight: 15,
   },
   groupedFavoriteIcon: {
     fontSize: 16,
@@ -1011,6 +1029,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     minWidth: 100,
+  },
+  groupedButtonMobile: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    minWidth: 80,
   },
 });
 
