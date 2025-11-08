@@ -95,6 +95,16 @@ export default function GalleryView({
         style={styles.list}
         numColumns={numColumns}
         key={numColumns} // Force re-render when columns change
+        // Performance optimizations for LCP
+        initialNumToRender={6}
+        maxToRenderPerBatch={10}
+        windowSize={5}
+        removeClippedSubviews={true}
+        getItemLayout={(data, index) => ({
+          length: 400, // Approximate item height
+          offset: 400 * index,
+          index,
+        })}
       />
     </View>
   );
