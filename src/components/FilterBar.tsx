@@ -57,6 +57,7 @@ export default function FilterBar({
   const handleDateRangeChange = useCallback((dateRange: string) => {
     // Map the pill selection to the appropriate filter action
     const rangeMap: Record<string, FilterState['dateRange']> = {
+      'all': 'all',
       'today': 'today',
       'tomorrow': 'tomorrow',
       'this_week': 'this_week',

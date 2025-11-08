@@ -12,6 +12,7 @@ interface CategoryPillsProps {
 }
 
 const dateRanges = [
+  { id: 'all', label: 'All', emoji: '📅' },
   { id: 'today', label: 'Today', emoji: '📅' },
   { id: 'tomorrow', label: 'Tomorrow', emoji: '📆' },
   { id: 'this_week', label: 'This Week', emoji: '📋' },

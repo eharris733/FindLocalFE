@@ -20,8 +20,8 @@ import { logger } from '../utils/logger';
 
 const initialFilterState: FilterState = {
   category: 'all',
-  startDate: startOfWeek(new Date()),
-  endDate: endOfWeek(new Date()),
+  startDate: startOfDay(new Date()),
+  endDate: endOfDay(addDays(new Date(), 6)),
   dateRange: 'this_week',
   searchText: '',
   location: 'all',
@@ -34,6 +34,10 @@ const getDateRangeFromSelection = (dateRange: FilterState['dateRange']): { start
   const today = new Date();
   
   switch (dateRange) {
+    case 'all':
+      // Show all events from today through one year in the future
+      return { start: startOfDay(today), end: endOfDay(addDays(today, 365)) };
+    
     case 'today':
       return { start: startOfDay(today), end: endOfDay(today) };
     
@@ -42,7 +46,8 @@ const getDateRangeFromSelection = (dateRange: FilterState['dateRange']): { start
       return { start: startOfDay(tomorrow), end: endOfDay(tomorrow) };
     
     case 'this_week':
-      return { start: startOfWeek(today), end: endOfWeek(today) };
+      // Show next 7 days starting from today
+      return { start: startOfDay(today), end: endOfDay(addDays(today, 6)) };
     
     case 'this_weekend':
       const saturday = addDays(startOfWeek(today), 6);
@@ -57,7 +62,6 @@ const getDateRangeFromSelection = (dateRange: FilterState['dateRange']): { start
     case 'this_month':
       return { start: startOfMonth(today), end: endOfMonth(today) };
     
-    case 'all':
     case 'custom':
     default:
       return { start: null, end: null };
