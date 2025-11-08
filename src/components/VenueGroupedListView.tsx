@@ -9,6 +9,23 @@ import type { Venue } from '../types/venues';
 
 const INITIAL_EVENTS_PER_VENUE = 10;
 
+// Helper function to get venue size icon and label with capacity
+const getVenueSizeDisplay = (size: string | null): { icon: string; label: string } => {
+  if (!size) return { icon: '👥', label: 'CAPACITY N/A' };
+  
+  const normalizedSize = size.toLowerCase();
+  
+  if (normalizedSize === 'small' || normalizedSize === 's') {
+    return { icon: '👥', label: '<100' };
+  } else if (normalizedSize === 'medium' || normalizedSize === 'm') {
+    return { icon: '👥', label: '100+' };
+  } else if (normalizedSize === 'large' || normalizedSize === 'l') {
+    return { icon: '👥', label: '300+' };
+  }
+  
+  return { icon: '👥', label: size.toUpperCase() };
+};
+
 interface VenueGroupedListViewProps {
   events: Event[];
   loading?: boolean;
@@ -122,6 +139,7 @@ export default function VenueGroupedListView({
         const isExpanded = expandedVenues.has(venueId);
         const displayEvents = isExpanded ? group.events : group.events.slice(0, INITIAL_EVENTS_PER_VENUE);
         const hasMore = group.events.length > INITIAL_EVENTS_PER_VENUE;
+        const sizeDisplay = getVenueSizeDisplay(venueSize);
         
         return (
           <View key={`venue-${venueId}`} style={styles.venueGroup}>
@@ -147,8 +165,11 @@ export default function VenueGroupedListView({
                     backgroundColor: theme.colors.primary[100],
                     borderColor: theme.colors.primary[200],
                   }]}>
+                    <Text style={[styles.venueTagIcon, { color: theme.colors.primary[700] }]}>
+                      {sizeDisplay.icon}
+                    </Text>
                     <Text style={[styles.venueTagText, { color: theme.colors.primary[700] }]}>
-                      {venueSize.toUpperCase()}
+                      {sizeDisplay.label}
                     </Text>
                   </View>
                 )}
@@ -242,10 +263,17 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   venueTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 4,
     borderWidth: 1,
+  },
+  venueTagIcon: {
+    fontSize: 12,
+    lineHeight: 14,
   },
   venueTagText: {
     fontSize: 11,
