@@ -272,40 +272,6 @@ const EventCard: React.FC<EventCardProps> = ({ event, onPress, variant = 'defaul
           
           {/* Action buttons */}
           <View style={styles.groupedActions}>
-            {/* Share button - with tooltip - hide on mobile */}
-            {!isMobile && (
-              <View style={{ position: 'relative' }}>
-                <Pressable
-                  style={[styles.groupedShareButton, { 
-                    borderColor: theme.colors.border.light,
-                    backgroundColor: theme.colors.background.tertiary,
-                    opacity: 0.5,
-                  }]}
-                  onPress={() => {
-                    setShowTooltip(!showTooltip);
-                    setTimeout(() => setShowTooltip(false), 2000);
-                  }}
-                  onHoverIn={Platform.OS === 'web' ? () => setShowTooltip(true) : undefined}
-                  onHoverOut={Platform.OS === 'web' ? () => setShowTooltip(false) : undefined}
-                >
-                  <Text style={{ fontSize: 14 }}>🔗</Text>
-                </Pressable>
-                
-                {/* Tooltip */}
-                {showTooltip && (
-                  <View style={[styles.tooltip, {
-                    backgroundColor: theme.colors.gray[900],
-                    shadowColor: theme.colors.gray[900],
-                  }]}>
-                    <Text style={[styles.tooltipText, { color: theme.colors.text.inverse }]}>
-                      Coming soon!
-                    </Text>
-                    <View style={[styles.tooltipArrow, { borderTopColor: theme.colors.gray[900] }]} />
-                  </View>
-                )}
-              </View>
-            )}
-            
             {/* View Details button - less padding on mobile */}
             <TouchableOpacity 
               style={[
