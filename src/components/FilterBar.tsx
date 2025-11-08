@@ -103,33 +103,24 @@ export default function FilterBar({
         onSearchChange={handleSearchChange}
       />
 
+      {/* Category Pills - Full width */}
+      <CategoryPills
+        selectedCategory={filters.category}
+        onCategoryChange={handleCategoryChange}
+        selectedDateRange={filters.dateRange}
+        onDateRangeChange={handleDateRangeChange}
+      />
+      
+      {/* Show More Filters Button - on its own row */}
       <View style={{ 
-        display: 'flex', 
-        flexDirection: isMobile ? 'column' : 'row', 
-        alignItems: isMobile ? 'stretch' : 'center',
-        gap: isMobile ? 8 : 0
+        alignItems: 'center',
+        paddingVertical: 4,
       }}>
-        {/* Category Pills - Full width on mobile for better scrolling */}
-        <View style={{ flex: isMobile ? undefined : 1 }}>
-          <CategoryPills
-            selectedCategory={filters.category}
-            onCategoryChange={handleCategoryChange}
-            selectedDateRange={filters.dateRange}
-            onDateRangeChange={handleDateRangeChange}
-          />
-        </View>
-        
-        {/* Show More Filters Button */}
-        <View style={{ 
-          alignItems: isMobile ? 'center' : 'flex-end',
-          paddingHorizontal: isMobile ? 16 : 0,
-          marginLeft: isMobile ? 0 : 16
-        }}>
-          <Pressable onPress={() => setShowMore(!showMore)}>
-            <Text variant='link'>{`${showMore ? 'Hide' : 'Show'} More Filters`}</Text>
-          </Pressable>
-        </View>
+        <Pressable onPress={() => setShowMore(!showMore)}>
+          <Text variant='link'>{`${showMore ? 'Hide' : 'Show'} More Filters`}</Text>
+        </Pressable>
       </View>
+
       {/* Additional Filtering */}
         {showMore && (<FilterRow
         selectedDateRange={{ start: filters.startDate, end: filters.endDate }}

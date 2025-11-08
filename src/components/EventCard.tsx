@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { View, Image, TouchableOpacity, Linking, StyleSheet, Platform, Pressable } from 'react-native';
+import React, { useMemo } from 'react';
+import { View, Image, TouchableOpacity, Linking, StyleSheet } from 'react-native';
 import { format } from 'date-fns';
 import type { Event } from '../types/events';
 import type { Venue } from '../types/venues';
@@ -46,7 +46,6 @@ const EventCard: React.FC<EventCardProps> = ({ event, onPress, variant = 'defaul
   const { theme } = useTheme();
   const { isFavorite, toggleFavorite } = useFavorites();
   const { isMobile: isDeviceMobile } = useDeviceInfo();
-  const [showTooltip, setShowTooltip] = useState(false);
   
   // Use prop if provided, otherwise use device info
   const isMobile = isMobileProp !== undefined ? isMobileProp : isDeviceMobile;
@@ -115,6 +114,8 @@ const EventCard: React.FC<EventCardProps> = ({ event, onPress, variant = 'defaul
             source={imageSource}
             style={[styles.compactImage, { backgroundColor: theme.colors.gray[100] }]}
             resizeMode="cover"
+            defaultSource={require('../../assets/record.png')}
+            fadeDuration={100}
           />
           
           <View style={styles.compactContent}>
@@ -305,6 +306,10 @@ const EventCard: React.FC<EventCardProps> = ({ event, onPress, variant = 'defaul
             source={imageSource}
             style={[styles.mockupImage, { backgroundColor: theme.colors.gray[100] }]}
             resizeMode="cover"
+            defaultSource={require('../../assets/record.png')}
+            fadeDuration={100}
+            // Force load immediately for better LCP
+            loadingIndicatorSource={require('../../assets/record.png')}
           />
           {/* Favorite heart icon in top-left */}
           <TouchableOpacity 
@@ -396,41 +401,6 @@ const EventCard: React.FC<EventCardProps> = ({ event, onPress, variant = 'defaul
                 View Details
               </Text>
             </TouchableOpacity>
-            <View style={{ position: 'relative' }}>
-              <Pressable
-                style={[styles.mockupShareButton, { 
-                  borderColor: theme.colors.border.light,
-                  backgroundColor: theme.colors.background.tertiary,
-                  opacity: 0.5,
-                }]}
-                onPress={() => {
-                  if (Platform.OS !== 'web') {
-                    setShowTooltip(!showTooltip);
-                    // Auto-hide tooltip after 2 seconds on mobile
-                    setTimeout(() => setShowTooltip(false), 2000);
-                  }
-                }}
-                onHoverIn={Platform.OS === 'web' ? () => setShowTooltip(true) : undefined}
-                onHoverOut={Platform.OS === 'web' ? () => setShowTooltip(false) : undefined}
-              >
-                <Text style={[styles.mockupShareButtonText, { color: theme.colors.text.tertiary }]}>
-                  🔗 Share
-                </Text>
-              </Pressable>
-              
-              {/* Tooltip */}
-              {showTooltip && (
-                <View style={[styles.tooltip, {
-                  backgroundColor: theme.colors.gray[900],
-                  shadowColor: theme.colors.gray[900],
-                }]}>
-                  <Text style={[styles.tooltipText, { color: theme.colors.text.inverse }]}>
-                    Coming soon!
-                  </Text>
-                  <View style={[styles.tooltipArrow, { borderTopColor: theme.colors.gray[900] }]} />
-                </View>
-              )}
-            </View>
           </View>
         </View>
       </View>
@@ -620,6 +590,7 @@ const styles = StyleSheet.create({
     height: 60,
     borderRadius: 6,
     marginRight: 12,
+    backgroundColor: '#f0f0f0', // Placeholder to prevent CLS
   },
   compactContent: {
     flex: 1,
@@ -696,6 +667,7 @@ const styles = StyleSheet.create({
     position: 'relative',
     width: '100%',
     height: 180,
+    backgroundColor: '#f0f0f0', // Placeholder color to prevent CLS
   },
   mockupImage: {
     width: '100%',
@@ -815,7 +787,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: 6,
     alignItems: 'center',
-    marginRight: 8,
   },
   mockupViewButtonText: {
     fontSize: 12,

@@ -132,6 +132,7 @@ export default function VenueGroupedListView({
       style={[styles.container, { backgroundColor: theme.colors.background.secondary }]}
       contentContainerStyle={styles.scrollContent}
       showsVerticalScrollIndicator={true}
+      removeClippedSubviews={true} // Performance optimization
     >
       {venueGroups.map((group, index) => {
         const venueName = group.venue?.name || 'Unknown Venue';
