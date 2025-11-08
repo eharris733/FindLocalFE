@@ -20,9 +20,9 @@ import { logger } from '../utils/logger';
 
 const initialFilterState: FilterState = {
   category: 'all',
-  startDate: null,
-  endDate: null,
-  dateRange: 'all',
+  startDate: startOfWeek(new Date()),
+  endDate: endOfWeek(new Date()),
+  dateRange: 'this_week',
   searchText: '',
   location: 'all',
   venues: [], // Initialize as empty array
