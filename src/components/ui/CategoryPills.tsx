@@ -7,7 +7,15 @@ import { useDeviceInfo } from '../../hooks/useDeviceInfo';
 interface CategoryPillsProps {
   selectedCategory: string;
   onCategoryChange: (category: string) => void;
+  selectedDateRange?: string;
+  onDateRangeChange?: (dateRange: string) => void;
 }
+
+const dateRanges = [
+  { id: 'today', label: 'Today', emoji: '📅' },
+  { id: 'tomorrow', label: 'Tomorrow', emoji: '📆' },
+  { id: 'this_week', label: 'This Week', emoji: '📋' },
+];
 
 const categories = [
   { id: 'all', label: 'All', emoji: '🎭' },
@@ -19,9 +27,11 @@ const categories = [
   { id: 'other', label: 'Other', emoji: '🎪' },
 ];
 
-export const CategoryPills: React.FC<CategoryPillsProps> = ({
+const CategoryPillsComponent: React.FC<CategoryPillsProps> = ({
   selectedCategory,
   onCategoryChange,
+  selectedDateRange,
+  onDateRangeChange,
 }) => {
   const { theme } = useTheme();
   const { isMobile } = useDeviceInfo();
@@ -34,6 +44,45 @@ export const CategoryPills: React.FC<CategoryPillsProps> = ({
         contentContainerStyle={[styles.scrollContent, { paddingRight: isMobile ? 12 : 16 }]}
         style={{ flexGrow: 0 }} // Prevent ScrollView from expanding vertically
       >
+        {/* Date Range Pills */}
+        {onDateRangeChange && selectedDateRange && dateRanges.map((dateRange) => {
+          const isSelected = selectedDateRange === dateRange.id;
+          // Use shorter label on mobile for "This Week"
+          const displayLabel = isMobile && dateRange.id === 'this_week' ? 'Week' : dateRange.label;
+          
+          return (
+            <TouchableOpacity
+              key={dateRange.id}
+              style={[
+                styles.pill,
+                {
+                  backgroundColor: isSelected 
+                    ? theme.colors.secondary[500] 
+                    : theme.colors.background.secondary,
+                  borderColor: isSelected
+                    ? theme.colors.secondary[500]
+                    : theme.colors.border.light,
+                }
+              ]}
+              onPress={() => onDateRangeChange(dateRange.id)}
+            >
+              <Text 
+                variant="body2" 
+                color={isSelected ? 'inverse' : 'secondary'}
+                style={styles.label}
+              >
+                {displayLabel}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+        
+        {/* Divider */}
+        {onDateRangeChange && selectedDateRange && (
+          <View style={[styles.divider, { backgroundColor: theme.colors.border.light }]} />
+        )}
+        
+        {/* Category Pills */}
         {categories.map((category) => {
           const isSelected = selectedCategory === category.id;
           return (
@@ -95,4 +144,12 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     fontSize: 13,
   },
+  divider: {
+    width: 1,
+    height: 24,
+    marginHorizontal: 8,
+    alignSelf: 'center',
+  },
 });
+
+export const CategoryPills = React.memo(CategoryPillsComponent);

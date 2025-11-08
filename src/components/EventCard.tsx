@@ -1,22 +1,25 @@
-import React, { useState, useEffect } from 'react';
-import { View, Image, TouchableOpacity, Linking, StyleSheet, Platform, Alert, Pressable } from 'react-native';
+import React, { useState, useEffect, useMemo } from 'react';
+import { View, Image, TouchableOpacity, Linking, StyleSheet, Platform, Pressable } from 'react-native';
 import { format } from 'date-fns';
 import type { Event } from '../types/events';
 import type { Venue } from '../types/venues';
 import { useTheme } from '../context/ThemeContext';
 import { useFavorites } from '../context/FavoritesContext';
-import { Text, Card } from './ui';
+import { Text } from './ui';
 import { getVenueById } from '../api/venues';
 import { getDisplayCityName } from '../utils/cityUtils';
 import { getCompactVenueSizeLabel } from '../utils/venueUtils';
 import { EVENT_NO_DESCRIPTION_FALLBACK } from '../utils/eventUtils';
 import { logger } from '../utils/logger';
+import { useDeviceInfo } from '../hooks/useDeviceInfo';
 
 interface EventCardProps {
   event: Event;
   onPress?: (event: Event) => void;
-  variant?: 'default' | 'compact';
+  variant?: 'default' | 'compact' | 'grouped';
   venues?: Venue[]; // Optional venue list for faster lookup
+  onVenuePress?: (venue: Venue) => void; // Optional callback for venue press
+  isMobile?: boolean; // Optional mobile flag for grouped variant
 }
 
 function formatMilitaryTime(time: string): string {
@@ -39,11 +42,14 @@ function formatMilitaryTime(time: string): string {
   return `${formattedHours}:${formattedMinutes} ${isPM ? 'PM' : 'AM'}`;
 }
 
-const EventCard: React.FC<EventCardProps> = ({ event, onPress, variant = 'default', venues }) => {
+const EventCard: React.FC<EventCardProps> = ({ event, onPress, variant = 'default', venues, isMobile: isMobileProp }) => {
   const { theme } = useTheme();
   const { isFavorite, toggleFavorite } = useFavorites();
-  const [venue, setVenue] = useState<Venue | null>(null);
+  const { isMobile: isDeviceMobile } = useDeviceInfo();
   const [showTooltip, setShowTooltip] = useState(false);
+  
+  // Use prop if provided, otherwise use device info
+  const isMobile = isMobileProp !== undefined ? isMobileProp : isDeviceMobile;
   
   const isEventFavorited = isFavorite(event.id);
   
@@ -53,38 +59,14 @@ const EventCard: React.FC<EventCardProps> = ({ event, onPress, variant = 'defaul
     await toggleFavorite(event.id);
   };
   
-  // Look up venue information if event has a venue_id
-  useEffect(() => {
-    const lookupVenue = async () => {
-      if (!event.venue_id) {
-        setVenue(null);
-        return;
-      }
-
-      // First try to find venue in the provided venues array (faster)
-      if (venues) {
-        const foundVenue = venues.find(v => v.id === event.venue_id);
-        if (foundVenue) {
-          setVenue(foundVenue);
-          return;
-        }
-      }
-
-      // If not found in provided venues array, fetch from API
-      try {
-        const venueData = await getVenueById(event.venue_id);
-        setVenue(venueData);
-      } catch (error) {
-        logger.error('Error fetching venue:', error);
-        setVenue(null);
-      }
-    };
-
-    lookupVenue();
+  // Optimized venue lookup using useMemo instead of useEffect/useState
+  const venue = useMemo(() => {
+    if (!event.venue_id || !venues) return null;
+    return venues.find(v => v.id === event.venue_id) || null;
   }, [event.venue_id, venues]);
 
-  // Get the venue information for display
-  const getVenueInfo = () => {
+  // Memoize venue info to avoid recalculation on every render
+  const venueInfo = useMemo(() => {
     return {
       name: venue?.name || null,
       address: venue?.address || getDisplayCityName(event.city),
@@ -93,7 +75,19 @@ const EventCard: React.FC<EventCardProps> = ({ event, onPress, variant = 'defaul
       type: venue?.type || null,
       image: venue?.image || null
     };
-  };
+  }, [venue, event.city]);
+  
+  // Memoize display genre
+  const displayGenre = useMemo(() => {
+    if (event.music_info?.genres) {
+      if (Array.isArray(event.music_info.genres)) {
+        return event.music_info.genres[0];
+      } else if (typeof event.music_info.genres === 'string') {
+        return event.music_info.genres;
+      }
+    }
+    return null;
+  }, [event.music_info]);
   
   const handleCardPress = () => {
     if (onPress) {
@@ -109,28 +103,6 @@ const EventCard: React.FC<EventCardProps> = ({ event, onPress, variant = 'defaul
     : venue?.image
     ? { uri: venue.image }
     : require('../../assets/record.png');
-
-  // Extract first genre from music_info for display
-  const getDisplayGenre = () => {
-    if (event.music_info && event.music_info.genres) {
-      if (Array.isArray(event.music_info.genres)) {
-        return event.music_info.genres[0];
-      } else if (typeof event.music_info.genres === 'string') {
-        return event.music_info.genres;
-      }
-    }
-    return null;
-  };
-
-  const displayGenre = getDisplayGenre();
-
-  // Mock pricing data - COMMENTED OUT until we have real price data
-  // const getMockPrice = () => {
-  //   const prices = ['Free', '$30', '$45', '$35', '$20'];
-  //   return prices[Math.floor(Math.random() * prices.length)];
-  // };
-
-  // const eventPrice = getMockPrice();
 
   if (variant === 'compact') {
     return (
@@ -162,29 +134,24 @@ const EventCard: React.FC<EventCardProps> = ({ event, onPress, variant = 'defaul
               {event.title || 'Untitled Event'}
             </Text>
             
-            {(() => {
-              const venueInfo = getVenueInfo();
-              return (
-                <View style={styles.compactVenueContainer}>
-                  <Text variant="body2" style={styles.compactVenueIcon}>📍</Text>
-                  <View style={styles.compactVenueTextContainer}>
-                    {venueInfo.name && (
-                      <Text variant="caption" color="primary" numberOfLines={1} style={styles.compactVenueName}>
-                        {venueInfo.name}
-                      </Text>
-                    )}
-                    <Text variant="caption" color="secondary" numberOfLines={1} style={styles.compactVenueAddress}>
-                      {venueInfo.address}
-                    </Text>
-                    {(venueInfo.sizeLabel || venueInfo.type) && (
-                      <Text variant="caption" color="secondary" numberOfLines={1} style={styles.compactVenueType}>
-                        {[venueInfo.sizeLabel, venueInfo.type].filter(Boolean).join(' • ')}
-                      </Text>
-                    )}
-                  </View>
-                </View>
-              );
-            })()}
+            <View style={styles.compactVenueContainer}>
+              <Text variant="body2" style={styles.compactVenueIcon}>📍</Text>
+              <View style={styles.compactVenueTextContainer}>
+                {venueInfo.name && (
+                  <Text variant="caption" color="primary" numberOfLines={1} style={styles.compactVenueName}>
+                    {venueInfo.name}
+                  </Text>
+                )}
+                <Text variant="caption" color="secondary" numberOfLines={1} style={styles.compactVenueAddress}>
+                  {venueInfo.address}
+                </Text>
+                {(venueInfo.sizeLabel || venueInfo.type) && (
+                  <Text variant="caption" color="secondary" numberOfLines={1} style={styles.compactVenueType}>
+                    {[venueInfo.sizeLabel, venueInfo.type].filter(Boolean).join(' • ')}
+                  </Text>
+                )}
+              </View>
+            </View>
             
             <View style={styles.compactMeta}>
               {event.event_date && (
@@ -205,6 +172,153 @@ const EventCard: React.FC<EventCardProps> = ({ event, onPress, variant = 'defaul
                 </View>
               )}
             </View>
+          </View>
+        </View>
+      </TouchableOpacity>
+    );
+  }
+
+  // Grouped variant - minimal info for venue-grouped list view
+  if (variant === 'grouped') {
+    return (
+      <TouchableOpacity onPress={handleCardPress}>
+        <View style={[styles.groupedCard, { 
+          backgroundColor: theme.colors.background.primary,
+          borderBottomColor: theme.colors.border.light,
+        }]}>
+          {/* Date and time on the left */}
+          <View style={styles.groupedDateSection}>
+            {event.event_date && (
+              <Text variant="caption" style={[
+                styles.groupedDate, 
+                isMobile && styles.groupedDateMobile,
+                { color: theme.colors.text.primary }
+              ]}>
+                {format(new Date(event.event_date), 'MMM dd')}
+              </Text>
+            )}
+            {event.start_time && (
+              <Text variant="caption" style={[
+                styles.groupedTime, 
+                isMobile && styles.groupedTimeMobile,
+                { color: theme.colors.text.secondary }
+              ]}>
+                {formatMilitaryTime(event.start_time)}
+              </Text>
+            )}
+          </View>
+          
+          {/* Event details */}
+          <View style={styles.groupedContent}>
+            <View style={styles.groupedTitleRow}>
+              <Text variant="body2" numberOfLines={1} style={[
+                styles.groupedTitle,
+                isMobile && styles.groupedTitleMobile,
+                { color: theme.colors.text.primary }
+              ]}>
+                {event.title || 'Untitled Event'}
+              </Text>
+              
+              {/* Metadata tags - hide on mobile */}
+              {!isMobile && (
+                <View style={styles.groupedMetaTags}>
+                  {displayGenre && (
+                    <View style={[styles.groupedTag, { 
+                      backgroundColor: theme.colors.primary[100],
+                      borderColor: theme.colors.primary[200],
+                    }]}>
+                      <Text variant="caption" style={[styles.groupedTagText, { color: theme.colors.primary[700] }]} numberOfLines={1}>
+                        {displayGenre}
+                      </Text>
+                    </View>
+                  )}
+                  {event.status && (
+                    <View style={[styles.groupedTag, { 
+                      backgroundColor: theme.colors.success[100],
+                      borderColor: theme.colors.success[200],
+                    }]}>
+                      <Text variant="caption" style={[styles.groupedTagText, { color: theme.colors.success[700] }]} numberOfLines={1}>
+                        {event.status}
+                      </Text>
+                    </View>
+                  )}
+                  {event.price && (
+                    <View style={[styles.groupedTag, { 
+                      backgroundColor: theme.colors.accent[100],
+                      borderColor: theme.colors.accent[200],
+                    }]}>
+                      <Text variant="caption" style={[styles.groupedTagText, { color: theme.colors.accent[700] }]} numberOfLines={1}>
+                        {event.price}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              )}
+              
+              <TouchableOpacity 
+                onPress={handleToggleFavorite}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <Text style={[
+                  styles.groupedFavoriteIcon, 
+                  isMobile && styles.groupedFavoriteIconMobile,
+                  { color: isEventFavorited ? theme.colors.error : theme.colors.gray[400] }
+                ]}>
+                  {isEventFavorited ? '❤️' : '🤍'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+          
+          {/* Action buttons */}
+          <View style={styles.groupedActions}>
+            {/* Share button - with tooltip - hide on mobile */}
+            {!isMobile && (
+              <View style={{ position: 'relative' }}>
+                <Pressable
+                  style={[styles.groupedShareButton, { 
+                    borderColor: theme.colors.border.light,
+                    backgroundColor: theme.colors.background.tertiary,
+                    opacity: 0.5,
+                  }]}
+                  onPress={() => {
+                    setShowTooltip(!showTooltip);
+                    setTimeout(() => setShowTooltip(false), 2000);
+                  }}
+                  onHoverIn={Platform.OS === 'web' ? () => setShowTooltip(true) : undefined}
+                  onHoverOut={Platform.OS === 'web' ? () => setShowTooltip(false) : undefined}
+                >
+                  <Text style={{ fontSize: 14 }}>🔗</Text>
+                </Pressable>
+                
+                {/* Tooltip */}
+                {showTooltip && (
+                  <View style={[styles.tooltip, {
+                    backgroundColor: theme.colors.gray[900],
+                    shadowColor: theme.colors.gray[900],
+                  }]}>
+                    <Text style={[styles.tooltipText, { color: theme.colors.text.inverse }]}>
+                      Coming soon!
+                    </Text>
+                    <View style={[styles.tooltipArrow, { borderTopColor: theme.colors.gray[900] }]} />
+                  </View>
+                )}
+              </View>
+            )}
+            
+            {/* View Details button - less padding on mobile */}
+            <TouchableOpacity 
+              style={[
+                styles.groupedButton,
+                isMobile && styles.groupedButtonMobile,
+                { backgroundColor: theme.colors.primary[500] }
+              ]}
+              onPress={handleCardPress}
+            >
+              <Text variant="caption" style={{ color: theme.colors.text.inverse, fontWeight: '600' }}>
+                Details
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
       </TouchableOpacity>
@@ -270,21 +384,14 @@ const EventCard: React.FC<EventCardProps> = ({ event, onPress, variant = 'defaul
           <View style={styles.mockupVenueRow}>
             <Text style={[styles.mockupVenueIcon, { color: theme.colors.text.secondary }]}>📍</Text>
             <View style={styles.mockupVenueTextContainer}>
-              {(() => {
-                const venueInfo = getVenueInfo();
-                return (
-                  <>
-                    {venueInfo.name && (
-                      <Text style={[styles.mockupVenueName, { color: theme.colors.text.primary }]} numberOfLines={1}>
-                        {venueInfo.name}
-                      </Text>
-                    )}
-                    <Text style={[styles.mockupVenueAddress, { color: theme.colors.text.secondary }]} numberOfLines={2}>
-                      {venueInfo.address}
-                    </Text>
-                  </>
-                );
-              })()}
+              {venueInfo.name && (
+                <Text style={[styles.mockupVenueName, { color: theme.colors.text.primary }]} numberOfLines={1}>
+                  {venueInfo.name}
+                </Text>
+              )}
+              <Text style={[styles.mockupVenueAddress, { color: theme.colors.text.secondary }]} numberOfLines={2}>
+                {venueInfo.address}
+              </Text>
             </View>
           </View>
           
@@ -308,16 +415,9 @@ const EventCard: React.FC<EventCardProps> = ({ event, onPress, variant = 'defaul
           </View>
           
           <View style={styles.mockupVenueTypeRow}>
-            {(() => {
-              const venueInfo = getVenueInfo();
-              const sizeText = venueInfo.sizeLabel || 'Unknown size';
-              const typeText = venueInfo.type || 'Venue';
-              return (
-                <Text style={[styles.mockupVenueType, { color: theme.colors.text.secondary }]}>
-                  🏢 {sizeText} • {typeText}
-                </Text>
-              );
-            })()}
+            <Text style={[styles.mockupVenueType, { color: theme.colors.text.secondary }]}>
+              🏢 {venueInfo.sizeLabel || 'Unknown size'} • {venueInfo.type || 'Venue'}
+            </Text>
           </View>
           
           {/* Action buttons */}
@@ -346,8 +446,6 @@ const EventCard: React.FC<EventCardProps> = ({ event, onPress, variant = 'defaul
                 }}
                 onHoverIn={Platform.OS === 'web' ? () => setShowTooltip(true) : undefined}
                 onHoverOut={Platform.OS === 'web' ? () => setShowTooltip(false) : undefined}
-                onPressIn={Platform.OS === 'web' ? () => setShowTooltip(true) : undefined}
-                onPressOut={Platform.OS === 'web' ? undefined : undefined}
               >
                 <Text style={[styles.mockupShareButtonText, { color: theme.colors.text.tertiary }]}>
                   🔗 Share
@@ -835,6 +933,108 @@ const styles = StyleSheet.create({
   compactFavoriteIcon: {
     fontSize: 16,
   },
+  
+  // Grouped variant styles
+  groupedCard: {
+    flexDirection: 'row',
+    padding: 16,
+    borderBottomWidth: 1,
+    alignItems: 'center',
+    gap: 16,
+  },
+  groupedDateSection: {
+    minWidth: 64,
+    alignItems: 'center',
+  },
+  groupedDate: {
+    fontWeight: '700',
+    fontSize: 15,
+    marginBottom: 2,
+  },
+  groupedDateMobile: {
+    fontSize: 12,
+  },
+  groupedTime: {
+    fontSize: 12,
+  },
+  groupedTimeMobile: {
+    fontSize: 10,
+  },
+  groupedContent: {
+    flex: 1,
+    minWidth: 0,
+  },
+  groupedTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 0,
+  },
+  groupedTitle: {
+    flex: 1,
+    fontWeight: '600',
+    fontSize: 14,
+    lineHeight: 16,
+  },
+  groupedTitleMobile: {
+    fontSize: 13,
+    lineHeight: 15,
+  },
+  groupedFavoriteIcon: {
+    fontSize: 16,
+    lineHeight: 16,
+  },
+  groupedFavoriteIconMobile: {
+    fontSize: 14,
+    lineHeight: 14,
+  },
+  groupedMetaTags: {
+    flexDirection: 'row',
+    flexWrap: 'nowrap',
+    gap: 6,
+    marginLeft: 8,
+    marginRight: 8,
+    overflow: 'hidden',
+  },
+  groupedTag: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 4,
+    borderWidth: 1,
+  },
+  groupedTagText: {
+    fontSize: 10,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  groupedActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flexShrink: 0,
+  },
+  groupedShareButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    borderRadius: 6,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  groupedButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 100,
+  },
+  groupedButtonMobile: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    minWidth: 80,
+  },
 });
 
-export default EventCard;
+export default React.memo(EventCard);

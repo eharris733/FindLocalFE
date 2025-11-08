@@ -1,13 +1,8 @@
-import React, { useState } from 'react';
-import {View, StyleSheet, ScrollView, Platform, TextInput, TouchableOpacity, Dimensions, Pressable} from 'react-native';
+import React, { useState, useCallback } from 'react';
+import {View, StyleSheet, Pressable} from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import {
-  Button,
   Text,
-  SearchableDropdown,
-  DateRangePicker,
-  VenueSelectionModal,
-  CityPicker,
   CategoryPills,
   FilterRow,
   SearchAndToggle,
@@ -26,8 +21,8 @@ interface FilterBarProps {
   availableLocations: string[];
   venues: Venue[];
   venuesLoading: boolean;
-  viewMode?: 'list' | 'map';
-  onViewModeChange?: (mode: 'list' | 'map') => void;
+  viewMode?: 'gallery' | 'list' | 'map';
+  onViewModeChange?: (mode: 'gallery' | 'list' | 'map') => void;
   resultsCount?: number;
   loading?: boolean;
 }
@@ -55,32 +50,45 @@ export default function FilterBar({
     screenshotMarker('FilterBar redesign loaded');
   }, []);
 
-  const handleCategoryChange = (category: string) => {
+  const handleCategoryChange = useCallback((category: string) => {
     dispatchFilters({ type: 'SET_CATEGORY', payload: category });
-  };
+  }, [dispatchFilters]);
 
-  const handleSearchChange = (text: string) => {
+  const handleDateRangeChange = useCallback((dateRange: string) => {
+    // Map the pill selection to the appropriate filter action
+    const rangeMap: Record<string, FilterState['dateRange']> = {
+      'today': 'today',
+      'tomorrow': 'tomorrow',
+      'this_week': 'this_week',
+    };
+    
+    const mappedRange = rangeMap[dateRange];
+    if (mappedRange) {
+      dispatchFilters({ type: 'SET_DATE_RANGE', payload: mappedRange });
+    }
+  }, [dispatchFilters]);
+
+  const handleSearchChange = useCallback((text: string) => {
     dispatchFilters({ type: 'SET_SEARCH_TEXT', payload: text });
-  };
+  }, [dispatchFilters]);
 
-  const handleViewModeChange = (mode: 'list' | 'map') => {
+  const handleViewModeChange = useCallback((mode: 'gallery' | 'list' | 'map') => {
     onViewModeChange?.(mode);
-  };
+  }, [onViewModeChange]);
 
-  const handleDateRangeChange = (range: DateRange) => {
+  const handleDateRangePickerChange = useCallback((range: DateRange) => {
     // Dispatch actions to update the filter state in useEvents
     dispatchFilters({ type: 'SET_START_DATE', payload: range.start });
     dispatchFilters({ type: 'SET_END_DATE', payload: range.end });
-    //console.log('Date range changed to:', range);
-  };
+  }, [dispatchFilters]);
 
-  const handlePriceChange = (price: string) => {
+  const handlePriceChange = useCallback((price: string) => {
     dispatchFilters({ type: 'SET_PRICE', payload: price });
-  };
+  }, [dispatchFilters]);
 
-  const handleSizeChange = (size: string | string[]) => {
+  const handleSizeChange = useCallback((size: string | string[]) => {
     dispatchFilters({ type: 'SET_SIZE', payload: size });
-  };
+  }, [dispatchFilters]);
 
   return (
     <View style={[styles.container, { 
@@ -105,6 +113,8 @@ export default function FilterBar({
           <CategoryPills
             selectedCategory={filters.category}
             onCategoryChange={handleCategoryChange}
+            selectedDateRange={filters.dateRange}
+            onDateRangeChange={handleDateRangeChange}
           />
         </View>
         
@@ -124,7 +134,7 @@ export default function FilterBar({
         selectedDateRange={{ start: filters.startDate, end: filters.endDate }}
         selectedPrice={filters.price}
         selectedSize={filters.size}
-        onDateRangeChange={handleDateRangeChange}
+        onDateRangeChange={handleDateRangePickerChange}
         onPriceChange={handlePriceChange}
         onSizeChange={handleSizeChange}
         resultsCount={resultsCount}
