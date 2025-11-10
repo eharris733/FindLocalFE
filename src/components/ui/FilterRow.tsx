@@ -20,8 +20,8 @@ interface FilterRowProps {
   onPriceChange: (price: string) => void;
   onSizeChange: (size: string | string[]) => void;
   resultsCount?: number;
-  viewMode?: 'list' | 'map';
-  onViewModeChange?: (mode: 'list' | 'map') => void;
+  viewMode?: 'gallery' | 'list' | 'map';
+  onViewModeChange?: (mode: 'gallery' | 'list' | 'map') => void;
 }
 
 export const FilterRow: React.FC<FilterRowProps> = ({

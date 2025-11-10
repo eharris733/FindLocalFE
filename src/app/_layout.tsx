@@ -1,7 +1,7 @@
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useState, useCallback} from 'react';
 import {
     WorkSans_300Light,
     WorkSans_400Regular,
@@ -16,6 +16,9 @@ import {useAuth} from "../hooks/useAuth";
 import AuthProvider from "../providers/auth-provider";
 import {SplashScreenController} from "../components/SplashScreenController";
 import { logger } from "../utils/logger";
+import FeedbackBanner from "../components/FeedbackBanner";
+import FeedbackModal from "../components/FeedbackModal";
+import { View } from 'react-native';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -63,14 +66,39 @@ export default function RootLayout() {
 
 // Separate this into a new component so it can access the SessionProvider context later
 function RootNavigator() {
-    const { isLoggedIn } = useAuth()
-    return <Stack screenOptions={{ header: Header }} initialRouteName="index">
-        <Stack.Protected guard={isLoggedIn}>
-            <Stack.Screen name="(private)" options={{ headerShown: false }} />
-        </Stack.Protected>
-        <Stack.Protected guard={!isLoggedIn}>
-            <Stack.Screen name="user/signin" />
-        </Stack.Protected>
-        <Stack.Screen name="+not-found" />
-    </Stack>
+    const { isLoggedIn } = useAuth();
+    const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+
+    const handleFeedbackPress = useCallback(() => {
+        setShowFeedbackModal(true);
+    }, []);
+
+    const handleCloseFeedback = useCallback(() => {
+        setShowFeedbackModal(false);
+    }, []);
+
+    const renderHeader = useCallback((props: any) => (
+        <Header onFeedbackPress={handleFeedbackPress} {...props} />
+    ), [handleFeedbackPress]);
+
+    return (
+        <View style={{ flex: 1 }}>
+            <FeedbackBanner onFeedbackPress={handleFeedbackPress} />
+            <Stack 
+                screenOptions={{ 
+                    header: renderHeader
+                }} 
+                initialRouteName="index"
+            >
+                <Stack.Protected guard={isLoggedIn}>
+                    <Stack.Screen name="(private)" options={{ headerShown: false }} />
+                </Stack.Protected>
+                <Stack.Protected guard={!isLoggedIn}>
+                    <Stack.Screen name="user/signin" />
+                </Stack.Protected>
+                <Stack.Screen name="+not-found" />
+            </Stack>
+            <FeedbackModal visible={showFeedbackModal} onClose={handleCloseFeedback} />
+        </View>
+    );
 }

@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, StyleSheet, Platform } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import FilterBar from './FilterBar';
-import SidebarEventList from './SidebarEventList';
+import GalleryView from './GalleryView';
+import VenueGroupedListView from './VenueGroupedListView';
 import MapPanel from './MapPanel';
+import VenueModal from './VenueModal';
 import type { Event } from '../types/events';
 import type { FilterState, FilterAction } from '../hooks/useEvents';
 import type { Venue } from '../types/venues';
@@ -33,25 +35,37 @@ export default function MainLayout({
   onEventPress,
 }: MainLayoutProps) {
   const { theme } = useTheme();
-  const {isMobile, isTablet} = useDeviceInfo();
-  const [activeTab, setActiveTab] = useState<'list' | 'map'>('list');
+  const {isMobile} = useDeviceInfo();
+  const [activeTab, setActiveTab] = useState<'gallery' | 'list' | 'map'>('list');
   const [highlightedEventId, setHighlightedEventId] = useState<string | undefined>();
+  const [selectedVenue, setSelectedVenue] = useState<Venue | null>(null);
+  const [showVenueModal, setShowVenueModal] = useState(false);
 
-  const handleEventHover = (event: Event | null) => {
+  const handleEventHover = useCallback((event: Event | null) => {
     if (Platform.OS === 'web' && !isMobile) {
       setHighlightedEventId(event?.id);
     }
-  };
+  }, [isMobile]);
 
-  const handleMarkerPress = (event: Event) => {
+  const handleMarkerPress = useCallback((event: Event) => {
     if (!isMobile) {
       setHighlightedEventId(event.id);
     }
-  };
+  }, [isMobile]);
 
-  const handleViewModeChange = (mode: 'list' | 'map') => {
+  const handleViewModeChange = useCallback((mode: 'gallery' | 'list' | 'map') => {
     setActiveTab(mode);
-  };
+  }, []);
+
+  const handleVenuePress = useCallback((venue: Venue) => {
+    setSelectedVenue(venue);
+    setShowVenueModal(true);
+  }, []);
+
+  const handleCloseVenueModal = useCallback(() => {
+    setShowVenueModal(false);
+    setSelectedVenue(null);
+  }, []);
 
   if (isMobile) {
     // Mobile layout with tabs
@@ -71,12 +85,20 @@ export default function MainLayout({
           loading={loading}
         />
         
-        {activeTab === 'list' ? (
-          <SidebarEventList
+        {activeTab === 'gallery' ? (
+          <GalleryView
             events={events}
             loading={loading}
             onEventPress={onEventPress}
             highlightedEventId={highlightedEventId}
+            venues={venues}
+          />
+        ) : activeTab === 'list' ? (
+          <VenueGroupedListView
+            events={events}
+            loading={loading}
+            onEventPress={onEventPress}
+            onVenuePress={handleVenuePress}
             venues={venues}
           />
         ) : (
@@ -87,6 +109,12 @@ export default function MainLayout({
             onMarkerPress={handleMarkerPress}
           />
         )}
+
+        <VenueModal
+          visible={showVenueModal}
+          venue={selectedVenue}
+          onClose={handleCloseVenueModal}
+        />
       </View>
     );
   }
@@ -107,14 +135,24 @@ export default function MainLayout({
         loading={loading}
       />
       
-      {activeTab === 'list' ? (
+      {activeTab === 'gallery' ? (
         <View style={styles.fullContainer}>
-          <SidebarEventList
+          <GalleryView
             events={events}
             loading={loading}
             onEventPress={onEventPress}
             onEventHover={handleEventHover}
             highlightedEventId={highlightedEventId}
+            venues={venues}
+          />
+        </View>
+      ) : activeTab === 'list' ? (
+        <View style={styles.fullContainer}>
+          <VenueGroupedListView
+            events={events}
+            loading={loading}
+            onEventPress={onEventPress}
+            onVenuePress={handleVenuePress}
             venues={venues}
           />
         </View>
@@ -128,6 +166,12 @@ export default function MainLayout({
           />
         </View>
       )}
+
+      <VenueModal
+        visible={showVenueModal}
+        venue={selectedVenue}
+        onClose={handleCloseVenueModal}
+      />
     </View>
   );
 }

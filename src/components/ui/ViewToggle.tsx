@@ -4,8 +4,8 @@ import { useTheme } from '../../context/ThemeContext';
 import { Text } from './Text';
 
 interface ViewToggleProps {
-  viewMode: 'list' | 'map';
-  onViewModeChange: (mode: 'list' | 'map') => void;
+  viewMode: 'gallery' | 'list' | 'map';
+  onViewModeChange: (mode: 'gallery' | 'list' | 'map') => void;
 }
 
 export const ViewToggle: React.FC<ViewToggleProps> = ({
@@ -38,7 +38,27 @@ export const ViewToggle: React.FC<ViewToggleProps> = ({
           color={viewMode === 'list' ? 'inverse' : 'secondary'}
           style={styles.toggleText}
         >
-          📋 List
+          List
+        </Text>
+      </TouchableOpacity>
+      
+      <TouchableOpacity
+        style={[
+          styles.toggleButton,
+          {
+            backgroundColor: viewMode === 'gallery' 
+              ? theme.colors.primary[500] 
+              : 'transparent',
+          }
+        ]}
+        onPress={() => onViewModeChange('gallery')}
+      >
+        <Text 
+          variant="body2" 
+          color={viewMode === 'gallery' ? 'inverse' : 'secondary'}
+          style={styles.toggleText}
+        >
+          Gallery
         </Text>
       </TouchableOpacity>
       
@@ -58,7 +78,7 @@ export const ViewToggle: React.FC<ViewToggleProps> = ({
           color={viewMode === 'map' ? 'inverse' : 'secondary'}
           style={styles.toggleText}
         >
-          🗺️ Map
+          Map
         </Text>
       </TouchableOpacity>
     </View>

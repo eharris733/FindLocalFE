@@ -40,11 +40,12 @@ const DELETE_ACCOUNT_MESSAGES = {
 };
 
 interface ProfileModalProps {
-  visible: boolean;
-  onClose: () => void;
+  readonly visible: boolean;
+  readonly onClose: () => void;
+  readonly onFeedbackPress?: () => void;
 }
 
-export default function ProfileModal({ visible, onClose }: ProfileModalProps) {
+export default function ProfileModal({ visible, onClose, onFeedbackPress }: ProfileModalProps) {
   const { theme } = useTheme();
   const { selectedCity, onCityChange } = useCityLocation();
   const { isLoggedIn, profile, session } = useAuth();
@@ -374,13 +375,31 @@ export default function ProfileModal({ visible, onClose }: ProfileModalProps) {
             </Text>
             <View style={styles.betaSection}>
               <Text variant="body1" style={styles.betaTitle}>
+                Share Your Feedback
+              </Text>
+              <Text variant="body2" color="secondary" style={styles.betaDescription}>
+                Have a bug to report, feature to suggest, or just want to share your thoughts? We'd love to hear from you!
+              </Text>
+              <Button
+                variant="primary"
+                style={styles.betaButton}
+                title="Give Feedback"
+                onPress={() => {
+                  if (onFeedbackPress) {
+                    onFeedbackPress();
+                  }
+                }}
+              />
+            </View>
+            <View style={[styles.betaSection, { marginTop: 20 }]}>
+              <Text variant="body1" style={styles.betaTitle}>
                 Become a Beta Tester
               </Text>
               <Text variant="body2" color="secondary" style={styles.betaDescription}>
                 Fill out this form to get on the email list and get notified about updates and perks for beta testers!
               </Text>
               <Button
-                variant="primary"
+                variant="outline"
                 style={styles.betaButton}
                 title="Sign Up for Beta Testing"
                 onPress={() => Linking.openURL('https://forms.gle/diBZKyejuUXsdQu46')}
