@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, StyleSheet, Image, Platform, TouchableOpacity } from 'react-native';
 import { Event } from '../types/events';
 import { Venue } from '../types/venues';
@@ -37,6 +37,7 @@ const CustomMapMarker: React.FC<CustomMapMarkerProps> = ({
   onMarkerPress,
 }) => {
   const { theme } = useTheme();
+  const markerRef = useRef<{ showCallout?: () => void; hideCallout?: () => void } | null>(null);
   const latitude = Number(venue.latitude);
   const longitude = Number(venue.longitude);
   // Limit callout to first 9 events; badge should reflect total count
@@ -46,6 +47,15 @@ const CustomMapMarker: React.FC<CustomMapMarkerProps> = ({
 
   const [isHovered, setHovered] = useState(false);
   const [currentEventIndex, setCurrentEventIndex] = useState(0);
+
+  // Keep the native marker callout visibility in sync with our managed state.
+  useEffect(() => {
+    if (isActive) {
+      markerRef.current?.showCallout?.();
+    } else {
+      markerRef.current?.hideCallout?.();
+    }
+  }, [isActive]);
 
   // Get the image URL with fallback hierarchy: event image -> venue image -> record.png
   const getImageUrl = (event: Event) => {
@@ -98,6 +108,7 @@ const CustomMapMarker: React.FC<CustomMapMarkerProps> = ({
 
   return (
     <Marker
+      ref={markerRef}
       key={venue.id}
       coordinate={{ latitude, longitude }}
       anchor={{ x: 0.5, y: 0.5 }}
