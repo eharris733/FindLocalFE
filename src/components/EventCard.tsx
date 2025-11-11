@@ -6,11 +6,8 @@ import type { Venue } from '../types/venues';
 import { useTheme } from '../context/ThemeContext';
 import { useFavorites } from '../context/FavoritesContext';
 import { Text } from './ui';
-import { getVenueById } from '../api/venues';
 import { getDisplayCityName } from '../utils/cityUtils';
 import { getCompactVenueSizeLabel } from '../utils/venueUtils';
-import { EVENT_NO_DESCRIPTION_FALLBACK } from '../utils/eventUtils';
-import { logger } from '../utils/logger';
 import { useDeviceInfo } from '../hooks/useDeviceInfo';
 
 interface EventCardProps {
@@ -323,12 +320,35 @@ const EventCard: React.FC<EventCardProps> = ({ event, onPress, variant = 'defaul
               {isEventFavorited ? '❤️' : '🤍'}
             </Text>
           </TouchableOpacity>
-          {/* Price tag in top-right corner - COMMENTED OUT until we have real price data */}
-          {/* <View style={[styles.mockupPriceTag, { backgroundColor: theme.colors.background.primary }]}>
-            <Text style={[styles.mockupPriceText, { color: theme.colors.text.primary }]}>
-              {eventPrice}
-            </Text>
-          </View> */}
+          
+          {/* Price pin in top-right corner */}
+          {event.price && (
+            <View style={[styles.mockupPriceTag, { backgroundColor: theme.colors.background.primary }]}>
+              <Text style={[styles.mockupPriceText, { color: theme.colors.text.primary }]}>
+                {event.price}
+              </Text>
+            </View>
+          )}
+          
+          {/* Status pin below price (if both exist) or in top-right */}
+          {event.status && (
+            <View style={[
+              styles.mockupStatusPin, 
+              { 
+                backgroundColor: event.status.toLowerCase().includes('sold') 
+                  ? theme.colors.error 
+                  : event.status.toLowerCase().includes('cancel') || event.status.toLowerCase().includes('postpon')
+                  ? theme.colors.warning
+                  : theme.colors.success,
+                top: event.price ? 48 : 8, // Position below price if price exists
+              }
+            ]}>
+              <Text style={[styles.mockupStatusText, { color: theme.colors.text.inverse }]}>
+                {event.status}
+              </Text>
+            </View>
+          )}
+          
           {/* Category tag in bottom-left */}
           {displayGenre && (
             <View style={[styles.mockupCategoryTag, { backgroundColor: theme.colors.primary[600] }]}>
@@ -343,13 +363,6 @@ const EventCard: React.FC<EventCardProps> = ({ event, onPress, variant = 'defaul
         <View style={styles.mockupContent}>
           <Text style={[styles.mockupTitle, { color: theme.colors.text.primary }]} numberOfLines={2}>
             {event.title || 'Untitled Event'}
-          </Text>
-          
-          <Text style={[styles.mockupDescription, { 
-            color: theme.colors.text.secondary,
-            fontStyle: event.description ? 'normal' : 'italic',
-          }]} numberOfLines={2}>
-            {event.description || EVENT_NO_DESCRIPTION_FALLBACK}
           </Text>
           
           <View style={styles.mockupVenueRow}>
@@ -689,6 +702,25 @@ const styles = StyleSheet.create({
   mockupPriceText: {
     fontSize: 12,
     fontWeight: '600',
+  },
+  mockupStatusPin: {
+    position: 'absolute',
+    right: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.5,
+    shadowRadius: 4,
+    elevation: 5,
+    opacity: 1,
+  },
+  mockupStatusText: {
+    fontSize: 10,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   mockupCategoryTag: {
     position: 'absolute',
