@@ -268,22 +268,23 @@ const EventCard: React.FC<EventCardProps> = ({ event, onPress, variant = 'defaul
             </View>
           </View>
           
-          {/* Action buttons */}
-          <View style={styles.groupedActions}>
-            {/* View Details button - less padding on mobile */}
-            <TouchableOpacity 
-              style={[
-                styles.groupedButton,
-                isMobile && styles.groupedButtonMobile,
-                { backgroundColor: theme.colors.primary[500] }
-              ]}
-              onPress={handleCardPress}
-            >
-              <Text variant="caption" style={{ color: theme.colors.text.inverse, fontWeight: '600' }}>
-                Details
-              </Text>
-            </TouchableOpacity>
-          </View>
+          {/* Action buttons - hide on mobile */}
+          {!isMobile && (
+            <View style={styles.groupedActions}>
+              {/* View Details button */}
+              <TouchableOpacity 
+                style={[
+                  styles.groupedButton,
+                  { backgroundColor: theme.colors.primary[500] }
+                ]}
+                onPress={handleCardPress}
+              >
+                <Text variant="caption" style={{ color: theme.colors.text.inverse, fontWeight: '600' }}>
+                  Details
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
       </TouchableOpacity>
     );
