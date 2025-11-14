@@ -15,7 +15,6 @@ import type { Event } from '../types/events';
 import { getVenueByName, getVenueById, getVenuesByCity } from '../api/venues';
 import { useTheme } from '../context/ThemeContext';
 import { Text } from './ui';
-import { getDisplayCityName } from '../utils/cityUtils';
 import { getVenueSizeLabel } from '../utils/venueUtils';
 import { EVENT_NO_DESCRIPTION_FALLBACK } from '../utils/eventUtils';
 import { logger } from '../utils/logger';
@@ -88,11 +87,22 @@ const EventModal: React.FC<EventModalProps> = ({ visible, event, onClose }) => {
   };
 
   const handleEventLink = () => {
-    // Prioritize detail_page_url, fallback to root_url
-    const linkUrl = event?.detail_page_url || event?.root_url;
+    // Priority: ticket_page_url -> detail_page_url -> root_url -> venue.url
+    const linkUrl = event?.ticket_page_url || event?.detail_page_url || event?.root_url || venue?.url;
     if (linkUrl) {
       Linking.openURL(linkUrl);
     }
+  };
+
+  // Get button text and indicator based on available URLs
+  const getButtonInfo = () => {
+    if (event?.ticket_page_url) {
+      return { text: '🎫 Buy Tickets', showExternal: false };
+    }
+    if (event?.detail_page_url || event?.root_url) {
+      return { text: 'Event Website →', showExternal: true };
+    }
+    return { text: 'Venue Website →', showExternal: true };
   };
 
   const handleAddressPress = () => {
@@ -128,6 +138,7 @@ const EventModal: React.FC<EventModalProps> = ({ visible, event, onClose }) => {
 
   const displayGenre = getDisplayGenre();
   const venueSizeLabel = venue?.venue_size ? getVenueSizeLabel(venue.venue_size) : null;
+  const buttonInfo = getButtonInfo();
 
   if (!visible) return null;
 
@@ -196,7 +207,49 @@ const EventModal: React.FC<EventModalProps> = ({ visible, event, onClose }) => {
                   resizeMode="contain"
                 />
                 
-                {/* Genre Badge */}
+                {/* Price badge - top right */}
+                {event.price && (
+                  <View style={[styles.priceBadge, {
+                    backgroundColor: theme.colors.background.primary,
+                    paddingHorizontal: theme.spacing.md,
+                    paddingVertical: theme.spacing.xs,
+                    borderRadius: theme.borderRadius.md,
+                    ...theme.shadows.small,
+                  }]}>
+                    <Text variant="body2" style={{
+                      color: theme.colors.text.primary,
+                      fontWeight: '700',
+                    }}>
+                      {event.price}
+                    </Text>
+                  </View>
+                )}
+
+                {/* Status badge - below price or top right if no price */}
+                {event.status && (
+                  <View style={[styles.statusBadge, {
+                    backgroundColor: event.status.toLowerCase().includes('sold') 
+                      ? theme.colors.error 
+                      : event.status.toLowerCase().includes('cancel') || event.status.toLowerCase().includes('postpon')
+                      ? theme.colors.warning
+                      : theme.colors.success,
+                    paddingHorizontal: theme.spacing.md,
+                    paddingVertical: theme.spacing.xs,
+                    borderRadius: theme.borderRadius.md,
+                    top: event.price ? 48 : 8, // Position below price if price exists
+                    ...theme.shadows.medium,
+                  }]}>
+                    <Text variant="caption" style={{
+                      color: theme.colors.text.inverse,
+                      fontWeight: '700',
+                      textTransform: 'uppercase',
+                    }}>
+                      {event.status}
+                    </Text>
+                  </View>
+                )}
+                
+                {/* Genre Badge - bottom left */}
                 {displayGenre && (
                   <View style={[styles.genreBadge, {
                     backgroundColor: theme.colors.primary[600],
@@ -258,17 +311,52 @@ const EventModal: React.FC<EventModalProps> = ({ visible, event, onClose }) => {
                     </View>
                   )}
 
-                  {event.city && (
-                    <View style={[styles.metaRow, { marginBottom: theme.spacing.sm }]}>
-                      <Text style={[styles.metaIcon, { color: theme.colors.text.secondary }]}>🏙️</Text>
-                      <Text variant="body1" style={{
-                        color: theme.colors.text.secondary,
-                        fontWeight: '500',
-                      }}>
-                        {getDisplayCityName(event.city)}
-                      </Text>
-                    </View>
+                  {venue?.address && (
+                    <TouchableOpacity 
+                      style={[styles.metaRow, { marginBottom: theme.spacing.sm }]}
+                      onPress={handleAddressPress}
+                    >
+                      <Text style={[styles.metaIcon, { color: theme.colors.text.secondary }]}>📍</Text>
+                      <View style={{ flex: 1 }}>
+                        <Text variant="body1" style={{
+                          color: theme.colors.text.primary,
+                          fontWeight: '600',
+                        }}>
+                          {venue.address}
+                        </Text>
+                        <Text variant="caption" style={{
+                          color: theme.colors.primary[600],
+                          fontStyle: 'italic',
+                        }}>
+                          Tap to open in maps
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
                   )}
+
+                  {/* Primary Action Button */}
+                  <TouchableOpacity
+                    style={[styles.primaryActionButton, {
+                      backgroundColor: theme.colors.secondary[500],
+                      paddingVertical: theme.spacing.md,
+                      paddingHorizontal: theme.spacing.lg,
+                      borderRadius: theme.borderRadius.lg,
+                      alignItems: 'center',
+                      marginTop: theme.spacing.sm,
+                      marginBottom: theme.spacing.md,
+                      ...theme.shadows.medium,
+                    }]}
+                    onPress={handleEventLink}
+                  >
+                    <Text variant="body1" style={{ 
+                      color: theme.colors.text.inverse, 
+                      fontWeight: '700',
+                      textAlign: 'center',
+                      fontSize: 16,
+                    }}>
+                      {buttonInfo.text}
+                    </Text>
+                  </TouchableOpacity>
 
                   {/* Show music genres if available */}
                   {event.music_info?.genres && (
@@ -327,6 +415,34 @@ const EventModal: React.FC<EventModalProps> = ({ visible, event, onClose }) => {
                       </Text>
                     </TouchableOpacity>
                   )}
+                  
+                  {/* Link to event detail page or venue website */}
+                  {(event.detail_page_url || event.root_url || venue?.url) && (
+                    <TouchableOpacity 
+                      onPress={() => {
+                        // If detail_page_url equals ticket_page_url, skip to venue site
+                        const url = (event.detail_page_url && event.detail_page_url !== event.ticket_page_url)
+                          ? event.detail_page_url
+                          : event.root_url || venue?.url;
+                        if (url) Linking.openURL(url);
+                      }}
+                      style={{ 
+                        marginTop: theme.spacing.md,
+                        paddingTop: theme.spacing.md,
+                        borderTopWidth: 1,
+                        borderTopColor: theme.colors.border.light,
+                      }}
+                    >
+                      <Text variant="body2" style={{
+                        color: theme.colors.primary[600],
+                        fontWeight: '600',
+                      }}>
+                        {(event.detail_page_url && event.detail_page_url !== event.ticket_page_url) || event.root_url 
+                          ? '🔗 View original posting →' 
+                          : '🔗 Visit venue website →'}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
                 </View>
 
                 {/* Venue Information Section */}
@@ -343,60 +459,59 @@ const EventModal: React.FC<EventModalProps> = ({ visible, event, onClose }) => {
                     Venue Information
                   </Text>
 
-                  <View style={styles.venueContentContainer}>
-                    {/* Venue thumbnail - larger and positioned to wrap with text */}
-                    {venue.image && (
-                      <Image
-                        source={{ uri: venue.image }}
-                        style={[styles.venueThumbnail, { 
-                          backgroundColor: theme.colors.gray[100],
-                          borderRadius: theme.borderRadius.md,
-                        }]}
-                        resizeMode="cover"
-                      />
-                    )}
-                    
-                    <View style={styles.venueTextContent}>
-                      <Text variant="h4" style={{
-                        color: theme.colors.text.primary,
-                        marginBottom: theme.spacing.xs,
+                  {/* Venue thumbnail */}
+                  {venue.image && (
+                    <Image
+                      source={{ uri: venue.image }}
+                      style={[styles.venueThumbnail, { 
+                        backgroundColor: theme.colors.gray[100],
+                        borderRadius: theme.borderRadius.md,
+                        marginBottom: theme.spacing.md,
+                        width: '100%',
+                        height: 150,
+                      }]}
+                      resizeMode="cover"
+                    />
+                  )}
+
+                  <Text variant="h4" style={{
+                    color: theme.colors.text.primary,
+                    marginBottom: theme.spacing.xs,
+                    fontWeight: '600',
+                  }}>
+                    {venue.name}
+                  </Text>
+
+                  {venue.type && (
+                    <View style={[styles.venueTypeBadge, {
+                      backgroundColor: theme.colors.primary[100],
+                      paddingHorizontal: theme.spacing.sm,
+                      paddingVertical: theme.spacing.xs,
+                      borderRadius: theme.borderRadius.md,
+                      alignSelf: 'flex-start',
+                      marginBottom: theme.spacing.sm,
+                    }]}>
+                      <Text variant="caption" style={{
+                        color: theme.colors.primary[700],
                         fontWeight: '600',
+                        textTransform: 'uppercase',
                       }}>
-                        {venue.name}
+                        {venue.type}
                       </Text>
-
-                      {venue.type && (
-                        <View style={[styles.venueTypeBadge, {
-                          backgroundColor: theme.colors.primary[100],
-                          paddingHorizontal: theme.spacing.sm,
-                          paddingVertical: theme.spacing.xs,
-                          borderRadius: theme.borderRadius.md,
-                          alignSelf: 'flex-start',
-                          marginBottom: theme.spacing.sm,
-                        }]}>
-                          <Text variant="caption" style={{
-                            color: theme.colors.primary[700],
-                            fontWeight: '600',
-                            textTransform: 'uppercase',
-                          }}>
-                            {venue.type}
-                          </Text>
-                        </View>
-                      )}
-
-                      {venueSizeLabel && (
-                        <View style={[styles.metaRow, { marginBottom: theme.spacing.sm }]}>
-                          <Text style={[styles.metaIcon, { color: theme.colors.text.secondary }]}>👥</Text>
-                          <Text variant="body2" style={{
-                            color: theme.colors.text.secondary,
-                            fontStyle: 'italic',
-                          }}>
-                            {venueSizeLabel}
-                          </Text>
-                        </View>
-                      )}
                     </View>
-                  </View>
+                  )}
+
+                  {venueSizeLabel && (
+                    <View style={[styles.metaRow, { marginBottom: theme.spacing.sm }]}>
+                      <Text style={[styles.metaIcon, { color: theme.colors.text.secondary }]}>👥</Text>
+                      <Text variant="body2" style={{
+                        color: theme.colors.text.secondary,
+                        fontStyle: 'italic',
+                      }}>
+                        {venueSizeLabel}
+                      </Text>
+                    </View>
+                  )}
                   
                   {venue.address && (
                     <TouchableOpacity 
@@ -461,33 +576,6 @@ const EventModal: React.FC<EventModalProps> = ({ visible, event, onClose }) => {
                     </View>
                   )}
                 </View>
-
-                {/* Action Button */}
-                {(event?.detail_page_url || event?.root_url) && (
-                  <View style={[styles.actionButtons, { 
-                    marginTop: theme.spacing.lg,
-                  }]}>
-                    <TouchableOpacity
-                      style={[styles.primaryActionButton, {
-                        backgroundColor: theme.colors.secondary[500],
-                        paddingVertical: theme.spacing.md,
-                        paddingHorizontal: theme.spacing.lg,
-                        borderRadius: theme.borderRadius.lg,
-                        alignItems: 'center',
-                        ...theme.shadows.small,
-                      }]}
-                      onPress={handleEventLink}
-                    >
-                      <Text variant="body1" style={{ 
-                        color: theme.colors.text.inverse, 
-                        fontWeight: '600',
-                        textAlign: 'center',
-                      }}>
-                        🎫 View Event Details
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                )}
               </View>
             </View>
           )}
@@ -553,10 +641,19 @@ const styles = StyleSheet.create({
     height: 200, // Reduced height to prevent cutoff
     backgroundColor: '#f0f0f0',
   },
+  priceBadge: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+  },
+  statusBadge: {
+    position: 'absolute',
+    right: 8,
+  },
   genreBadge: {
     position: 'absolute',
-    top: 16,
-    right: 16,
+    bottom: 8,
+    left: 8,
   },
   eventInfo: {},
   eventTitle: {},
@@ -589,6 +686,13 @@ const styles = StyleSheet.create({
   venueTypeBadge: {},
   addressContainer: {},
   venueDescriptionContainer: {},
+  venueTagsSection: {},
+  tagsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  tag: {},
   actionButtons: {},
   primaryActionButton: {
     alignItems: 'center',

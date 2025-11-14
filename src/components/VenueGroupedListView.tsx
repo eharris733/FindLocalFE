@@ -52,8 +52,8 @@ export default function VenueGroupedListView({
   const { favoriteEventIds } = useFavorites();
   const { isMobile } = useDeviceInfo();
   const [expandedVenues, setExpandedVenues] = useState<Set<string>>(new Set());
-
-  // Group events by venue
+  
+  // Group events by venue and capture initial sort order
   const venueGroups = useMemo(() => {
     const groups = new Map<string, VenueGroup>();
 
@@ -72,13 +72,13 @@ export default function VenueGroupedListView({
       const group = groups.get(venueId)!;
       group.events.push(event);
       
-      // Check if this event is favorited
+      // Check if this event is favorited (at the time of grouping)
       if (favoriteEventIds.includes(event.id)) {
         group.hasFavorite = true;
       }
     });
 
-    // Convert to array and sort
+    // Convert to array and sort ONLY when events change
     const sortedGroups = Array.from(groups.values()).sort((a, b) => {
       // Venues with favorited events first
       if (a.hasFavorite && !b.hasFavorite) return -1;
@@ -91,7 +91,7 @@ export default function VenueGroupedListView({
     });
 
     return sortedGroups;
-  }, [events, venues, favoriteEventIds]);
+  }, [events, venues]); // Remove favoriteEventIds from dependencies!
 
   // Show loading indicator when loading and no events
   if (loading && events.length === 0) {
