@@ -47,7 +47,7 @@ export default function VenueGroupedListView({
   onEventPress,
   onVenuePress,
   venues = []
-}: VenueGroupedListViewProps) {
+}: Readonly<VenueGroupedListViewProps>) {
   const { theme } = useTheme();
   const { favoriteEventIds } = useFavorites();
   const { isMobile } = useDeviceInfo();
@@ -57,7 +57,7 @@ export default function VenueGroupedListView({
   const venueGroups = useMemo(() => {
     const groups = new Map<string, VenueGroup>();
 
-    events.forEach(event => {
+    for (const event of events) {
       const venueId = event.venue_id || 'no-venue';
       const venue = event.venue_id ? venues.find(v => v.id === event.venue_id) || null : null;
       
@@ -76,7 +76,7 @@ export default function VenueGroupedListView({
       if (favoriteEventIds.includes(event.id)) {
         group.hasFavorite = true;
       }
-    });
+    }
 
     // Convert to array and sort ONLY when events change
     const sortedGroups = Array.from(groups.values()).sort((a, b) => {
@@ -93,8 +93,15 @@ export default function VenueGroupedListView({
     return sortedGroups;
   }, [events, venues]); // Remove favoriteEventIds from dependencies!
 
-  // Show loading indicator when loading and no events
-  if (loading && events.length === 0) {
+  // Check if any event has a venue_id that we couldn't find in the venues array
+  // This means venues are still loading or the data is incomplete
+  const hasMissingVenueData = events.some(event => {
+    if (!event.venue_id) return false; // Events without venue_id are OK
+    return !venues.some(v => v.id === event.venue_id); // Problem if venue not found
+  });
+
+  // Show loading indicator when loading or when we have venue IDs but can't find matching venues
+  if (loading || hasMissingVenueData) {
     return (
       <View style={[styles.container, styles.centerContent, { backgroundColor: theme.colors.background.primary }]}>
         <Text variant="body1" style={{ color: theme.colors.text.secondary }}>
