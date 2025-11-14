@@ -93,8 +93,15 @@ export default function VenueGroupedListView({
     return sortedGroups;
   }, [events, venues]); // Remove favoriteEventIds from dependencies!
 
-  // Show loading indicator when loading and no events
-  if (loading && events.length === 0) {
+  // Check if any event has a venue_id that we couldn't find in the venues array
+  // This means venues are still loading or the data is incomplete
+  const hasMissingVenueData = events.some(event => {
+    if (!event.venue_id) return false; // Events without venue_id are OK
+    return !venues.find(v => v.id === event.venue_id); // Problem if venue not found
+  });
+
+  // Show loading indicator when loading or when we have venue IDs but can't find matching venues
+  if (loading || hasMissingVenueData) {
     return (
       <View style={[styles.container, styles.centerContent, { backgroundColor: theme.colors.background.primary }]}>
         <Text variant="body1" style={{ color: theme.colors.text.secondary }}>
