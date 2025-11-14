@@ -127,6 +127,9 @@ export const useEvents = ({ selectedCity, favoriteEventIds = [] }: UseEventsProp
   const [venues, setVenues] = useState<Venue[]>([]);
   const [venuesLoading, setVenuesLoading] = useState<boolean>(true);
   const [filters, dispatchFilters] = useReducer(filterReducer, initialFilterState);
+  
+  // Capture initial favorites snapshot for sorting - only updates when events are reloaded
+  const [initialFavoriteIds, setInitialFavoriteIds] = useState<string[]>(favoriteEventIds);
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -147,6 +150,12 @@ export const useEvents = ({ selectedCity, favoriteEventIds = [] }: UseEventsProp
     };
     fetchEvents();
   }, [selectedCity]); // Re-fetch when selectedCity changes
+  
+  // Update the favorites snapshot when events are loaded (events array reference changes)
+  useEffect(() => {
+    setInitialFavoriteIds(favoriteEventIds);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [events]); // Only when events array changes, not favoriteEventIds
 
   // Fetch venues for filtering
   useEffect(() => {
@@ -432,10 +441,11 @@ export const useEvents = ({ selectedCity, favoriteEventIds = [] }: UseEventsProp
     });
 
     // Sort favorited events to the top (except when filtering by favorites category)
-    if (filters.category !== 'favorites' && favoriteEventIds.length > 0) {
+    // Use initial snapshot to prevent reordering when user favorites/unfavorites
+    if (filters.category !== 'favorites' && initialFavoriteIds.length > 0) {
       filtered = filtered.sort((a, b) => {
-        const aIsFavorite = favoriteEventIds.includes(a.id);
-        const bIsFavorite = favoriteEventIds.includes(b.id);
+        const aIsFavorite = initialFavoriteIds.includes(a.id);
+        const bIsFavorite = initialFavoriteIds.includes(b.id);
         
         // Favorites first
         if (aIsFavorite && !bIsFavorite) return -1;
@@ -447,7 +457,15 @@ export const useEvents = ({ selectedCity, favoriteEventIds = [] }: UseEventsProp
     }
 
     return filtered;
-  }, [events, filters, venues, favoriteEventIds]);
+  }, [
+    events, 
+    filters, 
+    venues, 
+    initialFavoriteIds,
+    // Only include favoriteEventIds when in favorites filter mode
+    // This prevents recalculation when favoriting in other modes
+    filters.category === 'favorites' ? favoriteEventIds : null
+  ]);
 
   return {
     events,
