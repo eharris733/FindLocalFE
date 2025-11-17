@@ -36,7 +36,7 @@ export const FilterRow: React.FC<FilterRowProps> = ({
   const [showPriceTooltip, setShowPriceTooltip] = useState(false);
 
   const priceOptions = ['All prices']; // Only allow "All prices" until real price data is available
-  const sizeOptions = ['All sizes', 'Small', 'Medium', 'Large'];
+  const sizeOptions = ['All sizes', '<100', '100+', '300+'];
 
   const handleDropdownToggle = (dropdown: 'price' | 'size') => {
     if (dropdown === 'price') {
