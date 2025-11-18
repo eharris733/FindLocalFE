@@ -20,7 +20,7 @@ export interface Event {
 }
 
 export interface FilterState {
-  category: string;
+  category: string | string[];
   startDate: Date | null;
   endDate: Date | null;
   dateRange: 'all' | 'today' | 'tomorrow' | 'this_week' | 'this_weekend' | 'next_week' | 'this_month' | 'custom';
@@ -35,7 +35,7 @@ export interface FilterState {
 export type EventFilters = FilterState;
 
 export type FilterAction =
-  | { type: 'SET_CATEGORY'; payload: string }
+  | { type: 'SET_CATEGORY'; payload: string | string[] }
   | { type: 'SET_START_DATE'; payload: Date | null }
   | { type: 'SET_END_DATE'; payload: Date | null }
   | { type: 'SET_DATE_RANGE'; payload: FilterState['dateRange'] }

@@ -97,6 +97,7 @@ export default function MainLayout({
           <VenueGroupedListView
             events={events}
             loading={loading}
+            venuesLoading={venuesLoading}
             onEventPress={onEventPress}
             onVenuePress={handleVenuePress}
             venues={venues}
@@ -151,6 +152,7 @@ export default function MainLayout({
           <VenueGroupedListView
             events={events}
             loading={loading}
+            venuesLoading={venuesLoading}
             onEventPress={onEventPress}
             onVenuePress={handleVenuePress}
             venues={venues}

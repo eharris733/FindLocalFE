@@ -17,11 +17,11 @@ const getVenueSizeDisplay = (size: string | null): { icon: string; label: string
   const normalizedSize = size.toLowerCase();
   
   if (normalizedSize === 'small' || normalizedSize === 's') {
-    return { icon: '👥', label: '<100' };
+    return { icon: '', label: '<100 👥' };
   } else if (normalizedSize === 'medium' || normalizedSize === 'm') {
-    return { icon: '👥', label: '100+' };
+    return { icon: '', label: '100+ 👥' };
   } else if (normalizedSize === 'large' || normalizedSize === 'l') {
-    return { icon: '👥', label: '300+' };
+    return { icon: '', label: '300+ 👥' };
   }
   
   return { icon: '👥', label: size.toUpperCase() };
@@ -30,6 +30,7 @@ const getVenueSizeDisplay = (size: string | null): { icon: string; label: string
 interface VenueGroupedListViewProps {
   events: Event[];
   loading?: boolean;
+  venuesLoading?: boolean;
   onEventPress: (event: Event) => void;
   onVenuePress?: (venue: Venue) => void;
   venues?: Venue[];
@@ -44,6 +45,7 @@ interface VenueGroup {
 export default function VenueGroupedListView({ 
   events, 
   loading = false,
+  venuesLoading = false,
   onEventPress,
   onVenuePress,
   venues = []
@@ -93,15 +95,10 @@ export default function VenueGroupedListView({
     return sortedGroups;
   }, [events, venues]); // Remove favoriteEventIds from dependencies!
 
-  // Check if any event has a venue_id that we couldn't find in the venues array
-  // This means venues are still loading or the data is incomplete
-  const hasMissingVenueData = events.some(event => {
-    if (!event.venue_id) return false; // Events without venue_id are OK
-    return !venues.some(v => v.id === event.venue_id); // Problem if venue not found
-  });
-
-  // Show loading indicator when loading or when we have venue IDs but can't find matching venues
-  if (loading || hasMissingVenueData) {
+  // Show loading indicator when:
+  // 1. Events are loading and we have no events yet, OR
+  // 2. Venues are still loading (wait for them to avoid "Unknown Venue" flash)
+  if ((loading && events.length === 0) || venuesLoading) {
     return (
       <View style={[styles.container, styles.centerContent, { backgroundColor: theme.colors.background.primary }]}>
         <Text variant="body1" style={{ color: theme.colors.text.secondary }}>

@@ -50,7 +50,7 @@ export default function FilterBar({
     screenshotMarker('FilterBar redesign loaded');
   }, []);
 
-  const handleCategoryChange = useCallback((category: string) => {
+  const handleCategoryChange = useCallback((category: string | string[]) => {
     dispatchFilters({ type: 'SET_CATEGORY', payload: category });
   }, [dispatchFilters]);
 

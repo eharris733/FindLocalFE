@@ -5,8 +5,8 @@ import { Text } from './Text';
 import { useDeviceInfo } from '../../hooks/useDeviceInfo';
 
 interface CategoryPillsProps {
-  selectedCategory: string;
-  onCategoryChange: (category: string) => void;
+  selectedCategory: string | string[];
+  onCategoryChange: (category: string | string[]) => void;
   selectedDateRange?: string;
   onDateRangeChange?: (dateRange: string) => void;
 }
@@ -36,6 +36,35 @@ const CategoryPillsComponent: React.FC<CategoryPillsProps> = ({
 }) => {
   const { theme } = useTheme();
   const { isMobile } = useDeviceInfo();
+
+  // Normalize selectedCategory to array for easier checking
+  const selectedCategories = Array.isArray(selectedCategory) ? selectedCategory : [selectedCategory];
+
+  const handleCategoryPress = (categoryId: string) => {
+    if (categoryId === 'all') {
+      // Clicking "All" always sets it to just "all"
+      onCategoryChange('all');
+    } else {
+      // Remove 'all' from current selection
+      let newSelection = selectedCategories.filter(c => c !== 'all');
+      
+      if (newSelection.includes(categoryId)) {
+        // Toggle off - remove this category
+        newSelection = newSelection.filter(c => c !== categoryId);
+        
+        // If nothing is selected, default back to 'all'
+        if (newSelection.length === 0) {
+          onCategoryChange('all');
+        } else {
+          onCategoryChange(newSelection);
+        }
+      } else {
+        // Toggle on - add this category
+        newSelection = [...newSelection, categoryId];
+        onCategoryChange(newSelection);
+      }
+    }
+  };
 
   return (
     <View style={[styles.container, { paddingHorizontal: isMobile ? 12 : 16 }]}>
@@ -85,7 +114,7 @@ const CategoryPillsComponent: React.FC<CategoryPillsProps> = ({
         
         {/* Category Pills */}
         {categories.map((category) => {
-          const isSelected = selectedCategory === category.id;
+          const isSelected = selectedCategories.includes(category.id);
           return (
             <TouchableOpacity
               key={category.id}
@@ -100,7 +129,7 @@ const CategoryPillsComponent: React.FC<CategoryPillsProps> = ({
                     : theme.colors.border.light,
                 }
               ]}
-              onPress={() => onCategoryChange(category.id)}
+              onPress={() => handleCategoryPress(category.id)}
             >
               <Text variant="body2" style={styles.emoji}>
                 {category.emoji}
