@@ -47,7 +47,7 @@ interface ProfileModalProps {
 
 export default function ProfileModal({ visible, onClose, onFeedbackPress }: ProfileModalProps) {
   const { theme } = useTheme();
-  const { selectedCity, onCityChange } = useCityLocation();
+  const { selectedCity, onCityChange, selectedRegions, onRegionsChange } = useCityLocation();
   const { isLoggedIn, profile, session } = useAuth();
   const router = useRouter();
 
@@ -346,6 +346,8 @@ export default function ProfileModal({ visible, onClose, onFeedbackPress }: Prof
             <CityPicker
               selectedCity={selectedCity}
               onCityChange={handleCityChange}
+              selectedRegions={selectedRegions}
+              onRegionsChange={onRegionsChange}
               showTrigger={false}
               initiallyOpen={true}
               onClose={handleCityPickerClose}

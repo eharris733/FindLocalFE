@@ -12,6 +12,7 @@ export { DateRangePicker } from './DateRangePicker';
 export { FilterRow } from './FilterRow';
 export { Input} from './Input'
 export { Portal } from './Portal';
+export { RegionPills } from './RegionPills';
 export { SearchableDropdown } from './SearchableDropdown';
 export { SearchAndToggle } from './SearchAndToggle';
 export { Text } from './Text';

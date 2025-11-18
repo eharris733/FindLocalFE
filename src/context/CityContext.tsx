@@ -19,8 +19,10 @@ interface CityData {
 interface CityContextType {
     selectedCity: string; // "Boston" or "New York"
     availableRegions: string[]; // All regions for the selected city
+    selectedRegions: string[]; // Currently selected regions for filtering
     allCityData: CityData[]; // All cities with their regions
     onCityChange: (city: string) => Promise<void>;
+    onRegionsChange: (regions: string[]) => void;
     loading: boolean;
     error: boolean;
 }
@@ -34,6 +36,7 @@ interface CityProviderProps {
 export const CityProvider: React.FC<CityProviderProps> = ({ children }) => {
     const [selectedCity, setSelectedCity] = useState('Boston'); // City preference: "Boston" or "New York"
     const [availableRegions, setAvailableRegions] = useState<string[]>([]); // Regions for selected city
+    const [selectedRegions, setSelectedRegions] = useState<string[]>([]); // Selected regions for filtering
     const [allCityData, setAllCityData] = useState<CityData[]>([]); // All cities with their regions
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(false);
@@ -110,6 +113,9 @@ export const CityProvider: React.FC<CityProviderProps> = ({ children }) => {
         const regions = await fetchRegionsForCity(city);
         setAvailableRegions(regions);
         
+        // Clear selected regions when city changes
+        setSelectedRegions([]);
+        
         // Save to AsyncStorage
         try {
             await AsyncStorage.setItem(STORAGE_KEYS.PREFERRED_CITY, city);
@@ -126,6 +132,11 @@ export const CityProvider: React.FC<CityProviderProps> = ({ children }) => {
             }
         }
     }, [session]);
+
+    const onRegionsChange = useCallback((regions: string[]) => {
+        logger.info('📍 CityContext onRegionsChange called with:', regions);
+        setSelectedRegions(regions);
+    }, []);
 
     // Load saved city preference on mount
     useEffect(() => {
@@ -209,11 +220,13 @@ export const CityProvider: React.FC<CityProviderProps> = ({ children }) => {
     const value: CityContextType = useMemo(() => ({
         selectedCity,
         availableRegions,
+        selectedRegions,
         allCityData,
         onCityChange,
+        onRegionsChange,
         loading,
         error
-    }), [selectedCity, availableRegions, allCityData, onCityChange, loading, error]);
+    }), [selectedCity, availableRegions, selectedRegions, allCityData, onCityChange, onRegionsChange, loading, error]);
 
     return (
         <CityContext.Provider value={value}>

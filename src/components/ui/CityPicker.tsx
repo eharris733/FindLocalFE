@@ -7,6 +7,8 @@ import { useCityLocation } from "../../context/CityContext";
 interface CityPickerProps {
   selectedCity: string;
   onCityChange: (city: string) => Promise<void>;
+  selectedRegions?: string[]; // Array of selected regions
+  onRegionsChange?: (regions: string[]) => void; // Callback for region selection
   initiallyOpen?: boolean; // For external control - opens immediately if true
   showTrigger?: boolean; // Show the trigger button or just the modal
   onClose?: () => void; // Callback when modal is closed
@@ -15,6 +17,8 @@ interface CityPickerProps {
 export const CityPicker: React.FC<CityPickerProps> = ({
   selectedCity,
   onCityChange,
+  selectedRegions = [],
+  onRegionsChange,
   initiallyOpen = false,
   showTrigger = true,
   onClose,
@@ -25,8 +29,11 @@ export const CityPicker: React.FC<CityPickerProps> = ({
 
   const handleSelection = async (selection: string) => {
     await onCityChange(selection);
-    setIsOpen(false);
-    onClose?.(); // Call external close handler if provided
+    // Clear region selection when city changes
+    if (onRegionsChange) {
+      onRegionsChange([]);
+    }
+    // Don't close the modal - let user select regions
   };
 
   const handleModalClose = () => {
@@ -36,6 +43,34 @@ export const CityPicker: React.FC<CityPickerProps> = ({
 
   const isCitySelected = (cityName: string) => {
     return selectedCity === cityName;
+  };
+
+  const handleRegionToggle = (region: string) => {
+    if (!onRegionsChange) return;
+
+    const currentRegions = selectedRegions || [];
+    
+    if (currentRegions.includes(region)) {
+      // Remove region from selection
+      onRegionsChange(currentRegions.filter(r => r !== region));
+    } else {
+      // Add region to selection
+      onRegionsChange([...currentRegions, region]);
+    }
+  };
+
+  const handleAllRegionsClick = () => {
+    if (!onRegionsChange) return;
+    // Clear all selections to show all regions
+    onRegionsChange([]);
+  };
+
+  const isRegionSelected = (region: string) => {
+    return selectedRegions?.includes(region) || false;
+  };
+
+  const isAllRegionsSelected = () => {
+    return !selectedRegions || selectedRegions.length === 0;
   };
 
   return (
@@ -136,29 +171,66 @@ export const CityPicker: React.FC<CityPickerProps> = ({
                       )}
                     </TouchableOpacity>
 
-                    {/* Show available regions for this city */}
-                    {cityInfo.regions && cityInfo.regions.length > 0 && (
+                    {/* Show available regions only for the currently selected city */}
+                    {isCitySelected(cityInfo.name) && cityInfo.regions && cityInfo.regions.length > 0 && (
                       <View style={styles.regionSection}>
                         <Text variant="caption" color="tertiary" style={styles.regionHeader}>
-                          Available Regions:
+                          Filter by Region (tap to select):
                         </Text>
                         <View style={styles.regionChips}>
-                          {cityInfo.regions.map((region) => (
-                            <View
-                              key={region}
-                              style={[
-                                styles.regionChip,
-                                { 
-                                  backgroundColor: theme.colors.background.secondary,
-                                  borderColor: theme.colors.border.light,
-                                }
-                              ]}
+                          {/* "All" pill */}
+                          <TouchableOpacity
+                            style={[
+                              styles.regionChip,
+                              { 
+                                backgroundColor: isAllRegionsSelected()
+                                  ? theme.colors.primary[500]
+                                  : theme.colors.background.secondary,
+                                borderColor: isAllRegionsSelected()
+                                  ? theme.colors.primary[500]
+                                  : theme.colors.border.light,
+                              }
+                            ]}
+                            onPress={handleAllRegionsClick}
+                          >
+                            <Text 
+                              variant="caption" 
+                              color={isAllRegionsSelected() ? 'inverse' : 'secondary'}
+                              style={{ fontWeight: isAllRegionsSelected() ? '600' : '400' }}
                             >
-                              <Text variant="caption" color="secondary">
-                                {region}
-                              </Text>
-                            </View>
-                          ))}
+                              All
+                            </Text>
+                          </TouchableOpacity>
+                          
+                          {cityInfo.regions.map((region) => {
+                            const isSelected = isRegionSelected(region);
+                            
+                            return (
+                              <TouchableOpacity
+                                key={region}
+                                style={[
+                                  styles.regionChip,
+                                  { 
+                                    backgroundColor: isSelected 
+                                      ? theme.colors.primary[500]
+                                      : theme.colors.background.secondary,
+                                    borderColor: isSelected
+                                      ? theme.colors.primary[500]
+                                      : theme.colors.border.light,
+                                  }
+                                ]}
+                                onPress={() => handleRegionToggle(region)}
+                              >
+                                <Text 
+                                  variant="caption" 
+                                  color={isSelected ? 'inverse' : 'secondary'}
+                                  style={{ fontWeight: isSelected ? '600' : '400' }}
+                                >
+                                  {region}
+                                </Text>
+                              </TouchableOpacity>
+                            );
+                          })}
                         </View>
                       </View>
                     )}

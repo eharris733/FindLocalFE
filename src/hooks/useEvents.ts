@@ -28,6 +28,7 @@ const initialFilterState: FilterState = {
   venues: [], // Initialize as empty array
   price: 'All prices',
   size: ['All sizes'], // Initialize as array
+  regions: [], // Initialize as empty array - all regions selected by default
 };
 
 const getDateRangeFromSelection = (dateRange: FilterState['dateRange']): { start: Date | null; end: Date | null } => {
@@ -94,6 +95,8 @@ const filterReducer = (state: FilterState, action: FilterAction): FilterState =>
       return { ...state, price: action.payload };
     case 'SET_SIZE':
       return { ...state, size: action.payload };
+    case 'SET_REGIONS':
+      return { ...state, regions: action.payload };
     case 'CLEAR_ALL':
     case 'RESET_FILTERS':
       return initialFilterState;
@@ -362,6 +365,13 @@ export const useEvents = ({ selectedCity, favoriteEventIds = [] }: UseEventsProp
       // Location filter (city)
       if (filters.location !== 'all' && event.city !== filters.location) {
         return false;
+      }
+
+      // Region filter - if regions are selected, check if event's region matches
+      if (filters.regions.length > 0 && event.region) {
+        if (!filters.regions.includes(event.region)) {
+          return false;
+        }
       }
 
       // Venue filter - check if event's venue is in selected venues

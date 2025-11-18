@@ -19,7 +19,7 @@ export default function TopNavigation({ onNavLinkPress, onFeedbackPress }: TopNa
   const { theme } = useTheme();
   const {isMobile} = useDeviceInfo();
   const { isLoggedIn } = useAuth();
-  const { selectedCity, onCityChange } = useCityLocation();
+  const { selectedCity, onCityChange, selectedRegions, onRegionsChange } = useCityLocation();
   const router = useRouter();
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showCityPicker, setShowCityPicker] = useState(false);
@@ -247,6 +247,8 @@ export default function TopNavigation({ onNavLinkPress, onFeedbackPress }: TopNa
         <CityPicker
           selectedCity={selectedCity}
           onCityChange={handleCityChange}
+          selectedRegions={selectedRegions}
+          onRegionsChange={onRegionsChange}
           onClose={handleCityPickerClose}
           initiallyOpen={true}
           showTrigger={false}
