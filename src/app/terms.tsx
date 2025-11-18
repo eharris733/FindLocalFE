@@ -122,21 +122,14 @@ export default function TermsRoute() {
       </Text>
 
       <Text variant="h3" style={{ marginTop: theme.spacing.xl, marginBottom: theme.spacing.md }}>
-        10. Governing Law and Dispute Resolution
-      </Text>
-      <Text variant="body1" style={{ marginBottom: theme.spacing.md, lineHeight: 22 }}>
-        These Terms shall be governed by the laws of the Commonwealth of Massachusetts and the United States, without regard to its conflict of law provisions. You agree that different data protection laws may apply depending on your location.
-      </Text>
-
-      <Text variant="h3" style={{ marginTop: theme.spacing.xl, marginBottom: theme.spacing.md }}>
-        11. Changes to Terms
+        10. Changes to Terms
       </Text>
       <Text variant="body1" style={{ marginBottom: theme.spacing.md, lineHeight: 22 }}>
         We reserve the right to modify or replace these Terms at any time. We will provide notice of any changes by posting the new Terms on this page and updating the "Last Updated" date. For material changes, we will also provide notice to you via the email address associated with your account.
       </Text>
 
       <Text variant="h3" style={{ marginTop: theme.spacing.xl, marginBottom: theme.spacing.md }}>
-        12. Contact Us
+        11. Contact Us
       </Text>
       <Text variant="body1" style={{ marginBottom: theme.spacing.xl, lineHeight: 22 }}>
         If you have any questions about these Terms, please contact us at:{' '}
