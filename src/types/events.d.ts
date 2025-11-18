@@ -20,7 +20,7 @@ export interface Event {
 }
 
 export interface FilterState {
-  category: string;
+  category: string | string[];
   startDate: Date | null;
   endDate: Date | null;
   dateRange: 'all' | 'today' | 'tomorrow' | 'this_week' | 'this_weekend' | 'next_week' | 'this_month' | 'custom';
@@ -29,13 +29,14 @@ export interface FilterState {
   venues: string[]; // New field for multi-select venues
   price: string; // New field for price filtering
   size: string | string[]; // New field for venue size filtering - supports multi-select
+  regions: string[]; // New field for region filtering - supports multi-select
 }
 
 // Backwards compatibility
 export type EventFilters = FilterState;
 
 export type FilterAction =
-  | { type: 'SET_CATEGORY'; payload: string }
+  | { type: 'SET_CATEGORY'; payload: string | string[] }
   | { type: 'SET_START_DATE'; payload: Date | null }
   | { type: 'SET_END_DATE'; payload: Date | null }
   | { type: 'SET_DATE_RANGE'; payload: FilterState['dateRange'] }
@@ -44,5 +45,6 @@ export type FilterAction =
   | { type: 'SET_VENUES'; payload: string[] }
   | { type: 'SET_PRICE'; payload: string }
   | { type: 'SET_SIZE'; payload: string | string[] }
+  | { type: 'SET_REGIONS'; payload: string[] }
   | { type: 'CLEAR_ALL' } // Added clear all action
   | { type: 'RESET_FILTERS' }; // Keep for backwards compatibility

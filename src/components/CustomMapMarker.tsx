@@ -123,22 +123,25 @@ const CustomMapMarker: React.FC<CustomMapMarkerProps> = ({
         handleMarkerPress(e);
         //console.log('Marker pressed', venue.id);
       }}
-      hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+      hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
     >
-      <View  
-      style={[
-            styles.dotBase,
-            hasEvents ? [styles.dotActive] : styles.dotInactive,
-            (isHighlighted || isHovered) && [styles.dotHighlighted, { backgroundColor: theme.colors.primary[700] }],
-          ]}
-        >
-        {hasEvents && totalEvents > 0 && (
-          <View style={[styles.eventCountBadge, { backgroundColor: theme.colors.secondary[500] }]}>
-            <Text variant="caption" style={[styles.eventCountText, { color: theme.colors.text.primary }]}>
-              {totalEvents > 9 ? '9+' : totalEvents}
-            </Text>
-          </View>
-        )}
+      {/* Invisible hitbox for better touch target */}
+      <View style={styles.hitbox}>
+        <View  
+        style={[
+              styles.dotBase,
+              hasEvents ? [styles.dotActive] : styles.dotInactive,
+              (isHighlighted || isHovered) && [styles.dotHighlighted, { backgroundColor: theme.colors.primary[700] }],
+            ]}
+          >
+          {hasEvents && totalEvents > 0 && (
+            <View style={[styles.eventCountBadge, { backgroundColor: theme.colors.secondary[500] }]}>
+              <Text variant="caption" style={[styles.eventCountText, { color: theme.colors.text.primary }]}>
+                {totalEvents > 9 ? '9+' : totalEvents}
+              </Text>
+            </View>
+          )}
+        </View>
       </View>
 
       {isActive && (
@@ -301,6 +304,12 @@ const CustomMapMarker: React.FC<CustomMapMarkerProps> = ({
 
 const styles = StyleSheet.create({
   markerContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  hitbox: {
+    width: 44,
+    height: 44,
     alignItems: 'center',
     justifyContent: 'center',
   },

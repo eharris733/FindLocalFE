@@ -18,7 +18,7 @@ export default function PrivacyRoute() {
       <Text variant="h2" style={{ marginBottom: theme.spacing.lg }}>Privacy Policy</Text>
       
       <Text variant="body2" color="secondary" style={{ marginBottom: theme.spacing.xl, fontStyle: 'italic' }}>
-        Last Updated: October 14, 2025
+        Last Updated: November 18, 2025
       </Text>
 
       <Text variant="body1" style={{ marginBottom: theme.spacing.md, lineHeight: 22 }}>
@@ -76,7 +76,21 @@ export default function PrivacyRoute() {
       </Text>
 
       <Text variant="h3" style={{ marginTop: theme.spacing.xl, marginBottom: theme.spacing.md }}>
-        3. How We Share Your Information
+        3. Affiliate Links and Third-Party Commissions
+      </Text>
+      <Text variant="body1" style={{ marginBottom: theme.spacing.md, lineHeight: 22 }}>
+        The Service may contain affiliate links to third-party websites, venues, or services. FindLocal may receive a commission if you make a purchase or booking through these links, regardless of whether the purchase is made immediately after clicking the link or at a later time, and regardless of whether the linked site is directly affiliated with FindLocal. This does not affect your privacy or the price you pay. We are transparent about this practice to maintain trust with our users.
+      </Text>
+
+      <Text variant="h3" style={{ marginTop: theme.spacing.xl, marginBottom: theme.spacing.md }}>
+        4. Prohibited Activities: Data Scraping
+      </Text>
+      <Text variant="body1" style={{ marginBottom: theme.spacing.md, lineHeight: 22 }}>
+        Scraping, crawling, or using automated means to collect data from the Service is strictly prohibited without our express written permission. This includes but is not limited to using bots, scrapers, or any automated tools to extract content, event information, or user data. Violations may result in account termination and legal action.
+      </Text>
+
+      <Text variant="h3" style={{ marginTop: theme.spacing.xl, marginBottom: theme.spacing.md }}>
+        5. How We Share Your Information
       </Text>
       <Text variant="body1" style={{ marginBottom: theme.spacing.sm, lineHeight: 22 }}>
         We do not sell your personal data. We may share information in the following situations:
@@ -95,7 +109,7 @@ export default function PrivacyRoute() {
       </Text>
 
       <Text variant="h3" style={{ marginTop: theme.spacing.xl, marginBottom: theme.spacing.md }}>
-        4. Your Rights and Data Control
+        6. Your Rights and Data Control
       </Text>
       <Text variant="body1" style={{ marginBottom: theme.spacing.sm, lineHeight: 22 }}>
         You have control over your personal information:
@@ -108,14 +122,14 @@ export default function PrivacyRoute() {
       </Text>
 
       <Text variant="h3" style={{ marginTop: theme.spacing.xl, marginBottom: theme.spacing.md }}>
-        5. Children's Privacy
+        7. Children's Privacy
       </Text>
       <Text variant="body1" style={{ marginBottom: theme.spacing.md, lineHeight: 22 }}>
         Our Service is not intended for use by children under the age of 13. We do not knowingly collect personal information from children under 13. Furthermore, users must be of the legal age required by their jurisdiction (e.g., 21+ in the United States) to attend events involving alcohol or other age-restricted substances.
       </Text>
 
       <Text variant="h3" style={{ marginTop: theme.spacing.xl, marginBottom: theme.spacing.md }}>
-        6. Your Privacy Rights for California and European Users
+        8. Your Privacy Rights for California and European Users
       </Text>
       <Text variant="body1" style={{ marginBottom: theme.spacing.sm, lineHeight: 22 }}>
         If you are a resident of California or a data subject in the European Economic Area (EEA), you have additional rights regarding your personal data under the California Consumer Privacy Act (CCPA) and the General Data Protection Regulation (GDPR), respectively.
@@ -131,14 +145,14 @@ export default function PrivacyRoute() {
       </Text>
 
       <Text variant="h3" style={{ marginTop: theme.spacing.xl, marginBottom: theme.spacing.md }}>
-        7. Changes to This Privacy Policy
+        9. Changes to This Privacy Policy
       </Text>
       <Text variant="body1" style={{ marginBottom: theme.spacing.md, lineHeight: 22 }}>
         We may update this Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page and updating the "Last Updated" date. For material changes, we will also provide notice to you via the email address associated with your account.
       </Text>
 
       <Text variant="h3" style={{ marginTop: theme.spacing.xl, marginBottom: theme.spacing.md }}>
-        8. Contact Us
+        10. Contact Us
       </Text>
       <Text variant="body1" style={{ marginBottom: theme.spacing.xl, lineHeight: 22 }}>
         If you have any questions about this Privacy Policy, please contact us at:{' '}

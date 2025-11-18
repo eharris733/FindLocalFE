@@ -19,14 +19,14 @@ export default function TopNavigation({ onNavLinkPress, onFeedbackPress }: TopNa
   const { theme } = useTheme();
   const {isMobile} = useDeviceInfo();
   const { isLoggedIn } = useAuth();
-  const { selectedCity, onCityChange } = useCityLocation();
+  const { selectedCity, onCityChange, selectedRegions, onRegionsChange } = useCityLocation();
   const router = useRouter();
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showCityPicker, setShowCityPicker] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [slideAnim] = useState(new Animated.Value(-250)); // Start off-screen
 
-  const navLinks = ['About', 'Friends'];
+  const navLinks = ['Events', 'About', 'Friends'];
 
   useEffect(() => {
     if (showMobileMenu) {
@@ -247,6 +247,8 @@ export default function TopNavigation({ onNavLinkPress, onFeedbackPress }: TopNa
         <CityPicker
           selectedCity={selectedCity}
           onCityChange={handleCityChange}
+          selectedRegions={selectedRegions}
+          onRegionsChange={onRegionsChange}
           onClose={handleCityPickerClose}
           initiallyOpen={true}
           showTrigger={false}

@@ -11,7 +11,12 @@ export default function Header({ onFeedbackPress }: HeaderProps = {}) {
     const router = useRouter();
 
     const handleNavLinkPress = (link: string) => {
-        router.navigate(`/${link.toLowerCase()}`);
+        // Map 'Events' to home page, others to their respective routes
+        if (link.toLowerCase() === 'events') {
+            router.navigate('/');
+        } else {
+            router.navigate(`/${link.toLowerCase()}`);
+        }
     };
 
     return (<View><TopNavigation onNavLinkPress={handleNavLinkPress} onFeedbackPress={onFeedbackPress} />

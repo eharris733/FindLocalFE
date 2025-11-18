@@ -11,7 +11,7 @@ import type {Event} from "../types/events";
 
 export default function IndexRoute() {
     const { theme, isDark } = useTheme();
-    const { selectedCity} = useCityLocation();
+    const { selectedCity, selectedRegions} = useCityLocation();
     const { favoriteEventIds } = useFavorites();
     const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
     const [showEventModal, setShowEventModal] = useState(false);
@@ -27,6 +27,11 @@ export default function IndexRoute() {
         venues,
         venuesLoading,
     } = useEvents({ selectedCity, favoriteEventIds });
+
+    // Sync selectedRegions from CityContext to filters
+    React.useEffect(() => {
+        dispatchFilters({ type: 'SET_REGIONS', payload: selectedRegions });
+    }, [selectedRegions, dispatchFilters]);
 
     const handleEventPress = (event: Event) => {
         setSelectedEvent(event);

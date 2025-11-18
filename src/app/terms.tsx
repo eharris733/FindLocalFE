@@ -18,7 +18,7 @@ export default function TermsRoute() {
       <Text variant="h2" style={{ marginBottom: theme.spacing.lg }}>Terms of Service</Text>
       
       <Text variant="body2" color="secondary" style={{ marginBottom: theme.spacing.xl, fontStyle: 'italic' }}>
-        Last Updated: October 14, 2025
+        Last Updated: November 18, 2025
       </Text>
 
       <Text variant="body1" style={{ marginBottom: theme.spacing.md, lineHeight: 22 }}>
@@ -60,8 +60,11 @@ export default function TermsRoute() {
       <Text variant="body1" style={{ marginBottom: theme.spacing.xs, marginLeft: theme.spacing.md, lineHeight: 22 }}>
         • Attempt to gain unauthorized access to our systems or engage in any activity that disrupts the Service.
       </Text>
-      <Text variant="body1" style={{ marginBottom: theme.spacing.md, marginLeft: theme.spacing.md, lineHeight: 22 }}>
+      <Text variant="body1" style={{ marginBottom: theme.spacing.xs, marginLeft: theme.spacing.md, lineHeight: 22 }}>
         • Send spam or use the friend invitation feature for unmediated advertising or in an excessive manner.
+      </Text>
+      <Text variant="body1" style={{ marginBottom: theme.spacing.md, marginLeft: theme.spacing.md, lineHeight: 22 }}>
+        • Scrape, crawl, or use automated means to collect data from the Service without our express written permission. This includes but is not limited to using bots, scrapers, or any automated tools to extract content, event information, or user data from the Service.
       </Text>
       <Text variant="body1" style={{ marginBottom: theme.spacing.md, lineHeight: 22 }}>
         We reserve the right to limit, suspend, or terminate accounts that violate this policy at our sole discretion.
@@ -98,28 +101,35 @@ export default function TermsRoute() {
       </Text>
 
       <Text variant="h3" style={{ marginTop: theme.spacing.xl, marginBottom: theme.spacing.md }}>
-        7. Disclaimer of Warranties and Limitation of Liability
+        7. Affiliate Links and Commission Disclosure
+      </Text>
+      <Text variant="body1" style={{ marginBottom: theme.spacing.md, lineHeight: 22 }}>
+        Some links on the Service may be affiliate links, and FindLocal may receive a commission if you make a purchase through these links. This applies regardless of whether the purchase is made immediately after clicking the link or at a later time, and regardless of whether the linked site is directly affiliated with FindLocal. The use of affiliate links does not affect the price you pay, and we only recommend products, services, or venues that we believe may be of interest to our users.
+      </Text>
+
+      <Text variant="h3" style={{ marginTop: theme.spacing.xl, marginBottom: theme.spacing.md }}>
+        8. Disclaimer of Warranties and Limitation of Liability
       </Text>
       <Text variant="body1" style={{ marginBottom: theme.spacing.md, lineHeight: 22 }}>
         The Service is provided on an "AS IS" and "AS AVAILABLE" basis. FindLocal LLC is not liable for any financial loss or other damages resulting from your use of this site or from inaccurate event information.
       </Text>
 
       <Text variant="h3" style={{ marginTop: theme.spacing.xl, marginBottom: theme.spacing.md }}>
-        8. Governing Law and Dispute Resolution
+        9. Governing Law and Dispute Resolution
       </Text>
       <Text variant="body1" style={{ marginBottom: theme.spacing.md, lineHeight: 22 }}>
         These Terms shall be governed by the laws of the Commonwealth of Massachusetts and the United States, without regard to its conflict of law provisions. You agree that different data protection laws may apply depending on your location.
       </Text>
 
       <Text variant="h3" style={{ marginTop: theme.spacing.xl, marginBottom: theme.spacing.md }}>
-        9. Changes to Terms
+        10. Changes to Terms
       </Text>
       <Text variant="body1" style={{ marginBottom: theme.spacing.md, lineHeight: 22 }}>
         We reserve the right to modify or replace these Terms at any time. We will provide notice of any changes by posting the new Terms on this page and updating the "Last Updated" date. For material changes, we will also provide notice to you via the email address associated with your account.
       </Text>
 
       <Text variant="h3" style={{ marginTop: theme.spacing.xl, marginBottom: theme.spacing.md }}>
-        10. Contact Us
+        11. Contact Us
       </Text>
       <Text variant="body1" style={{ marginBottom: theme.spacing.xl, lineHeight: 22 }}>
         If you have any questions about these Terms, please contact us at:{' '}

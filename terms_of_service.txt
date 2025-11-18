@@ -1,6 +1,6 @@
 Terms of Service for findlocal.community
 
-Last Updated: October 14, 2025
+Last Updated: November 18, 2025
 
 Welcome to FindLocal. These Terms of Service ("Terms") govern your access to and use of the findlocal.community website and services (the "Service"), operated by FindLocal LLC (pending registration).
 
@@ -21,6 +21,7 @@ You agree not to use the Service to:
 - Use the Service for any illegal purpose or in violation of any local, state, national, or international law.
 - Attempt to gain unauthorized access to our systems or engage in any activity that disrupts the Service.
 - Send spam or use the friend invitation feature for unmediated advertising or in an excessive manner.
+- Scrape, crawl, or use automated means to collect data from the Service without our express written permission. This includes but is not limited to using bots, scrapers, or any automated tools to extract content, event information, or user data from the Service.
 
 We reserve the right to limit, suspend, or terminate accounts that violate this policy at our sole discretion.
 
@@ -39,18 +40,22 @@ We reserve the right to limit, suspend, or terminate accounts that violate this 
 
 If paid accounts or features are offered, we will refund payment up to the last billing cycle for users who terminate their accounts. However, if an account is terminated by us due to a clear violation of these Terms, no refund will be issued.
 
-7. Disclaimer of Warranties and Limitation of Liability
+7. Affiliate Links and Commission Disclosure
+
+Some links on the Service may be affiliate links, and FindLocal may receive a commission if you make a purchase through these links. This applies regardless of whether the purchase is made immediately after clicking the link or at a later time, and regardless of whether the linked site is directly affiliated with FindLocal. The use of affiliate links does not affect the price you pay, and we only recommend products, services, or venues that we believe may be of interest to our users.
+
+8. Disclaimer of Warranties and Limitation of Liability
 
 The Service is provided on an "AS IS" and "AS AVAILABLE" basis. FindLocal LLC is not liable for any financial loss or other damages resulting from your use of this site or from inaccurate event information.
 
-8. Governing Law and Dispute Resolution
+10. Governing Law and Dispute Resolution
 
 These Terms shall be governed by the laws of the Commonwealth of Massachusetts and the United States, without regard to its conflict of law provisions. You agree that different data protection laws may apply depending on your location.
 
-9. Changes to Terms
+11. Changes to Terms
 
 We reserve the right to modify or replace these Terms at any time. We will provide notice of any changes by posting the new Terms on this page and updating the "Last Updated" date. For material changes, we will also provide notice to you via the email address associated with your account.
 
-10. Contact Us
+12. Contact Us
 
 If you have any questions about these Terms, please contact us at: findlocalinternal@gmail.com
