@@ -189,6 +189,7 @@ export default function FilterBar({
           selectedCategories={selectedCategories}
           onCategoriesChange={handleCategoryChange}
           multiSelect={true}
+          availableEventTypes={availableFilterOptions?.eventTypes}
         />
 
         {/* Where Filter */}

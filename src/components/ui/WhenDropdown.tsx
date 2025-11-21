@@ -4,7 +4,6 @@ import { useTheme } from '../../context/ThemeContext';
 import { Text } from './Text';
 import { Calendar } from './Calendar';
 import { Portal } from './Portal';
-import { Ionicons } from '@expo/vector-icons';
 import { format, addDays, startOfWeek, endOfWeek, startOfDay, endOfDay } from 'date-fns';
 
 interface DateRange {
@@ -42,14 +41,6 @@ export const WhenDropdown: React.FC<WhenDropdownProps> = ({
 
   const quickOptions = [
     { 
-      id: 'all' as const,
-      label: 'All', 
-      getValue: () => {
-        const today = new Date();
-        return { start: startOfDay(today), end: endOfDay(addDays(today, 365)) };
-      }
-    },
-    { 
       id: 'today' as const,
       label: 'Today', 
       getValue: () => {
@@ -69,6 +60,14 @@ export const WhenDropdown: React.FC<WhenDropdownProps> = ({
       id: 'this_week' as const,
       label: 'Week', 
       getValue: () => ({ start: startOfWeek(new Date()), end: endOfWeek(new Date()) })
+    },
+    { 
+      id: 'all' as const,
+      label: 'All', 
+      getValue: () => {
+        const today = new Date();
+        return { start: startOfDay(today), end: endOfDay(addDays(today, 365)) };
+      }
     },
   ];
 
@@ -184,11 +183,7 @@ export const WhenDropdown: React.FC<WhenDropdownProps> = ({
             <Text variant="body2" color="primary" style={styles.buttonText}>
               {formatDisplayValue()}
             </Text>
-            <Ionicons 
-              name="chevron-down" 
-              size={16} 
-              color={theme.colors.text.secondary} 
-            />
+            <Text variant="body2" color="secondary" style={{ fontSize: 14 }}>▼</Text>
           </TouchableOpacity>
         </View>
 
@@ -249,11 +244,7 @@ export const WhenDropdown: React.FC<WhenDropdownProps> = ({
           <Text variant="body2" color="primary" style={styles.buttonText}>
             {formatDisplayValue()}
           </Text>
-          <Ionicons 
-            name="chevron-down" 
-            size={16} 
-            color={theme.colors.text.secondary} 
-          />
+          <Text variant="body2" color="secondary" style={{ fontSize: 14 }}>▼</Text>
         </TouchableOpacity>
       </View>
 

@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { View, TouchableOpacity, Modal, StyleSheet, ScrollView } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import { Text } from './Text';
 
@@ -8,14 +7,15 @@ interface TimeRange {
   start?: number; // Hour in 24h format
   end?: number;
   label: string;
+  emoji: string;
 }
 
 const TIME_OPTIONS: TimeRange[] = [
-  { label: 'Morning', start: 6, end: 12 },
-  { label: 'Afternoon', start: 12, end: 17 },
-  { label: 'Evening', start: 17, end: 21 },
-  { label: 'Night', start: 21, end: 6 }, // wraps to next day
-  { label: 'Any Time' },
+  { label: 'Morning', start: 6, end: 12, emoji: '🌅' },
+  { label: 'Afternoon', start: 12, end: 17, emoji: '☀️' },
+  { label: 'Evening', start: 17, end: 21, emoji: '🌆' },
+  { label: 'Night', start: 21, end: 6, emoji: '🌙' }, // wraps to next day
+  { label: 'Any Time', emoji: '🕐' },
 ];
 
 interface TimeDropdownProps {
@@ -90,11 +90,7 @@ export const TimeDropdown: React.FC<TimeDropdownProps> = ({
           ]}>
             {getSelectedLabel()}
           </Text>
-          <Ionicons 
-            name="chevron-down" 
-            size={16} 
-            color={hasActiveFilter ? '#FFFFFF' : theme.colors.text.secondary} 
-          />
+          <Text style={{ color: hasActiveFilter ? '#FFFFFF' : theme.colors.text.secondary, fontSize: 14 }}>▼</Text>
         </TouchableOpacity>
       </View>
 
@@ -118,13 +114,14 @@ export const TimeDropdown: React.FC<TimeDropdownProps> = ({
                 Filter by Time of Day
               </Text>
               <TouchableOpacity onPress={() => setIsModalVisible(false)}>
-                <Ionicons name="close" size={24} color={theme.colors.text.primary} />
+                <Text variant="h3" color="secondary">✕</Text>
               </TouchableOpacity>
             </View>
 
             <ScrollView style={styles.optionsContainer}>
-              {TIME_OPTIONS.filter(opt => isTimeRangeAvailable(opt)).map((option) => {
+              {TIME_OPTIONS.map((option) => {
                 const selected = isSelected(option);
+                const available = isTimeRangeAvailable(option);
                 const timeDescription = option.start && option.end 
                   ? `${formatHour(option.start)} - ${formatHour(option.end)}`
                   : null;
@@ -134,32 +131,35 @@ export const TimeDropdown: React.FC<TimeDropdownProps> = ({
                     key={option.label}
                     style={[
                       styles.option,
-                      { borderBottomColor: theme.colors.border.light }
+                      { 
+                        borderBottomColor: theme.colors.border.light,
+                        opacity: available ? 1 : 0.3,
+                      }
                     ]}
                     onPress={() => handleSelect(option)}
+                    disabled={!available}
                   >
-                    <View>
-                      <Text style={[
-                        styles.optionText,
-                        { color: theme.colors.text.primary }
-                      ]}>
-                        {option.label}
-                      </Text>
-                      {timeDescription && (
+                    <View style={styles.optionContent}>
+                      <Text style={styles.optionEmoji}>{option.emoji}</Text>
+                      <View>
                         <Text style={[
-                          styles.optionDescription,
-                          { color: theme.colors.text.secondary }
+                          styles.optionText,
+                          { color: theme.colors.text.primary }
                         ]}>
-                          {timeDescription}
+                          {option.label}
                         </Text>
-                      )}
+                        {timeDescription && (
+                          <Text style={[
+                            styles.optionDescription,
+                            { color: theme.colors.text.secondary }
+                          ]}>
+                            {timeDescription}
+                          </Text>
+                        )}
+                      </View>
                     </View>
                     {selected && (
-                      <Ionicons 
-                        name="checkmark" 
-                        size={20} 
-                        color={theme.colors.primary[500]} 
-                      />
+                      <Text style={{ color: theme.colors.primary[500], fontSize: 18 }}>✓</Text>
                     )}
                   </TouchableOpacity>
                 );
@@ -243,6 +243,14 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 12,
     borderBottomWidth: 1,
+  },
+  optionContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  optionEmoji: {
+    fontSize: 20,
   },
   optionText: {
     fontSize: 16,
