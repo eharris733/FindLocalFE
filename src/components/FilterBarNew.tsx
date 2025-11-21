@@ -24,7 +24,14 @@ interface DateRange {
 interface FilterBarProps {
   readonly filters: FilterState;
   readonly dispatchFilters: React.Dispatch<FilterAction>;
-  readonly availableRegions?: string[];
+  readonly availableFilterOptions?: {
+    venueTypes: string[];
+    sizes: string[];
+    regions: string[];
+    priceRanges: string[];
+    timeRanges: string[];
+    eventTypes: string[];
+  };
   readonly viewMode?: ViewMode;
   readonly onViewModeChange?: (mode: ViewMode) => void;
   readonly resultsCount?: number;
@@ -38,7 +45,7 @@ import { ALL_VENUES } from '../constants';
 export default function FilterBarNew({ 
   filters, 
   dispatchFilters,
-  availableRegions = [],
+  availableFilterOptions,
   viewMode = 'list',
   onViewModeChange,
   resultsCount = 0,
@@ -189,7 +196,9 @@ export default function FilterBarNew({
           selectedVenueTypes={filters.venueTypes}
           selectedRegions={filters.regions}
           selectedSizes={selectedSizes}
-          availableRegions={availableRegions}
+          availableRegions={availableFilterOptions?.regions || []}
+          availableVenueTypes={availableFilterOptions?.venueTypes}
+          availableSizes={availableFilterOptions?.sizes}
           onVenueTypesChange={handleVenueTypesChange}
           onRegionsChange={handleRegionsChange}
           onSizesChange={handleSizeChange}
@@ -198,12 +207,14 @@ export default function FilterBarNew({
         {/* Price Filter */}
         <PriceDropdown
           selectedPrice={filters.price}
+          availablePriceRanges={availableFilterOptions?.priceRanges}
           onPriceChange={handlePriceChange}
         />
 
         {/* Time Filter */}
         <TimeDropdown
           selectedTime={filters.timeRange}
+          availableTimeRanges={availableFilterOptions?.timeRanges}
           onTimeChange={handleTimeChange}
         />
 

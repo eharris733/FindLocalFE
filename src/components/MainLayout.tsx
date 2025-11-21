@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, StyleSheet, Platform } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import FilterBarNew from './FilterBarNew';
@@ -10,7 +10,6 @@ import type { Event } from '../types/events';
 import type { FilterState, FilterAction } from '../hooks/useEvents';
 import type { Venue } from '../types/venues';
 import { useDeviceInfo } from "../hooks/useDeviceInfo";
-import { getAvailableRegions } from '../utils/regionHelpers';
 
 interface MainLayoutProps {
   events: Event[];
@@ -21,6 +20,14 @@ interface MainLayoutProps {
   availableLocations: string[];
   venues: Venue[];
   venuesLoading: boolean;
+  availableFilterOptions: {
+    venueTypes: string[];
+    sizes: string[];
+    regions: string[];
+    priceRanges: string[];
+    timeRanges: string[];
+    eventTypes: string[];
+  };
   onEventPress: (event: Event) => void;
 }
 
@@ -33,6 +40,7 @@ export default function MainLayout({
   availableLocations,
   venues,
   venuesLoading,
+  availableFilterOptions,
   onEventPress,
 }: MainLayoutProps) {
   const { theme } = useTheme();
@@ -41,9 +49,6 @@ export default function MainLayout({
   const [highlightedEventId, setHighlightedEventId] = useState<string | undefined>();
   const [selectedVenue, setSelectedVenue] = useState<Venue | null>(null);
   const [showVenueModal, setShowVenueModal] = useState(false);
-
-  // Extract available regions from events
-  const availableRegions = useMemo(() => getAvailableRegions(events), [events]);
 
   const handleEventHover = useCallback((event: Event | null) => {
     if (Platform.OS === 'web' && !isMobile) {
@@ -79,7 +84,7 @@ export default function MainLayout({
         <FilterBarNew
           filters={filters}
           dispatchFilters={dispatchFilters}
-          availableRegions={availableRegions}
+          availableFilterOptions={availableFilterOptions}
           viewMode={activeTab}
           onViewModeChange={handleViewModeChange}
           resultsCount={events.length}
@@ -127,7 +132,7 @@ export default function MainLayout({
       <FilterBarNew
         filters={filters}
         dispatchFilters={dispatchFilters}
-        availableRegions={availableRegions}
+        availableFilterOptions={availableFilterOptions}
         viewMode={activeTab}
         onViewModeChange={handleViewModeChange}
         resultsCount={events.length}

@@ -20,15 +20,27 @@ const TIME_OPTIONS: TimeRange[] = [
 
 interface TimeDropdownProps {
   selectedTime?: { start?: number; end?: number };
+  availableTimeRanges?: string[];
   onTimeChange: (range?: { start?: number; end?: number }) => void;
 }
 
 export const TimeDropdown: React.FC<TimeDropdownProps> = ({
   selectedTime,
+  availableTimeRanges,
   onTimeChange,
 }) => {
   const { theme } = useTheme();
   const [isModalVisible, setIsModalVisible] = useState(false);
+
+  // Helper to check if a time range is available
+  const isTimeRangeAvailable = (option: TimeRange): boolean => {
+    if (!availableTimeRanges || availableTimeRanges.length === 0) return true;
+    if (!option.start && !option.end) return true; // "Any Time" is always available
+    
+    // Map option to range key
+    const label = option.label.toLowerCase();
+    return availableTimeRanges.includes(label);
+  };
 
   const getSelectedLabel = () => {
     if (!selectedTime) return 'Time';
@@ -111,7 +123,7 @@ export const TimeDropdown: React.FC<TimeDropdownProps> = ({
             </View>
 
             <ScrollView style={styles.optionsContainer}>
-              {TIME_OPTIONS.map((option) => {
+              {TIME_OPTIONS.filter(opt => isTimeRangeAvailable(opt)).map((option) => {
                 const selected = isSelected(option);
                 const timeDescription = option.start && option.end 
                   ? `${formatHour(option.start)} - ${formatHour(option.end)}`

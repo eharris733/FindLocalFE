@@ -20,15 +20,35 @@ const PRICE_OPTIONS: PriceRange[] = [
 
 interface PriceDropdownProps {
   selectedPrice?: { min?: number; max?: number };
+  availablePriceRanges?: string[];
   onPriceChange: (range?: { min?: number; max?: number }) => void;
 }
 
 export const PriceDropdown: React.FC<PriceDropdownProps> = ({
   selectedPrice,
+  availablePriceRanges,
   onPriceChange,
 }) => {
   const { theme } = useTheme();
   const [isModalVisible, setIsModalVisible] = useState(false);
+
+  // Helper to check if a price range is available
+  const isPriceRangeAvailable = (option: PriceRange): boolean => {
+    if (!availablePriceRanges || availablePriceRanges.length === 0) return true;
+    if (!option.min && !option.max) return true; // "Any Price" is always available
+    
+    // Map option to range key
+    if (option.min === 0 && option.max === 0) {
+      return availablePriceRanges.includes('free');
+    } else if (option.max === 25) {
+      return availablePriceRanges.includes('under25') || availablePriceRanges.includes('free');
+    } else if (option.max === 50) {
+      return availablePriceRanges.includes('under50') || availablePriceRanges.includes('under25') || availablePriceRanges.includes('free');
+    } else if (option.min === 50) {
+      return availablePriceRanges.includes('50plus');
+    }
+    return true;
+  };
 
   const getSelectedLabel = () => {
     if (!selectedPrice) return 'Price';
@@ -111,7 +131,7 @@ export const PriceDropdown: React.FC<PriceDropdownProps> = ({
             </View>
 
             <ScrollView style={styles.optionsContainer}>
-              {PRICE_OPTIONS.map((option) => {
+              {PRICE_OPTIONS.filter(opt => isPriceRangeAvailable(opt)).map((option) => {
                 const selected = isSelected(option);
                 return (
                   <TouchableOpacity

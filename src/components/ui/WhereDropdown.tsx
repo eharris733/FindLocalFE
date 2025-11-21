@@ -10,6 +10,8 @@ interface WhereDropdownProps {
   selectedRegions: string[];
   selectedSizes: string[];
   availableRegions: string[];
+  availableVenueTypes?: string[];
+  availableSizes?: string[];
   onVenueTypesChange: (venueTypes: string[]) => void;
   onRegionsChange: (regions: string[]) => void;
   onSizesChange: (sizes: string[]) => void;
@@ -55,12 +57,41 @@ export const WhereDropdown: React.FC<WhereDropdownProps> = ({
   selectedRegions,
   selectedSizes,
   availableRegions,
+  availableVenueTypes,
+  availableSizes,
   onVenueTypesChange,
   onRegionsChange,
   onSizesChange,
 }) => {
   const { theme } = useTheme();
   const [showModal, setShowModal] = useState(false);
+
+  // Helper to check if venue type is available (case-insensitive, flexible matching)
+  const isVenueTypeAvailable = (venueTypeId: string): boolean => {
+    if (!availableVenueTypes || availableVenueTypes.length === 0) return true; // Show all if no filter data
+    const normalized = venueTypeId.toLowerCase().trim().replace(/[_\s]+/g, '');
+    return availableVenueTypes.some(available => {
+      const availableNormalized = available.toLowerCase().trim().replace(/[_\s]+/g, '');
+      return availableNormalized === normalized || 
+             availableNormalized.includes(normalized) ||
+             normalized.includes(availableNormalized);
+    });
+  };
+
+  // Helper to check if size is available
+  const isSizeAvailable = (sizeId: string): boolean => {
+    if (!availableSizes || availableSizes.length === 0) return true; // Show all if no filter data
+    // Map size IDs to database values
+    const sizeMapping: Record<string, string[]> = {
+      '<100': ['small', 's'],
+      '100+': ['medium', 'm'],
+      '300+': ['large', 'l'],
+    };
+    const mappedValues = sizeMapping[sizeId] || [];
+    return availableSizes.some(available => 
+      mappedValues.some(val => available.toLowerCase().includes(val))
+    );
+  };
 
   const handleVenueTypeToggle = (venueTypeId: string) => {
     let newSelection = [...selectedVenueTypes];
@@ -90,8 +121,15 @@ export const WhereDropdown: React.FC<WhereDropdownProps> = ({
     let newSelection = [...selectedSizes];
     
     if (newSelection.includes(sizeId)) {
+      // Remove the size
       newSelection = newSelection.filter(s => s !== sizeId);
+      // If no sizes left, add ALL_VENUES back
+      if (newSelection.length === 0) {
+        newSelection = [ALL_VENUES];
+      }
     } else {
+      // Adding a size - remove ALL_VENUES if present
+      newSelection = newSelection.filter(s => s !== ALL_VENUES);
       newSelection = [...newSelection, sizeId];
     }
     
@@ -211,20 +249,31 @@ export const WhereDropdown: React.FC<WhereDropdownProps> = ({
               </TouchableOpacity>
             </View>
 
-            <ScrollView style={styles.modalScroll}>
+            <ScrollView 
+              style={styles.modalScroll}
+              keyboardShouldPersistTaps="handled"
+              scrollEventThrottle={16}
+              automaticallyAdjustKeyboardInsets={false}
+            >
               {/* Venue Types Section */}
               <View style={styles.section}>
                 <Text variant="h4" style={styles.sectionTitle}>
                   Venue Types
                 </Text>
-                {venueTypeGroups.map((group) => (
-                  <View key={group.title} style={styles.venueTypeGroup}>
+                {venueTypeGroups.map((group) => {
+                  return (
+                  <View 
+                    key={group.title} 
+                    style={styles.venueTypeGroup}
+                  >
                     <Text variant="caption" color="tertiary" style={styles.groupTitle}>
                       {group.title.toUpperCase()}
                     </Text>
                     <View style={styles.venueTypeGrid}>
                       {group.types.map((venueType) => {
+                        const isAvailable = isVenueTypeAvailable(venueType.id);
                         const isSelected = selectedVenueTypes.includes(venueType.id);
+                        
                         return (
                           <TouchableOpacity
                             key={venueType.id}
@@ -237,9 +286,11 @@ export const WhereDropdown: React.FC<WhereDropdownProps> = ({
                                 borderColor: isSelected
                                   ? theme.colors.primary[500]
                                   : theme.colors.border.light,
+                                opacity: isAvailable ? 1 : 0.3,
                               }
                             ]}
                             onPress={() => handleVenueTypeToggle(venueType.id)}
+                            disabled={!isAvailable}
                           >
                             <Text variant="body2" style={styles.venueTypeEmoji}>
                               {venueType.emoji}
@@ -264,7 +315,8 @@ export const WhereDropdown: React.FC<WhereDropdownProps> = ({
                       })}
                     </View>
                   </View>
-                ))}
+                  );
+                })}
               </View>
 
               {/* Venue Size Section */}
@@ -273,7 +325,7 @@ export const WhereDropdown: React.FC<WhereDropdownProps> = ({
                   Venue Size
                 </Text>
                 <View style={styles.sizeGrid}>
-                  {VENUE_SIZE_OPTIONS.map((size) => {
+                  {VENUE_SIZE_OPTIONS.filter(size => isSizeAvailable(size.id)).map((size) => {
                     const isSelected = selectedSizes.includes(size.id);
                     return (
                       <TouchableOpacity
@@ -317,18 +369,22 @@ export const WhereDropdown: React.FC<WhereDropdownProps> = ({
 
               {/* Regions Section */}
               {availableRegions.length > 0 && (
-                <View style={[styles.section, { borderTopWidth: 1, borderTopColor: theme.colors.border.light }]}>
+                <View 
+                  style={[styles.section, { borderTopWidth: 1, borderTopColor: theme.colors.border.light }]}
+                >
                   <View style={styles.sectionHeaderRow}>
                     <Text variant="h4" style={styles.sectionTitle}>
                       Regions
                     </Text>
-                    {selectedRegions.length > 0 && (
-                      <TouchableOpacity onPress={handleClearRegions}>
-                        <Text variant="body2" color="primary" style={styles.clearButton}>
-                          Clear All
-                        </Text>
-                      </TouchableOpacity>
-                    )}
+                    <TouchableOpacity 
+                      onPress={handleClearRegions}
+                      disabled={selectedRegions.length === 0}
+                      style={{ opacity: selectedRegions.length > 0 ? 1 : 0 }}
+                    >
+                      <Text variant="body2" color="primary" style={styles.clearButton}>
+                        Clear All
+                      </Text>
+                    </TouchableOpacity>
                   </View>
                   <View style={styles.regionsGrid}>
                     {availableRegions.map((region) => {
