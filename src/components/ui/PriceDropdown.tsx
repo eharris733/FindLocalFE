@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { View, TouchableOpacity, Modal, StyleSheet, ScrollView } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import { Text } from './Text';
 
@@ -105,11 +104,7 @@ export const PriceDropdown: React.FC<PriceDropdownProps> = ({
           ]}>
             {getSelectedLabel()}
           </Text>
-          <Ionicons 
-            name="chevron-down" 
-            size={16} 
-            color={hasActiveFilter ? '#FFFFFF' : theme.colors.text.secondary} 
-          />
+          <Text style={{ color: hasActiveFilter ? '#FFFFFF' : theme.colors.text.secondary, fontSize: 14 }}>▼</Text>
         </TouchableOpacity>
       </View>
 
@@ -133,7 +128,7 @@ export const PriceDropdown: React.FC<PriceDropdownProps> = ({
                 Filter by Price
               </Text>
               <TouchableOpacity onPress={() => setIsModalVisible(false)}>
-                <Ionicons name="close" size={24} color={theme.colors.text.primary} />
+                <Text variant="h3" color="secondary">✕</Text>
               </TouchableOpacity>
             </View>
 
@@ -156,11 +151,7 @@ export const PriceDropdown: React.FC<PriceDropdownProps> = ({
                       {option.label}
                     </Text>
                     {selected && (
-                      <Ionicons 
-                        name="checkmark" 
-                        size={20} 
-                        color={theme.colors.primary[500]} 
-                      />
+                      <Text style={{ color: theme.colors.primary[500], fontSize: 18 }}>✓</Text>
                     )}
                   </TouchableOpacity>
                 );

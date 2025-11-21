@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { View, TouchableOpacity, StyleSheet, ScrollView, Pressable, Modal } from 'react-native';
 import { useTheme } from '../../context/ThemeContext';
 import { Text } from './Text';
-import { Ionicons } from '@expo/vector-icons';
 import { EVENT_CATEGORY_OPTIONS } from '../../constants/eventCategories';
 
 interface WhatDropdownProps {
@@ -136,11 +135,7 @@ export const WhatDropdown: React.FC<WhatDropdownProps> = ({
           <Text variant="body2" color="primary" style={styles.buttonText}>
             {getDisplayText()}
           </Text>
-          <Ionicons 
-            name="chevron-down" 
-            size={16} 
-            color={theme.colors.text.secondary} 
-          />
+          <Text variant="body2" color="secondary" style={{ fontSize: 14 }}>▼</Text>
         </TouchableOpacity>
       </View>
 
@@ -165,7 +160,7 @@ export const WhatDropdown: React.FC<WhatDropdownProps> = ({
             <View style={styles.modalHeader}>
               <Text variant="h3">Select Categories</Text>
               <TouchableOpacity onPress={() => setShowModal(false)}>
-                <Ionicons name="close" size={24} color={theme.colors.text.primary} />
+                <Text variant="h3" color="secondary">✕</Text>
               </TouchableOpacity>
             </View>
 
@@ -205,12 +200,7 @@ export const WhatDropdown: React.FC<WhatDropdownProps> = ({
                             {category.label}
                           </Text>
                           {isSelected && (
-                            <Ionicons 
-                              name="checkmark-circle" 
-                              size={16} 
-                              color="#FFF" 
-                              style={styles.checkmark}
-                            />
+                            <Text style={[styles.checkmark, { color: '#FFF', fontSize: 14 }]}>✓</Text>
                           )}
                         </TouchableOpacity>
                       );
