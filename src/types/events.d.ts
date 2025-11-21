@@ -6,19 +6,19 @@ export interface Event {
   city: string; // "Boston" or "New York"
   region: string | null; // "Brooklyn", "Cambridge", "Staten Island", etc.
   description: string | null;
-  event_date: string | null; // date
+  event_date: string | null; // timestamp with time zone
   start_time: string | null; // time without time zone
-  end_time: string | null; // time without time zone
   detail_page_url: string | null;
   root_url: string | null;
   image_url: string | null;
-  music_info: any | null; // jsonb
   ticket_page_url: string | null; // URL to external ticket purchase page
   price: string | null; // Ticket price or price range (e.g., "$25", "$20-$30", "Free")
   price_amount: number | null; // Numeric price for filtering
   status: string | null; // Event status: "Sold Out", "Cancelled", "Postponed", etc.
-  event_type: string[] | null; // Array of event types (music, comedy, theater, etc.)
+  event_type: string[] | null; // Array of event types and genres (music, jazz, rock, comedy, theater, etc.)
   created_at: string | null; // timestamp with time zone
+  last_seen_at: string | null; // timestamp with time zone
+  is_deleted: boolean | null; // soft delete flag
 }
 
 export interface FilterState {
