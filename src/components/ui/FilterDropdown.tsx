@@ -2,6 +2,7 @@ import React from "react";
 import {useTheme} from "../../context/ThemeContext";
 import {StyleSheet, TouchableOpacity, View} from "react-native";
 import {Text} from "./Text";
+import { ALL_VENUES } from "../../constants";
 
 interface FilterDropdownProps {
     label: string;
@@ -54,7 +55,7 @@ export const FilterDropdown: React.FC<FilterDropdownProps> = ({
                         {multiSelect && Array.isArray(selectedValue) 
                             ? selectedValue.length > 1 
                                 ? `${selectedValue.length} selected`
-                                : selectedValue[0] || 'All sizes'
+                                : selectedValue[0] || ALL_VENUES
                             : selectedValue
                         }
                     </Text>
@@ -101,11 +102,11 @@ export const FilterDropdown: React.FC<FilterDropdownProps> = ({
                                         
                                             
                                             
-                                        if (option === 'All sizes') {
+                                        if (option === ALL_VENUES) {
                                             
-                                            onValueChange(['All sizes']);
+                                            onValueChange([ALL_VENUES]);
                                         } else {
-                                            let newSelected = currentSelected.filter(v => v !== 'All sizes');
+                                            let newSelected = currentSelected.filter(v => v !== ALL_VENUES);
                                             if (newSelected.includes(option)) {
                                                 newSelected = newSelected.filter(v => v !== option);
                                                 
@@ -113,7 +114,7 @@ export const FilterDropdown: React.FC<FilterDropdownProps> = ({
                                                 newSelected = [...newSelected, option];
                                                 
                                             }
-                                            const finalSelection = newSelected.length === 0 ? ['All sizes'] : newSelected;
+                                            const finalSelection = newSelected.length === 0 ? [ALL_VENUES] : newSelected;
                                             
                                             onValueChange(finalSelection);
                                         }

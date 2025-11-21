@@ -26,6 +26,7 @@ export default function IndexRoute() {
         availableLocations,
         venues,
         venuesLoading,
+        availableFilterOptions,
     } = useEvents({ selectedCity, favoriteEventIds });
 
     // Sync selectedRegions from CityContext to filters
@@ -58,6 +59,7 @@ export default function IndexRoute() {
             availableLocations={availableLocations}
             venues={venues}
             venuesLoading={venuesLoading}
+            availableFilterOptions={availableFilterOptions}
             onEventPress={handleEventPress}
         />
 

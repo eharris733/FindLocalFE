@@ -9,7 +9,7 @@ import VenueModal from './VenueModal';
 import type { Event } from '../types/events';
 import type { FilterState, FilterAction } from '../hooks/useEvents';
 import type { Venue } from '../types/venues';
-import {useDeviceInfo} from "../hooks/useDeviceInfo";
+import { useDeviceInfo } from "../hooks/useDeviceInfo";
 
 interface MainLayoutProps {
   events: Event[];
@@ -20,6 +20,14 @@ interface MainLayoutProps {
   availableLocations: string[];
   venues: Venue[];
   venuesLoading: boolean;
+  availableFilterOptions: {
+    venueTypes: string[];
+    sizes: string[];
+    regions: string[];
+    priceRanges: string[];
+    timeRanges: string[];
+    eventTypes: string[];
+  };
   onEventPress: (event: Event) => void;
 }
 
@@ -32,10 +40,11 @@ export default function MainLayout({
   availableLocations,
   venues,
   venuesLoading,
+  availableFilterOptions,
   onEventPress,
 }: MainLayoutProps) {
   const { theme } = useTheme();
-  const {isMobile} = useDeviceInfo();
+  const { isMobile } = useDeviceInfo();
   const [activeTab, setActiveTab] = useState<'gallery' | 'list' | 'map'>('list');
   const [highlightedEventId, setHighlightedEventId] = useState<string | undefined>();
   const [selectedVenue, setSelectedVenue] = useState<Venue | null>(null);
@@ -75,10 +84,7 @@ export default function MainLayout({
         <FilterBar
           filters={filters}
           dispatchFilters={dispatchFilters}
-          availableCategories={availableCategories}
-          availableLocations={availableLocations}
-          venues={venues}
-          venuesLoading={venuesLoading}
+          availableFilterOptions={availableFilterOptions}
           viewMode={activeTab}
           onViewModeChange={handleViewModeChange}
           resultsCount={events.length}
@@ -126,10 +132,7 @@ export default function MainLayout({
       <FilterBar
         filters={filters}
         dispatchFilters={dispatchFilters}
-        availableCategories={availableCategories}
-        availableLocations={availableLocations}
-        venues={venues}
-        venuesLoading={venuesLoading}
+        availableFilterOptions={availableFilterOptions}
         viewMode={activeTab}
         onViewModeChange={handleViewModeChange}
         resultsCount={events.length}
