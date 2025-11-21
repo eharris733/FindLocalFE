@@ -93,6 +93,12 @@ export const WhereDropdown: React.FC<WhereDropdownProps> = ({
   };
 
   const handleVenueTypeToggle = (venueTypeId: string) => {
+    // Handle "All Venues" special case
+    if (venueTypeId === 'all') {
+      onVenueTypesChange([]);
+      return;
+    }
+    
     let newSelection = [...selectedVenueTypes];
     
     if (newSelection.includes(venueTypeId)) {
@@ -164,11 +170,21 @@ export const WhereDropdown: React.FC<WhereDropdownProps> = ({
     return `${totalSelected} filters`;
   };
 
-  // Group venue types
+  // Group venue types with Popular section at the top
+  const popularVenueTypes = [
+    { id: 'all', label: 'All Venues', emoji: '🏢' },
+    { id: 'jazz_club', label: 'Jazz Club', emoji: '🎷' },
+    { id: 'bar', label: 'Bar', emoji: '🍺' },
+  ];
+
   const venueTypeGroups = [
     {
+      title: 'Popular',
+      types: popularVenueTypes
+    },
+    {
       title: 'Nightlife & Entertainment',
-      types: VENUE_TYPE_CONFIG.filter(v => v.group === 'Nightlife & Entertainment')
+      types: VENUE_TYPE_CONFIG.filter(v => v.group === 'Nightlife & Entertainment' && v.id !== 'bar' && v.id !== 'jazz_club')
     },
     {
       title: 'Performance Venues',
@@ -255,6 +271,7 @@ export const WhereDropdown: React.FC<WhereDropdownProps> = ({
                 <Text variant="h4" style={styles.sectionTitle}>
                   Venue Types
                 </Text>
+                
                 {venueTypeGroups.map((group) => {
                   return (
                   <View 
@@ -266,8 +283,12 @@ export const WhereDropdown: React.FC<WhereDropdownProps> = ({
                     </Text>
                     <View style={styles.venueTypeGrid}>
                       {group.types.map((venueType) => {
-                        const isAvailable = isVenueTypeAvailable(venueType.id);
-                        const isSelected = selectedVenueTypes.includes(venueType.id);
+                        // Special handling for "all" option
+                        const isAllOption = venueType.id === 'all';
+                        const isAvailable = isAllOption ? true : isVenueTypeAvailable(venueType.id);
+                        const isSelected = isAllOption 
+                          ? selectedVenueTypes.length === 0
+                          : selectedVenueTypes.includes(venueType.id);
                         
                         return (
                           <TouchableOpacity

@@ -8,15 +8,37 @@ interface WhatDropdownProps {
   selectedCategories: string[];
   onCategoriesChange: (categories: string[]) => void;
   multiSelect?: boolean;
+  availableEventTypes?: string[]; // Event types that have events available
 }
 
 export const WhatDropdown: React.FC<WhatDropdownProps> = ({
   selectedCategories,
   onCategoriesChange,
   multiSelect = true,
+  availableEventTypes,
 }) => {
   const { theme } = useTheme();
   const [showModal, setShowModal] = useState(false);
+
+  // Helper to check if a category is available based on its event types
+  const isCategoryAvailable = (categoryId: string): boolean => {
+    // 'all' and 'favorites' are always available
+    if (categoryId === 'all' || categoryId === 'favorites') return true;
+    
+    // If no filter data available, show all categories
+    if (!availableEventTypes || availableEventTypes.length === 0) return true;
+    
+    const category = EVENT_CATEGORY_OPTIONS.find(c => c.id === categoryId);
+    if (!category) return true;
+    
+    // If category has no event types defined, it's available
+    if (!category.eventTypes || category.eventTypes.length === 0) return true;
+    
+    // Check if any of the category's event types are available
+    return category.eventTypes.some(eventType => 
+      availableEventTypes.includes(eventType)
+    );
+  };
 
   const handleCategoryToggle = (categoryId: string) => {
     if (categoryId === 'all') {
@@ -173,6 +195,8 @@ export const WhatDropdown: React.FC<WhatDropdownProps> = ({
                   <View style={styles.categoryGrid}>
                     {group.categories.map((category) => {
                       const isSelected = selectedCategories.includes(category.id);
+                      const isAvailable = isCategoryAvailable(category.id);
+                      
                       return (
                         <TouchableOpacity
                           key={category.id}
@@ -185,9 +209,11 @@ export const WhatDropdown: React.FC<WhatDropdownProps> = ({
                               borderColor: isSelected
                                 ? theme.colors.primary[500]
                                 : theme.colors.border.light,
+                              opacity: isAvailable ? 1 : 0.3,
                             }
                           ]}
                           onPress={() => handleCategoryToggle(category.id)}
+                          disabled={!isAvailable}
                         >
                           <Text variant="body2" style={styles.categoryEmoji}>
                             {category.emoji}

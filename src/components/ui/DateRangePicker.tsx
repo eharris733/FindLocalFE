@@ -57,6 +57,10 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
       label: 'Week', 
       getValue: () => ({ start: startOfWeek(new Date()), end: endOfWeek(new Date()) })
     },
+    { 
+      label: 'All', 
+      getValue: () => ({ start: null, end: null })
+    },
   ];
 
   const formatDisplayValue = () => {

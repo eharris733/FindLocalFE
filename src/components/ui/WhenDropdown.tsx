@@ -41,14 +41,6 @@ export const WhenDropdown: React.FC<WhenDropdownProps> = ({
 
   const quickOptions = [
     { 
-      id: 'all' as const,
-      label: 'All', 
-      getValue: () => {
-        const today = new Date();
-        return { start: startOfDay(today), end: endOfDay(addDays(today, 365)) };
-      }
-    },
-    { 
       id: 'today' as const,
       label: 'Today', 
       getValue: () => {
@@ -68,6 +60,14 @@ export const WhenDropdown: React.FC<WhenDropdownProps> = ({
       id: 'this_week' as const,
       label: 'Week', 
       getValue: () => ({ start: startOfWeek(new Date()), end: endOfWeek(new Date()) })
+    },
+    { 
+      id: 'all' as const,
+      label: 'All', 
+      getValue: () => {
+        const today = new Date();
+        return { start: startOfDay(today), end: endOfDay(addDays(today, 365)) };
+      }
     },
   ];
 

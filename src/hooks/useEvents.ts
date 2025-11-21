@@ -241,16 +241,40 @@ export const useEvents = ({ selectedCity, favoriteEventIds = [] }: UseEventsProp
       // Normalize category filter to array
       const categoryFilter = Array.isArray(filters.category) ? filters.category : [filters.category];
 
-      // NEW: Direct event_type filtering (preferred method when event_type data is available)
-      if (filters.eventTypes.length > 0 && event.event_type && event.event_type.length > 0) {
+      // Event type filtering - use the event_type field from database
+      if (filters.eventTypes.length > 0) {
+        // If event doesn't have event_type array, exclude it
+        if (!event.event_type || !Array.isArray(event.event_type) || event.event_type.length === 0) {
+          return false;
+        }
+        
+        // Normalize event types for comparison (lowercase, replace spaces with underscores)
+        const normalizedEventTypes = event.event_type.map(type => 
+          type.toLowerCase().replace(/\s+/g, '_')
+        );
+        const normalizedFilterTypes = filters.eventTypes.map(type => 
+          type.toLowerCase().replace(/\s+/g, '_')
+        );
+        
         // Check if event has ANY of the selected event types
-        const hasMatchingType = event.event_type.some(eventType => 
-          filters.eventTypes.includes(eventType)
+        const hasMatchingType = normalizedEventTypes.some(eventType => 
+          normalizedFilterTypes.includes(eventType)
         );
         
         if (!hasMatchingType) {
-          return false; // No match on event_type
+          return false;
         }
+      }
+
+      // Special handling for favorites category
+      if (categoryFilter.includes('favorites')) {
+        // If ONLY favorites is selected, show only favorited events
+        if (categoryFilter.length === 1 || (categoryFilter.length === 2 && categoryFilter.includes('all'))) {
+          if (!favoriteEventIds.includes(event.id)) {
+            return false;
+          }
+        }
+        // If favorites + other categories, favorites are automatically included (handled by eventTypes filter above)
       }
 
       // Venue type filter - independent of event type filtering
@@ -270,7 +294,7 @@ export const useEvents = ({ selectedCity, favoriteEventIds = [] }: UseEventsProp
                      filterNormalized.includes(venueTypeNormalized);
             });
             if (!hasMatchingType) {
-              return false; // Venue type doesn't match
+              return false;
             }
           }
           // If venue not found or has no type, exclude the event
@@ -282,138 +306,6 @@ export const useEvents = ({ selectedCity, favoriteEventIds = [] }: UseEventsProp
         else {
           return false;
         }
-      }
-
-      // Legacy category filter - check music_info.genres and venue type/event_types
-      // Use OR logic: event matches if it matches ANY selected category
-      if (!categoryFilter.includes('all')) {
-        // Special handling for favorites: check if event is favorited OR matches other categories
-        const hasFavorites = categoryFilter.includes('favorites');
-        const otherCategories = categoryFilter.filter(c => c !== 'favorites');
-        
-        // If event is favorited and favorites is selected, it's automatically a match
-        if (hasFavorites && favoriteEventIds.includes(event.id)) {
-          return true; // Skip other checks, this event matches
-        }
-        
-        // If there are no other categories selected besides favorites, and event isn't favorited, exclude it
-        if (hasFavorites && otherCategories.length === 0) {
-          return false;
-        }
-        
-        // If there are other categories, check if event matches any of them
-        const categoriesToCheck = otherCategories.length > 0 ? otherCategories : categoryFilter;
-        
-        let matchesAnyCategory = false;
-        
-        for (const category of categoriesToCheck) {
-          let hasMatchingGenre = false;
-          
-          // First check event's music_info.genres
-          if (event.music_info && event.music_info.genres) {
-            const genres = Array.isArray(event.music_info.genres) 
-              ? event.music_info.genres 
-              : [event.music_info.genres];
-            
-            // Convert genres to lowercase for comparison
-            const lowerGenres = genres.map((g: string) => g.toLowerCase());
-            
-            switch (category) {
-              case 'music':
-                hasMatchingGenre = lowerGenres.some((g: string) => 
-                  g.includes('music') || g.includes('rock') || g.includes('pop') || 
-                  g.includes('jazz') || g.includes('blues') || g.includes('hip hop') ||
-                  g.includes('electronic') || g.includes('classical') || g.includes('folk')
-                );
-                break;
-              case 'bar':
-                hasMatchingGenre = lowerGenres.some((g: string) => 
-                  g.includes('bar') || g.includes('nightlife') || g.includes('drinks') ||
-                  g.includes('cocktail') || g.includes('pub')
-                );
-                break;
-              case 'theater':
-                hasMatchingGenre = lowerGenres.some((g: string) => 
-                  g.includes('theater') || g.includes('theatre') || g.includes('play') ||
-                  g.includes('musical') || g.includes('drama')
-                );
-                break;
-              case 'comedy':
-                hasMatchingGenre = lowerGenres.some((g: string) => 
-                  g.includes('comedy') || g.includes('stand up') || g.includes('standup') ||
-                  g.includes('humor') || g.includes('funny')
-                );
-                break;
-              case 'other':
-                hasMatchingGenre = !lowerGenres.some((g: string) => 
-                  g.includes('music') || g.includes('rock') || g.includes('pop') || 
-                  g.includes('jazz') || g.includes('blues') || g.includes('hip hop') ||
-                  g.includes('electronic') || g.includes('classical') || g.includes('folk') ||
-                  g.includes('bar') || g.includes('nightlife') || g.includes('drinks') ||
-                  g.includes('cocktail') || g.includes('pub') ||
-                  g.includes('theater') || g.includes('theatre') || g.includes('play') ||
-                  g.includes('musical') || g.includes('drama') ||
-                  g.includes('comedy') || g.includes('stand up') || g.includes('standup') ||
-                  g.includes('humor') || g.includes('funny')
-                );
-                break;
-              default:
-                hasMatchingGenre = false;
-            }
-          }
-          
-          // If not matched by music_info, check venue type and event_types
-          if (!hasMatchingGenre && event.venue_id) {
-            const venue = venues.find(v => v.id === event.venue_id);
-            if (venue) {
-              const venueType = (venue.type || '').toLowerCase();
-              let venueEventTypes: string[] = [];
-              
-              if (venue.event_types) {
-                venueEventTypes = Array.isArray(venue.event_types) 
-                  ? venue.event_types.map((t: string) => t.toLowerCase())
-                  : [venue.event_types.toString().toLowerCase()];
-              }
-              
-              switch (category) {
-                case 'music':
-                  hasMatchingGenre = venueType.includes('music') ||
-                    venueEventTypes.some(t => t.includes('music') || t.includes('concert'));
-                  break;
-                case 'bar':
-                  hasMatchingGenre = venueType.includes('bar') ||
-                    venueEventTypes.some(t => t.includes('bar') || t.includes('nightlife'));
-                  break;
-                case 'theater':
-                  hasMatchingGenre = venueType.includes('theater') || venueType.includes('theatre') ||
-                    venueEventTypes.some(t => t.includes('theater') || t.includes('play'));
-                  break;
-                case 'comedy':
-                  hasMatchingGenre = venueType.includes('comedy') ||
-                    venueEventTypes.some(t => t.includes('comedy'));
-                  break;
-                case 'other':
-                  hasMatchingGenre = !venueType.includes('music') && !venueType.includes('bar') &&
-                    !venueType.includes('theater') && !venueType.includes('theatre') &&
-                    !venueType.includes('comedy');
-                  break;
-              }
-            }
-          }
-          
-          // If still no match and no venue data, only show in "other" category
-          if (!hasMatchingGenre && !event.venue_id) {
-            hasMatchingGenre = category === 'other';
-          }
-          
-          // If this event matches this category, mark as matched and break
-          if (hasMatchingGenre) {
-            matchesAnyCategory = true;
-            break;
-          }
-        }
-        
-        if (!matchesAnyCategory) return false;
       }
 
       // Location filter (city)
@@ -629,9 +521,22 @@ export const useEvents = ({ selectedCity, favoriteEventIds = [] }: UseEventsProp
         }
         
         // Apply event type filter (unless excluded)
-        if (!excludeFilters.includes('eventTypes') && filters.eventTypes.length > 0 && event.event_type && event.event_type.length > 0) {
-          const hasMatchingType = event.event_type.some(eventType => 
-            filters.eventTypes.includes(eventType)
+        if (!excludeFilters.includes('eventTypes') && filters.eventTypes.length > 0) {
+          // Only apply filter if event has event_type data
+          if (!event.event_type || !Array.isArray(event.event_type) || event.event_type.length === 0) {
+            return false;
+          }
+          
+          // Normalize event types for comparison (lowercase, replace spaces with underscores)
+          const normalizedEventTypes = event.event_type.map(type => 
+            type.toLowerCase().replace(/\s+/g, '_')
+          );
+          const normalizedFilterTypes = filters.eventTypes.map(type => 
+            type.toLowerCase().replace(/\s+/g, '_')
+          );
+          
+          const hasMatchingType = normalizedEventTypes.some(eventType => 
+            normalizedFilterTypes.includes(eventType)
           );
           if (!hasMatchingType) return false;
         }
@@ -802,11 +707,32 @@ export const useEvents = ({ selectedCity, favoriteEventIds = [] }: UseEventsProp
     
     // Get events excluding event type filter to find available event types
     const eventsForEventTypes = getEventsExcluding(['eventTypes']);
+    
+    // DEBUG: Log event data to see what we're working with
+    console.log('🔍 DEBUG - Total events:', events.length);
+    console.log('🔍 DEBUG - Events for event types calculation:', eventsForEventTypes.length);
+    console.log('🔍 DEBUG - Current filters.eventTypes:', filters.eventTypes);
+    console.log('🔍 DEBUG - Sample event data (first 3):');
+    events.slice(0, 3).forEach((event, idx) => {
+      console.log(`  Event ${idx + 1}:`, {
+        title: event.title,
+        event_type: event.event_type,
+        hasEventType: !!event.event_type,
+        isArray: Array.isArray(event.event_type),
+      });
+    });
+    
     eventsForEventTypes.forEach(event => {
       if (event.event_type && Array.isArray(event.event_type)) {
-        event.event_type.forEach(type => eventTypes.add(type));
+        event.event_type.forEach(type => {
+          // Normalize to lowercase with underscores to match constants
+          const normalizedType = type.toLowerCase().replace(/\s+/g, '_');
+          eventTypes.add(normalizedType);
+        });
       }
     });
+    
+    console.log('🔍 DEBUG - Collected event types (normalized):', Array.from(eventTypes));
 
     return {
       venueTypes: Array.from(venueTypes),

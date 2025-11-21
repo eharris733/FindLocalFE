@@ -7,14 +7,15 @@ interface PriceRange {
   min?: number;
   max?: number;
   label: string;
+  emoji: string;
 }
 
 const PRICE_OPTIONS: PriceRange[] = [
-  { label: 'Free', min: 0, max: 0 },
-  { label: 'Under $25', min: 0.01, max: 25 },
-  { label: 'Under $50', min: 0.01, max: 50 },
-  { label: '$50+', min: 50 },
-  { label: 'Any Price' },
+  { label: 'Free', min: 0, max: 0, emoji: '🎁' },
+  { label: 'Under $25', min: 0.01, max: 25, emoji: '💵' },
+  { label: 'Under $50', min: 0.01, max: 50, emoji: '💰' },
+  { label: '$50+', min: 50, emoji: '💸' },
+  { label: 'Any Price', emoji: '💳' },
 ];
 
 interface PriceDropdownProps {
@@ -133,23 +134,31 @@ export const PriceDropdown: React.FC<PriceDropdownProps> = ({
             </View>
 
             <ScrollView style={styles.optionsContainer}>
-              {PRICE_OPTIONS.filter(opt => isPriceRangeAvailable(opt)).map((option) => {
+              {PRICE_OPTIONS.map((option) => {
                 const selected = isSelected(option);
+                const available = isPriceRangeAvailable(option);
                 return (
                   <TouchableOpacity
                     key={option.label}
                     style={[
                       styles.option,
-                      { borderBottomColor: theme.colors.border.light }
+                      { 
+                        borderBottomColor: theme.colors.border.light,
+                        opacity: available ? 1 : 0.3,
+                      }
                     ]}
                     onPress={() => handleSelect(option)}
+                    disabled={!available}
                   >
-                    <Text style={[
-                      styles.optionText,
-                      { color: theme.colors.text.primary }
-                    ]}>
-                      {option.label}
-                    </Text>
+                    <View style={styles.optionContent}>
+                      <Text style={styles.optionEmoji}>{option.emoji}</Text>
+                      <Text style={[
+                        styles.optionText,
+                        { color: theme.colors.text.primary }
+                      ]}>
+                        {option.label}
+                      </Text>
+                    </View>
                     {selected && (
                       <Text style={{ color: theme.colors.primary[500], fontSize: 18 }}>✓</Text>
                     )}
@@ -228,6 +237,14 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 12,
     borderBottomWidth: 1,
+  },
+  optionContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  optionEmoji: {
+    fontSize: 20,
   },
   optionText: {
     fontSize: 16,
