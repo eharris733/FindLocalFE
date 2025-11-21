@@ -45,23 +45,26 @@ const getDateRangeFromSelection = (dateRange: FilterState['dateRange']): { start
     case 'today':
       return { start: startOfDay(today), end: endOfDay(today) };
     
-    case 'tomorrow':
+    case 'tomorrow': {
       const tomorrow = addDays(today, 1);
       return { start: startOfDay(tomorrow), end: endOfDay(tomorrow) };
+    }
     
     case 'this_week':
       // Show next 7 days starting from today
       return { start: startOfDay(today), end: endOfDay(addDays(today, 6)) };
     
-    case 'this_weekend':
+    case 'this_weekend': {
       const saturday = addDays(startOfWeek(today), 6);
       const sunday = addDays(startOfWeek(today), 7);
       return { start: startOfDay(saturday), end: endOfDay(sunday) };
+    }
     
-    case 'next_week':
+    case 'next_week': {
       const nextWeekStart = addDays(startOfWeek(today), 7);
       const nextWeekEnd = addDays(endOfWeek(today), 7);
       return { start: nextWeekStart, end: nextWeekEnd };
+    }
     
     case 'this_month':
       return { start: startOfMonth(today), end: endOfMonth(today) };
@@ -84,7 +87,7 @@ const filterReducer = (state: FilterState, action: FilterAction): FilterState =>
       return { ...state, startDate: action.payload, dateRange: 'custom' };
     case 'SET_END_DATE':
       return { ...state, endDate: action.payload, dateRange: 'custom' };
-    case 'SET_DATE_RANGE':
+    case 'SET_DATE_RANGE': {
       const { start, end } = getDateRangeFromSelection(action.payload);
       // For 'custom', preserve existing startDate/endDate if they exist
       if (action.payload === 'custom' && state.startDate && state.endDate) {
@@ -99,6 +102,7 @@ const filterReducer = (state: FilterState, action: FilterAction): FilterState =>
         startDate: start,
         endDate: end
       };
+    }
     case 'SET_SEARCH_TEXT':
       return { ...state, searchText: action.payload };
     case 'SET_LOCATION':
@@ -206,7 +210,7 @@ export const useEvents = ({ selectedCity, favoriteEventIds = [] }: UseEventsProp
   const { availableCategories, availableLocations } = useMemo(() => {
     const categories = new Set(['all']); // Use lowercase 'all' instead of 'ALL'
     const locations = new Set(['all']);
-    events.forEach(event => {
+    for (const event of events) {
       // Add predefined categories that we support
       categories.add('music');
       categories.add('bar');
@@ -216,7 +220,7 @@ export const useEvents = ({ selectedCity, favoriteEventIds = [] }: UseEventsProp
       
       // Use city as location
       if (event.city) locations.add(event.city);
-    });
+    }
     return {
       availableCategories: Array.from(categories).sort((a, b) => {
         if (a === 'all') return -1;
@@ -242,6 +246,7 @@ export const useEvents = ({ selectedCity, favoriteEventIds = [] }: UseEventsProp
       const categoryFilter = Array.isArray(filters.category) ? filters.category : [filters.category];
 
       // Event type filtering - use the event_type field from database
+      // This includes both regular event types AND music genres (they're all in event_type array)
       if (filters.eventTypes.length > 0) {
         // If event doesn't have event_type array, exclude it
         if (!event.event_type || !Array.isArray(event.event_type) || event.event_type.length === 0) {
@@ -250,15 +255,15 @@ export const useEvents = ({ selectedCity, favoriteEventIds = [] }: UseEventsProp
         
         // Normalize event types for comparison (lowercase, replace spaces with underscores)
         const normalizedEventTypes = event.event_type.map(type => 
-          type.toLowerCase().replace(/\s+/g, '_')
+          type.toLowerCase().replaceAll(/\s+/g, '_')
         );
-        const normalizedFilterTypes = filters.eventTypes.map(type => 
-          type.toLowerCase().replace(/\s+/g, '_')
-        );
+        const normalizedFilterTypes = new Set(filters.eventTypes.map(type => 
+          type.toLowerCase().replaceAll(/\s+/g, '_')
+        ));
         
-        // Check if event has ANY of the selected event types
+        // Check if event has ANY of the selected event types (including genres)
         const hasMatchingType = normalizedEventTypes.some(eventType => 
-          normalizedFilterTypes.includes(eventType)
+          normalizedFilterTypes.has(eventType)
         );
         
         if (!hasMatchingType) {
@@ -282,12 +287,12 @@ export const useEvents = ({ selectedCity, favoriteEventIds = [] }: UseEventsProp
         // If event has a venue_id, check if venue type matches
         if (event.venue_id) {
           const venue = venues.find(v => v.id === event.venue_id);
-          if (venue && venue.type) {
+          if (venue?.type) {
             // Case-insensitive and flexible comparison
             // Normalize both values: lowercase, trim, remove underscores and extra spaces
-            const venueTypeNormalized = venue.type.toLowerCase().trim().replace(/[_\s]+/g, '');
+            const venueTypeNormalized = venue.type.toLowerCase().trim().replaceAll(/[_\s]+/g, '');
             const hasMatchingType = filters.venueTypes.some(filterType => {
-              const filterNormalized = filterType.toLowerCase().trim().replace(/[_\s]+/g, '');
+              const filterNormalized = filterType.toLowerCase().trim().replaceAll(/[_\s]+/g, '');
               // Check if they match when normalized
               return venueTypeNormalized === filterNormalized || 
                      venueTypeNormalized.includes(filterNormalized) ||
@@ -336,7 +341,7 @@ export const useEvents = ({ selectedCity, favoriteEventIds = [] }: UseEventsProp
       const sizeFilter = Array.isArray(filters.size) ? filters.size : [filters.size];
       if (!sizeFilter.includes(ALL_VENUES) && event.venue_id) {
         const venue = venues.find(v => v.id === event.venue_id);
-        if (venue && venue.venue_size) {
+        if (venue?.venue_size) {
           let sizeMatches = false;
           
           // Convert venue_size to lowercase for comparison
@@ -383,27 +388,26 @@ export const useEvents = ({ selectedCity, favoriteEventIds = [] }: UseEventsProp
           if (eventPrice === null || eventPrice === undefined || eventPrice > 0) {
             return false;
           }
-        } else {
+        } else if (eventPrice !== null && eventPrice !== undefined) {
           // For other price ranges, only filter events with valid price data
-          if (eventPrice !== null && eventPrice !== undefined) {
-            if (filters.price.min !== undefined && eventPrice < filters.price.min) {
-              return false;
-            }
-            if (filters.price.max !== undefined && eventPrice > filters.price.max) {
-              return false;
-            }
-          } else {
-            // If event has no price data and a price filter is active, exclude it
+          if (filters.price.min !== undefined && eventPrice < filters.price.min) {
             return false;
           }
+          if (filters.price.max !== undefined && eventPrice > filters.price.max) {
+            return false;
+          }
+        } else {
+          // If event has no price data and a price filter is active, exclude it
+          return false;
         }
       }
 
       // Time of day filter
       if (filters.timeRange && event.start_time) {
-        const timeMatch = event.start_time.match(/^(\d{2}):(\d{2})/);
+        const timeRegex = /^(\d{2}):(\d{2})/;
+        const timeMatch = timeRegex.exec(event.start_time);
         if (timeMatch) {
-          const eventHour = parseInt(timeMatch[1], 10);
+          const eventHour = Number.parseInt(timeMatch[1], 10);
           const { start, end } = filters.timeRange;
           
           if (start !== undefined && end !== undefined) {
@@ -412,10 +416,8 @@ export const useEvents = ({ selectedCity, favoriteEventIds = [] }: UseEventsProp
               if (eventHour < start && eventHour >= end) {
                 return false;
               }
-            } else {
-              if (eventHour < start || eventHour >= end) {
-                return false;
-              }
+            } else if (eventHour < start || eventHour >= end) {
+              return false;
             }
           }
         }
@@ -521,6 +523,7 @@ export const useEvents = ({ selectedCity, favoriteEventIds = [] }: UseEventsProp
         }
         
         // Apply event type filter (unless excluded)
+        // This includes both regular event types AND music genres
         if (!excludeFilters.includes('eventTypes') && filters.eventTypes.length > 0) {
           // Only apply filter if event has event_type data
           if (!event.event_type || !Array.isArray(event.event_type) || event.event_type.length === 0) {
@@ -529,14 +532,14 @@ export const useEvents = ({ selectedCity, favoriteEventIds = [] }: UseEventsProp
           
           // Normalize event types for comparison (lowercase, replace spaces with underscores)
           const normalizedEventTypes = event.event_type.map(type => 
-            type.toLowerCase().replace(/\s+/g, '_')
+            type.toLowerCase().replaceAll(/\s+/g, '_')
           );
-          const normalizedFilterTypes = filters.eventTypes.map(type => 
-            type.toLowerCase().replace(/\s+/g, '_')
-          );
+          const normalizedFilterTypes = new Set(filters.eventTypes.map(type => 
+            type.toLowerCase().replaceAll(/\s+/g, '_')
+          ));
           
           const hasMatchingType = normalizedEventTypes.some(eventType => 
-            normalizedFilterTypes.includes(eventType)
+            normalizedFilterTypes.has(eventType)
           );
           if (!hasMatchingType) return false;
         }
@@ -545,10 +548,10 @@ export const useEvents = ({ selectedCity, favoriteEventIds = [] }: UseEventsProp
         if (!excludeFilters.includes('venueTypes') && filters.venueTypes.length > 0) {
           if (event.venue_id) {
             const venue = venues.find(v => v.id === event.venue_id);
-            if (venue && venue.type) {
-              const venueTypeNormalized = venue.type.toLowerCase().trim().replace(/[_\s]+/g, '');
+            if (venue?.type) {
+              const venueTypeNormalized = venue.type.toLowerCase().trim().replaceAll(/[_\s]+/g, '');
               const hasMatchingType = filters.venueTypes.some(filterType => {
-                const filterNormalized = filterType.toLowerCase().trim().replace(/[_\s]+/g, '');
+                const filterNormalized = filterType.toLowerCase().trim().replaceAll(/[_\s]+/g, '');
                 return venueTypeNormalized === filterNormalized || 
                        venueTypeNormalized.includes(filterNormalized) ||
                        filterNormalized.includes(venueTypeNormalized);
@@ -576,7 +579,7 @@ export const useEvents = ({ selectedCity, favoriteEventIds = [] }: UseEventsProp
           const sizeFilter = Array.isArray(filters.size) ? filters.size : [filters.size];
           if (!sizeFilter.includes(ALL_VENUES) && event.venue_id) {
             const venue = venues.find(v => v.id === event.venue_id);
-            if (venue && venue.venue_size) {
+            if (venue?.venue_size) {
               const venueSize = venue.venue_size.toLowerCase();
               let sizeMatches = false;
               for (const selectedSize of sizeFilter) {
@@ -600,27 +603,26 @@ export const useEvents = ({ selectedCity, favoriteEventIds = [] }: UseEventsProp
           if (filters.price.min === 0 && filters.price.max === 0) {
             // Free events: exclude if price is null, undefined, or > 0
             if (eventPrice === null || eventPrice === undefined || eventPrice > 0) return false;
+          } else if (eventPrice !== null && eventPrice !== undefined) {
+            if (filters.price.min !== undefined && eventPrice < filters.price.min) return false;
+            if (filters.price.max !== undefined && eventPrice > filters.price.max) return false;
           } else {
-            if (eventPrice !== null && eventPrice !== undefined) {
-              if (filters.price.min !== undefined && eventPrice < filters.price.min) return false;
-              if (filters.price.max !== undefined && eventPrice > filters.price.max) return false;
-            } else {
-              return false;
-            }
+            return false;
           }
         }
         
         // Apply time filter (unless excluded)
         if (!excludeFilters.includes('time') && filters.timeRange && event.start_time) {
-          const timeMatch = event.start_time.match(/^(\d{2}):(\d{2})/);
+          const timeRegex = /^(\d{2}):(\d{2})/;
+          const timeMatch = timeRegex.exec(event.start_time);
           if (timeMatch) {
             const eventHour = Number.parseInt(timeMatch[1], 10);
             const { start, end } = filters.timeRange;
             if (start !== undefined && end !== undefined) {
               if (start < end) {
                 if (eventHour < start || eventHour >= end) return false;
-              } else {
-                if (eventHour < start && eventHour >= end) return false;
+              } else if (eventHour < start && eventHour >= end) {
+                return false;
               }
             }
           }
@@ -640,37 +642,37 @@ export const useEvents = ({ selectedCity, favoriteEventIds = [] }: UseEventsProp
     
     // Get events excluding venue type filter to find available venue types
     const eventsForVenueTypes = getEventsExcluding(['venueTypes']);
-    eventsForVenueTypes.forEach(event => {
+    for (const event of eventsForVenueTypes) {
       if (event.venue_id) {
         const venue = venues.find(v => v.id === event.venue_id);
         if (venue?.type) {
           venueTypes.add(venue.type.toLowerCase().trim());
         }
       }
-    });
+    }
     
     // Get events excluding size filter to find available sizes
     const eventsForSizes = getEventsExcluding(['sizes']);
-    eventsForSizes.forEach(event => {
+    for (const event of eventsForSizes) {
       if (event.venue_id) {
         const venue = venues.find(v => v.id === event.venue_id);
         if (venue?.venue_size) {
           sizes.add(venue.venue_size.toLowerCase().trim());
         }
       }
-    });
+    }
     
     // Get events excluding region filter to find available regions
     const eventsForRegions = getEventsExcluding(['regions']);
-    eventsForRegions.forEach(event => {
+    for (const event of eventsForRegions) {
       if (event.region) {
         regions.add(event.region);
       }
-    });
+    }
     
     // Get events excluding price filter to find available prices
     const eventsForPrices = getEventsExcluding(['price']);
-    eventsForPrices.forEach(event => {
+    for (const event of eventsForPrices) {
       if (event.price_amount !== null && event.price_amount !== undefined) {
         const price = event.price_amount;
         if (price === 0) {
@@ -683,13 +685,14 @@ export const useEvents = ({ selectedCity, favoriteEventIds = [] }: UseEventsProp
           priceRanges.add('50plus');
         }
       }
-    });
+    }
     
     // Get events excluding time filter to find available times
     const eventsForTimes = getEventsExcluding(['time']);
-    eventsForTimes.forEach(event => {
+    for (const event of eventsForTimes) {
       if (event.start_time) {
-        const timeMatch = event.start_time.match(/^(\d{2}):(\d{2})/);
+        const timeRegex = /^(\d{2}):(\d{2})/;
+        const timeMatch = timeRegex.exec(event.start_time);
         if (timeMatch) {
           const hour = Number.parseInt(timeMatch[1], 10);
           if (hour >= 6 && hour < 12) {
@@ -703,36 +706,20 @@ export const useEvents = ({ selectedCity, favoriteEventIds = [] }: UseEventsProp
           }
         }
       }
-    });
+    }
     
     // Get events excluding event type filter to find available event types
     const eventsForEventTypes = getEventsExcluding(['eventTypes']);
     
-    // DEBUG: Log event data to see what we're working with
-    console.log('🔍 DEBUG - Total events:', events.length);
-    console.log('🔍 DEBUG - Events for event types calculation:', eventsForEventTypes.length);
-    console.log('🔍 DEBUG - Current filters.eventTypes:', filters.eventTypes);
-    console.log('🔍 DEBUG - Sample event data (first 3):');
-    events.slice(0, 3).forEach((event, idx) => {
-      console.log(`  Event ${idx + 1}:`, {
-        title: event.title,
-        event_type: event.event_type,
-        hasEventType: !!event.event_type,
-        isArray: Array.isArray(event.event_type),
-      });
-    });
-    
-    eventsForEventTypes.forEach(event => {
+    for (const event of eventsForEventTypes) {
       if (event.event_type && Array.isArray(event.event_type)) {
-        event.event_type.forEach(type => {
+        for (const type of event.event_type) {
           // Normalize to lowercase with underscores to match constants
-          const normalizedType = type.toLowerCase().replace(/\s+/g, '_');
+          const normalizedType = type.toLowerCase().replaceAll(/\s+/g, '_');
           eventTypes.add(normalizedType);
-        });
+        }
       }
-    });
-    
-    console.log('🔍 DEBUG - Collected event types (normalized):', Array.from(eventTypes));
+    }
 
     return {
       venueTypes: Array.from(venueTypes),
@@ -759,4 +746,4 @@ export const useEvents = ({ selectedCity, favoriteEventIds = [] }: UseEventsProp
   };
 };
 
-export type { FilterState, FilterAction };
+export type { FilterState, FilterAction } from '../types/events';

@@ -31,6 +31,12 @@ export const WhatDropdown: React.FC<WhatDropdownProps> = ({
     const category = EVENT_CATEGORY_OPTIONS.find(c => c.id === categoryId);
     if (!category) return true;
     
+    // For music genre categories, check if the genre exists in availableEventTypes
+    if (category.musicGenre) {
+      const genreInEventTypes = availableEventTypes.includes(category.musicGenre);
+      return genreInEventTypes;
+    }
+    
     // If category has no event types defined, it's available
     if (!category.eventTypes || category.eventTypes.length === 0) return true;
     
@@ -95,9 +101,15 @@ export const WhatDropdown: React.FC<WhatDropdownProps> = ({
       )
     },
     {
+      title: 'Music',
+      categories: EVENT_CATEGORY_OPTIONS.filter(cat => 
+        cat.id === 'music' || cat.musicGenre !== undefined
+      )
+    },
+    {
       title: 'Performance & Entertainment',
       categories: EVENT_CATEGORY_OPTIONS.filter(cat => 
-        ['music', 'comedy', 'theater', 'dance', 'film'].includes(cat.id)
+        ['comedy', 'theater', 'dance', 'film'].includes(cat.id)
       )
     },
     {

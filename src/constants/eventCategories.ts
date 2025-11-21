@@ -24,6 +24,19 @@ export const EVENT_TYPE_FOOD_DRINK = 'food_drink';
 export const EVENT_TYPE_FAMILY = 'family';
 export const EVENT_TYPE_FREE = 'free';
 
+// Music Genre Constants
+export const MUSIC_GENRE_JAZZ = 'jazz';
+export const MUSIC_GENRE_POP = 'pop';
+export const MUSIC_GENRE_ROCK = 'rock';
+export const MUSIC_GENRE_HIP_HOP = 'hip_hop';
+export const MUSIC_GENRE_ALTERNATIVE = 'alternative';
+export const MUSIC_GENRE_CLASSICAL = 'classical';
+export const MUSIC_GENRE_ELECTRONIC = 'electronic';
+export const MUSIC_GENRE_COUNTRY = 'country';
+export const MUSIC_GENRE_BLUES = 'blues';
+export const MUSIC_GENRE_FOLK = 'folk';
+export const MUSIC_GENRE_UNKNOWN = 'unknown';
+
 export const EVENT_TYPES = [
   EVENT_TYPE_MUSIC,
   EVENT_TYPE_COMEDY,
@@ -114,6 +127,7 @@ export interface CategoryOption {
   eventTypes?: string[]; // Maps to event_type values
   venueTypes?: string[]; // Maps to venue type values
   description?: string;
+  musicGenre?: string; // Maps to music_info.genres for filtering
 }
 
 // Grouped categories for better UX
@@ -158,6 +172,97 @@ export const EVENT_CATEGORY_OPTIONS: CategoryOption[] = [
     venueTypes: [VENUE_TYPE_CONCERT_HALL, VENUE_TYPE_JAZZ_CLUB],
     description: 'Live music performances'
   },
+  
+  // Music Genres
+  { 
+    id: 'jazz', 
+    label: 'Jazz', 
+    emoji: '🎷',
+    eventTypes: [EVENT_TYPE_MUSIC],
+    description: 'Jazz music events',
+    musicGenre: MUSIC_GENRE_JAZZ
+  },
+  { 
+    id: 'rock', 
+    label: 'Rock', 
+    emoji: '🎸',
+    eventTypes: [EVENT_TYPE_MUSIC],
+    description: 'Rock music events',
+    musicGenre: MUSIC_GENRE_ROCK
+  },
+  { 
+    id: 'pop', 
+    label: 'Pop', 
+    emoji: '🎤',
+    eventTypes: [EVENT_TYPE_MUSIC],
+    description: 'Pop music events',
+    musicGenre: MUSIC_GENRE_POP
+  },
+  { 
+    id: 'hip_hop', 
+    label: 'Hip Hop', 
+    emoji: '🎤',
+    eventTypes: [EVENT_TYPE_MUSIC],
+    description: 'Hip hop music events',
+    musicGenre: MUSIC_GENRE_HIP_HOP
+  },
+  { 
+    id: 'alternative', 
+    label: 'Alternative', 
+    emoji: '🎵',
+    eventTypes: [EVENT_TYPE_MUSIC],
+    description: 'Alternative music events',
+    musicGenre: MUSIC_GENRE_ALTERNATIVE
+  },
+  { 
+    id: 'classical', 
+    label: 'Classical', 
+    emoji: '🎻',
+    eventTypes: [EVENT_TYPE_MUSIC],
+    description: 'Classical music events',
+    musicGenre: MUSIC_GENRE_CLASSICAL
+  },
+  { 
+    id: 'electronic', 
+    label: 'Electronic', 
+    emoji: '🎧',
+    eventTypes: [EVENT_TYPE_MUSIC],
+    description: 'Electronic/EDM events',
+    musicGenre: MUSIC_GENRE_ELECTRONIC
+  },
+  { 
+    id: 'country', 
+    label: 'Country', 
+    emoji: '🤠',
+    eventTypes: [EVENT_TYPE_MUSIC],
+    description: 'Country music events',
+    musicGenre: MUSIC_GENRE_COUNTRY
+  },
+  { 
+    id: 'blues', 
+    label: 'Blues', 
+    emoji: '🎺',
+    eventTypes: [EVENT_TYPE_MUSIC],
+    description: 'Blues music events',
+    musicGenre: MUSIC_GENRE_BLUES
+  },
+  { 
+    id: 'folk', 
+    label: 'Folk', 
+    emoji: '🪕',
+    eventTypes: [EVENT_TYPE_MUSIC],
+    description: 'Folk music events',
+    musicGenre: MUSIC_GENRE_FOLK
+  },
+  { 
+    id: 'unknown_genre', 
+    label: 'Other Music', 
+    emoji: '🎶',
+    eventTypes: [EVENT_TYPE_MUSIC],
+    description: 'Other music genres',
+    musicGenre: MUSIC_GENRE_UNKNOWN
+  },
+  
   { 
     id: 'comedy', 
     label: 'Comedy', 
@@ -334,13 +439,62 @@ export const getCategoryOption = (id: string): CategoryOption | undefined => {
 };
 
 // Helper to get all event types for a category
+// For genre categories, returns the genre itself instead of just 'music'
 export const getEventTypesForCategory = (categoryId: string): string[] => {
   const category = getCategoryOption(categoryId);
-  return category?.eventTypes || [];
+  if (!category) return [];
+  
+  // If this is a genre category, return the genre as the event type
+  if (category.musicGenre) {
+    return [category.musicGenre];
+  }
+  
+  // Otherwise return the regular event types
+  return category.eventTypes || [];
 };
 
 // Helper to get all venue types for a category
 export const getVenueTypesForCategory = (categoryId: string): string[] => {
   const category = getCategoryOption(categoryId);
   return category?.venueTypes || [];
+};
+
+// Music genre constants for reference
+const MUSIC_GENRES = [
+  MUSIC_GENRE_JAZZ,
+  MUSIC_GENRE_POP,
+  MUSIC_GENRE_ROCK,
+  MUSIC_GENRE_HIP_HOP,
+  MUSIC_GENRE_ALTERNATIVE,
+  MUSIC_GENRE_CLASSICAL,
+  MUSIC_GENRE_ELECTRONIC,
+  MUSIC_GENRE_COUNTRY,
+  MUSIC_GENRE_BLUES,
+  MUSIC_GENRE_FOLK,
+  MUSIC_GENRE_UNKNOWN,
+];
+
+// Helper to extract music genres from event_type array
+export const getGenresFromEventTypes = (eventTypes: string[] | null): string[] => {
+  if (!eventTypes || !Array.isArray(eventTypes)) return [];
+  
+  const normalizedEventTypes = eventTypes.map(type => type.toLowerCase().trim());
+  
+  // Filter event types to only include known music genres
+  return normalizedEventTypes.filter(type => 
+    MUSIC_GENRES.some(genre => {
+      const normalizedGenre = genre.toLowerCase().replace(/_/g, ' ');
+      return type === genre || 
+             type === normalizedGenre || 
+             type.replace(/[\s_-]/g, '') === normalizedGenre.replace(/[\s_-]/g, '');
+    })
+  );
+};
+
+// Helper to get display label for a genre
+export const getGenreDisplayLabel = (genre: string): string => {
+  const category = EVENT_CATEGORY_OPTIONS.find(cat => 
+    cat.musicGenre && cat.musicGenre.toLowerCase() === genre.toLowerCase()
+  );
+  return category?.label || genre;
 };

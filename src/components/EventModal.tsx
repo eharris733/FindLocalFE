@@ -18,6 +18,7 @@ import { Text } from './ui';
 import { getVenueSizeLabel } from '../utils/venueUtils';
 import { EVENT_NO_DESCRIPTION_FALLBACK } from '../utils/eventUtils';
 import { logger } from '../utils/logger';
+import { getGenresFromEventTypes, getGenreDisplayLabel } from '../constants/eventCategories';
 
 interface EventModalProps {
   visible: boolean;
@@ -124,14 +125,12 @@ const EventModal: React.FC<EventModalProps> = ({ visible, event, onClose }) => {
     return require('../../assets/record.png');
   };
 
-  // Get display genre from event music info
+  // Get display genre from event event_type array
   const getDisplayGenre = () => {
-    if (event?.music_info && event.music_info.genres) {
-      if (Array.isArray(event.music_info.genres)) {
-        return event.music_info.genres[0];
-      } else if (typeof event.music_info.genres === 'string') {
-        return event.music_info.genres;
-      }
+    if (!event) return null;
+    const genres = getGenresFromEventTypes(event.event_type);
+    if (genres.length > 0) {
+      return getGenreDisplayLabel(genres[0]);
     }
     return null;
   };
@@ -297,16 +296,14 @@ const EventModal: React.FC<EventModalProps> = ({ visible, event, onClose }) => {
                     </View>
                   )}
                   
-                  {(event.start_time || event.end_time) && (
+                  {event.start_time && (
                     <View style={[styles.metaRow, { marginBottom: theme.spacing.sm }]}>
                       <Text style={[styles.metaIcon, { color: theme.colors.secondary[500] }]}>🕐</Text>
                       <Text variant="body1" style={{
                         color: theme.colors.text.primary,
                         fontWeight: '600',
                       }}>
-                        {event.start_time && formatMilitaryTime(event.start_time)}
-                        {event.start_time && event.end_time && ' - '}
-                        {event.end_time && formatMilitaryTime(event.end_time)}
+                        {formatMilitaryTime(event.start_time)}
                       </Text>
                     </View>
                   )}
@@ -359,20 +356,23 @@ const EventModal: React.FC<EventModalProps> = ({ visible, event, onClose }) => {
                   </TouchableOpacity>
 
                   {/* Show music genres if available */}
-                  {event.music_info?.genres && (
-                    <View style={[styles.metaRow, { marginBottom: theme.spacing.sm }]}>
-                      <Text style={[styles.metaIcon, { color: theme.colors.primary[500] }]}>🎵</Text>
-                      <Text variant="body1" style={{
-                        color: theme.colors.text.secondary,
-                        fontWeight: '500',
-                      }}>
-                        {Array.isArray(event.music_info.genres) 
-                          ? event.music_info.genres.join(', ')
-                          : event.music_info.genres
-                        }
-                      </Text>
-                    </View>
-                  )}
+                  {(() => {
+                    const genres = getGenresFromEventTypes(event.event_type);
+                    if (genres.length > 0) {
+                      return (
+                        <View style={[styles.metaRow, { marginBottom: theme.spacing.sm }]}>
+                          <Text style={[styles.metaIcon, { color: theme.colors.primary[500] }]}>🎵</Text>
+                          <Text variant="body1" style={{
+                            color: theme.colors.text.secondary,
+                            fontWeight: '500',
+                          }}>
+                            {genres.map(g => getGenreDisplayLabel(g)).join(', ')}
+                          </Text>
+                        </View>
+                      );
+                    }
+                    return null;
+                  })()}
                 </View>
 
                 {/* Event Description */}

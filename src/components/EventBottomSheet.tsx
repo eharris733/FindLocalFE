@@ -13,6 +13,7 @@ import type { Event } from '../types/events';
 import { useTheme } from '../context/ThemeContext';
 import { Text } from './ui';
 import { getDisplayCityName } from '../utils/cityUtils';
+import { getGenresFromEventTypes, getGenreDisplayLabel } from '../constants/eventCategories';
 
 interface EventBottomSheetProps {
   visible: boolean;
@@ -160,26 +161,30 @@ const EventBottomSheet: React.FC<EventBottomSheetProps> = ({ visible, event, onE
               </Text>
             </View>
 
-            {/* Display genres from music_info */}
-            {event.music_info && event.music_info.genres && (
-              <View style={[styles.categoryContainer, {
-                backgroundColor: theme.colors.accent[500],
-                paddingHorizontal: theme.spacing.md,
-                paddingVertical: theme.spacing.xs,
-                borderRadius: theme.borderRadius.full,
-                marginBottom: theme.spacing.md,
-              }]}>
-                <Text variant="caption" style={{
-                  color: theme.colors.text.inverse,
-                  fontWeight: '600',
-                  textTransform: 'uppercase',
-                }}>
-                  {Array.isArray(event.music_info.genres) 
-                    ? event.music_info.genres.join(', ') 
-                    : event.music_info.genres}
-                </Text>
-              </View>
-            )}
+            {/* Display genres from event_type array */}
+            {(() => {
+              const genres = getGenresFromEventTypes(event.event_type);
+              if (genres.length > 0) {
+                return (
+                  <View style={[styles.categoryContainer, {
+                    backgroundColor: theme.colors.accent[500],
+                    paddingHorizontal: theme.spacing.md,
+                    paddingVertical: theme.spacing.xs,
+                    borderRadius: theme.borderRadius.full,
+                    marginBottom: theme.spacing.md,
+                  }]}>
+                    <Text variant="caption" style={{
+                      color: theme.colors.text.inverse,
+                      fontWeight: '600',
+                      textTransform: 'uppercase',
+                    }}>
+                      {genres.map(g => getGenreDisplayLabel(g)).join(', ')}
+                    </Text>
+                  </View>
+                );
+              }
+              return null;
+            })()}
 
             {event.description && (
               <View style={[styles.descriptionContainer, { marginBottom: theme.spacing.xl }]}>

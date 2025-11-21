@@ -9,6 +9,7 @@ import { Text } from './ui';
 import { getDisplayCityName } from '../utils/cityUtils';
 import { getCompactVenueSizeLabel } from '../utils/venueUtils';
 import { useDeviceInfo } from '../hooks/useDeviceInfo';
+import { getGenresFromEventTypes, getGenreDisplayLabel } from '../constants/eventCategories';
 
 interface EventCardProps {
   event: Event;
@@ -75,15 +76,12 @@ const EventCard: React.FC<EventCardProps> = ({ event, onPress, variant = 'defaul
   
   // Memoize display genre
   const displayGenre = useMemo(() => {
-    if (event.music_info?.genres) {
-      if (Array.isArray(event.music_info.genres)) {
-        return event.music_info.genres[0];
-      } else if (typeof event.music_info.genres === 'string') {
-        return event.music_info.genres;
-      }
+    const genres = getGenresFromEventTypes(event.event_type);
+    if (genres.length > 0) {
+      return getGenreDisplayLabel(genres[0]);
     }
     return null;
-  }, [event.music_info]);
+  }, [event.event_type]);
   
   const handleCardPress = () => {
     if (onPress) {
