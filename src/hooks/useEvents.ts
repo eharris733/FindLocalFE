@@ -732,7 +732,6 @@ export const useEvents = ({ selectedCity, favoriteEventIds = [] }: UseEventsProp
       }
     });
     
-    console.log('🔍 DEBUG - Collected event types (normalized):', Array.from(eventTypes));
 
     return {
       venueTypes: Array.from(venueTypes),
