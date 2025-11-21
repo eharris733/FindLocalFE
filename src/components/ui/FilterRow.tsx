@@ -6,6 +6,7 @@ import { ViewToggle } from './ViewToggle';
 import { DateRangePicker } from './DateRangePicker';
 import {useCityLocation} from "../../hooks/useCityLocation";
 import {FilterDropdown} from "./FilterDropdown";
+import { ALL_VENUES } from '../../constants';
 
 interface DateRange {
   start: Date | null;
@@ -36,7 +37,7 @@ export const FilterRow: React.FC<FilterRowProps> = ({
   const [showPriceTooltip, setShowPriceTooltip] = useState(false);
 
   const priceOptions = ['All prices']; // Only allow "All prices" until real price data is available
-  const sizeOptions = ['All sizes', '<100 👥', '100+ 👥', '300+ 👥'];
+  const sizeOptions = [ALL_VENUES, '<100 👥', '100+ 👥', '300+ 👥'];
 
   const handleDropdownToggle = (dropdown: 'price' | 'size') => {
     if (dropdown === 'price') {

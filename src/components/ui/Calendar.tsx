@@ -15,7 +15,8 @@ import {
   subMonths,
   isAfter,
   isBefore,
-  isWithinInterval
+  isWithinInterval,
+  startOfDay
 } from 'date-fns';
 
 interface CalendarProps {
@@ -81,6 +82,8 @@ export const Calendar: React.FC<CalendarProps> = ({
   const renderCalendarDays = () => {
     const days = [];
     let day = startDate_cal;
+    const today = new Date();
+    const startOfToday = startOfDay(today);
 
     while (day <= endDate_cal) {
       const week = [];
@@ -92,6 +95,7 @@ export const Calendar: React.FC<CalendarProps> = ({
         const isInRange = startDate && endDate && 
                          isWithinInterval(currentDay, { start: startDate, end: endDate });
         const isToday = isSameDay(currentDay, new Date());
+        const isPastDate = isBefore(currentDay, startOfToday);
 
         week.push(
           <TouchableOpacity
@@ -102,9 +106,10 @@ export const Calendar: React.FC<CalendarProps> = ({
               isSelected && { backgroundColor: theme.colors.primary[500] },
               isInRange && !isSelected && { backgroundColor: theme.colors.primary[100] },
               isToday && !isSelected && { borderColor: theme.colors.primary[500], borderWidth: 1 },
+              isPastDate && { opacity: 0.4 },
             ]}
-            onPress={() => isCurrentMonth && handleDateClick(currentDay)}
-            disabled={!isCurrentMonth}
+            onPress={() => isCurrentMonth && !isPastDate && handleDateClick(currentDay)}
+            disabled={!isCurrentMonth || isPastDate}
           >
             <Text 
               variant="body2" 
@@ -112,6 +117,7 @@ export const Calendar: React.FC<CalendarProps> = ({
               style={[
                 styles.dayText,
                 !isCurrentMonth && { color: theme.colors.text.tertiary },
+                isPastDate && { color: theme.colors.text.tertiary },
               ]}
             >
               {format(currentDay, 'd')}

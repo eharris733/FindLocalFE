@@ -17,17 +17,21 @@ import {
   isSameDay
 } from 'date-fns';
 import { logger } from '../utils/logger';
+import { ALL_VENUES } from '../constants';
 
 const initialFilterState: FilterState = {
   category: 'all',
+  eventTypes: [], // New: for event_type filtering
+  venueTypes: [], // New: for venue type filtering
   startDate: startOfDay(new Date()),
   endDate: endOfDay(new Date()),
   dateRange: 'today',
   searchText: '',
   location: 'all',
   venues: [], // Initialize as empty array
-  price: 'All prices',
-  size: ['All sizes'], // Initialize as array
+  price: undefined, // Price range filter
+  timeRange: undefined, // Time of day filter
+  size: [ALL_VENUES], // Initialize as array
   regions: [], // Initialize as empty array - all regions selected by default
 };
 
@@ -73,12 +77,23 @@ const filterReducer = (state: FilterState, action: FilterAction): FilterState =>
   switch (action.type) {
     case 'SET_CATEGORY':
       return { ...state, category: action.payload };
+    case 'SET_EVENT_TYPES':
+      return { ...state, eventTypes: action.payload };
+    case 'SET_VENUE_TYPES':
+      return { ...state, venueTypes: action.payload };
     case 'SET_START_DATE':
       return { ...state, startDate: action.payload, dateRange: 'custom' };
     case 'SET_END_DATE':
       return { ...state, endDate: action.payload, dateRange: 'custom' };
     case 'SET_DATE_RANGE':
       const { start, end } = getDateRangeFromSelection(action.payload);
+      // For 'custom', preserve existing startDate/endDate if they exist
+      if (action.payload === 'custom' && state.startDate && state.endDate) {
+        return { 
+          ...state, 
+          dateRange: action.payload,
+        };
+      }
       return { 
         ...state, 
         dateRange: action.payload,
@@ -93,6 +108,8 @@ const filterReducer = (state: FilterState, action: FilterAction): FilterState =>
       return { ...state, venues: action.payload };
     case 'SET_PRICE':
       return { ...state, price: action.payload };
+    case 'SET_TIME_RANGE':
+      return { ...state, timeRange: action.payload };
     case 'SET_SIZE':
       return { ...state, size: action.payload };
     case 'SET_REGIONS':
@@ -116,6 +133,14 @@ interface UseEventsResult {
   availableLocations: string[];
   venues: Venue[];
   venuesLoading: boolean;
+  availableFilterOptions: {
+    venueTypes: string[];
+    sizes: string[];
+    regions: string[];
+    priceRanges: string[];
+    timeRanges: string[];
+    eventTypes: string[];
+  };
 }
 
 interface UseEventsProps {
@@ -230,7 +255,50 @@ export const useEvents = ({ selectedCity, favoriteEventIds = [] }: UseEventsProp
       // Normalize category filter to array
       const categoryFilter = Array.isArray(filters.category) ? filters.category : [filters.category];
 
-      // Category filter - check music_info.genres and venue type/event_types
+      // NEW: Direct event_type filtering (preferred method when event_type data is available)
+      if (filters.eventTypes.length > 0 && event.event_type && event.event_type.length > 0) {
+        // Check if event has ANY of the selected event types
+        const hasMatchingType = event.event_type.some(eventType => 
+          filters.eventTypes.includes(eventType)
+        );
+        
+        if (!hasMatchingType) {
+          return false; // No match on event_type
+        }
+      }
+
+      // Venue type filter - independent of event type filtering
+      if (filters.venueTypes.length > 0) {
+        // If event has a venue_id, check if venue type matches
+        if (event.venue_id) {
+          const venue = venues.find(v => v.id === event.venue_id);
+          if (venue && venue.type) {
+            // Case-insensitive and flexible comparison
+            // Normalize both values: lowercase, trim, remove underscores and extra spaces
+            const venueTypeNormalized = venue.type.toLowerCase().trim().replace(/[_\s]+/g, '');
+            const hasMatchingType = filters.venueTypes.some(filterType => {
+              const filterNormalized = filterType.toLowerCase().trim().replace(/[_\s]+/g, '');
+              // Check if they match when normalized
+              return venueTypeNormalized === filterNormalized || 
+                     venueTypeNormalized.includes(filterNormalized) ||
+                     filterNormalized.includes(venueTypeNormalized);
+            });
+            if (!hasMatchingType) {
+              return false; // Venue type doesn't match
+            }
+          }
+          // If venue not found or has no type, exclude the event
+          else {
+            return false;
+          }
+        }
+        // If event has no venue_id, exclude it when venue type filter is active
+        else {
+          return false;
+        }
+      }
+
+      // Legacy category filter - check music_info.genres and venue type/event_types
       // Use OR logic: event matches if it matches ANY selected category
       if (!categoryFilter.includes('all')) {
         // Special handling for favorites: check if event is favorited OR matches other categories
@@ -368,8 +436,13 @@ export const useEvents = ({ selectedCity, favoriteEventIds = [] }: UseEventsProp
       }
 
       // Region filter - if regions are selected, check if event's region matches
-      if (filters.regions.length > 0 && event.region) {
-        if (!filters.regions.includes(event.region)) {
+      if (filters.regions.length > 0) {
+        if (event.region) {
+          if (!filters.regions.includes(event.region)) {
+            return false;
+          }
+        } else {
+          // If event has no region data and region filter is active, exclude it
           return false;
         }
       }
@@ -383,7 +456,7 @@ export const useEvents = ({ selectedCity, favoriteEventIds = [] }: UseEventsProp
 
       // Size filter - supports both single string and multi-select array
       const sizeFilter = Array.isArray(filters.size) ? filters.size : [filters.size];
-      if (!sizeFilter.includes('All sizes') && event.venue_id) {
+      if (!sizeFilter.includes(ALL_VENUES) && event.venue_id) {
         const venue = venues.find(v => v.id === event.venue_id);
         if (venue && venue.venue_size) {
           let sizeMatches = false;
@@ -394,17 +467,17 @@ export const useEvents = ({ selectedCity, favoriteEventIds = [] }: UseEventsProp
           // Check if venue matches any of the selected sizes
           for (const selectedSize of sizeFilter) {
             switch (selectedSize) {
-              case '<100 👥':
+              case '<100':
                 if (venueSize.includes('small')) {
                   sizeMatches = true;
                 }
                 break;
-              case '100+ 👥':
+              case '100+':
                 if (venueSize.includes('medium')) {
                   sizeMatches = true;
                 }
                 break;
-              case '300+ 👥':
+              case '300+':
                 if (venueSize.includes('large')) {
                   sizeMatches = true;
                 }
@@ -426,10 +499,52 @@ export const useEvents = ({ selectedCity, favoriteEventIds = [] }: UseEventsProp
         }
       }
 
-      // Price filter - for now, only allow "All prices" since we don't have price data
-      if (filters.price !== 'All prices') {
-        // Skip events for non-"All prices" selections until we have real price data
-        return false;
+      // Price filter
+      if (filters.price) {
+        const eventPrice = event.price_amount;
+        
+        // Special case for "Free" filter (min: 0, max: 0)
+        if (filters.price.min === 0 && filters.price.max === 0) {
+          // Only show events that are explicitly free (price_amount === 0)
+          if (eventPrice !== 0) {
+            return false;
+          }
+        } else {
+          // For other price ranges, only filter events with valid price data
+          if (eventPrice !== null && eventPrice !== undefined) {
+            if (filters.price.min !== undefined && eventPrice < filters.price.min) {
+              return false;
+            }
+            if (filters.price.max !== undefined && eventPrice > filters.price.max) {
+              return false;
+            }
+          } else {
+            // If event has no price data and a price filter is active, exclude it
+            return false;
+          }
+        }
+      }
+
+      // Time of day filter
+      if (filters.timeRange && event.start_time) {
+        const timeMatch = event.start_time.match(/^(\d{2}):(\d{2})/);
+        if (timeMatch) {
+          const eventHour = parseInt(timeMatch[1], 10);
+          const { start, end } = filters.timeRange;
+          
+          if (start !== undefined && end !== undefined) {
+            // Handle overnight ranges (e.g., Night: 21-6)
+            if (start > end) {
+              if (eventHour < start && eventHour >= end) {
+                return false;
+              }
+            } else {
+              if (eventHour < start || eventHour >= end) {
+                return false;
+              }
+            }
+          }
+        }
       }
 
       // Date filter
@@ -501,6 +616,82 @@ export const useEvents = ({ selectedCity, favoriteEventIds = [] }: UseEventsProp
     filters.category === 'favorites' ? favoriteEventIds : null
   ]);
 
+  // Compute available filter options based on filtered events
+  // This helps hide/disable options that would return 0 results
+  const availableFilterOptions = useMemo(() => {
+    const venueTypes = new Set<string>();
+    const sizes = new Set<string>();
+    const regions = new Set<string>();
+    const priceRanges = new Set<string>();
+    const timeRanges = new Set<string>();
+    const eventTypes = new Set<string>();
+
+    filteredEvents.forEach(event => {
+      // Collect venue types and sizes from events' venues
+      if (event.venue_id) {
+        const venue = venues.find(v => v.id === event.venue_id);
+        if (venue) {
+          if (venue.type) {
+            venueTypes.add(venue.type.toLowerCase().trim());
+          }
+          if (venue.venue_size) {
+            sizes.add(venue.venue_size.toLowerCase().trim());
+          }
+        }
+      }
+
+      // Collect regions
+      if (event.region) {
+        regions.add(event.region);
+      }
+
+      // Collect event types
+      if (event.event_type && Array.isArray(event.event_type)) {
+        event.event_type.forEach(type => eventTypes.add(type));
+      }
+
+      // Collect price ranges
+      if (event.price_amount !== null && event.price_amount !== undefined) {
+        const price = event.price_amount;
+        if (price === 0) {
+          priceRanges.add('free');
+        } else if (price < 25) {
+          priceRanges.add('under25');
+        } else if (price < 50) {
+          priceRanges.add('under50');
+        } else {
+          priceRanges.add('50plus');
+        }
+      }
+
+      // Collect time ranges
+      if (event.start_time) {
+        const timeMatch = event.start_time.match(/^(\d{2}):(\d{2})/);
+        if (timeMatch) {
+          const hour = Number.parseInt(timeMatch[1], 10);
+          if (hour >= 6 && hour < 12) {
+            timeRanges.add('morning');
+          } else if (hour >= 12 && hour < 17) {
+            timeRanges.add('afternoon');
+          } else if (hour >= 17 && hour < 21) {
+            timeRanges.add('evening');
+          } else {
+            timeRanges.add('night');
+          }
+        }
+      }
+    });
+
+    return {
+      venueTypes: Array.from(venueTypes),
+      sizes: Array.from(sizes),
+      regions: Array.from(regions),
+      priceRanges: Array.from(priceRanges),
+      timeRanges: Array.from(timeRanges),
+      eventTypes: Array.from(eventTypes),
+    };
+  }, [filteredEvents, venues]);
+
   return {
     events,
     loading,
@@ -512,6 +703,7 @@ export const useEvents = ({ selectedCity, favoriteEventIds = [] }: UseEventsProp
     availableLocations,
     venues,
     venuesLoading,
+    availableFilterOptions,
   };
 };
 

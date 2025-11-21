@@ -1,0 +1,243 @@
+import React, { useState } from 'react';
+import { View, TouchableOpacity, Modal, StyleSheet, ScrollView } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../../context/ThemeContext';
+import { Text } from './Text';
+
+interface TimeRange {
+  start?: number; // Hour in 24h format
+  end?: number;
+  label: string;
+}
+
+const TIME_OPTIONS: TimeRange[] = [
+  { label: 'Morning', start: 6, end: 12 },
+  { label: 'Afternoon', start: 12, end: 17 },
+  { label: 'Evening', start: 17, end: 21 },
+  { label: 'Night', start: 21, end: 6 }, // wraps to next day
+  { label: 'Any Time' },
+];
+
+interface TimeDropdownProps {
+  selectedTime?: { start?: number; end?: number };
+  onTimeChange: (range?: { start?: number; end?: number }) => void;
+}
+
+export const TimeDropdown: React.FC<TimeDropdownProps> = ({
+  selectedTime,
+  onTimeChange,
+}) => {
+  const { theme } = useTheme();
+  const [isModalVisible, setIsModalVisible] = useState(false);
+
+  const getSelectedLabel = () => {
+    if (!selectedTime) return 'Time';
+    
+    const option = TIME_OPTIONS.find(
+      opt => opt.start === selectedTime.start && opt.end === selectedTime.end
+    );
+    return option?.label || 'Time';
+  };
+
+  const isSelected = (option: TimeRange) => {
+    if (!selectedTime && !option.start && !option.end) return true;
+    if (!selectedTime) return false;
+    return option.start === selectedTime.start && option.end === selectedTime.end;
+  };
+
+  const handleSelect = (option: TimeRange) => {
+    if (!option.start && !option.end) {
+      onTimeChange(undefined);
+    } else {
+      onTimeChange({ start: option.start, end: option.end });
+    }
+    setIsModalVisible(false);
+  };
+
+  const hasActiveFilter = selectedTime !== undefined;
+
+  return (
+    <>
+      <View style={styles.container}>
+        <Text variant="caption" color="tertiary" style={styles.label}>
+          TIME
+        </Text>
+        <TouchableOpacity
+          style={[
+            styles.button,
+            { 
+              backgroundColor: hasActiveFilter ? theme.colors.primary[500] : theme.colors.background.secondary,
+              borderColor: hasActiveFilter ? theme.colors.primary[500] : theme.colors.border.light,
+            }
+          ]}
+          onPress={() => setIsModalVisible(true)}
+        >
+          <Text variant="body2" style={[
+            styles.buttonText,
+            { color: hasActiveFilter ? '#FFFFFF' : theme.colors.text.primary }
+          ]}>
+            {getSelectedLabel()}
+          </Text>
+          <Ionicons 
+            name="chevron-down" 
+            size={16} 
+            color={hasActiveFilter ? '#FFFFFF' : theme.colors.text.secondary} 
+          />
+        </TouchableOpacity>
+      </View>
+
+      <Modal
+        visible={isModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setIsModalVisible(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setIsModalVisible(false)}
+        >
+          <View 
+            style={[styles.modalContent, { backgroundColor: theme.colors.background.primary }]}
+            onStartShouldSetResponder={() => true}
+          >
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: theme.colors.text.primary }]}>
+                Filter by Time of Day
+              </Text>
+              <TouchableOpacity onPress={() => setIsModalVisible(false)}>
+                <Ionicons name="close" size={24} color={theme.colors.text.primary} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.optionsContainer}>
+              {TIME_OPTIONS.map((option) => {
+                const selected = isSelected(option);
+                const timeDescription = option.start && option.end 
+                  ? `${formatHour(option.start)} - ${formatHour(option.end)}`
+                  : null;
+                
+                return (
+                  <TouchableOpacity
+                    key={option.label}
+                    style={[
+                      styles.option,
+                      { borderBottomColor: theme.colors.border.light }
+                    ]}
+                    onPress={() => handleSelect(option)}
+                  >
+                    <View>
+                      <Text style={[
+                        styles.optionText,
+                        { color: theme.colors.text.primary }
+                      ]}>
+                        {option.label}
+                      </Text>
+                      {timeDescription && (
+                        <Text style={[
+                          styles.optionDescription,
+                          { color: theme.colors.text.secondary }
+                        ]}>
+                          {timeDescription}
+                        </Text>
+                      )}
+                    </View>
+                    {selected && (
+                      <Ionicons 
+                        name="checkmark" 
+                        size={20} 
+                        color={theme.colors.primary[500]} 
+                      />
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+    </>
+  );
+};
+
+const formatHour = (hour: number): string => {
+  if (hour === 0) return '12am';
+  if (hour < 12) return `${hour}am`;
+  if (hour === 12) return '12pm';
+  return `${hour - 12}pm`;
+};
+
+const styles = StyleSheet.create({
+  container: {
+    gap: 4,
+  },
+  label: {
+    fontSize: 10,
+    fontWeight: '600',
+    letterSpacing: 0.5,
+    marginLeft: 4,
+  },
+  button: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    gap: 4,
+    minWidth: 80,
+  },
+  buttonText: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    width: '100%',
+    maxWidth: 400,
+    maxHeight: '70%',
+    borderRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E5E5',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  optionsContainer: {
+    padding: 8,
+  },
+  option: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderBottomWidth: 1,
+  },
+  optionText: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  optionDescription: {
+    fontSize: 13,
+    marginTop: 2,
+  },
+});

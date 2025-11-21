@@ -15,19 +15,24 @@ export interface Event {
   music_info: any | null; // jsonb
   ticket_page_url: string | null; // URL to external ticket purchase page
   price: string | null; // Ticket price or price range (e.g., "$25", "$20-$30", "Free")
+  price_amount: number | null; // Numeric price for filtering
   status: string | null; // Event status: "Sold Out", "Cancelled", "Postponed", etc.
+  event_type: string[] | null; // Array of event types (music, comedy, theater, etc.)
   created_at: string | null; // timestamp with time zone
 }
 
 export interface FilterState {
-  category: string | string[];
+  category: string | string[]; // Legacy - maps to event categories
+  eventTypes: string[]; // New: direct event_type filtering
+  venueTypes: string[]; // New: venue type filtering
   startDate: Date | null;
   endDate: Date | null;
   dateRange: 'all' | 'today' | 'tomorrow' | 'this_week' | 'this_weekend' | 'next_week' | 'this_month' | 'custom';
   searchText: string;
   location: string; // Changed from 'venue' to 'location' for consistency (cities)
   venues: string[]; // New field for multi-select venues
-  price: string; // New field for price filtering
+  price?: { min?: number; max?: number }; // Price range filtering
+  timeRange?: { start?: number; end?: number }; // Time of day filtering (hours in 24h format)
   size: string | string[]; // New field for venue size filtering - supports multi-select
   regions: string[]; // New field for region filtering - supports multi-select
 }
@@ -37,13 +42,16 @@ export type EventFilters = FilterState;
 
 export type FilterAction =
   | { type: 'SET_CATEGORY'; payload: string | string[] }
+  | { type: 'SET_EVENT_TYPES'; payload: string[] }
+  | { type: 'SET_VENUE_TYPES'; payload: string[] }
   | { type: 'SET_START_DATE'; payload: Date | null }
   | { type: 'SET_END_DATE'; payload: Date | null }
   | { type: 'SET_DATE_RANGE'; payload: FilterState['dateRange'] }
   | { type: 'SET_SEARCH_TEXT'; payload: string }
   | { type: 'SET_LOCATION'; payload: string }
   | { type: 'SET_VENUES'; payload: string[] }
-  | { type: 'SET_PRICE'; payload: string }
+  | { type: 'SET_PRICE'; payload: { min?: number; max?: number } | undefined }
+  | { type: 'SET_TIME_RANGE'; payload: { start?: number; end?: number } | undefined }
   | { type: 'SET_SIZE'; payload: string | string[] }
   | { type: 'SET_REGIONS'; payload: string[] }
   | { type: 'CLEAR_ALL' } // Added clear all action

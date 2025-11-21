@@ -1,7 +1,7 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { View, StyleSheet, Platform } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
-import FilterBar from './FilterBar';
+import FilterBarNew from './FilterBarNew';
 import GalleryView from './GalleryView';
 import VenueGroupedListView from './VenueGroupedListView';
 import MapPanel from './MapPanel';
@@ -9,7 +9,8 @@ import VenueModal from './VenueModal';
 import type { Event } from '../types/events';
 import type { FilterState, FilterAction } from '../hooks/useEvents';
 import type { Venue } from '../types/venues';
-import {useDeviceInfo} from "../hooks/useDeviceInfo";
+import { useDeviceInfo } from "../hooks/useDeviceInfo";
+import { getAvailableRegions } from '../utils/regionHelpers';
 
 interface MainLayoutProps {
   events: Event[];
@@ -35,11 +36,14 @@ export default function MainLayout({
   onEventPress,
 }: MainLayoutProps) {
   const { theme } = useTheme();
-  const {isMobile} = useDeviceInfo();
+  const { isMobile } = useDeviceInfo();
   const [activeTab, setActiveTab] = useState<'gallery' | 'list' | 'map'>('list');
   const [highlightedEventId, setHighlightedEventId] = useState<string | undefined>();
   const [selectedVenue, setSelectedVenue] = useState<Venue | null>(null);
   const [showVenueModal, setShowVenueModal] = useState(false);
+
+  // Extract available regions from events
+  const availableRegions = useMemo(() => getAvailableRegions(events), [events]);
 
   const handleEventHover = useCallback((event: Event | null) => {
     if (Platform.OS === 'web' && !isMobile) {
@@ -72,13 +76,10 @@ export default function MainLayout({
     return (
       <View style={[styles.container, { backgroundColor: theme.colors.background.secondary }]}>
 
-        <FilterBar
+        <FilterBarNew
           filters={filters}
           dispatchFilters={dispatchFilters}
-          availableCategories={availableCategories}
-          availableLocations={availableLocations}
-          venues={venues}
-          venuesLoading={venuesLoading}
+          availableRegions={availableRegions}
           viewMode={activeTab}
           onViewModeChange={handleViewModeChange}
           resultsCount={events.length}
@@ -123,13 +124,10 @@ export default function MainLayout({
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background.secondary }]}>
 
-      <FilterBar
+      <FilterBarNew
         filters={filters}
         dispatchFilters={dispatchFilters}
-        availableCategories={availableCategories}
-        availableLocations={availableLocations}
-        venues={venues}
-        venuesLoading={venuesLoading}
+        availableRegions={availableRegions}
         viewMode={activeTab}
         onViewModeChange={handleViewModeChange}
         resultsCount={events.length}

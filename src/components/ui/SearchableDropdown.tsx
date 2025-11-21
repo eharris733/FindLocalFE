@@ -11,6 +11,7 @@ import {
 import { useTheme } from '../../context/ThemeContext';
 import { Text } from './Text';
 import { Portal } from './Portal';
+import { ALL_VENUES } from '../../constants';
 
 interface SearchableDropdownProps {
   data: string[];
@@ -80,7 +81,7 @@ export const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
     setTimeout(() => setIsOpen(false), 150);
   };
 
-  const displayValue = value === 'all' ? 'All Venues' : value;
+  const displayValue = value === 'all' ? ALL_VENUES : value;
   const { width: screenWidth } = Dimensions.get('window');
 
   return (
@@ -194,7 +195,7 @@ export const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
                     color={item === value ? 'primary' : 'secondary'}
                     style={{ fontWeight: item === value ? '600' : '400' }}
                   >
-                    {item === 'all' ? 'All Venues' : item}
+                    {item === 'all' ? ALL_VENUES : item}
                   </Text>
                   {item === value && (
                     <Text variant="body2" color="primary">
