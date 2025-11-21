@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { View, StyleSheet, Platform } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
-import FilterBarNew from './FilterBarNew';
+import FilterBar from './FilterBar';
 import GalleryView from './GalleryView';
 import VenueGroupedListView from './VenueGroupedListView';
 import MapPanel from './MapPanel';
@@ -81,7 +81,7 @@ export default function MainLayout({
     return (
       <View style={[styles.container, { backgroundColor: theme.colors.background.secondary }]}>
 
-        <FilterBarNew
+        <FilterBar
           filters={filters}
           dispatchFilters={dispatchFilters}
           availableFilterOptions={availableFilterOptions}
@@ -129,7 +129,7 @@ export default function MainLayout({
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background.secondary }]}>
 
-      <FilterBarNew
+      <FilterBar
         filters={filters}
         dispatchFilters={dispatchFilters}
         availableFilterOptions={availableFilterOptions}

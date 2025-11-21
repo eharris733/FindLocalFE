@@ -12,8 +12,8 @@ interface PriceRange {
 
 const PRICE_OPTIONS: PriceRange[] = [
   { label: 'Free', min: 0, max: 0 },
-  { label: 'Under $25', min: 0, max: 25 },
-  { label: 'Under $50', min: 0, max: 50 },
+  { label: 'Under $25', min: 0.01, max: 25 },
+  { label: 'Under $50', min: 0.01, max: 50 },
   { label: '$50+', min: 50 },
   { label: 'Any Price' },
 ];
@@ -60,15 +60,22 @@ export const PriceDropdown: React.FC<PriceDropdownProps> = ({
   };
 
   const isSelected = (option: PriceRange) => {
-    if (!selectedPrice && !option.min && !option.max) return true;
+    // "Any Price" option (no min/max defined)
+    if (option.min === undefined && option.max === undefined) {
+      return !selectedPrice;
+    }
+    // No selection made
     if (!selectedPrice) return false;
+    // Compare min and max values
     return option.min === selectedPrice.min && option.max === selectedPrice.max;
   };
 
   const handleSelect = (option: PriceRange) => {
-    if (!option.min && !option.max) {
+    // "Any Price" option - clear the price filter
+    if (option.min === undefined && option.max === undefined) {
       onPriceChange(undefined);
     } else {
+      // Set the price range (including Free which is min:0, max:0)
       onPriceChange({ min: option.min, max: option.max });
     }
     setIsModalVisible(false);

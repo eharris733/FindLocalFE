@@ -13,8 +13,7 @@ import {
   startOfWeek,
   endOfWeek,
   startOfMonth,
-  endOfMonth,
-  isSameDay
+  endOfMonth
 } from 'date-fns';
 import { logger } from '../utils/logger';
 import { ALL_VENUES } from '../constants';
@@ -161,7 +160,6 @@ export const useEvents = ({ selectedCity, favoriteEventIds = [] }: UseEventsProp
 
   useEffect(() => {
     const fetchEvents = async () => {
-      //console.log('🎉 useEvents: fetchEvents called with selectedCity:', selectedCity);
       setLoading(true);
       setEvents([]); // Clear old events immediately when city changes
       setError(null);
@@ -169,7 +167,6 @@ export const useEvents = ({ selectedCity, favoriteEventIds = [] }: UseEventsProp
         // Fetch events filtered by city if provided
         const data = await getEvents(selectedCity);
         setEvents(data || []); 
-        //console.log(`🎉 Loaded ${data?.length || 0} events for city: ${selectedCity || 'all cities'}`);
       } catch (err) {
         setError("Failed to load events. Please try again.");
         logger.error('Failed to fetch events:', err);
@@ -189,7 +186,6 @@ export const useEvents = ({ selectedCity, favoriteEventIds = [] }: UseEventsProp
   // Fetch venues for filtering
   useEffect(() => {
     const fetchVenues = async () => {
-      //console.log('🏢 useEvents: fetchVenues called with selectedCity:', selectedCity);
       setVenuesLoading(true);
       setVenues([]); // Clear old venues immediately when city changes
       try {
@@ -198,16 +194,6 @@ export const useEvents = ({ selectedCity, favoriteEventIds = [] }: UseEventsProp
           ? await getVenuesByCity(selectedCity)
           : await getAllVenues();
         setVenues(venueData);
-        //console.log(`🏢 Loaded ${venueData.length} venues for ${selectedCity || 'all cities'}`);
-        
-        // Debug: Log venue sizes
-        const venueSizes = venueData.map(v => v.venue_size).filter(Boolean);
-        //console.log('Venue sizes found:', [...new Set(venueSizes)]);
-        venueData.slice(0, 5).forEach(v => {
-          if (v.venue_size) {
-            //console.log(`${v.name}: size="${v.venue_size}", type="${v.type}"`);
-          }
-        });
       } catch (err) {
         logger.error('Failed to fetch venues:', err);
       } finally {
@@ -486,15 +472,11 @@ export const useEvents = ({ selectedCity, favoriteEventIds = [] }: UseEventsProp
             if (sizeMatches) break; // Exit early if we found a match
           }
           
-          // Debug logging
-          logger.debug(`Size filter: ${JSON.stringify(sizeFilter)}, venue: ${venue.name}, venue_size: "${venue.venue_size}", matches: ${sizeMatches}`);
-          
           if (!sizeMatches) {
             return false;
           }
         } else {
           // If venue has no size data, exclude it from size filtering
-          logger.debug(`Size filter: ${JSON.stringify(sizeFilter)}, venue: ${venue?.name || 'unknown'}, no venue_size data`);
           return false;
         }
       }
@@ -505,8 +487,8 @@ export const useEvents = ({ selectedCity, favoriteEventIds = [] }: UseEventsProp
         
         // Special case for "Free" filter (min: 0, max: 0)
         if (filters.price.min === 0 && filters.price.max === 0) {
-          // Only show events that are explicitly free (price_amount === 0)
-          if (eventPrice !== 0) {
+          // Only show events that are explicitly free (price_amount is 0 or 0.00)
+          if (eventPrice === null || eventPrice === undefined || eventPrice > 0) {
             return false;
           }
         } else {
@@ -711,7 +693,8 @@ export const useEvents = ({ selectedCity, favoriteEventIds = [] }: UseEventsProp
         if (!excludeFilters.includes('price') && filters.price) {
           const eventPrice = event.price_amount;
           if (filters.price.min === 0 && filters.price.max === 0) {
-            if (eventPrice !== 0) return false;
+            // Free events: exclude if price is null, undefined, or > 0
+            if (eventPrice === null || eventPrice === undefined || eventPrice > 0) return false;
           } else {
             if (eventPrice !== null && eventPrice !== undefined) {
               if (filters.price.min !== undefined && eventPrice < filters.price.min) return false;
