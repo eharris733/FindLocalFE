@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { View, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, ScrollView, TouchableOpacity, StyleSheet, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import { useFavorites } from '../context/FavoritesContext';
 import EventCard from './EventCard';
@@ -34,6 +34,9 @@ interface VenueGroupedListViewProps {
   onEventPress: (event: Event) => void;
   onVenuePress?: (venue: Venue) => void;
   venues?: Venue[];
+  onScroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
+  scrollEventThrottle?: number;
+  contentInsetTop?: number;
 }
 
 interface VenueGroup {
@@ -48,7 +51,10 @@ export default function VenueGroupedListView({
   venuesLoading = false,
   onEventPress,
   onVenuePress,
-  venues = []
+  venues = [],
+  onScroll,
+  scrollEventThrottle = 16,
+  contentInsetTop = 0
 }: Readonly<VenueGroupedListViewProps>) {
   const { theme } = useTheme();
   const { favoriteEventIds } = useFavorites();
@@ -134,9 +140,11 @@ export default function VenueGroupedListView({
   return (
     <ScrollView 
       style={[styles.container, { backgroundColor: theme.colors.background.secondary }]}
-      contentContainerStyle={styles.scrollContent}
+      contentContainerStyle={[styles.scrollContent, { paddingTop: contentInsetTop }]}
       showsVerticalScrollIndicator={true}
       removeClippedSubviews={true} // Performance optimization
+      onScroll={onScroll}
+      scrollEventThrottle={scrollEventThrottle}
     >
       {venueGroups.map((group, index) => {
         const venueName = group.venue?.name || 'Unknown Venue';
@@ -164,6 +172,18 @@ export default function VenueGroupedListView({
                   {venueName}
                 </Text>
               </View>
+              
+              {/* Show venue type on mobile - right aligned */}
+              {isMobile && venueType && (
+                <View style={[styles.venueTagMobile, { 
+                  backgroundColor: theme.colors.secondary[100],
+                  borderColor: theme.colors.secondary[200],
+                }]}>
+                  <Text style={[styles.venueTagTextMobile, { color: theme.colors.secondary[700] }]}>
+                    {venueType}
+                  </Text>
+                </View>
+              )}
               
               {/* Venue tags - hide on mobile */}
               {!isMobile && (
@@ -234,7 +254,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: 20,
     paddingHorizontal: 16,
-    paddingTop: 16,
+    paddingTop: 24,
   },
   centerContent: {
     justifyContent: 'center',
@@ -250,7 +270,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingBottom: 12,
     borderBottomWidth: 1,
-    marginBottom: 16,
+    marginBottom: 8,
+    paddingTop: 8,
   },
   venueHeaderLeft: {
     flexDirection: 'row',
@@ -290,6 +311,22 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+  },
+  venueTagMobile: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 4,
+    borderWidth: 1,
+    flexShrink: 0,
+  },
+  venueTagTextMobile: {
+    fontSize: 10,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
   },
   eventsCardContainer: {
     borderRadius: 8,

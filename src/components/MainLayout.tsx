@@ -10,6 +10,7 @@ import type { Event } from '../types/events';
 import type { FilterState, FilterAction } from '../hooks/useEvents';
 import type { Venue } from '../types/venues';
 import { useDeviceInfo } from "../hooks/useDeviceInfo";
+import { useScrollAnimation } from '../hooks/useScrollAnimation';
 
 interface MainLayoutProps {
   events: Event[];
@@ -42,13 +43,19 @@ export default function MainLayout({
   venuesLoading,
   availableFilterOptions,
   onEventPress,
-}: MainLayoutProps) {
+}: Readonly<MainLayoutProps>) {
   const { theme } = useTheme();
   const { isMobile } = useDeviceInfo();
   const [activeTab, setActiveTab] = useState<'gallery' | 'list' | 'map'>('list');
   const [highlightedEventId, setHighlightedEventId] = useState<string | undefined>();
   const [selectedVenue, setSelectedVenue] = useState<Venue | null>(null);
   const [showVenueModal, setShowVenueModal] = useState(false);
+  const [filterBarHeight, setFilterBarHeight] = useState(0);
+
+  // Hook for scroll animation (only used for list and gallery views)
+  const { headerTranslateY, handleScroll, scrollEventThrottle } = useScrollAnimation({
+    headerHeight: filterBarHeight,
+  });
 
   const handleEventHover = useCallback((event: Event | null) => {
     if (Platform.OS === 'web' && !isMobile) {
@@ -76,46 +83,70 @@ export default function MainLayout({
     setSelectedVenue(null);
   }, []);
 
+  const handleFilterBarLayout = useCallback((height: number) => {
+    setFilterBarHeight(height);
+  }, []);
+
+  // Determine if we should show animated filter bar (list and gallery only, not map)
+  const shouldAnimateFilterBar = activeTab === 'list' || activeTab === 'gallery';
+
   if (isMobile) {
     // Mobile layout with tabs
     return (
       <View style={[styles.container, { backgroundColor: theme.colors.background.secondary }]}>
+        {/* Absolutely positioned filter bar */}
+        <View style={styles.filterBarContainer} pointerEvents="box-none">
+          <FilterBar
+            filters={filters}
+            dispatchFilters={dispatchFilters}
+            availableFilterOptions={availableFilterOptions}
+            viewMode={activeTab}
+            onViewModeChange={handleViewModeChange}
+            resultsCount={events.length}
+            loading={loading}
+            animatedStyle={shouldAnimateFilterBar ? { transform: [{ translateY: headerTranslateY }] } : undefined}
+            onLayout={handleFilterBarLayout}
+            pointerEvents="auto"
+          />
+        </View>
 
-        <FilterBar
-          filters={filters}
-          dispatchFilters={dispatchFilters}
-          availableFilterOptions={availableFilterOptions}
-          viewMode={activeTab}
-          onViewModeChange={handleViewModeChange}
-          resultsCount={events.length}
-          loading={loading}
-        />
-        
-        {activeTab === 'gallery' ? (
-          <GalleryView
-            events={events}
-            loading={loading}
-            onEventPress={onEventPress}
-            highlightedEventId={highlightedEventId}
-            venues={venues}
-          />
-        ) : activeTab === 'list' ? (
-          <VenueGroupedListView
-            events={events}
-            loading={loading}
-            venuesLoading={venuesLoading}
-            onEventPress={onEventPress}
-            onVenuePress={handleVenuePress}
-            venues={venues}
-          />
-        ) : (
-          <MapPanel
-            events={events}
-            onEventPress={onEventPress}
-            highlightedEventId={highlightedEventId}
-            onMarkerPress={handleMarkerPress}
-          />
-        )}
+        {/* Content with scroll capture overlay on top of filter bar area */}
+        <View style={styles.contentContainer}>
+          {/* Invisible scroll capture area that overlays the filter bar */}
+          <View style={[styles.scrollCaptureOverlay, { height: filterBarHeight }]} />
+          
+          {activeTab === 'gallery' ? (
+            <GalleryView
+              events={events}
+              loading={loading}
+              onEventPress={onEventPress}
+              highlightedEventId={highlightedEventId}
+              venues={venues}
+              onScroll={handleScroll}
+              scrollEventThrottle={scrollEventThrottle}
+              contentInsetTop={filterBarHeight}
+            />
+          ) : activeTab === 'list' ? (
+            <VenueGroupedListView
+              events={events}
+              loading={loading}
+              venuesLoading={venuesLoading}
+              onEventPress={onEventPress}
+              onVenuePress={handleVenuePress}
+              venues={venues}
+              onScroll={handleScroll}
+              scrollEventThrottle={scrollEventThrottle}
+              contentInsetTop={filterBarHeight}
+            />
+          ) : (
+            <MapPanel
+              events={events}
+              onEventPress={onEventPress}
+              highlightedEventId={highlightedEventId}
+              onMarkerPress={handleMarkerPress}
+            />
+          )}
+        </View>
 
         <VenueModal
           visible={showVenueModal}
@@ -128,19 +159,25 @@ export default function MainLayout({
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background.secondary }]}>
+      {/* Absolutely positioned filter bar */}
+      <View style={styles.filterBarContainer} pointerEvents="box-none">
+        <FilterBar
+          filters={filters}
+          dispatchFilters={dispatchFilters}
+          availableFilterOptions={availableFilterOptions}
+          viewMode={activeTab}
+          onViewModeChange={handleViewModeChange}
+          resultsCount={events.length}
+          loading={loading}
+          animatedStyle={shouldAnimateFilterBar ? { transform: [{ translateY: headerTranslateY }] } : undefined}
+          onLayout={handleFilterBarLayout}
+          pointerEvents="auto"
+        />
+      </View>
 
-      <FilterBar
-        filters={filters}
-        dispatchFilters={dispatchFilters}
-        availableFilterOptions={availableFilterOptions}
-        viewMode={activeTab}
-        onViewModeChange={handleViewModeChange}
-        resultsCount={events.length}
-        loading={loading}
-      />
-      
-      {activeTab === 'gallery' ? (
-        <View style={styles.fullContainer}>
+      {/* Content */}
+      <View style={styles.contentContainer}>
+        {activeTab === 'gallery' ? (
           <GalleryView
             events={events}
             loading={loading}
@@ -148,10 +185,11 @@ export default function MainLayout({
             onEventHover={handleEventHover}
             highlightedEventId={highlightedEventId}
             venues={venues}
+            onScroll={handleScroll}
+            scrollEventThrottle={scrollEventThrottle}
+            contentInsetTop={filterBarHeight}
           />
-        </View>
-      ) : activeTab === 'list' ? (
-        <View style={styles.fullContainer}>
+        ) : activeTab === 'list' ? (
           <VenueGroupedListView
             events={events}
             loading={loading}
@@ -159,18 +197,19 @@ export default function MainLayout({
             onEventPress={onEventPress}
             onVenuePress={handleVenuePress}
             venues={venues}
+            onScroll={handleScroll}
+            scrollEventThrottle={scrollEventThrottle}
+            contentInsetTop={filterBarHeight}
           />
-        </View>
-      ) : (
-        <View style={styles.fullContainer}>
+        ) : (
           <MapPanel
             events={events}
             onEventPress={onEventPress}
             highlightedEventId={highlightedEventId}
             onMarkerPress={handleMarkerPress}
           />
-        </View>
-      )}
+        )}
+      </View>
 
       <VenueModal
         visible={showVenueModal}
@@ -185,6 +224,24 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     overflow: 'visible',
+  },
+  filterBarContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    overflow: 'hidden',
+    zIndex: 10,
+  },
+  scrollCaptureOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 20,
+  },
+  contentContainer: {
+    flex: 1,
   },
   fullContainer: {
     flex: 1,

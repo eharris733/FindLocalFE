@@ -97,7 +97,7 @@ export const WhatDropdown: React.FC<WhatDropdownProps> = ({
     {
       title: 'Popular',
       categories: EVENT_CATEGORY_OPTIONS.filter(cat => 
-        ['all', 'favorites', 'free'].includes(cat.id)
+        ['all', 'favorites', 'free', 'jazz'].includes(cat.id)
       )
     },
     {

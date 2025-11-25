@@ -1,5 +1,5 @@
-import React, { useCallback } from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useCallback, useState } from 'react';
+import { View, StyleSheet, TouchableOpacity, Animated, Modal, Pressable } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import {
   Text,
@@ -13,6 +13,7 @@ import {
 } from './ui';
 import type { FilterState, FilterAction } from '../hooks/useEvents';
 import { screenshotMarker } from '../utils/screenshot';
+import { useDeviceInfo } from '../hooks/useDeviceInfo';
 
 type ViewMode = 'gallery' | 'list' | 'map';
 
@@ -36,6 +37,9 @@ interface FilterBarProps {
   readonly onViewModeChange?: (mode: ViewMode) => void;
   readonly resultsCount?: number;
   readonly loading?: boolean;
+  readonly animatedStyle?: any;
+  readonly onLayout?: (height: number) => void;
+  readonly pointerEvents?: 'box-none' | 'none' | 'box-only' | 'auto';
 }
 
 import { useCityLocation } from "../context/CityContext";
@@ -49,15 +53,29 @@ export default function FilterBar({
   viewMode = 'list',
   onViewModeChange,
   resultsCount = 0,
-  loading = false
+  loading = false,
+  animatedStyle,
+  onLayout,
+  pointerEvents = 'auto'
 }: FilterBarProps) {
   const { theme } = useTheme();
   const { selectedCity } = useCityLocation();
+  const { screenWidth } = useDeviceInfo();
+  const [showMoreFilters, setShowMoreFilters] = useState(false);
+
+  // Determine if screen is very small (< 400px)
+  const isVerySmallScreen = screenWidth < 400;
 
   // Screenshot marker for development
   React.useEffect(() => {
     screenshotMarker('FilterBar redesign loaded');
   }, []);
+
+  // Measure filter bar height
+  const handleLayoutMeasure = useCallback((event: any) => {
+    const { height } = event.nativeEvent.layout;
+    onLayout?.(height);
+  }, [onLayout]);
 
   // Handle category change - maps UI categories to event_type filters only
   const handleCategoryChange = useCallback((categories: string[]) => {
@@ -82,7 +100,8 @@ export default function FilterBar({
     // Don't automatically set venue types - let user control that separately via Where filter
   }, [dispatchFilters]);
 
-  const handleDateRangeChange = useCallback((option: 'today' | 'tomorrow' | 'this_week' | 'custom') => {
+  const handleDateRangeChange = useCallback((option: 'today' | 'tomorrow' | 'this_week' | 'custom' | 'all') => {
+    if (option === 'all') return; // Ignore 'all' option if it exists
     dispatchFilters({ type: 'SET_DATE_RANGE', payload: option });
   }, [dispatchFilters]);
 
@@ -163,10 +182,18 @@ export default function FilterBar({
   const selectedSizes = Array.isArray(filters.size) ? filters.size : [];
 
   return (
-    <View style={[styles.container, { 
-      backgroundColor: theme.colors.background.primary,
-      borderBottomColor: theme.colors.border.light,
-    }]}>
+    <Animated.View 
+      style={[
+        styles.container, 
+        { 
+          backgroundColor: theme.colors.background.primary,
+          borderBottomColor: theme.colors.border.light,
+        },
+        animatedStyle
+      ]}
+      onLayout={handleLayoutMeasure}
+      pointerEvents={pointerEvents}
+    >
 
       {/* Search Bar */}
       <SearchAndToggle
@@ -176,48 +203,68 @@ export default function FilterBar({
 
       {/* When, What, Where Filter Row */}
       <View style={styles.mainFilters}>
-        {/* When Filter */}
-        <WhenDropdown
-          selectedOption={filters.dateRange === 'custom' ? 'custom' : filters.dateRange as any}
-          customDateRange={{ start: filters.startDate, end: filters.endDate }}
-          onOptionChange={handleDateRangeChange}
-          onCustomDateChange={handleCustomDateRangeChange}
-        />
-        
-        {/* What Filter */}
-        <WhatDropdown
-          selectedCategories={selectedCategories}
-          onCategoriesChange={handleCategoryChange}
-          multiSelect={true}
-          availableEventTypes={availableFilterOptions?.eventTypes}
-        />
+        <View style={styles.primaryFilters}>
+          {/* When Filter */}
+          <WhenDropdown
+            selectedOption={filters.dateRange === 'custom' ? 'custom' : filters.dateRange as any}
+            customDateRange={{ start: filters.startDate, end: filters.endDate }}
+            onOptionChange={handleDateRangeChange}
+            onCustomDateChange={handleCustomDateRangeChange}
+          />
+          
+          {/* What Filter */}
+          <WhatDropdown
+            selectedCategories={selectedCategories}
+            onCategoriesChange={handleCategoryChange}
+            multiSelect={true}
+            availableEventTypes={availableFilterOptions?.eventTypes}
+          />
 
-        {/* Where Filter */}
-        <WhereDropdown
-          selectedVenueTypes={filters.venueTypes}
-          selectedRegions={filters.regions}
-          selectedSizes={selectedSizes}
-          availableRegions={availableFilterOptions?.regions || []}
-          availableVenueTypes={availableFilterOptions?.venueTypes}
-          availableSizes={availableFilterOptions?.sizes}
-          onVenueTypesChange={handleVenueTypesChange}
-          onRegionsChange={handleRegionsChange}
-          onSizesChange={handleSizeChange}
-        />
+          {/* Conditionally render filters based on screen size */}
+          {!isVerySmallScreen && (
+            <>
+              {/* Where Filter */}
+              <WhereDropdown
+                selectedVenueTypes={filters.venueTypes}
+                selectedRegions={filters.regions}
+                selectedSizes={selectedSizes}
+                availableRegions={availableFilterOptions?.regions || []}
+                availableVenueTypes={availableFilterOptions?.venueTypes}
+                availableSizes={availableFilterOptions?.sizes}
+                onVenueTypesChange={handleVenueTypesChange}
+                onRegionsChange={handleRegionsChange}
+                onSizesChange={handleSizeChange}
+              />
 
-        {/* Price Filter */}
-        <PriceDropdown
-          selectedPrice={filters.price}
-          availablePriceRanges={availableFilterOptions?.priceRanges}
-          onPriceChange={handlePriceChange}
-        />
+              {/* Price Filter */}
+              <PriceDropdown
+                selectedPrice={filters.price}
+                availablePriceRanges={availableFilterOptions?.priceRanges}
+                onPriceChange={handlePriceChange}
+              />
 
-        {/* Time Filter */}
-        <TimeDropdown
-          selectedTime={filters.timeRange}
-          availableTimeRanges={availableFilterOptions?.timeRanges}
-          onTimeChange={handleTimeChange}
-        />
+              {/* Time Filter */}
+              <TimeDropdown
+                selectedTime={filters.timeRange}
+                availableTimeRanges={availableFilterOptions?.timeRanges}
+                onTimeChange={handleTimeChange}
+              />
+            </>
+          )}
+        </View>
+
+        {/* More Filters button for small screens - positioned to the right */}
+        {isVerySmallScreen && (
+          <View style={styles.moreFiltersWrapper}>
+            <TouchableOpacity
+              onPress={() => setShowMoreFilters(true)}
+            >
+              <Text variant="caption" color="secondary" style={styles.moreFiltersText}>
+                More Filters
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* Clear All Filters Button - Only show if filters are active */}
         {hasActiveFilters() && (
@@ -237,6 +284,72 @@ export default function FilterBar({
           </TouchableOpacity>
         )}
       </View>
+
+      {/* More Filters Modal */}
+      {isVerySmallScreen && (
+        <Modal
+          visible={showMoreFilters}
+          transparent={true}
+          animationType="slide"
+          onRequestClose={() => setShowMoreFilters(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <Pressable 
+              style={styles.modalBackdrop} 
+              onPress={() => setShowMoreFilters(false)}
+            />
+            <View style={[styles.modalContent, { backgroundColor: theme.colors.background.primary }]}>
+              <View style={[styles.modalHeader, { borderBottomColor: theme.colors.border.light }]}>
+                <Text variant="h3" color="primary">More Filters</Text>
+                <TouchableOpacity
+                  style={[styles.closeButton, { backgroundColor: theme.colors.background.secondary }]}
+                  onPress={() => setShowMoreFilters(false)}
+                >
+                  <Text variant="body1" color="primary">✕</Text>
+                </TouchableOpacity>
+              </View>
+              
+              <View style={styles.modalFilters}>
+                {/* Where Filter */}
+                <WhereDropdown
+                  selectedVenueTypes={filters.venueTypes}
+                  selectedRegions={filters.regions}
+                  selectedSizes={selectedSizes}
+                  availableRegions={availableFilterOptions?.regions || []}
+                  availableVenueTypes={availableFilterOptions?.venueTypes}
+                  availableSizes={availableFilterOptions?.sizes}
+                  onVenueTypesChange={handleVenueTypesChange}
+                  onRegionsChange={handleRegionsChange}
+                  onSizesChange={handleSizeChange}
+                />
+
+                {/* Price Filter */}
+                <PriceDropdown
+                  selectedPrice={filters.price}
+                  availablePriceRanges={availableFilterOptions?.priceRanges}
+                  onPriceChange={handlePriceChange}
+                />
+
+                {/* Time Filter */}
+                <TimeDropdown
+                  selectedTime={filters.timeRange}
+                  availableTimeRanges={availableFilterOptions?.timeRanges}
+                  onTimeChange={handleTimeChange}
+                />
+              </View>
+
+              <TouchableOpacity
+                style={[styles.applyButton, { backgroundColor: theme.colors.primary[600] }]}
+                onPress={() => setShowMoreFilters(false)}
+              >
+                <Text variant="body1" style={{ color: '#fff', fontWeight: '600' }}>
+                  Apply Filters
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+      )}
       
       {/* Results count and view toggle row */}
       <View style={styles.bottomRow}>
@@ -258,25 +371,36 @@ export default function FilterBar({
           />
         )}
       </View>
-    </View>
+    </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     borderBottomWidth: 1,
-    position: 'relative',
-    zIndex: 100,
     paddingHorizontal: 8,
     paddingVertical: 8,
   },
   mainFilters: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     gap: 6,
     paddingHorizontal: 4,
     paddingVertical: 8,
-    flexWrap: 'wrap', // Allow wrapping on small screens
+    flexWrap: 'wrap',
+  },
+  primaryFilters: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    flex: 1,
+    flexWrap: 'wrap',
+  },
+  moreFiltersWrapper: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: '100%',
   },
   moreFiltersRow: {
     alignItems: 'center',
@@ -319,5 +443,63 @@ const styles = StyleSheet.create({
   clearButtonText: {
     fontSize: 12,
     fontWeight: '500',
+  },
+  moreFiltersButton: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    minHeight: 36,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  moreFiltersText: {
+    fontSize: 13,
+    fontWeight: '600',
+    textDecorationLine: 'underline',
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  modalBackdrop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingBottom: 34,
+    maxHeight: '80%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+  },
+  closeButton: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalFilters: {
+    padding: 20,
+    gap: 12,
+  },
+  applyButton: {
+    marginHorizontal: 20,
+    marginTop: 16,
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
   },
 });
