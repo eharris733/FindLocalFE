@@ -1,7 +1,13 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { View, StyleSheet, Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '../context/ThemeContext';
 import FilterBar from './FilterBar';
+import OnboardingModal from './OnboardingModal';
+import { STORAGE_KEYS } from '../constants/storage-keys';
+import { useAuth } from '../hooks/useAuth';
+import { updateInterests } from '../api/profiles';
+import { logger } from '../utils/logger';
 import GalleryView from './GalleryView';
 import VenueGroupedListView from './VenueGroupedListView';
 import MapPanel from './MapPanel';
@@ -46,11 +52,54 @@ export default function MainLayout({
 }: Readonly<MainLayoutProps>) {
   const { theme } = useTheme();
   const { isMobile } = useDeviceInfo();
+  const { session } = useAuth();
   const [activeTab, setActiveTab] = useState<'gallery' | 'list' | 'map'>('list');
   const [highlightedEventId, setHighlightedEventId] = useState<string | undefined>();
   const [selectedVenue, setSelectedVenue] = useState<Venue | null>(null);
   const [showVenueModal, setShowVenueModal] = useState(false);
   const [filterBarHeight, setFilterBarHeight] = useState(0);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  // Check if user has completed onboarding
+  useEffect(() => {
+    const checkOnboarding = async () => {
+      try {
+        const completed = await AsyncStorage.getItem(STORAGE_KEYS.ONBOARDING_COMPLETED);
+        if (!completed) {
+          setShowOnboarding(true);
+        }
+      } catch (error) {
+        console.error('Error checking onboarding status:', error);
+      }
+    };
+    checkOnboarding();
+  }, []);
+
+  const handleOnboardingComplete = useCallback(async (selectedInterests?: string[]) => {
+    try {
+      // Save onboarding completion status
+      await AsyncStorage.setItem(STORAGE_KEYS.ONBOARDING_COMPLETED, 'true');
+      
+      // Save interests locally
+      if (selectedInterests && selectedInterests.length > 0) {
+        await AsyncStorage.setItem(STORAGE_KEYS.SELECTED_INTERESTS, JSON.stringify(selectedInterests));
+      }
+      
+      // Save interests to profile if user is logged in
+      if (session?.user?.id && selectedInterests && selectedInterests.length > 0) {
+        const { error } = await updateInterests(session.user.id, selectedInterests);
+        if (error) {
+          logger.error('Error saving interests to profile:', error);
+        }
+      }
+      
+      setShowOnboarding(false);
+    } catch (error) {
+      logger.error('Error saving onboarding data:', error);
+      // Still close the modal even if save fails
+      setShowOnboarding(false);
+    }
+  }, [session]);
 
   // Hook for scroll animation (only used for list and gallery views)
   const { headerTranslateY, handleScroll, scrollEventThrottle } = useScrollAnimation({
@@ -93,6 +142,7 @@ export default function MainLayout({
   if (isMobile) {
     // Mobile layout with tabs
     return (
+      
       <View style={[styles.container, { backgroundColor: theme.colors.background.secondary }]}>
         {/* Absolutely positioned filter bar */}
         <View style={styles.filterBarContainer} pointerEvents="box-none">
@@ -152,6 +202,11 @@ export default function MainLayout({
           visible={showVenueModal}
           venue={selectedVenue}
           onClose={handleCloseVenueModal}
+        />
+
+        <OnboardingModal
+          visible={showOnboarding}
+          onComplete={handleOnboardingComplete}
         />
       </View>
     );
@@ -215,6 +270,11 @@ export default function MainLayout({
         visible={showVenueModal}
         venue={selectedVenue}
         onClose={handleCloseVenueModal}
+      />
+
+      <OnboardingModal
+        visible={showOnboarding}
+        onComplete={handleOnboardingComplete}
       />
     </View>
   );

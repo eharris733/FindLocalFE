@@ -9,6 +9,7 @@ export interface Profile {
   updated_at?: string | null;
   favorite_events?: string[] | null; // Array of event IDs
   preferred_city?: string | null; // "Boston" or "New York"
+  interests?: string[] | null; // User's selected interests/communities
   marketing_opt_in?: boolean | null; // User consent for marketing emails
   agreed_to_terms?: boolean | null; // User agreed to Terms of Service
   agreed_to_terms_date?: string | null; // Server-side timestamp (ISO string) - cannot be manipulated by client
@@ -39,6 +40,16 @@ export async function updatePreferredCity(userId: string, city: string): Promise
   const res = await supabase
     .from('profiles')
     .update({ preferred_city: city })
+    .eq('id', userId)
+    .select()
+    .maybeSingle();
+  return { data: res.data as Profile | null, error: res.error };
+}
+
+export async function updateInterests(userId: string, interests: string[]): Promise<{ data: Profile | null; error: any }> {
+  const res = await supabase
+    .from('profiles')
+    .update({ interests })
     .eq('id', userId)
     .select()
     .maybeSingle();
