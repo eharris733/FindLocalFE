@@ -1,7 +1,7 @@
 import {useCityLocation} from "../context/CityContext";
 import {useFavorites} from "../context/FavoritesContext";
 import {useEvents} from "../hooks/useEvents";
-import {StatusBar, StyleSheet, View} from "react-native";
+import {StatusBar, StyleSheet, View, Text} from "react-native";
 import MainLayout from "../components/MainLayout";
 import EventModal from "../components/EventModal";
 import React, {useState} from "react";
@@ -9,6 +9,7 @@ import {useTheme} from "../context/ThemeContext";
 import type {Event} from "../types/events";
 import { analytics } from '../utils/analytics';
 import { useFocusEffect } from '@react-navigation/native';
+import { StructuredData } from '../components/StructuredData';
 
 export default function IndexRoute() {
     const { theme, isDark } = useTheme();
@@ -61,10 +62,26 @@ export default function IndexRoute() {
 
     return (
         <View style={[styles.container, { backgroundColor: theme.colors.background.secondary }]}>
+        <StructuredData city={selectedCity} />
         <StatusBar
             barStyle={isDark ? "light-content" : "dark-content"}
             backgroundColor={theme.colors.background.primary}
         />
+        {/* Hidden H1 for SEO - positioned off-screen but accessible to search engines */}
+        <Text 
+            accessibilityRole="header" 
+            aria-level={1}
+            style={{
+                position: 'absolute',
+                left: -10000,
+                top: 'auto',
+                width: 1,
+                height: 1,
+                overflow: 'hidden'
+            }}
+        >
+            Find Local Events in {selectedCity || 'Your City'}: Concerts, Comedy, Theater & More
+        </Text>
         <MainLayout
             events={filteredEvents}
             loading={loading}
