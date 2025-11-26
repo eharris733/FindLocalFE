@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useReducer } from 'react';
 import type { Event, FilterState, FilterAction } from '../types/events';
 import type { Venue } from '../types/venues';
 import { getEvents } from '../api/events';
-import { getAllVenues, getVenuesByCity } from '../api/venues';
+import { getVenuesByCity } from '../api/venues';
 import { 
   startOfDay, 
   endOfDay, 
@@ -164,11 +164,18 @@ export const useEvents = ({ selectedCity, favoriteEventIds = [] }: UseEventsProp
 
   useEffect(() => {
     const fetchEvents = async () => {
+      // Don't fetch if no city is selected
+      if (!selectedCity) {
+        setLoading(false);
+        setEvents([]);
+        return;
+      }
+
       setLoading(true);
       setEvents([]); // Clear old events immediately when city changes
       setError(null);
       try {
-        // Fetch events filtered by city if provided
+        // Fetch events filtered by city
         const data = await getEvents(selectedCity);
         setEvents(data || []); 
       } catch (err) {
@@ -190,13 +197,18 @@ export const useEvents = ({ selectedCity, favoriteEventIds = [] }: UseEventsProp
   // Fetch venues for filtering
   useEffect(() => {
     const fetchVenues = async () => {
+      // Don't fetch if no city is selected
+      if (!selectedCity) {
+        setVenuesLoading(false);
+        setVenues([]);
+        return;
+      }
+
       setVenuesLoading(true);
       setVenues([]); // Clear old venues immediately when city changes
       try {
-        // Use selectedCity instead of hardcoded 'brooklyn'
-        const venueData = selectedCity 
-          ? await getVenuesByCity(selectedCity)
-          : await getAllVenues();
+        // Fetch venues for the selected city only
+        const venueData = await getVenuesByCity(selectedCity);
         setVenues(venueData);
       } catch (err) {
         logger.error('Failed to fetch venues:', err);

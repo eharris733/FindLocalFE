@@ -145,7 +145,7 @@ export default function MainLayout({
       
       <View style={[styles.container, { backgroundColor: theme.colors.background.secondary }]}>
         {/* Absolutely positioned filter bar */}
-        <View style={styles.filterBarContainer} pointerEvents="box-none">
+        <View style={styles.filterBarContainer}>
           <FilterBar
             filters={filters}
             dispatchFilters={dispatchFilters}
@@ -160,11 +160,8 @@ export default function MainLayout({
           />
         </View>
 
-        {/* Content with scroll capture overlay on top of filter bar area */}
+        {/* Content */}
         <View style={styles.contentContainer}>
-          {/* Invisible scroll capture area that overlays the filter bar */}
-          <View style={[styles.scrollCaptureOverlay, { height: filterBarHeight }]} />
-          
           {activeTab === 'gallery' ? (
             <GalleryView
               events={events}
@@ -215,7 +212,7 @@ export default function MainLayout({
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background.secondary }]}>
       {/* Absolutely positioned filter bar */}
-      <View style={styles.filterBarContainer} pointerEvents="box-none">
+      <View style={styles.filterBarContainer}>
         <FilterBar
           filters={filters}
           dispatchFilters={dispatchFilters}
@@ -290,15 +287,8 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    overflow: 'hidden',
     zIndex: 10,
-  },
-  scrollCaptureOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    zIndex: 20,
+    elevation: 10, // Android shadow/elevation
   },
   contentContainer: {
     flex: 1,

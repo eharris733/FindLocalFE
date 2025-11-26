@@ -1,12 +1,18 @@
-
-import { SplashScreen } from 'expo-router'
-import {useAuth} from "../hooks/useAuth";
-SplashScreen.preventAutoHideAsync()
+import * as SplashScreen from 'expo-splash-screen';
+import { useEffect } from 'react';
+import { useAuth } from "../hooks/useAuth";
+import { logger } from "../utils/logger";
 
 export function SplashScreenController() {
-    const { isLoading } = useAuth()
-    if (!isLoading) {
-        SplashScreen.hideAsync()
-    }
-    return null
+    const { isLoading } = useAuth();
+    
+    useEffect(() => {
+        if (!isLoading) {
+            SplashScreen.hideAsync().catch((error) => {
+                logger.warn('SplashScreen.hideAsync failed in controller:', error);
+            });
+        }
+    }, [isLoading]);
+    
+    return null;
 }

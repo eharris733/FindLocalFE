@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
-import { View, TouchableOpacity, StyleSheet, Platform, Modal, SafeAreaView, Pressable } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Platform, Modal, Pressable } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../../context/ThemeContext';
 import { Text } from './Text';
 import { Calendar } from './Calendar';

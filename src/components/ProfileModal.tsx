@@ -4,13 +4,13 @@ import {
   Modal,
   TouchableOpacity,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
   Linking,
   Platform,
   ActivityIndicator,
   Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../context/ThemeContext';
 import { Text, Card, Button, CityPicker } from './ui';
 import { ThemeToggle } from './ui/ThemeToggle';

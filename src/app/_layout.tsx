@@ -21,7 +21,10 @@ import FeedbackModal from "../components/FeedbackModal";
 import { View } from 'react-native';
 import { analytics } from '../utils/analytics';
 
-SplashScreen.preventAutoHideAsync();
+// Prevent auto hide with error handling for Expo Go
+SplashScreen.preventAutoHideAsync().catch((error) => {
+    logger.warn('SplashScreen.preventAutoHideAsync failed:', error);
+});
 
 export default function RootLayout() {
     const [fontTimeout, setFontTimeout] = useState(false);
@@ -57,7 +60,9 @@ export default function RootLayout() {
 
         // Hide splash screen when fonts are loaded or on timeout/error
         if (fontsLoaded || fontError || fontTimeout) {
-            SplashScreen.hideAsync();
+            SplashScreen.hideAsync().catch((error) => {
+                logger.warn('SplashScreen.hideAsync failed:', error);
+            });
         }
         
         return () => clearTimeout(timeout);
@@ -111,7 +116,6 @@ function RootNavigator() {
                 <Stack.Protected guard={!isLoggedIn}>
                     <Stack.Screen name="user/signin" />
                 </Stack.Protected>
-                <Stack.Screen name="+not-found" />
             </Stack>
             <FeedbackModal visible={showFeedbackModal} onClose={handleCloseFeedback} />
         </View>

@@ -34,7 +34,7 @@ interface CityProviderProps {
 }
 
 export const CityProvider: React.FC<CityProviderProps> = ({ children }) => {
-    const [selectedCity, setSelectedCity] = useState('Boston'); // City preference: "Boston" or "New York"
+    const [selectedCity, setSelectedCity] = useState(''); // Start empty, load from storage
     const [availableRegions, setAvailableRegions] = useState<string[]>([]); // Regions for selected city
     const [selectedRegions, setSelectedRegions] = useState<string[]>([]); // Selected regions for filtering
     const [allCityData, setAllCityData] = useState<CityData[]>([]); // All cities with their regions
@@ -149,12 +149,18 @@ export const CityProvider: React.FC<CityProviderProps> = ({ children }) => {
                     setAvailableRegions(regions);
                     logger.info('✅ Loaded saved city preference:', savedCity);
                 } else {
-                    // Default to Boston, fetch its regions
+                    // Default to Boston only if no saved preference
+                    setSelectedCity('Boston');
                     const regions = await fetchRegionsForCity('Boston');
                     setAvailableRegions(regions);
+                    logger.info('✅ No saved preference, defaulting to Boston');
                 }
             } catch (error) {
                 logger.error('Error loading city preference:', error);
+                // Fallback to Boston on error
+                setSelectedCity('Boston');
+                const regions = await fetchRegionsForCity('Boston');
+                setAvailableRegions(regions);
             } finally {
                 setHasLoadedPreference(true);
             }
