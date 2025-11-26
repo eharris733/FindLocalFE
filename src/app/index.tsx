@@ -1,9 +1,7 @@
 import {useCityLocation} from "../context/CityContext";
 import {useFavorites} from "../context/FavoritesContext";
 import {useEvents} from "../hooks/useEvents";
-import {Text} from "../components/ui";
-import {StatusBar, StyleSheet} from "react-native";
-import { SafeAreaView } from 'react-native-safe-area-context';
+import {StatusBar, StyleSheet, View} from "react-native";
 import MainLayout from "../components/MainLayout";
 import EventModal from "../components/EventModal";
 import React, {useState} from "react";
@@ -62,7 +60,7 @@ export default function IndexRoute() {
     };
 
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background.secondary }]}>
+        <View style={[styles.container, { backgroundColor: theme.colors.background.secondary }]}>
         <StatusBar
             barStyle={isDark ? "light-content" : "dark-content"}
             backgroundColor={theme.colors.background.primary}
@@ -86,7 +84,7 @@ export default function IndexRoute() {
             event={selectedEvent}
             onClose={handleCloseEventModal}
         />
-    </SafeAreaView>);
+    </View>);
 }
 
 const styles = StyleSheet.create({
