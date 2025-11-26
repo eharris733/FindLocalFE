@@ -13,7 +13,7 @@ interface AnalyticsEvent {
 
 interface EventMetric {
   eventId: string;
-  metricType: 'view' | 'click' | 'favorite' | 'unfavorite' | 'share' | 'modal_open' | 'modal_close';
+  metricType: 'view' | 'click' | 'favorite' | 'unfavorite' | 'share' | 'modal_open' | 'modal_close' | 'calendar_export';
   city?: string;
   durationMs?: number;
   source?: 'list' | 'map' | 'gallery' | 'search';
