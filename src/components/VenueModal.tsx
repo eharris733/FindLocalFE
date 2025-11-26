@@ -13,6 +13,8 @@ import { useTheme } from '../context/ThemeContext';
 import { Text } from './ui';
 import type { Venue } from '../types/venues';
 import { getCompactVenueSizeLabel } from '../utils/venueUtils';
+import { analytics } from '../utils/analytics';
+import { useModalTimeTracking } from '../hooks/useTimeTracking';
 
 interface VenueModalProps {
   visible: boolean;
@@ -22,11 +24,46 @@ interface VenueModalProps {
 
 export default function VenueModal({ visible, venue, onClose }: VenueModalProps) {
   const { theme } = useTheme();
+  const { getDuration } = useModalTimeTracking();
+
+  React.useEffect(() => {
+    if (visible && venue) {
+      // Track venue modal open
+      analytics.trackVenueMetric({
+        venueId: venue.id,
+        metricType: 'modal_open',
+        city: venue.city,
+        source: 'event_modal',
+        metadata: {
+          venueType: venue.type,
+          hasImage: !!venue.image,
+        },
+      });
+    } else if (!visible && venue) {
+      // Track modal close with duration
+      const duration = getDuration();
+      analytics.trackVenueMetric({
+        venueId: venue.id,
+        metricType: 'modal_close',
+        city: venue.city,
+        durationMs: duration,
+        source: 'event_modal',
+      });
+    }
+  }, [visible, venue]);
 
   if (!venue) return null;
 
   const handleVisitWebsite = () => {
     if (venue.url) {
+      // Track website click
+      analytics.trackVenueMetric({
+        venueId: venue.id,
+        metricType: 'website_click',
+        city: venue.city,
+        source: 'event_modal',
+      });
+      
       Linking.openURL(venue.url);
     }
   };

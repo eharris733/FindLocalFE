@@ -8,6 +8,8 @@ import EventModal from "../components/EventModal";
 import React, {useState} from "react";
 import {useTheme} from "../context/ThemeContext";
 import type {Event} from "../types/events";
+import { analytics } from '../utils/analytics';
+import { useFocusEffect } from '@react-navigation/native';
 
 export default function IndexRoute() {
     const { theme, isDark } = useTheme();
@@ -33,6 +35,20 @@ export default function IndexRoute() {
     React.useEffect(() => {
         dispatchFilters({ type: 'SET_REGIONS', payload: selectedRegions });
     }, [selectedRegions, dispatchFilters]);
+
+    // Track page views when screen comes into focus
+    useFocusEffect(
+        React.useCallback(() => {
+            analytics.trackPageView('/', {
+                city: selectedCity,
+            });
+        }, [selectedCity])
+    );
+
+    // Track city changes
+    React.useEffect(() => {
+        analytics.trackCityChange(selectedCity);
+    }, [selectedCity]);
 
     const handleEventPress = (event: Event) => {
         setSelectedEvent(event);

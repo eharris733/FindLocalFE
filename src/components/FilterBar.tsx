@@ -45,6 +45,7 @@ interface FilterBarProps {
 import { useCityLocation } from "../context/CityContext";
 import { getEventTypesForCategory } from '../constants/eventCategories';
 import { ALL_VENUES } from '../constants';
+import { analytics } from '../utils/analytics';
 
 export default function FilterBar({ 
   filters, 
@@ -97,8 +98,18 @@ export default function FilterBar({
     }
     
     dispatchFilters({ type: 'SET_EVENT_TYPES', payload: Array.from(eventTypes) });
-    // Don't automatically set venue types - let user control that separately via Where filter
-  }, [dispatchFilters]);
+    
+    // Track category filter usage
+    categories.forEach(cat => {
+      analytics.trackFilterUsage({
+        filterType: 'category',
+        filterValue: cat,
+        applied: true,
+        city: selectedCity,
+        resultsCount,
+      });
+    });
+  }, [dispatchFilters, selectedCity, resultsCount]);
 
   const handleDateRangeChange = useCallback((option: 'today' | 'tomorrow' | 'this_week' | 'custom' | 'all') => {
     if (option === 'all') return; // Ignore 'all' option if it exists
@@ -107,11 +118,19 @@ export default function FilterBar({
 
   const handleSearchChange = useCallback((text: string) => {
     dispatchFilters({ type: 'SET_SEARCH_TEXT', payload: text });
-  }, [dispatchFilters]);
+    
+    // Track search if text is not empty
+    if (text && text.length >= 3) {
+      analytics.trackSearch(text, resultsCount, selectedCity);
+    }
+  }, [dispatchFilters, resultsCount, selectedCity]);
 
   const handleViewModeChange = useCallback((mode: ViewMode) => {
+    // Track view mode change
+    analytics.trackViewModeChange(mode, selectedCity);
+    
     onViewModeChange?.(mode);
-  }, [onViewModeChange]);
+  }, [onViewModeChange, selectedCity]);
 
   const handleCustomDateRangeChange = useCallback((range: DateRange) => {
     dispatchFilters({ type: 'SET_START_DATE', payload: range.start });
@@ -132,7 +151,22 @@ export default function FilterBar({
 
   const handleRegionsChange = useCallback((regions: string[]) => {
     dispatchFilters({ type: 'SET_REGIONS', payload: regions });
-  }, [dispatchFilters]);
+    
+    // Track community/region selections
+    if (regions.length > 0) {
+      analytics.trackCommunitySelection(regions, selectedCity);
+      
+      regions.forEach(region => {
+        analytics.trackFilterUsage({
+          filterType: 'region',
+          filterValue: region,
+          applied: true,
+          city: selectedCity,
+          resultsCount,
+        });
+      });
+    }
+  }, [dispatchFilters, selectedCity, resultsCount]);
 
   const handleVenueTypesChange = useCallback((venueTypes: string[]) => {
     dispatchFilters({ type: 'SET_VENUE_TYPES', payload: venueTypes });

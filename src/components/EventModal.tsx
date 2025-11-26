@@ -19,6 +19,8 @@ import { getVenueSizeLabel } from '../utils/venueUtils';
 import { EVENT_NO_DESCRIPTION_FALLBACK } from '../utils/eventUtils';
 import { logger } from '../utils/logger';
 import { getGenresFromEventTypes, getGenreDisplayLabel } from '../constants/eventCategories';
+import { analytics } from '../utils/analytics';
+import { useModalTimeTracking } from '../hooks/useTimeTracking';
 
 interface EventModalProps {
   visible: boolean;
@@ -56,10 +58,33 @@ const EventModal: React.FC<EventModalProps> = ({ visible, event, onClose }) => {
   const [error, setError] = useState<string | null>(null);
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [showFullVenueDescription, setShowFullVenueDescription] = useState(false);
+  const { getDuration } = useModalTimeTracking();
 
   useEffect(() => {
     if (visible && event) {
+      // Track modal open
+      analytics.trackEventMetric({
+        eventId: event.id,
+        metricType: 'modal_open',
+        city: event.city,
+        metadata: {
+          hasVenue: !!event.venue_id,
+        },
+      });
+      
       fetchVenueData();
+    } else if (!visible && event) {
+      // Track modal close with duration
+      const duration = getDuration();
+      analytics.trackEventMetric({
+        eventId: event.id,
+        metricType: 'modal_close',
+        city: event.city,
+        durationMs: duration,
+        metadata: {
+          viewedVenue: !!venue,
+        },
+      });
     }
   }, [visible, event]);
 

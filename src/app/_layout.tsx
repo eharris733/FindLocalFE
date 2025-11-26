@@ -19,6 +19,7 @@ import { logger } from "../utils/logger";
 import FeedbackBanner from "../components/FeedbackBanner";
 import FeedbackModal from "../components/FeedbackModal";
 import { View } from 'react-native';
+import { analytics } from '../utils/analytics';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -31,6 +32,20 @@ export default function RootLayout() {
         WorkSans_600SemiBold,
         WorkSans_700Bold,
     });
+
+    useEffect(() => {
+        // Initialize analytics
+        analytics.initialize().catch(err => {
+            logger.error('Failed to initialize analytics:', err);
+        });
+        
+        // Cleanup on unmount
+        return () => {
+            analytics.cleanup().catch(err => {
+                logger.error('Failed to cleanup analytics:', err);
+            });
+        };
+    }, []);
 
     useEffect(() => {
         const timeout = setTimeout(() => {
