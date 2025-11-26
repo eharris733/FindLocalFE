@@ -140,9 +140,10 @@ class AnalyticsService {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       
+      // Use upsert to handle case where session already exists (e.g., after reload)
       const { error } = await supabase
         .from('session_metrics')
-        .insert({
+        .upsert({
           session_id: this.sessionId,
           user_id: user?.id || null,
           platform: Platform.OS,
@@ -153,6 +154,9 @@ class AnalyticsService {
             modelName: Device.modelName,
             brand: Device.brand,
           },
+        }, {
+          onConflict: 'session_id',
+          ignoreDuplicates: false, // Update if exists
         });
 
       if (error) {
@@ -165,6 +169,10 @@ class AnalyticsService {
 
   private async updateSession(updates: SessionUpdate) {
     if (!this.analyticsEnabled) return;
+    if (!this.sessionId) {
+      logger.warn('updateSession called before session initialized');
+      return;
+    }
 
     try {
       const updateData: any = { last_activity: new Date().toISOString() };
@@ -328,7 +336,12 @@ class AnalyticsService {
         logger.error('Error tracking event metric:', error);
       }
 
-      // Update session metrics
+      // Update session metrics (only if session is initialized)
+      if (!this.sessionId) {
+        logger.warn('trackEventMetric called before session initialized');
+        return;
+      }
+
       if (metricType === 'view' || metricType === 'modal_open') {
         const { data } = await supabase
           .from('session_metrics')
@@ -381,7 +394,12 @@ class AnalyticsService {
         logger.error('Error tracking venue metric:', error);
       }
 
-      // Update session metrics
+      // Update session metrics (only if session is initialized)
+      if (!this.sessionId) {
+        logger.warn('trackVenueMetric called before session initialized');
+        return;
+      }
+
       if (metricType === 'modal_open') {
         const { data } = await supabase
           .from('session_metrics')
@@ -448,7 +466,12 @@ class AnalyticsService {
       ...properties,
     });
 
-    // Update session page view count
+    // Update session page view count (only if session is initialized)
+    if (!this.sessionId) {
+      logger.warn('trackPageView called before session initialized');
+      return;
+    }
+
     const { data } = await supabase
       .from('session_metrics')
       .select('page_views')
