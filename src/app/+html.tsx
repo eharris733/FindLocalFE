@@ -8,6 +8,9 @@ export default function Document() {
         <meta name="description" content="Discover local events in your city. Find concerts, comedy shows, theater, dance performances, and more. Browse thousands of events in Boston and New York, updated daily." />
         <meta name="keywords" content="local events, concerts, comedy shows, theater, live music, Boston events, New York events" />
         
+        {/* Canonical URL */}
+        <link rel="canonical" href="https://findlocal.community" />
+        
         {/* Open Graph / Facebook */}
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://findlocal.community" />
