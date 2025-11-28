@@ -125,6 +125,32 @@ export async function getEventsByDateRange(
   }
 }
 
+export async function getEventById(eventId: string): Promise<Event | null> {
+  try {
+    const { data, error } = await supabase
+      .from('events_gold')
+      .select('*')
+      .eq('id', eventId)
+      .single();
+
+    if (error) {
+      logger.error('Error fetching event by ID from Supabase:', error);
+      throw new Error(`Supabase error: ${error.message}`);
+    }
+
+    if (!data) {
+      logger.warn(`No event found with ID: ${eventId}`);
+      return null;
+    }
+
+    logger.info(`Fetched event with ID: ${eventId}`);
+    return data as Event;
+  } catch (error: any) {
+    logger.error('Error fetching event by ID:', error);
+    throw new Error(`Failed to fetch event: ${error.message}`);
+  }
+}
+
 export async function getAvailableCities(): Promise<string[]> {
   try {
     //console.log('🏙️ Fetching available cities from events_gold table...');

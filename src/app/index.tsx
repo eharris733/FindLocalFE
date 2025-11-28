@@ -3,24 +3,22 @@ import {useFavorites} from "../context/FavoritesContext";
 import {useEvents} from "../hooks/useEvents";
 import {StatusBar, StyleSheet, View, Text} from "react-native";
 import MainLayout from "../components/MainLayout";
-import EventModal from "../components/EventModal";
-import React, {useState} from "react";
+import React from "react";
 import {useTheme} from "../context/ThemeContext";
 import type {Event} from "../types/events";
 import { analytics } from '../utils/analytics';
 import { useFocusEffect } from '@react-navigation/native';
 import { StructuredData } from '../components/StructuredData';
+import { useRouter } from 'expo-router';
 
 export default function IndexRoute() {
     const { theme, isDark } = useTheme();
     const { selectedCity, selectedRegions} = useCityLocation();
     const { favoriteEventIds } = useFavorites();
-    const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
-    const [showEventModal, setShowEventModal] = useState(false);
+    const router = useRouter();
 
     const {
         loading,
-        error,
         filteredEvents,
         filters,
         dispatchFilters,
@@ -51,13 +49,7 @@ export default function IndexRoute() {
     }, [selectedCity]);
 
     const handleEventPress = (event: Event) => {
-        setSelectedEvent(event);
-        setShowEventModal(true);
-    };
-
-    const handleCloseEventModal = () => {
-        setShowEventModal(false);
-        setSelectedEvent(null);
+        router.push(`/event/${event.id}`);
     };
 
     return (
@@ -93,13 +85,6 @@ export default function IndexRoute() {
             venuesLoading={venuesLoading}
             availableFilterOptions={availableFilterOptions}
             onEventPress={handleEventPress}
-        />
-
-        {/* Event Modal */}
-        <EventModal
-            visible={showEventModal}
-            event={selectedEvent}
-            onClose={handleCloseEventModal}
         />
     </View>);
 }
