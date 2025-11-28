@@ -9,6 +9,7 @@ import {
     WorkSans_600SemiBold, WorkSans_700Bold
 } from "@expo-google-fonts/work-sans";
 import {CityProvider} from "../context/CityContext";
+import {CommunityProvider} from "../context/CommunityContext";
 import {ThemeProvider} from "../context/ThemeContext";
 import {FavoritesProvider} from "../context/FavoritesContext";
 import Header from "../components/Header";
@@ -74,10 +75,12 @@ export default function RootLayout() {
         <ThemeProvider>
             <AuthProvider>
                 <CityProvider>
-                    <FavoritesProvider>
-                        <SplashScreenController />
-                        <RootNavigator />
-                    </FavoritesProvider>
+                    <CommunityProvider>
+                        <FavoritesProvider>
+                            <SplashScreenController />
+                            <RootNavigator />
+                        </FavoritesProvider>
+                    </CommunityProvider>
                 </CityProvider>
             </AuthProvider>
         </ThemeProvider>

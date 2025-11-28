@@ -1,4 +1,5 @@
 import {useCityLocation} from "../context/CityContext";
+import {useCommunity} from "../context/CommunityContext";
 import {useFavorites} from "../context/FavoritesContext";
 import {useEvents} from "../hooks/useEvents";
 import {StatusBar, StyleSheet, View, Text} from "react-native";
@@ -10,10 +11,12 @@ import { analytics } from '../utils/analytics';
 import { useFocusEffect } from '@react-navigation/native';
 import { StructuredData } from '../components/StructuredData';
 import { useRouter } from 'expo-router';
+import { logger } from '../utils/logger';
 
 export default function IndexRoute() {
     const { theme, isDark } = useTheme();
     const { selectedCity, selectedRegions} = useCityLocation();
+    const { selectedCommunities, allCommunities } = useCommunity();
     const { favoriteEventIds } = useFavorites();
     const router = useRouter();
 
@@ -33,6 +36,24 @@ export default function IndexRoute() {
     React.useEffect(() => {
         dispatchFilters({ type: 'SET_REGIONS', payload: selectedRegions });
     }, [selectedRegions, dispatchFilters]);
+
+    // Sync selected communities to filters
+    React.useEffect(() => {
+        logger.info('🎭 Selected communities changed in index:', selectedCommunities);
+        
+        // Convert community names to IDs
+        if (selectedCommunities.length === 0) {
+            // If no communities selected, show all (empty filter)
+            dispatchFilters({ type: 'SET_COMMUNITY_IDS', payload: [] });
+        } else {
+            const communityIds = selectedCommunities
+                .map(name => allCommunities.find(c => c.name === name)?.id)
+                .filter(Boolean) as string[];
+            
+            logger.info('🎭 Setting community IDs filter:', communityIds);
+            dispatchFilters({ type: 'SET_COMMUNITY_IDS', payload: communityIds });
+        }
+    }, [selectedCommunities, allCommunities, dispatchFilters]);
 
     // Track page views when screen comes into focus
     useFocusEffect(

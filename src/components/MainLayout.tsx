@@ -33,7 +33,8 @@ interface MainLayoutProps {
     regions: string[];
     priceRanges: string[];
     timeRanges: string[];
-    eventTypes: string[];
+    communityIds: string[];
+    labels: string[];
   };
   onEventPress: (event: Event) => void;
 }

@@ -1,154 +1,78 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, TouchableOpacity, StyleSheet, ScrollView, Pressable, Modal } from 'react-native';
 import { useTheme } from '../../context/ThemeContext';
 import { Text } from './Text';
-import { EVENT_CATEGORY_OPTIONS } from '../../constants/eventCategories';
+import { useCommunity } from '../../context/CommunityContext';
+import { logger } from '../../utils/logger';
 
 interface WhatDropdownProps {
-  selectedCategories: string[];
-  onCategoriesChange: (categories: string[]) => void;
+  selectedLabels?: string[];
+  onLabelsChange?: (labels: string[]) => void;
+  // Legacy props for backward compatibility
+  selectedCategories?: string[];
+  onCategoriesChange?: (categories: string[]) => void;
   multiSelect?: boolean;
-  availableEventTypes?: string[]; // Event types that have events available
+  availableEventTypes?: string[];
 }
 
 export const WhatDropdown: React.FC<WhatDropdownProps> = ({
+  selectedLabels: selectedLabelsProp,
+  onLabelsChange: onLabelsChangeProp,
+  // Legacy props
   selectedCategories,
   onCategoriesChange,
-  multiSelect = true,
+  multiSelect,
   availableEventTypes,
 }) => {
   const { theme } = useTheme();
+  const { selectedCommunities, allCommunities, labelsForCity } = useCommunity();
   const [showModal, setShowModal] = useState(false);
 
-  // Helper to check if a category is available based on its event types
-  const isCategoryAvailable = (categoryId: string): boolean => {
-    // 'all' and 'favorites' are always available
-    if (categoryId === 'all' || categoryId === 'favorites') return true;
-    
-    // If no filter data available, show all categories
-    if (!availableEventTypes || availableEventTypes.length === 0) return true;
-    
-    const category = EVENT_CATEGORY_OPTIONS.find(c => c.id === categoryId);
-    if (!category) return true;
-    
-    // For music genre categories, check if the genre exists in availableEventTypes
-    if (category.musicGenre) {
-      const genreInEventTypes = availableEventTypes.includes(category.musicGenre);
-      return genreInEventTypes;
-    }
-    
-    // If category has no event types defined, it's available
-    if (!category.eventTypes || category.eventTypes.length === 0) return true;
-    
-    // Check if any of the category's event types are available
-    return category.eventTypes.some(eventType => 
-      availableEventTypes.includes(eventType)
-    );
-  };
+  // Use new props if provided, otherwise fall back to legacy props
+  const selectedLabels = selectedLabelsProp ?? selectedCategories ?? [];
+  const onLabelsChange = onLabelsChangeProp ?? onCategoriesChange ?? (() => {});
 
-  const handleCategoryToggle = (categoryId: string) => {
-    if (categoryId === 'all') {
-      onCategoriesChange(['all']);
-      return;
+  // Get labels for selected communities only
+  const availableLabels = useMemo(() => {
+    if (selectedCommunities.length === 0) {
+      // Show all labels if all communities selected
+      logger.info('📋 WhatDropdown: Showing all labels', Object.keys(labelsForCity).length, 'communities');
+      return labelsForCity;
     }
 
-    if (!multiSelect) {
-      onCategoriesChange([categoryId]);
-      setShowModal(false);
-      return;
-    }
-
-    // Multi-select logic
-    let newSelection = selectedCategories.filter(c => c !== 'all');
-    
-    if (newSelection.includes(categoryId)) {
-      // Remove category
-      newSelection = newSelection.filter(c => c !== categoryId);
-      
-      // If nothing selected, default to 'all'
-      if (newSelection.length === 0) {
-        onCategoriesChange(['all']);
-      } else {
-        onCategoriesChange(newSelection);
+    // Filter labels to only selected communities
+    const filtered: typeof labelsForCity = {};
+    selectedCommunities.forEach(communityName => {
+      if (labelsForCity[communityName]) {
+        filtered[communityName] = labelsForCity[communityName];
       }
-    } else {
-      // Add category
-      newSelection = [...newSelection, categoryId];
-      onCategoriesChange(newSelection);
-    }
+    });
+    logger.info('📋 WhatDropdown: Filtered labels for', selectedCommunities, ':', Object.keys(filtered).length, 'communities');
+    return filtered;
+  }, [selectedCommunities, labelsForCity]);
+
+  const handleLabelToggle = (label: string) => {
+    const newSelection = selectedLabels.includes(label)
+      ? selectedLabels.filter(l => l !== label)
+      : [...selectedLabels, label];
+    
+    onLabelsChange(newSelection);
   };
 
-  // Get display text
   const getDisplayText = () => {
-    if (selectedCategories.includes('all') || selectedCategories.length === 0) {
+    if (!selectedLabels || selectedLabels.length === 0) {
       return 'All Events';
     }
-    
-    if (selectedCategories.length === 1) {
-      const category = EVENT_CATEGORY_OPTIONS.find(c => c.id === selectedCategories[0]);
-      return category?.label || selectedCategories[0];
+    if (selectedLabels.length === 1) {
+      return selectedLabels[0];
     }
-    
-    return `${selectedCategories.length} categories`;
+    return `${selectedLabels.length} labels`;
   };
 
-  // Group categories by theme
-  const categoryGroups = [
-    {
-      title: 'Popular',
-      categories: EVENT_CATEGORY_OPTIONS.filter(cat => 
-        ['all', 'favorites', 'free', 'jazz'].includes(cat.id)
-      )
-    },
-    {
-      title: 'Music',
-      categories: EVENT_CATEGORY_OPTIONS.filter(cat => 
-        cat.id === 'music' || cat.musicGenre !== undefined
-      )
-    },
-    {
-      title: 'Performance & Entertainment',
-      categories: EVENT_CATEGORY_OPTIONS.filter(cat => 
-        ['comedy', 'theater', 'dance', 'film'].includes(cat.id)
-      )
-    },
-    {
-      title: 'Arts & Culture',
-      categories: EVENT_CATEGORY_OPTIONS.filter(cat => 
-        ['art', 'literary'].includes(cat.id)
-      )
-    },
-    {
-      title: 'Social & Nightlife',
-      categories: EVENT_CATEGORY_OPTIONS.filter(cat => 
-        ['nightlife', 'food_drink', 'trivia', 'karaoke', 'networking', 'date_night'].includes(cat.id)
-      )
-    },
-    {
-      title: 'Sports & Fitness',
-      categories: EVENT_CATEGORY_OPTIONS.filter(cat => 
-        ['sports', 'fitness'].includes(cat.id)
-      )
-    },
-    {
-      title: 'Educational & Community',
-      categories: EVENT_CATEGORY_OPTIONS.filter(cat => 
-        ['workshop', 'lecture', 'tours', 'community'].includes(cat.id)
-      )
-    },
-    {
-      title: 'Markets & Festivals',
-      categories: EVENT_CATEGORY_OPTIONS.filter(cat => 
-        ['market', 'festival'].includes(cat.id)
-      )
-    },
-    {
-      title: 'Special',
-      categories: EVENT_CATEGORY_OPTIONS.filter(cat => 
-        ['family'].includes(cat.id)
-      )
-    }
-  ].filter(group => group.categories.length > 0);
+  const getCommunityColor = (communityName: string) => {
+    const community = allCommunities.find(c => c.name === communityName);
+    return community?.metadata.color || theme.colors.primary[500];
+  };
 
   return (
     <>
@@ -173,7 +97,7 @@ export const WhatDropdown: React.FC<WhatDropdownProps> = ({
         </TouchableOpacity>
       </View>
 
-      {/* Categories Modal */}
+      {/* Labels Modal */}
       <Modal
         visible={showModal}
         transparent={true}
@@ -192,67 +116,76 @@ export const WhatDropdown: React.FC<WhatDropdownProps> = ({
             onStartShouldSetResponder={() => true}
           >
             <View style={styles.modalHeader}>
-              <Text variant="h3">Select Categories</Text>
+              <Text variant="h3">Select Labels</Text>
               <TouchableOpacity onPress={() => setShowModal(false)}>
                 <Text variant="h3" color="secondary">✕</Text>
               </TouchableOpacity>
             </View>
 
             <ScrollView style={styles.modalScroll}>
-              {categoryGroups.map((group) => (
-                <View key={group.title} style={styles.categoryGroup}>
-                  <Text variant="caption" color="tertiary" style={styles.groupTitle}>
-                    {group.title.toUpperCase()}
+              {Object.keys(availableLabels).length === 0 ? (
+                <View style={styles.emptyState}>
+                  <Text variant="h4" color="tertiary" style={{ textAlign: 'center', marginBottom: 8 }}>📋</Text>
+                  <Text variant="body1" color="secondary" style={{ textAlign: 'center', marginBottom: 4 }}>
+                    No labels available yet
+                  </Text>
+                  <Text variant="caption" color="tertiary" style={{ textAlign: 'center' }}>
+                    Labels will appear here once they're added to the database for your selected communities.
+                  </Text>
+                </View>
+              ) : (
+                Object.entries(availableLabels).map(([communityName, labels]) => (
+                <View key={communityName} style={styles.categoryGroup}>
+                  <Text
+                    variant="caption"
+                    color="tertiary"
+                    style={[styles.groupTitle, { color: getCommunityColor(communityName) }]}
+                  >
+                    {communityName.toUpperCase()}
                   </Text>
                   <View style={styles.categoryGrid}>
-                    {group.categories.map((category) => {
-                      const isSelected = selectedCategories.includes(category.id);
-                      const isAvailable = isCategoryAvailable(category.id);
-                      
+                    {labels.map((labelObj) => {
+                      const isSelected = selectedLabels.includes(labelObj.label);
                       return (
                         <TouchableOpacity
-                          key={category.id}
+                          key={labelObj.id}
                           style={[
                             styles.categoryPill,
                             {
-                              backgroundColor: isSelected 
-                                ? theme.colors.primary[500] 
+                              backgroundColor: isSelected
+                                ? getCommunityColor(communityName)
                                 : theme.colors.background.secondary,
                               borderColor: isSelected
-                                ? theme.colors.primary[500]
+                                ? getCommunityColor(communityName)
                                 : theme.colors.border.light,
-                              opacity: isAvailable ? 1 : 0.3,
                             }
                           ]}
-                          onPress={() => handleCategoryToggle(category.id)}
-                          disabled={!isAvailable}
+                          onPress={() => handleLabelToggle(labelObj.label)}
                         >
-                          <Text variant="body2" style={styles.categoryEmoji}>
-                            {category.emoji}
-                          </Text>
-                          <Text 
-                            variant="body2" 
+                          <Text
+                            variant="body2"
                             color={isSelected ? 'inverse' : 'secondary'}
                             style={styles.categoryLabel}
                           >
-                            {category.label}
+                            {labelObj.label}
                           </Text>
                           {isSelected && (
-                            <Text style={[styles.checkmark, { color: '#FFF', fontSize: 14 }]}>✓</Text>
+                            <Text style={[styles.checkmark, { color: '#FFF' }]}>✓</Text>
                           )}
                         </TouchableOpacity>
                       );
                     })}
                   </View>
                 </View>
-              ))}
+              ))
+              )}
             </ScrollView>
 
             <View style={[styles.modalFooter, { borderTopColor: theme.colors.border.light }]}>
               <Text variant="body2" color="secondary">
-                {selectedCategories.includes('all') || selectedCategories.length === 0
-                  ? 'All categories selected'
-                  : `${selectedCategories.length} ${selectedCategories.length === 1 ? 'category' : 'categories'} selected`}
+                {!selectedLabels || selectedLabels.length === 0
+                  ? 'All labels'
+                  : `${selectedLabels.length} ${selectedLabels.length === 1 ? 'label' : 'labels'} selected`}
               </Text>
               <TouchableOpacity 
                 style={[styles.doneButton, { backgroundColor: theme.colors.primary[500] }]}
@@ -325,6 +258,11 @@ const styles = StyleSheet.create({
     maxHeight: 400,
     paddingHorizontal: 20,
   },
+  emptyState: {
+    paddingVertical: 60,
+    paddingHorizontal: 40,
+    alignItems: 'center',
+  },
   categoryGroup: {
     marginBottom: 20,
   },
@@ -357,6 +295,7 @@ const styles = StyleSheet.create({
   },
   checkmark: {
     marginLeft: 4,
+    fontSize: 14,
   },
   modalFooter: {
     flexDirection: 'row',

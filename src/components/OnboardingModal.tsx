@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, StyleSheet, Modal, TouchableOpacity, Pressable, ScrollView } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import { Text } from './ui';
-import { useCityLocation } from '../context/CityContext';
+import { useCommunity } from '../context/CommunityContext';
 import { useRouter } from 'expo-router';
 import AppleSignInButton from './user/AppleSignInButton';
 import GoogleSignInButton from './user/GoogleSignInButton'; 
@@ -14,22 +14,13 @@ interface OnboardingModalProps {
 
 const AVAILABLE_CITIES = ['Boston', 'New York'];
 
-const INTEREST_OPTIONS = [
-  { id: 'music', label: 'Music', subtitle: 'Jazz, Classical, Rock' },
-  { id: 'comedy', label: 'Comedy', subtitle: 'Standup, Improv, Underground' },
-  { id: 'theater', label: 'Theater', subtitle: 'Musicals, Opera, Plays' },
-  { id: 'dance', label: 'Dance', subtitle: 'EDM, Salsa, Line Dancing, Classes' },
-  { id: 'culture', label: 'Culture', subtitle: 'Galleries, Trivia, Visual Arts' },
-  { id: 'everything', label: 'Everything', subtitle: 'All of the above!' },
-];
-
 export default function OnboardingModal({ visible, onComplete }: Readonly<OnboardingModalProps>) {
   const { theme } = useTheme();
-  const { onCityChange } = useCityLocation();
+  const { allCommunities, onCommunitiesChange, onCityChange } = useCommunity();
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [selectedCity, setSelectedCity] = useState<string>('Boston');
-  const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
+  const [selectedCommunityIds, setSelectedCommunityIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
 
@@ -37,13 +28,12 @@ export default function OnboardingModal({ visible, onComplete }: Readonly<Onboar
     setSelectedCity(city);
   };
 
-  const handleInterestToggle = (interestId: string) => {
-    setSelectedInterests(prev => {
-      if (prev.includes(interestId)) {
-        return prev.filter(id => id !== interestId);
+  const handleCommunityToggle = (communityName: string) => {
+    setSelectedCommunityIds(prev => {
+      if (prev.includes(communityName)) {
+        return prev.filter(id => id !== communityName);
       } else {
-        // No limit on selections
-        return [...prev, interestId];
+        return [...prev, communityName];
       }
     });
   };
@@ -70,7 +60,8 @@ export default function OnboardingModal({ visible, onComplete }: Readonly<Onboar
 
   const handleAppleSignInSuccess = async () => {
     await onCityChange(selectedCity);
-    onComplete(selectedInterests);
+    await onCommunitiesChange(selectedCommunityIds);
+    onComplete(selectedCommunityIds);
   };
 
   const handleAppleSignInError = (error: string) => {
@@ -78,10 +69,11 @@ export default function OnboardingModal({ visible, onComplete }: Readonly<Onboar
   };
 
   const handleCreateAccount = async () => {
-    // Save city before closing modal
+    // Save city and communities before closing modal
     await onCityChange(selectedCity);
+    await onCommunitiesChange(selectedCommunityIds);
     // Close modal first, then navigate
-    onComplete(selectedInterests);
+    onComplete(selectedCommunityIds);
     // Navigate after a brief delay to ensure modal is closed
     setTimeout(() => {
       router.push('/user/signup');
@@ -90,7 +82,8 @@ export default function OnboardingModal({ visible, onComplete }: Readonly<Onboar
 
   const handleContinueAsGuest = async () => {
     await onCityChange(selectedCity);
-    onComplete(selectedInterests);
+    await onCommunitiesChange(selectedCommunityIds);
+    onComplete(selectedCommunityIds);
   };
 
   const canProceed = step === 1 ? !!selectedCity : true;
@@ -193,12 +186,15 @@ export default function OnboardingModal({ visible, onComplete }: Readonly<Onboar
 
             {step === 2 && (
               <View>
+                <Text variant="body2" color="secondary" style={styles.description}>
+                  Select the communities you're interested in (or skip to see everything)
+                </Text>
                 <View style={styles.interestsGrid}>
-                  {INTEREST_OPTIONS.map(interest => {
-                    const isSelected = selectedInterests.includes(interest.id);
+                  {allCommunities.map(community => {
+                    const isSelected = selectedCommunityIds.includes(community.name);
                     return (
                       <TouchableOpacity
-                        key={interest.id}
+                        key={community.id}
                         style={[
                           styles.interestButton,
                           {
@@ -206,12 +202,16 @@ export default function OnboardingModal({ visible, onComplete }: Readonly<Onboar
                               ? theme.colors.primary[100]
                               : theme.colors.background.secondary,
                             borderColor: isSelected
-                              ? theme.colors.primary[600]
+                              ? community.metadata.color
                               : theme.colors.border.light,
+                            borderLeftWidth: isSelected ? 4 : 2,
                           }
                         ]}
-                        onPress={() => handleInterestToggle(interest.id)}
+                        onPress={() => handleCommunityToggle(community.name)}
                       >
+                        <Text variant="h4" style={{ fontSize: 28, marginBottom: 4 }}>
+                          {community.metadata.icon}
+                        </Text>
                         <Text
                           variant="body2"
                           style={{
@@ -222,9 +222,9 @@ export default function OnboardingModal({ visible, onComplete }: Readonly<Onboar
                             fontSize: 14,
                           }}
                         >
-                          {interest.label}
+                          {community.name}
                         </Text>
-                        {interest.subtitle ? (
+                        {community.description ? (
                           <Text
                             variant="caption"
                             style={{
@@ -233,9 +233,10 @@ export default function OnboardingModal({ visible, onComplete }: Readonly<Onboar
                                 : theme.colors.text.tertiary,
                               marginTop: 2,
                               fontSize: 11,
+                              textAlign: 'center',
                             }}
                           >
-                            {interest.subtitle}
+                            {community.description}
                           </Text>
                         ) : null}
                       </TouchableOpacity>

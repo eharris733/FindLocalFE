@@ -43,7 +43,6 @@ interface FilterBarProps {
 }
 
 import { useCityLocation } from "../context/CityContext";
-import { getEventTypesForCategory } from '../constants/eventCategories';
 import { ALL_VENUES } from '../constants';
 import { analytics } from '../utils/analytics';
 
@@ -78,32 +77,16 @@ export default function FilterBar({
     onLayout?.(height);
   }, [onLayout]);
 
-  // Handle category change - maps UI categories to event_type filters only
-  const handleCategoryChange = useCallback((categories: string[]) => {
-    dispatchFilters({ type: 'SET_CATEGORY', payload: categories });
+  // Handle label change - filters by selected labels from WhatDropdown
+  const handleCategoryChange = useCallback((labels: string[]) => {
+    // Dispatch selected labels to filter
+    dispatchFilters({ type: 'SET_LABELS', payload: labels });
     
-    // Map categories to event types only (don't auto-filter venue types)
-    const eventTypes = new Set<string>();
-    
-    for (const categoryId of categories) {
-      if (categoryId === 'all' || categoryId === 'favorites') {
-        continue; // Don't add types for 'all' or 'favorites'
-      }
-      
-      const catEventTypes = getEventTypesForCategory(categoryId);
-      
-      for (const et of catEventTypes) {
-        eventTypes.add(et);
-      }
-    }
-    
-    dispatchFilters({ type: 'SET_EVENT_TYPES', payload: Array.from(eventTypes) });
-    
-    // Track category filter usage
-    categories.forEach(cat => {
+    // Track label filter usage
+    labels.forEach(label => {
       analytics.trackFilterUsage({
-        filterType: 'category',
-        filterValue: cat,
+        filterType: 'label',
+        filterValue: label,
         applied: true,
         city: selectedCity,
         resultsCount,
@@ -184,11 +167,11 @@ export default function FilterBar({
     // Check if date range is not 'today' (default)
     if (filters.dateRange !== 'today') return true;
     
-    // Check if category is not 'all' (default)
-    if (filters.category !== 'all' && filters.category !== '') return true;
+    // Check if community IDs are selected
+    if (filters.communityIds && filters.communityIds.length > 0) return true;
     
-    // Check if event types are selected
-    if (filters.eventTypes && filters.eventTypes.length > 0) return true;
+    // Check if labels are selected
+    if (filters.labels && filters.labels.length > 0) return true;
     
     // Check if venue types are selected
     if (filters.venueTypes && filters.venueTypes.length > 0) return true;
@@ -209,9 +192,6 @@ export default function FilterBar({
     return false;
   }, [filters]);
 
-  // Normalize category to array for WhatDropdown
-  const selectedCategories = Array.isArray(filters.category) ? filters.category : [filters.category];
-  
   // Normalize size to array for WhereDropdown
   const selectedSizes = Array.isArray(filters.size) ? filters.size : [];
 
@@ -248,10 +228,8 @@ export default function FilterBar({
           
           {/* What Filter */}
           <WhatDropdown
-            selectedCategories={selectedCategories}
-            onCategoriesChange={handleCategoryChange}
-            multiSelect={true}
-            availableEventTypes={availableFilterOptions?.eventTypes}
+            selectedLabels={filters.labels}
+            onLabelsChange={handleCategoryChange}
           />
 
           {/* Conditionally render filters based on screen size */}
