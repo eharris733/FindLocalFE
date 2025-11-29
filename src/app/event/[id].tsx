@@ -375,7 +375,7 @@ export default function EventPage() {
           onPress={handleShare}
         >
           <Text variant="body1" style={{ color: theme.colors.primary[600], fontWeight: '600' }}>
-            ⤴
+            Share
           </Text>
         </TouchableOpacity>
       </View>
@@ -847,9 +847,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   shareButton: {
-    borderRadius: 9999,
-    width: 32,
-    height: 32,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     alignItems: 'center',
     justifyContent: 'center',
   },

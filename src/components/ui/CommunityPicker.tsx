@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, TouchableOpacity, StyleSheet, Modal, ScrollView, ActivityIndicator } from 'react-native';
 import { useTheme } from '../../context/ThemeContext';
 import { Text } from './Text';
@@ -18,31 +18,41 @@ export const CommunityPicker: React.FC<CommunityPickerProps> = ({
   const { theme } = useTheme();
   const { selectedCommunities, allCommunities, onCommunitiesChange, loading } = useCommunity();
   const [isOpen, setIsOpen] = useState(initiallyOpen);
+  const [pendingSelection, setPendingSelection] = useState<string[]>(selectedCommunities);
 
-  const handleToggleCommunity = async (communityName: string) => {
+  // Sync pending selection when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setPendingSelection(selectedCommunities);
+    }
+  }, [isOpen, selectedCommunities]);
+
+  const handleToggleCommunity = (communityName: string) => {
     if (communityName === 'all') {
-      await onCommunitiesChange([]);
+      setPendingSelection([]);
     } else {
-      const newSelection = selectedCommunities.includes(communityName)
-        ? selectedCommunities.filter(c => c !== communityName)
-        : [...selectedCommunities, communityName];
+      const newSelection = pendingSelection.includes(communityName)
+        ? pendingSelection.filter(c => c !== communityName)
+        : [...pendingSelection, communityName];
       
-      await onCommunitiesChange(newSelection);
+      setPendingSelection(newSelection);
     }
   };
 
-  const handleModalClose = () => {
+  const handleModalClose = async () => {
+    // Apply changes only when closing
+    await onCommunitiesChange(pendingSelection);
     setIsOpen(false);
     onClose?.();
   };
 
-  const isAllSelected = selectedCommunities.length === 0;
+  const isAllSelected = pendingSelection.length === 0;
 
   const getDisplayText = () => {
     if (isAllSelected) return 'Everything';
-    if (selectedCommunities.length === 1) return selectedCommunities[0];
-    if (selectedCommunities.length === 2) return selectedCommunities.join(' • ');
-    return `${selectedCommunities.length} Communities`;
+    if (pendingSelection.length === 1) return pendingSelection[0];
+    if (pendingSelection.length === 2) return pendingSelection.join(' • ');
+    return `${pendingSelection.length} Communities`;
   };
 
   return (
@@ -128,7 +138,7 @@ export const CommunityPicker: React.FC<CommunityPickerProps> = ({
 
                   {/* Individual Communities */}
                   {allCommunities.map((community) => {
-                    const isSelected = selectedCommunities.includes(community.name);
+                    const isSelected = pendingSelection.includes(community.name);
                     return (
                       <TouchableOpacity
                         key={community.id}
@@ -181,7 +191,7 @@ export const CommunityPicker: React.FC<CommunityPickerProps> = ({
               <Text variant="body2" color="secondary">
                 {isAllSelected
                   ? 'Showing all communities'
-                  : `${selectedCommunities.length} ${selectedCommunities.length === 1 ? 'community' : 'communities'} selected`}
+                  : `${pendingSelection.length} ${pendingSelection.length === 1 ? 'community' : 'communities'} selected`}
               </Text>
               <TouchableOpacity
                 style={[styles.doneButton, { backgroundColor: theme.colors.primary[500] }]}

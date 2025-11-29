@@ -263,19 +263,18 @@ export const useEvents = ({ selectedCity, favoriteEventIds = [] }: UseEventsProp
 
       // Community filtering - use event_community_assignments
       if (filters.communityIds.length > 0) {
-        // If event doesn't have community assignments, exclude it
-        if (!event.event_community_assignments || event.event_community_assignments.length === 0) {
-          return false;
+        // If event has community assignments, check if it matches
+        if (event.event_community_assignments && event.event_community_assignments.length > 0) {
+          const hasMatchingCommunity = event.event_community_assignments.some(assignment =>
+            filters.communityIds.includes(assignment.community_id)
+          );
+          
+          if (!hasMatchingCommunity) {
+            return false;
+          }
         }
-        
-        // Check if event belongs to any of the selected communities
-        const hasMatchingCommunity = event.event_community_assignments.some(assignment =>
-          filters.communityIds.includes(assignment.community_id)
-        );
-        
-        if (!hasMatchingCommunity) {
-          return false;
-        }
+        // If event doesn't have community assignments, still show it
+        // (it will appear as uncategorized/unfiltered content)
       }
 
       // Label filtering - filter by labels within communities
@@ -548,13 +547,14 @@ export const useEvents = ({ selectedCity, favoriteEventIds = [] }: UseEventsProp
         
         // Apply community filter (unless excluded)
         if (!excludeFilters.includes('communityIds') && filters.communityIds.length > 0) {
-          if (!event.event_community_assignments || event.event_community_assignments.length === 0) {
-            return false;
+          // If event has community assignments, check if it matches
+          if (event.event_community_assignments && event.event_community_assignments.length > 0) {
+            const hasMatchingCommunity = event.event_community_assignments.some(assignment =>
+              filters.communityIds.includes(assignment.community_id)
+            );
+            if (!hasMatchingCommunity) return false;
           }
-          const hasMatchingCommunity = event.event_community_assignments.some(assignment =>
-            filters.communityIds.includes(assignment.community_id)
-          );
-          if (!hasMatchingCommunity) return false;
+          // If event doesn't have community assignments, still include it
         }
         
         // Apply label filter (unless excluded)

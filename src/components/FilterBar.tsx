@@ -230,6 +230,7 @@ export default function FilterBar({
           <WhatDropdown
             selectedLabels={filters.labels}
             onLabelsChange={handleCategoryChange}
+            availableLabels={availableFilterOptions?.labels}
           />
 
           {/* Conditionally render filters based on screen size */}

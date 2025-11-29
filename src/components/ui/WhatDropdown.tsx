@@ -13,6 +13,7 @@ interface WhatDropdownProps {
   onCategoriesChange?: (categories: string[]) => void;
   multiSelect?: boolean;
   availableEventTypes?: string[];
+  availableLabels?: string[]; // Labels that have events
 }
 
 export const WhatDropdown: React.FC<WhatDropdownProps> = ({
@@ -23,6 +24,7 @@ export const WhatDropdown: React.FC<WhatDropdownProps> = ({
   onCategoriesChange,
   multiSelect,
   availableEventTypes,
+  availableLabels: availableLabelsProp,
 }) => {
   const { theme } = useTheme();
   const { selectedCommunities, allCommunities, labelsForCity } = useCommunity();
@@ -32,24 +34,40 @@ export const WhatDropdown: React.FC<WhatDropdownProps> = ({
   const selectedLabels = selectedLabelsProp ?? selectedCategories ?? [];
   const onLabelsChange = onLabelsChangeProp ?? onCategoriesChange ?? (() => {});
 
-  // Get labels for selected communities only
+  // Get labels for selected communities only, filtered by available labels (those with events)
   const availableLabels = useMemo(() => {
+    let filtered: typeof labelsForCity = {};
+    
     if (selectedCommunities.length === 0) {
       // Show all labels if all communities selected
       logger.info('📋 WhatDropdown: Showing all labels', Object.keys(labelsForCity).length, 'communities');
-      return labelsForCity;
+      filtered = labelsForCity;
+    } else {
+      // Filter labels to only selected communities
+      selectedCommunities.forEach(communityName => {
+        if (labelsForCity[communityName]) {
+          filtered[communityName] = labelsForCity[communityName];
+        }
+      });
+      logger.info('📋 WhatDropdown: Filtered labels for', selectedCommunities, ':', Object.keys(filtered).length, 'communities');
     }
-
-    // Filter labels to only selected communities
-    const filtered: typeof labelsForCity = {};
-    selectedCommunities.forEach(communityName => {
-      if (labelsForCity[communityName]) {
-        filtered[communityName] = labelsForCity[communityName];
-      }
-    });
-    logger.info('📋 WhatDropdown: Filtered labels for', selectedCommunities, ':', Object.keys(filtered).length, 'communities');
+    
+    // Filter out labels with no events (if availableLabelsProp is provided)
+    if (availableLabelsProp && availableLabelsProp.length >= 0) {
+      const filteredByEvents: typeof labelsForCity = {};
+      Object.entries(filtered).forEach(([communityName, labels]) => {
+        const labelsWithEvents = labels.filter(labelObj => 
+          availableLabelsProp.includes(labelObj.label)
+        );
+        if (labelsWithEvents.length > 0) {
+          filteredByEvents[communityName] = labelsWithEvents;
+        }
+      });
+      return filteredByEvents;
+    }
+    
     return filtered;
-  }, [selectedCommunities, labelsForCity]);
+  }, [selectedCommunities, labelsForCity, availableLabelsProp]);
 
   const handleLabelToggle = (label: string) => {
     const newSelection = selectedLabels.includes(label)
@@ -117,9 +135,21 @@ export const WhatDropdown: React.FC<WhatDropdownProps> = ({
           >
             <View style={styles.modalHeader}>
               <Text variant="h3">Select Labels</Text>
-              <TouchableOpacity onPress={() => setShowModal(false)}>
-                <Text variant="h3" color="secondary">✕</Text>
-              </TouchableOpacity>
+              <View style={styles.headerActions}>
+                {selectedLabels.length > 0 && (
+                  <TouchableOpacity 
+                    onPress={() => onLabelsChange([])}
+                    style={styles.clearButton}
+                  >
+                    <Text variant="body2" color="primary" style={styles.clearButtonText}>
+                      Clear All
+                    </Text>
+                  </TouchableOpacity>
+                )}
+                <TouchableOpacity onPress={() => setShowModal(false)}>
+                  <Text variant="h3" color="secondary">✕</Text>
+                </TouchableOpacity>
+              </View>
             </View>
 
             <ScrollView style={styles.modalScroll}>
@@ -253,6 +283,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
     paddingBottom: 16,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  clearButton: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  clearButtonText: {
+    fontWeight: '600',
   },
   modalScroll: {
     maxHeight: 400,
