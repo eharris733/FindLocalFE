@@ -9,6 +9,7 @@ import {
     WorkSans_600SemiBold, WorkSans_700Bold
 } from "@expo-google-fonts/work-sans";
 import {CityProvider} from "../context/CityContext";
+import {CommunityProvider} from "../context/CommunityContext";
 import {ThemeProvider} from "../context/ThemeContext";
 import {FavoritesProvider} from "../context/FavoritesContext";
 import Header from "../components/Header";
@@ -19,8 +20,12 @@ import { logger } from "../utils/logger";
 import FeedbackBanner from "../components/FeedbackBanner";
 import FeedbackModal from "../components/FeedbackModal";
 import { View } from 'react-native';
+import { analytics } from '../utils/analytics';
 
-SplashScreen.preventAutoHideAsync();
+// Prevent auto hide with error handling for Expo Go
+SplashScreen.preventAutoHideAsync().catch((error) => {
+    logger.warn('SplashScreen.preventAutoHideAsync failed:', error);
+});
 
 export default function RootLayout() {
     const [fontTimeout, setFontTimeout] = useState(false);
@@ -33,6 +38,20 @@ export default function RootLayout() {
     });
 
     useEffect(() => {
+        // Initialize analytics
+        analytics.initialize().catch(err => {
+            logger.error('Failed to initialize analytics:', err);
+        });
+        
+        // Cleanup on unmount
+        return () => {
+            analytics.cleanup().catch(err => {
+                logger.error('Failed to cleanup analytics:', err);
+            });
+        };
+    }, []);
+
+    useEffect(() => {
         const timeout = setTimeout(() => {
             if (!fontsLoaded && !fontError) {
                 logger.warn('Font loading timeout - proceeding with fallback fonts');
@@ -42,7 +61,9 @@ export default function RootLayout() {
 
         // Hide splash screen when fonts are loaded or on timeout/error
         if (fontsLoaded || fontError || fontTimeout) {
-            SplashScreen.hideAsync();
+            SplashScreen.hideAsync().catch((error) => {
+                logger.warn('SplashScreen.hideAsync failed:', error);
+            });
         }
         
         return () => clearTimeout(timeout);
@@ -54,10 +75,12 @@ export default function RootLayout() {
         <ThemeProvider>
             <AuthProvider>
                 <CityProvider>
-                    <FavoritesProvider>
-                        <SplashScreenController />
-                        <RootNavigator />
-                    </FavoritesProvider>
+                    <CommunityProvider>
+                        <FavoritesProvider>
+                            <SplashScreenController />
+                            <RootNavigator />
+                        </FavoritesProvider>
+                    </CommunityProvider>
                 </CityProvider>
             </AuthProvider>
         </ThemeProvider>
@@ -96,7 +119,6 @@ function RootNavigator() {
                 <Stack.Protected guard={!isLoggedIn}>
                     <Stack.Screen name="user/signin" />
                 </Stack.Protected>
-                <Stack.Screen name="+not-found" />
             </Stack>
             <FeedbackModal visible={showFeedbackModal} onClose={handleCloseFeedback} />
         </View>

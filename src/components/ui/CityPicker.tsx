@@ -3,6 +3,7 @@ import { View, TouchableOpacity, StyleSheet, Modal, ScrollView, ActivityIndicato
 import { useTheme } from '../../context/ThemeContext';
 import { Text } from './Text';
 import { useCityLocation } from "../../context/CityContext";
+import { useCommunity } from '../../context/CommunityContext';
 
 interface CityPickerProps {
   selectedCity: string;
@@ -25,10 +26,13 @@ export const CityPicker: React.FC<CityPickerProps> = ({
 }) => {
   const { theme } = useTheme();
   const { loading, allCityData } = useCityLocation();
+  const { onCityChange: onCommunityCityChange } = useCommunity();
   const [isOpen, setIsOpen] = useState(initiallyOpen);
 
   const handleSelection = async (selection: string) => {
     await onCityChange(selection);
+    // Also update CommunityContext city (triggers label reload)
+    await onCommunityCityChange(selection);
     // Clear region selection when city changes
     if (onRegionsChange) {
       onRegionsChange([]);

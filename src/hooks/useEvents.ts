@@ -1,8 +1,8 @@
 import { useState, useEffect, useMemo, useReducer } from 'react';
 import type { Event, FilterState, FilterAction } from '../types/events';
 import type { Venue } from '../types/venues';
-import { getEvents } from '../api/events';
-import { getAllVenues, getVenuesByCity } from '../api/venues';
+import { getEventsWithCommunities } from '../api/events';
+import { getVenuesByCity } from '../api/venues';
 import { 
   startOfDay, 
   endOfDay, 
@@ -20,8 +20,9 @@ import { ALL_VENUES } from '../constants';
 
 const initialFilterState: FilterState = {
   category: 'all',
-  eventTypes: [], // New: for event_type filtering
-  venueTypes: [], // New: for venue type filtering
+  communityIds: [], // Community-based filtering
+  labels: [], // Label filtering within communities
+  venueTypes: [], // Venue type filtering
   startDate: startOfDay(new Date()),
   endDate: endOfDay(new Date()),
   dateRange: 'today',
@@ -79,8 +80,10 @@ const filterReducer = (state: FilterState, action: FilterAction): FilterState =>
   switch (action.type) {
     case 'SET_CATEGORY':
       return { ...state, category: action.payload };
-    case 'SET_EVENT_TYPES':
-      return { ...state, eventTypes: action.payload };
+    case 'SET_COMMUNITY_IDS':
+      return { ...state, communityIds: action.payload };
+    case 'SET_LABELS':
+      return { ...state, labels: action.payload };
     case 'SET_VENUE_TYPES':
       return { ...state, venueTypes: action.payload };
     case 'SET_START_DATE':
@@ -142,7 +145,8 @@ interface UseEventsResult {
     regions: string[];
     priceRanges: string[];
     timeRanges: string[];
-    eventTypes: string[];
+    communityIds: string[];
+    labels: string[];
   };
 }
 
@@ -164,12 +168,19 @@ export const useEvents = ({ selectedCity, favoriteEventIds = [] }: UseEventsProp
 
   useEffect(() => {
     const fetchEvents = async () => {
+      // Don't fetch if no city is selected
+      if (!selectedCity) {
+        setLoading(false);
+        setEvents([]);
+        return;
+      }
+
       setLoading(true);
       setEvents([]); // Clear old events immediately when city changes
       setError(null);
       try {
-        // Fetch events filtered by city if provided
-        const data = await getEvents(selectedCity);
+        // Fetch events with community assignments
+        const data = await getEventsWithCommunities(selectedCity);
         setEvents(data || []); 
       } catch (err) {
         setError("Failed to load events. Please try again.");
@@ -190,13 +201,18 @@ export const useEvents = ({ selectedCity, favoriteEventIds = [] }: UseEventsProp
   // Fetch venues for filtering
   useEffect(() => {
     const fetchVenues = async () => {
+      // Don't fetch if no city is selected
+      if (!selectedCity) {
+        setVenuesLoading(false);
+        setVenues([]);
+        return;
+      }
+
       setVenuesLoading(true);
       setVenues([]); // Clear old venues immediately when city changes
       try {
-        // Use selectedCity instead of hardcoded 'brooklyn'
-        const venueData = selectedCity 
-          ? await getVenuesByCity(selectedCity)
-          : await getAllVenues();
+        // Fetch venues for the selected city only
+        const venueData = await getVenuesByCity(selectedCity);
         setVenues(venueData);
       } catch (err) {
         logger.error('Failed to fetch venues:', err);
@@ -245,28 +261,35 @@ export const useEvents = ({ selectedCity, favoriteEventIds = [] }: UseEventsProp
       // Normalize category filter to array
       const categoryFilter = Array.isArray(filters.category) ? filters.category : [filters.category];
 
-      // Event type filtering - use the event_type field from database
-      // This includes both regular event types AND music genres (they're all in event_type array)
-      if (filters.eventTypes.length > 0) {
-        // If event doesn't have event_type array, exclude it
-        if (!event.event_type || !Array.isArray(event.event_type) || event.event_type.length === 0) {
+      // Community filtering - use event_community_assignments
+      if (filters.communityIds.length > 0) {
+        // If event has community assignments, check if it matches
+        if (event.event_community_assignments && event.event_community_assignments.length > 0) {
+          const hasMatchingCommunity = event.event_community_assignments.some(assignment =>
+            filters.communityIds.includes(assignment.community_id)
+          );
+          
+          if (!hasMatchingCommunity) {
+            return false;
+          }
+        }
+        // If event doesn't have community assignments, still show it
+        // (it will appear as uncategorized/unfiltered content)
+      }
+
+      // Label filtering - filter by labels within communities
+      if (filters.labels.length > 0) {
+        // If event doesn't have community assignments, exclude it
+        if (!event.event_community_assignments || event.event_community_assignments.length === 0) {
           return false;
         }
         
-        // Normalize event types for comparison (lowercase, replace spaces with underscores)
-        const normalizedEventTypes = event.event_type.map(type => 
-          type.toLowerCase().replaceAll(/\s+/g, '_')
-        );
-        const normalizedFilterTypes = new Set(filters.eventTypes.map(type => 
-          type.toLowerCase().replaceAll(/\s+/g, '_')
-        ));
-        
-        // Check if event has ANY of the selected event types (including genres)
-        const hasMatchingType = normalizedEventTypes.some(eventType => 
-          normalizedFilterTypes.has(eventType)
+        // Check if event has any of the selected labels in its assignments
+        const hasMatchingLabel = event.event_community_assignments.some(assignment =>
+          assignment.labels?.some(label => filters.labels.includes(label))
         );
         
-        if (!hasMatchingType) {
+        if (!hasMatchingLabel) {
           return false;
         }
       }
@@ -279,7 +302,7 @@ export const useEvents = ({ selectedCity, favoriteEventIds = [] }: UseEventsProp
             return false;
           }
         }
-        // If favorites + other categories, favorites are automatically included (handled by eventTypes filter above)
+        // If favorites + other categories, favorites are automatically included
       }
 
       // Venue type filter - independent of event type filtering
@@ -522,26 +545,27 @@ export const useEvents = ({ selectedCity, favoriteEventIds = [] }: UseEventsProp
           }
         }
         
-        // Apply event type filter (unless excluded)
-        // This includes both regular event types AND music genres
-        if (!excludeFilters.includes('eventTypes') && filters.eventTypes.length > 0) {
-          // Only apply filter if event has event_type data
-          if (!event.event_type || !Array.isArray(event.event_type) || event.event_type.length === 0) {
+        // Apply community filter (unless excluded)
+        if (!excludeFilters.includes('communityIds') && filters.communityIds.length > 0) {
+          // If event has community assignments, check if it matches
+          if (event.event_community_assignments && event.event_community_assignments.length > 0) {
+            const hasMatchingCommunity = event.event_community_assignments.some(assignment =>
+              filters.communityIds.includes(assignment.community_id)
+            );
+            if (!hasMatchingCommunity) return false;
+          }
+          // If event doesn't have community assignments, still include it
+        }
+        
+        // Apply label filter (unless excluded)
+        if (!excludeFilters.includes('labels') && filters.labels.length > 0) {
+          if (!event.event_community_assignments || event.event_community_assignments.length === 0) {
             return false;
           }
-          
-          // Normalize event types for comparison (lowercase, replace spaces with underscores)
-          const normalizedEventTypes = event.event_type.map(type => 
-            type.toLowerCase().replaceAll(/\s+/g, '_')
+          const hasMatchingLabel = event.event_community_assignments.some(assignment =>
+            assignment.labels?.some(label => filters.labels.includes(label))
           );
-          const normalizedFilterTypes = new Set(filters.eventTypes.map(type => 
-            type.toLowerCase().replaceAll(/\s+/g, '_')
-          ));
-          
-          const hasMatchingType = normalizedEventTypes.some(eventType => 
-            normalizedFilterTypes.has(eventType)
-          );
-          if (!hasMatchingType) return false;
+          if (!hasMatchingLabel) return false;
         }
         
         // Apply venue type filter (unless excluded)
@@ -638,7 +662,8 @@ export const useEvents = ({ selectedCity, favoriteEventIds = [] }: UseEventsProp
     const regions = new Set<string>();
     const priceRanges = new Set<string>();
     const timeRanges = new Set<string>();
-    const eventTypes = new Set<string>();
+    const communityIds = new Set<string>();
+    const labels = new Set<string>();
     
     // Get events excluding venue type filter to find available venue types
     const eventsForVenueTypes = getEventsExcluding(['venueTypes']);
@@ -708,15 +733,26 @@ export const useEvents = ({ selectedCity, favoriteEventIds = [] }: UseEventsProp
       }
     }
     
-    // Get events excluding event type filter to find available event types
-    const eventsForEventTypes = getEventsExcluding(['eventTypes']);
+    // Get events excluding community filter to find available communities
+    const eventsForCommunities = getEventsExcluding(['communityIds']);
+    for (const event of eventsForCommunities) {
+      if (event.event_community_assignments) {
+        for (const assignment of event.event_community_assignments) {
+          communityIds.add(assignment.community_id);
+        }
+      }
+    }
     
-    for (const event of eventsForEventTypes) {
-      if (event.event_type && Array.isArray(event.event_type)) {
-        for (const type of event.event_type) {
-          // Normalize to lowercase with underscores to match constants
-          const normalizedType = type.toLowerCase().replaceAll(/\s+/g, '_');
-          eventTypes.add(normalizedType);
+    // Get events excluding label filter to find available labels
+    const eventsForLabels = getEventsExcluding(['labels']);
+    for (const event of eventsForLabels) {
+      if (event.event_community_assignments) {
+        for (const assignment of event.event_community_assignments) {
+          if (assignment.labels) {
+            for (const label of assignment.labels) {
+              labels.add(label);
+            }
+          }
         }
       }
     }
@@ -727,7 +763,8 @@ export const useEvents = ({ selectedCity, favoriteEventIds = [] }: UseEventsProp
       regions: Array.from(regions),
       priceRanges: Array.from(priceRanges),
       timeRanges: Array.from(timeRanges),
-      eventTypes: Array.from(eventTypes),
+      communityIds: Array.from(communityIds),
+      labels: Array.from(labels),
     };
   }, [events, filters, venues]);
 

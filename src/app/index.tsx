@@ -1,24 +1,27 @@
 import {useCityLocation} from "../context/CityContext";
+import {useCommunity} from "../context/CommunityContext";
 import {useFavorites} from "../context/FavoritesContext";
 import {useEvents} from "../hooks/useEvents";
-import {Text} from "../components/ui";
-import {SafeAreaView, StatusBar, StyleSheet} from "react-native";
+import {StatusBar, StyleSheet, View, Text} from "react-native";
 import MainLayout from "../components/MainLayout";
-import EventModal from "../components/EventModal";
-import React, {useState} from "react";
+import React from "react";
 import {useTheme} from "../context/ThemeContext";
 import type {Event} from "../types/events";
+import { analytics } from '../utils/analytics';
+import { useFocusEffect } from '@react-navigation/native';
+import { StructuredData } from '../components/StructuredData';
+import { useRouter } from 'expo-router';
+import { logger } from '../utils/logger';
 
 export default function IndexRoute() {
     const { theme, isDark } = useTheme();
     const { selectedCity, selectedRegions} = useCityLocation();
+    const { selectedCommunities, allCommunities } = useCommunity();
     const { favoriteEventIds } = useFavorites();
-    const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
-    const [showEventModal, setShowEventModal] = useState(false);
+    const router = useRouter();
 
     const {
         loading,
-        error,
         filteredEvents,
         filters,
         dispatchFilters,
@@ -34,22 +37,64 @@ export default function IndexRoute() {
         dispatchFilters({ type: 'SET_REGIONS', payload: selectedRegions });
     }, [selectedRegions, dispatchFilters]);
 
-    const handleEventPress = (event: Event) => {
-        setSelectedEvent(event);
-        setShowEventModal(true);
-    };
+    // Sync selected communities to filters
+    React.useEffect(() => {
+        logger.info('🎭 Selected communities changed in index:', selectedCommunities);
+        
+        // Convert community names to IDs
+        if (selectedCommunities.length === 0) {
+            // If no communities selected, show all (empty filter)
+            dispatchFilters({ type: 'SET_COMMUNITY_IDS', payload: [] });
+        } else {
+            const communityIds = selectedCommunities
+                .map(name => allCommunities.find(c => c.name === name)?.id)
+                .filter(Boolean) as string[];
+            
+            logger.info('🎭 Setting community IDs filter:', communityIds);
+            dispatchFilters({ type: 'SET_COMMUNITY_IDS', payload: communityIds });
+        }
+    }, [selectedCommunities, allCommunities, dispatchFilters]);
 
-    const handleCloseEventModal = () => {
-        setShowEventModal(false);
-        setSelectedEvent(null);
+    // Track page views when screen comes into focus
+    useFocusEffect(
+        React.useCallback(() => {
+            analytics.trackPageView('/', {
+                city: selectedCity,
+            });
+        }, [selectedCity])
+    );
+
+    // Track city changes
+    React.useEffect(() => {
+        analytics.trackCityChange(selectedCity);
+    }, [selectedCity]);
+
+    const handleEventPress = (event: Event) => {
+        router.push(`/event/${event.id}`);
     };
 
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background.secondary }]}>
+        <View style={[styles.container, { backgroundColor: theme.colors.background.secondary }]}>
+        <StructuredData city={selectedCity} />
         <StatusBar
             barStyle={isDark ? "light-content" : "dark-content"}
             backgroundColor={theme.colors.background.primary}
         />
+        {/* Hidden H1 for SEO - positioned off-screen but accessible to search engines */}
+        <Text 
+            accessibilityRole="header" 
+            aria-level={1}
+            style={{
+                position: 'absolute',
+                left: -10000,
+                top: 'auto',
+                width: 1,
+                height: 1,
+                overflow: 'hidden'
+            }}
+        >
+            Find Local Events in {selectedCity || 'Your City'}: Concerts, Comedy, Theater & More
+        </Text>
         <MainLayout
             events={filteredEvents}
             loading={loading}
@@ -62,14 +107,7 @@ export default function IndexRoute() {
             availableFilterOptions={availableFilterOptions}
             onEventPress={handleEventPress}
         />
-
-        {/* Event Modal */}
-        <EventModal
-            visible={showEventModal}
-            event={selectedEvent}
-            onClose={handleCloseEventModal}
-        />
-    </SafeAreaView>);
+    </View>);
 }
 
 const styles = StyleSheet.create({

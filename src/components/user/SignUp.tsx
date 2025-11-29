@@ -5,10 +5,10 @@ import {supabase, getAuthRedirectUrl} from "../../supabase";
 import React, {useState, useEffect} from "react";
 import Input from "../ui/Input";
 import {useRouter} from "expo-router";
-import * as Linking from "expo-linking";
 import { useTheme } from "../../context/ThemeContext";
 import { logger } from "../../utils/logger";
 import AppleSignInButton from "./AppleSignInButton";
+import GoogleSignInButton from "./GoogleSignInButton";
 
 type LoginFormValues = {
     email: string;
@@ -277,42 +277,7 @@ export default function SignUp() {
         }
     }
 
-    async function signUpWithGoogle() {
-        setLoading(true);
-        try {
-            const redirectTo = getAuthRedirectUrl('/auth/callback');
-            const { data, error } = await supabase.auth.signInWithOAuth({
-                provider: 'google',
-                options: { redirectTo },
-            });
 
-            if (error) {
-                // Handle OAuth sign-up errors
-                if (error.status === 422) {
-                    setFeedback('Unable to sign up with Google. The account may already exist. Try signing in instead.');
-                } else if (error.status === 429) {
-                    setFeedback('Too many requests. Please wait a moment and try again.');
-                } else {
-                    setFeedback(`Google sign-up failed: ${error.message || 'Please try again.'}`);
-                }
-            }
-
-            if (data?.url && Platform.OS !== 'web') {
-                const supported = await Linking.canOpenURL(data.url);
-                if (supported) {
-                    await Linking.openURL(data.url);
-                } else {
-                    logger.warn('Cannot open URL from Supabase OAuth', data.url);
-                    setFeedback('Unable to open sign-up page. Please try again.');
-                }
-            }
-        } catch (err: any) {
-            logger.error('Unexpected Google sign-up error:', err);
-            setFeedback('An unexpected error occurred. Please try again.');
-        } finally {
-            setLoading(false);
-        }
-    }
 
     async function resendConfirmationEmail(values: LoginFormValues) {
         setLoading(true);
@@ -556,11 +521,10 @@ export default function SignUp() {
                     <View style={styles.dividerLine} />
                 </View>
 
-                <Button 
-                    title="Continue with Google" 
-                    variant="outline" 
-                    onPress={signUpWithGoogle}
-                    fullWidth
+                <GoogleSignInButton
+                    onSuccess={() => router.replace('/')}
+                    onError={setFeedback}
+                    setLoading={setLoading}
                 />
 
                 <AppleSignInButton

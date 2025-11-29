@@ -4,10 +4,12 @@ import { useTheme } from '../context/ThemeContext';
 import { Text } from './ui';
 import ProfileModal from './ProfileModal';
 import { CityPicker } from './ui/CityPicker';
+import { CommunityPicker } from './ui/CommunityPicker';
 import {useDeviceInfo} from "../hooks/useDeviceInfo";
 import {Logo} from "./ui/Logo";
 import { useAuth } from '../hooks/useAuth';
 import { useCityLocation } from '../context/CityContext';
+import { useCommunity } from '../context/CommunityContext';
 import { useRouter } from 'expo-router';
 
 interface TopNavigationProps {
@@ -20,9 +22,11 @@ export default function TopNavigation({ onNavLinkPress, onFeedbackPress }: TopNa
   const {isMobile} = useDeviceInfo();
   const { isLoggedIn } = useAuth();
   const { selectedCity, onCityChange, selectedRegions, onRegionsChange } = useCityLocation();
+  const { selectedCommunities } = useCommunity();
   const router = useRouter();
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showCityPicker, setShowCityPicker] = useState(false);
+  const [showCommunityPicker, setShowCommunityPicker] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [slideAnim] = useState(new Animated.Value(-250)); // Start off-screen
 
@@ -105,23 +109,42 @@ export default function TopNavigation({ onNavLinkPress, onFeedbackPress }: TopNa
                 </Text>
               </TouchableOpacity>
             ) : (
-              <TouchableOpacity
-                style={[styles.cityBadge, { 
-                  backgroundColor: theme.colors.background.secondary,
-                  borderColor: theme.colors.border.light,
-                }]}
-                onPress={handleCityPickerOpen}
-              >
-                <Text variant="body2" color="primary" style={styles.cityText}>
-                  {selectedCity}
-                </Text>
-                <Text variant="caption" color="secondary" style={styles.cityArrow}>▼</Text>
-              </TouchableOpacity>
+              <View style={styles.badgeContainer}>
+                <TouchableOpacity
+                  style={[styles.communityBadge, { 
+                    backgroundColor: theme.colors.primary[100],
+                    borderColor: theme.colors.primary[300],
+                  }]}
+                  onPress={() => setShowCommunityPicker(true)}
+                >
+                  <Text variant="body2" color="primary" style={styles.communityMainText}>
+                    {selectedCommunities.length === 0 ? '🌍 Everything' : selectedCommunities.join(' • ')}
+                  </Text>
+                  <Text variant="caption" color="primary" style={styles.cityArrow}>▼</Text>
+                </TouchableOpacity>
+                
+                <Text variant="body2" color="secondary" style={styles.inText}>in</Text>
+                
+                <TouchableOpacity
+                  style={[styles.cityBadge, { 
+                    backgroundColor: theme.colors.background.secondary,
+                    borderColor: theme.colors.border.light,
+                  }]}
+                  onPress={handleCityPickerOpen}
+                >
+                  <Text variant="body2" color="primary" style={styles.cityText}>
+                    {selectedCity}
+                  </Text>
+                  <Text variant="caption" color="secondary" style={styles.cityArrow}>▼</Text>
+                </TouchableOpacity>
+              </View>
             )}
           </View>
           
           <View style={styles.centerSection}>
-            <Pressable onPress={() => handleNavLinkPress('')}> <Logo isMobile={isMobile}/></Pressable>
+            <Pressable onPress={() => handleNavLinkPress('')}>
+              <Logo isMobile={isMobile}/>
+            </Pressable>
           </View>
           
           {/* Right section with nav links and profile */}
@@ -210,6 +233,28 @@ export default function TopNavigation({ onNavLinkPress, onFeedbackPress }: TopNa
                   </View>
                   <Text variant="body2" color="secondary" style={styles.chevron}>›</Text>
                 </TouchableOpacity>
+
+                {/* Community Selector for Mobile */}
+                <TouchableOpacity
+                  style={[styles.sideNavLinkRow, {
+                    borderBottomColor: theme.colors.border.light,
+                  }]}
+                  onPress={() => setShowCommunityPicker(true)}
+                >
+                  <View style={styles.cityMenuRow}>
+                    <Text variant="caption" style={styles.cityMenuEmoji}>🎭</Text>
+                    <Text 
+                      variant="body1" 
+                      color="primary" 
+                      style={styles.cityMenuText}
+                      numberOfLines={1}
+                      ellipsizeMode="tail"
+                    >
+                      {selectedCommunities.length === 0 ? 'Everything' : selectedCommunities.join(', ')}
+                    </Text>
+                  </View>
+                  <Text variant="body2" color="secondary" style={styles.chevron}>›</Text>
+                </TouchableOpacity>
                 
                 {navLinks.map((link) => (
                   <TouchableOpacity
@@ -254,6 +299,15 @@ export default function TopNavigation({ onNavLinkPress, onFeedbackPress }: TopNa
           showTrigger={false}
         />
       )}
+
+      {/* Community Picker Modal */}
+      {showCommunityPicker && (
+        <CommunityPicker
+          initiallyOpen={true}
+          showTrigger={false}
+          onClose={() => setShowCommunityPicker(false)}
+        />
+      )}
     </>
   );
 }
@@ -281,6 +335,25 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'flex-start',
     justifyContent: 'center',
+  },
+  badgeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  inText: {
+    fontSize: 14,
+    fontWeight: '500',
+    marginHorizontal: 4,
+  },
+  cityBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    gap: 4,
   },
   centerSection: {
     flex: 2,
@@ -395,21 +468,32 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   // City Badge Styles
-  cityBadge: {
+  communityBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 16,
-    borderWidth: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 2,
     gap: 6,
+    maxWidth: 250,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  communityMainText: {
+    fontWeight: '700',
+    fontSize: 14,
   },
   cityText: {
     fontWeight: '600',
     fontSize: 13,
   },
   cityArrow: {
-    fontSize: 10,
+    fontSize: 11,
+    fontWeight: '600',
   },
   // City Menu Styles (Mobile)
   cityMenuRow: {

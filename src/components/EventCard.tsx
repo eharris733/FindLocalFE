@@ -10,6 +10,7 @@ import { getDisplayCityName } from '../utils/cityUtils';
 import { getCompactVenueSizeLabel } from '../utils/venueUtils';
 import { useDeviceInfo } from '../hooks/useDeviceInfo';
 import { getGenresFromEventTypes, getGenreDisplayLabel } from '../constants/eventCategories';
+import { analytics } from '../utils/analytics';
 
 interface EventCardProps {
   event: Event;
@@ -53,6 +54,20 @@ const EventCard: React.FC<EventCardProps> = ({ event, onPress, variant = 'defaul
   const handleToggleFavorite = async (e: any) => {
     // Stop propagation to prevent opening the event modal
     e.stopPropagation();
+    
+    const metricType = isEventFavorited ? 'unfavorite' : 'favorite';
+    
+    // Track favorite action
+    analytics.trackEventMetric({
+      eventId: event.id,
+      metricType,
+      city: event.city,
+      source: variant === 'compact' ? 'list' : variant === 'grouped' ? 'list' : 'gallery',
+      metadata: {
+        variant,
+      },
+    });
+    
     await toggleFavorite(event.id);
   };
   
@@ -84,6 +99,19 @@ const EventCard: React.FC<EventCardProps> = ({ event, onPress, variant = 'defaul
   }, [event.event_type]);
   
   const handleCardPress = () => {
+    // Track event click
+    analytics.trackEventMetric({
+      eventId: event.id,
+      metricType: 'click',
+      city: event.city,
+      source: variant === 'compact' ? 'list' : variant === 'grouped' ? 'list' : 'gallery',
+      metadata: {
+        variant,
+        eventType: event.event_type,
+        hasImage: !!event.image_url,
+      },
+    });
+    
     if (onPress) {
       onPress(event);
     } else if (event.detail_page_url) {

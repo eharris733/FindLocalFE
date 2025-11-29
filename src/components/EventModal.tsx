@@ -19,6 +19,10 @@ import { getVenueSizeLabel } from '../utils/venueUtils';
 import { EVENT_NO_DESCRIPTION_FALLBACK } from '../utils/eventUtils';
 import { logger } from '../utils/logger';
 import { getGenresFromEventTypes, getGenreDisplayLabel } from '../constants/eventCategories';
+import { analytics } from '../utils/analytics';
+import { useModalTimeTracking } from '../hooks/useTimeTracking';
+import { addToGoogleCalendar, addToAppleCalendar } from '../utils/calendarUtils';
+import { useAuth } from '../hooks/useAuth';
 
 interface EventModalProps {
   visible: boolean;
@@ -51,15 +55,39 @@ function formatMilitaryTime(time: string): string {
 
 const EventModal: React.FC<EventModalProps> = ({ visible, event, onClose }) => {
   const { theme } = useTheme();
+  const { isLoggedIn } = useAuth();
   const [venue, setVenue] = useState<Venue | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [showFullVenueDescription, setShowFullVenueDescription] = useState(false);
+  const { getDuration } = useModalTimeTracking();
 
   useEffect(() => {
     if (visible && event) {
+      // Track modal open
+      analytics.trackEventMetric({
+        eventId: event.id,
+        metricType: 'modal_open',
+        city: event.city,
+        metadata: {
+          hasVenue: !!event.venue_id,
+        },
+      });
+      
       fetchVenueData();
+    } else if (!visible && event) {
+      // Track modal close with duration
+      const duration = getDuration();
+      analytics.trackEventMetric({
+        eventId: event.id,
+        metricType: 'modal_close',
+        city: event.city,
+        durationMs: duration,
+        metadata: {
+          viewedVenue: !!venue,
+        },
+      });
     }
   }, [visible, event]);
 
@@ -112,6 +140,40 @@ const EventModal: React.FC<EventModalProps> = ({ visible, event, onClose }) => {
       const mapsUrl = `https://maps.google.com/?q=${encodedAddress}`;
       Linking.openURL(mapsUrl);
     }
+  };
+
+  const handleAddToGoogleCalendar = () => {
+    if (!event) return;
+    
+    // Track calendar export
+    analytics.trackEventMetric({
+      eventId: event.id,
+      metricType: 'calendar_export',
+      city: event.city,
+      metadata: {
+        calendarType: 'google',
+        hasVenue: !!venue,
+      },
+    });
+    
+    addToGoogleCalendar(event, venue);
+  };
+
+  const handleAddToAppleCalendar = () => {
+    if (!event) return;
+    
+    // Track calendar export
+    analytics.trackEventMetric({
+      eventId: event.id,
+      metricType: 'calendar_export',
+      city: event.city,
+      metadata: {
+        calendarType: 'apple',
+        hasVenue: !!venue,
+      },
+    });
+    
+    addToAppleCalendar(event, venue);
   };
 
   // Get image source with same priority as EventCard: event image -> venue image -> default
@@ -354,6 +416,66 @@ const EventModal: React.FC<EventModalProps> = ({ visible, event, onClose }) => {
                       {buttonInfo.text}
                     </Text>
                   </TouchableOpacity>
+
+                  {/* Add to Calendar Buttons - Only visible for logged in users */}
+                  {isLoggedIn && event.event_date && (
+                    <View style={[styles.calendarButtonsContainer, { marginBottom: theme.spacing.md }]}>
+                      <Text variant="body2" style={{ 
+                        color: theme.colors.text.secondary,
+                        marginBottom: theme.spacing.sm,
+                        fontWeight: '600',
+                      }}>
+                        Add to Calendar
+                      </Text>
+                      <View style={styles.calendarButtons}>
+                        <TouchableOpacity
+                          style={[styles.calendarButton, {
+                            backgroundColor: theme.colors.background.primary,
+                            borderColor: theme.colors.primary[500],
+                            borderWidth: 1.5,
+                            paddingVertical: theme.spacing.sm,
+                            paddingHorizontal: theme.spacing.md,
+                            borderRadius: theme.borderRadius.md,
+                            flex: 1,
+                            marginRight: theme.spacing.xs,
+                            alignItems: 'center',
+                          }]}
+                          onPress={handleAddToGoogleCalendar}
+                        >
+                          <Text variant="body2" style={{ 
+                            color: theme.colors.primary[600], 
+                            fontWeight: '600',
+                            fontSize: 13,
+                          }}>
+                            📅 Google
+                          </Text>
+                        </TouchableOpacity>
+                        
+                        <TouchableOpacity
+                          style={[styles.calendarButton, {
+                            backgroundColor: theme.colors.background.primary,
+                            borderColor: theme.colors.primary[500],
+                            borderWidth: 1.5,
+                            paddingVertical: theme.spacing.sm,
+                            paddingHorizontal: theme.spacing.md,
+                            borderRadius: theme.borderRadius.md,
+                            flex: 1,
+                            marginLeft: theme.spacing.xs,
+                            alignItems: 'center',
+                          }]}
+                          onPress={handleAddToAppleCalendar}
+                        >
+                          <Text variant="body2" style={{ 
+                            color: theme.colors.primary[600], 
+                            fontWeight: '600',
+                            fontSize: 13,
+                          }}>
+                            📅 Apple
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  )}
 
                   {/* Show music genres if available */}
                   {(() => {
@@ -716,6 +838,19 @@ const styles = StyleSheet.create({
   eventMeta: {},
   actionButton: {
     alignItems: 'center',
+  },
+  
+  // Calendar button styles
+  calendarButtonsContainer: {
+    marginTop: 8,
+  },
+  calendarButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  calendarButton: {
+    flex: 1,
   },
 });
 

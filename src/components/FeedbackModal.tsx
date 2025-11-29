@@ -4,11 +4,11 @@ import {
   Modal,
   TouchableOpacity,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
   TextInput,
   ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../context/ThemeContext';
 import { Text, Button } from './ui';
 import { useAuth } from '../hooks/useAuth';

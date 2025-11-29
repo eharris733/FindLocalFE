@@ -1,3 +1,10 @@
+export interface EventCommunityAssignment {
+  community_id: string;
+  labels?: string[] | null;
+  assigned_by: 'ai' | 'venue' | 'manual';
+  confidence?: number | null;
+}
+
 export interface Event {
   id: string; // uuid
   silver_event_id: string | null; // uuid, foreign key to events_silver
@@ -15,7 +22,8 @@ export interface Event {
   price: string | null; // Ticket price or price range (e.g., "$25", "$20-$30", "Free")
   price_amount: number | null; // Numeric price for filtering
   status: string | null; // Event status: "Sold Out", "Cancelled", "Postponed", etc.
-  event_type: string[] | null; // Array of event types and genres (music, jazz, rock, comedy, theater, etc.)
+  event_type: string[] | null; // Array of event types and genres (music, jazz, rock, comedy, theater, etc.) - LEGACY
+  event_community_assignments?: EventCommunityAssignment[] | null; // New: community-based taxonomy
   created_at: string | null; // timestamp with time zone
   last_seen_at: string | null; // timestamp with time zone
   is_deleted: boolean | null; // soft delete flag
@@ -23,8 +31,9 @@ export interface Event {
 
 export interface FilterState {
   category: string | string[]; // Legacy - maps to event categories
-  eventTypes: string[]; // New: direct event_type filtering
-  venueTypes: string[]; // New: venue type filtering
+  communityIds: string[]; // Community-based filtering (replaces eventTypes)
+  labels: string[]; // Label filtering within communities
+  venueTypes: string[]; // Venue type filtering
   startDate: Date | null;
   endDate: Date | null;
   dateRange: 'all' | 'today' | 'tomorrow' | 'this_week' | 'this_weekend' | 'next_week' | 'this_month' | 'custom';
@@ -42,7 +51,8 @@ export type EventFilters = FilterState;
 
 export type FilterAction =
   | { type: 'SET_CATEGORY'; payload: string | string[] }
-  | { type: 'SET_EVENT_TYPES'; payload: string[] }
+  | { type: 'SET_COMMUNITY_IDS'; payload: string[] }
+  | { type: 'SET_LABELS'; payload: string[] }
   | { type: 'SET_VENUE_TYPES'; payload: string[] }
   | { type: 'SET_START_DATE'; payload: Date | null }
   | { type: 'SET_END_DATE'; payload: Date | null }

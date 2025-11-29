@@ -125,6 +125,32 @@ export async function getEventsByDateRange(
   }
 }
 
+export async function getEventById(eventId: string): Promise<Event | null> {
+  try {
+    const { data, error } = await supabase
+      .from('events_gold')
+      .select('*')
+      .eq('id', eventId)
+      .single();
+
+    if (error) {
+      logger.error('Error fetching event by ID from Supabase:', error);
+      throw new Error(`Supabase error: ${error.message}`);
+    }
+
+    if (!data) {
+      logger.warn(`No event found with ID: ${eventId}`);
+      return null;
+    }
+
+    logger.info(`Fetched event with ID: ${eventId}`);
+    return data as Event;
+  } catch (error: any) {
+    logger.error('Error fetching event by ID:', error);
+    throw new Error(`Failed to fetch event: ${error.message}`);
+  }
+}
+
 export async function getAvailableCities(): Promise<string[]> {
   try {
     //console.log('🏙️ Fetching available cities from events_gold table...');
@@ -149,3 +175,82 @@ export async function getAvailableCities(): Promise<string[]> {
     return [];
   }
 }
+
+/**
+ * Fetch events with their community assignments and labels
+ * This includes the community_id, labels, and assigned_by from event_community_assignments
+ */
+export async function getEventsWithCommunities(
+  city?: string,
+  communityIds?: string[],
+  labels?: string[]
+): Promise<Event[]> {
+  try {
+    let allEvents: Event[] = [];
+    let page = 0;
+    let hasMore = true;
+
+    while (hasMore) {
+      let query = supabase
+        .from('events_gold')
+        .select(`
+          *,
+          event_community_assignments(
+            community_id,
+            labels,
+            assigned_by,
+            confidence
+          )
+        `)
+        .order('event_date', { ascending: true })
+        .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
+
+      // Filter by city if provided
+      if (city) {
+        query = query.eq('city', city);
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        logger.error('Error fetching events with communities:', error);
+        throw new Error(`Supabase error: ${error.message}`);
+      }
+
+      if (data && data.length > 0) {
+        // Filter by community IDs if provided
+        let filteredData = data;
+        
+        if (communityIds && communityIds.length > 0) {
+          filteredData = data.filter(event => 
+            event.event_community_assignments?.some((assignment: any) =>
+              communityIds.includes(assignment.community_id)
+            )
+          );
+        }
+
+        // Filter by labels if provided
+        if (labels && labels.length > 0) {
+          filteredData = filteredData.filter(event =>
+            event.event_community_assignments?.some((assignment: any) =>
+              assignment.labels?.some((label: string) => labels.includes(label))
+            )
+          );
+        }
+
+        allEvents.push(...(filteredData as Event[]));
+        hasMore = data.length === PAGE_SIZE;
+        page++;
+      } else {
+        hasMore = false;
+      }
+    }
+
+    logger.info(`Fetched ${allEvents.length} events with communities from Supabase`);
+    return allEvents;
+  } catch (error: any) {
+    logger.error('Error fetching events with communities:', error);
+    throw new Error(`Failed to fetch events with communities: ${error.message}`);
+  }
+}
+

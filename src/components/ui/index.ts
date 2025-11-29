@@ -6,6 +6,7 @@ export type {
 export { Card } from './Card';
 export { CategoryPills } from './CategoryPills';
 export { CityPicker } from './CityPicker';
+export { CommunityPicker } from './CommunityPicker';
 export type { CardVariant } from './Card';
 export { Container } from './Container';
 export { DateRangePicker } from './DateRangePicker';

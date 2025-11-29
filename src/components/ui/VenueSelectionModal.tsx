@@ -9,7 +9,7 @@ import {
   Alert,
 } from 'react-native';
 import { useTheme } from '../../context/ThemeContext';
-import { Text } from '../ui';
+import { Text } from './Text';
 import { getVenuesByCity } from '../../api/venues';
 import { getDisplayCityName } from '../../utils/cityUtils';
 import type { Venue } from '../../types/venues';

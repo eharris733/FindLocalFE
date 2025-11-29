@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, FlatList, StyleSheet, Platform, Dimensions } from 'react-native';
+import { View, FlatList, StyleSheet, Platform, Dimensions, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import EventCard from './EventCard';
 import { Text } from './ui';
@@ -13,6 +13,9 @@ interface GalleryViewProps {
   onEventHover?: (event: Event | null) => void;
   highlightedEventId?: string;
   venues?: Venue[];
+  onScroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
+  scrollEventThrottle?: number;
+  contentInsetTop?: number;
 }
 
 export default function GalleryView({ 
@@ -21,8 +24,11 @@ export default function GalleryView({
   onEventPress, 
   onEventHover,
   highlightedEventId,
-  venues
-}: GalleryViewProps) {
+  venues,
+  onScroll,
+  scrollEventThrottle = 16,
+  contentInsetTop = 0
+}: Readonly<GalleryViewProps>) {
   const { theme } = useTheme();
   const { width } = Dimensions.get('window');
   
@@ -90,7 +96,7 @@ export default function GalleryView({
         data={events}
         keyExtractor={(item) => item.id}
         renderItem={renderEventCard}
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={[styles.listContent, { paddingTop: contentInsetTop }]}
         showsVerticalScrollIndicator={true}
         style={styles.list}
         numColumns={numColumns}
@@ -105,6 +111,8 @@ export default function GalleryView({
           offset: 400 * index,
           index,
         })}
+        onScroll={onScroll}
+        scrollEventThrottle={scrollEventThrottle}
       />
     </View>
   );

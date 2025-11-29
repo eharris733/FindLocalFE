@@ -4,9 +4,9 @@ import {
   Modal,
   TouchableOpacity,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../../context/ThemeContext';
 import { Text, Button, SearchableDropdown } from './';
 import type { FilterState, FilterAction } from '../../hooks/useEvents';
