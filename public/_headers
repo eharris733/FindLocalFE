@@ -11,19 +11,27 @@
 /assets/*.ttf
   Content-Type: font/ttf
   Access-Control-Allow-Origin: *
+  Cache-Control: public, max-age=31536000, immutable, no-transform
+  Content-Encoding: identity
   Cross-Origin-Resource-Policy: cross-origin
 
 /assets/*.otf
   Content-Type: font/otf
   Access-Control-Allow-Origin: *
+  Cache-Control: public, max-age=31536000, immutable, no-transform
+  Content-Encoding: identity
   Cross-Origin-Resource-Policy: cross-origin
 
 /assets/*.woff
   Content-Type: font/woff
   Access-Control-Allow-Origin: *
+  Cache-Control: public, max-age=31536000, immutable, no-transform
+  Content-Encoding: identity
   Cross-Origin-Resource-Policy: cross-origin
 
 /assets/*.woff2
   Content-Type: font/woff2
   Access-Control-Allow-Origin: *
+  Cache-Control: public, max-age=31536000, immutable, no-transform
+  Content-Encoding: identity
   Cross-Origin-Resource-Policy: cross-origin
