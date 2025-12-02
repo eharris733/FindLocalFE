@@ -66,7 +66,9 @@ export default function MainLayout({
     const checkOnboarding = async () => {
       try {
         const completed = await AsyncStorage.getItem(STORAGE_KEYS.ONBOARDING_COMPLETED);
-        if (!completed) {
+        // Don't show onboarding if already completed OR if user is logged in
+        // (logged in users have already completed onboarding via OAuth or signup)
+        if (!completed && !session) {
           setShowOnboarding(true);
         }
       } catch (error) {
@@ -74,7 +76,7 @@ export default function MainLayout({
       }
     };
     checkOnboarding();
-  }, []);
+  }, [session]); // Re-check when session changes
 
   const handleOnboardingComplete = useCallback(async (selectedInterests?: string[]) => {
     try {
