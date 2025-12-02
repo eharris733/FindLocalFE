@@ -32,6 +32,13 @@ export default function TopNavigation({ onNavLinkPress, onFeedbackPress }: TopNa
 
   const navLinks = ['Events', 'About', 'Friends'];
 
+  const formatCommunityName = (name: string) => {
+    const lower = name.toLowerCase();
+    if (lower === 'theater') return 'Theater';
+    if (lower === 'culture') return 'Culture';
+    return name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
+  };
+
   useEffect(() => {
     if (showMobileMenu) {
       Animated.timing(slideAnim, {
@@ -117,8 +124,8 @@ export default function TopNavigation({ onNavLinkPress, onFeedbackPress }: TopNa
                   }]}
                   onPress={() => setShowCommunityPicker(true)}
                 >
-                  <Text variant="body2" color="primary" style={styles.communityMainText}>
-                    {selectedCommunities.length === 0 ? '🌍 Everything' : selectedCommunities.join(' • ')}
+                  <Text variant="body2" color="primary" style={styles.communitiesText}>
+                    {selectedCommunities.length === 0 ? '🌍 Everything' : selectedCommunities.map(formatCommunityName).join(' • ')}
                   </Text>
                   <Text variant="caption" color="primary" style={styles.cityArrow}>▼</Text>
                 </TouchableOpacity>
@@ -250,7 +257,7 @@ export default function TopNavigation({ onNavLinkPress, onFeedbackPress }: TopNa
                       numberOfLines={1}
                       ellipsizeMode="tail"
                     >
-                      {selectedCommunities.length === 0 ? 'Everything' : selectedCommunities.join(', ')}
+                      {selectedCommunities.length === 0 ? 'Everything' : selectedCommunities.map(formatCommunityName).join(', ')}
                     </Text>
                   </View>
                   <Text variant="body2" color="secondary" style={styles.chevron}>›</Text>

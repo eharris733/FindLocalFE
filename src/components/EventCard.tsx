@@ -11,6 +11,7 @@ import { getCompactVenueSizeLabel } from '../utils/venueUtils';
 import { useDeviceInfo } from '../hooks/useDeviceInfo';
 import { getGenresFromEventTypes, getGenreDisplayLabel } from '../constants/eventCategories';
 import { analytics } from '../utils/analytics';
+import type { Community } from '../api/communities';
 
 interface EventCardProps {
   event: Event;
@@ -19,6 +20,7 @@ interface EventCardProps {
   venues?: Venue[]; // Optional venue list for faster lookup
   onVenuePress?: (venue: Venue) => void; // Optional callback for venue press
   isMobile?: boolean; // Optional mobile flag for grouped variant
+  communities?: Community[]; // Available communities for enrichment
 }
 
 function formatMilitaryTime(time: string): string {
@@ -41,7 +43,7 @@ function formatMilitaryTime(time: string): string {
   return `${formattedHours}:${formattedMinutes} ${isPM ? 'PM' : 'AM'}`;
 }
 
-const EventCard: React.FC<EventCardProps> = ({ event, onPress, variant = 'default', venues, isMobile: isMobileProp }) => {
+const EventCard: React.FC<EventCardProps> = ({ event, onPress, variant = 'default', venues, isMobile: isMobileProp, communities = [] }) => {
   const { theme } = useTheme();
   const { isFavorite, toggleFavorite } = useFavorites();
   const { isMobile: isDeviceMobile } = useDeviceInfo();
@@ -50,6 +52,25 @@ const EventCard: React.FC<EventCardProps> = ({ event, onPress, variant = 'defaul
   const isMobile = isMobileProp !== undefined ? isMobileProp : isDeviceMobile;
   
   const isEventFavorited = isFavorite(event.id);
+  
+  // Get enriched communities for this event
+  const enrichedCommunities = useMemo(() => {
+    if (!event.event_community_assignments || !communities.length) return [];
+    
+    return event.event_community_assignments
+      .map(assignment => {
+        const community = communities.find(c => c.id === assignment.community_id);
+        if (!community) return null;
+        
+        return {
+          id: assignment.community_id,
+          color: community.metadata?.color || '#6366f1',
+          icon: community.metadata?.icon || '🎵',
+        };
+      })
+      .filter(Boolean)
+      .slice(0, 3); // Max 3 dots
+  }, [event.event_community_assignments, communities]);
   
   const handleToggleFavorite = async (e: any) => {
     // Stop propagation to prevent opening the event modal
@@ -177,6 +198,28 @@ const EventCard: React.FC<EventCardProps> = ({ event, onPress, variant = 'defaul
               </View>
             </View>
             
+            {/* Community indicators */}
+            {enrichedCommunities.length > 0 && (
+              <View style={[styles.communityIndicators, {
+                flexDirection: 'row',
+                gap: 3,
+                marginTop: theme.spacing.xs,
+                marginBottom: theme.spacing.xs,
+              }]}>
+                {enrichedCommunities.map((community: any, index: number) => (
+                  <View
+                    key={`${community.id}-${index}`}
+                    style={{
+                      width: 6,
+                      height: 6,
+                      borderRadius: 3,
+                      backgroundColor: community.color,
+                    }}
+                  />
+                ))}
+              </View>
+            )}
+            
             <View style={styles.compactMeta}>
               {event.event_date && (
                 <Text variant="caption" style={[styles.compactDate, { color: theme.colors.primary[600] }]}>
@@ -242,6 +285,27 @@ const EventCard: React.FC<EventCardProps> = ({ event, onPress, variant = 'defaul
               ]}>
                 {event.title || 'Untitled Event'}
               </Text>
+              
+              {/* Community indicator dots - show on mobile */}
+              {isMobile && enrichedCommunities.length > 0 && (
+                <View style={[styles.communityIndicators, {
+                  flexDirection: 'row',
+                  gap: 2,
+                  marginLeft: theme.spacing.xs,
+                }]}>
+                  {enrichedCommunities.map((community: any, index: number) => (
+                    <View
+                      key={`${community.id}-${index}`}
+                      style={{
+                        width: 5,
+                        height: 5,
+                        borderRadius: 2.5,
+                        backgroundColor: community.color,
+                      }}
+                    />
+                  ))}
+                </View>
+              )}
               
               {/* Metadata tags - hide on mobile */}
               {!isMobile && (
@@ -429,6 +493,27 @@ const EventCard: React.FC<EventCardProps> = ({ event, onPress, variant = 'defaul
             <Text style={[styles.mockupVenueType, { color: theme.colors.text.secondary }]}>
               🏢 {venueInfo.sizeLabel || 'Unknown size'} • {venueInfo.type || 'Venue'}
             </Text>
+            
+            {/* Community indicators */}
+            {enrichedCommunities.length > 0 && (
+              <View style={[styles.communityIndicators, {
+                flexDirection: 'row',
+                gap: 3,
+                marginLeft: theme.spacing.sm,
+              }]}>
+                {enrichedCommunities.map((community: any, index: number) => (
+                  <View
+                    key={`${community.id}-${index}`}
+                    style={{
+                      width: 6,
+                      height: 6,
+                      borderRadius: 3,
+                      backgroundColor: community.color,
+                    }}
+                  />
+                ))}
+              </View>
+            )}
           </View>
           
           {/* Action buttons */}

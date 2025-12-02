@@ -4,6 +4,7 @@ import {useFavorites} from "../context/FavoritesContext";
 import {useEvents} from "../hooks/useEvents";
 import {StatusBar, StyleSheet, View, Text} from "react-native";
 import MainLayout from "../components/MainLayout";
+import FeedbackModal from "../components/FeedbackModal";
 import React from "react";
 import {useTheme} from "../context/ThemeContext";
 import type {Event} from "../types/events";
@@ -19,6 +20,7 @@ export default function IndexRoute() {
     const { selectedCommunities, allCommunities } = useCommunity();
     const { favoriteEventIds } = useFavorites();
     const router = useRouter();
+    const [showFeedbackModal, setShowFeedbackModal] = React.useState(false);
 
     const {
         loading,
@@ -73,6 +75,14 @@ export default function IndexRoute() {
         router.push(`/event/${event.id}`);
     };
 
+    const handleFeedbackPress = React.useCallback(() => {
+        setShowFeedbackModal(true);
+    }, []);
+
+    const handleCloseFeedback = React.useCallback(() => {
+        setShowFeedbackModal(false);
+    }, []);
+
     return (
         <View style={[styles.container, { backgroundColor: theme.colors.background.secondary }]}>
         <StructuredData city={selectedCity} />
@@ -80,21 +90,6 @@ export default function IndexRoute() {
             barStyle={isDark ? "light-content" : "dark-content"}
             backgroundColor={theme.colors.background.primary}
         />
-        {/* Hidden H1 for SEO - positioned off-screen but accessible to search engines */}
-        <Text 
-            accessibilityRole="header" 
-            aria-level={1}
-            style={{
-                position: 'absolute',
-                left: -10000,
-                top: 'auto',
-                width: 1,
-                height: 1,
-                overflow: 'hidden'
-            }}
-        >
-            Find Local Events in {selectedCity || 'Your City'}: Concerts, Comedy, Theater & More
-        </Text>
         <MainLayout
             events={filteredEvents}
             loading={loading}
@@ -106,7 +101,9 @@ export default function IndexRoute() {
             venuesLoading={venuesLoading}
             availableFilterOptions={availableFilterOptions}
             onEventPress={handleEventPress}
+            onFeedbackPress={handleFeedbackPress}
         />
+        <FeedbackModal visible={showFeedbackModal} onClose={handleCloseFeedback} />
     </View>);
 }
 

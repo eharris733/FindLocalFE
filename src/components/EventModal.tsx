@@ -23,14 +23,37 @@ import { analytics } from '../utils/analytics';
 import { useModalTimeTracking } from '../hooks/useTimeTracking';
 import { addToGoogleCalendar, addToAppleCalendar } from '../utils/calendarUtils';
 import { useAuth } from '../hooks/useAuth';
+import type { Community } from '../api/communities';
 
 interface EventModalProps {
   visible: boolean;
   event: Event | null;
   onClose: () => void;
+  communities?: Community[]; // Available communities for enrichment
 }
 
 const { width, height } = Dimensions.get('window');
+
+// Helper to enrich community assignments with full community data
+function getEnrichedCommunities(event: Event | null, communities: Community[] = []) {
+  if (!event?.event_community_assignments || !communities.length) return [];
+  
+  return event.event_community_assignments
+    .map(assignment => {
+      const community = communities.find(c => c.id === assignment.community_id);
+      if (!community) return null;
+      
+      return {
+        community_id: assignment.community_id,
+        community_name: community.name,
+        community_icon: community.metadata?.icon || '🎵',
+        community_color: community.metadata?.color || '#6366f1',
+        labels: assignment.labels || [],
+        confidence: assignment.confidence,
+      };
+    })
+    .filter(Boolean);
+}
 
 // Helper function to format time like in EventCard
 function formatMilitaryTime(time: string): string {
@@ -53,9 +76,10 @@ function formatMilitaryTime(time: string): string {
   return `${formattedHours}:${formattedMinutes} ${isPM ? 'PM' : 'AM'}`;
 }
 
-const EventModal: React.FC<EventModalProps> = ({ visible, event, onClose }) => {
+const EventModal: React.FC<EventModalProps> = ({ visible, event, onClose, communities = [] }) => {
   const { theme } = useTheme();
   const { isLoggedIn } = useAuth();
+  const enrichedCommunities = getEnrichedCommunities(event, communities);
   const [venue, setVenue] = useState<Venue | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -328,6 +352,41 @@ const EventModal: React.FC<EventModalProps> = ({ visible, event, onClose }) => {
                     </Text>
                   </View>
                 )}
+                
+                {/* Community Badges - bottom right */}
+                {enrichedCommunities.length > 0 && (
+                  <View style={[styles.communityBadgesContainer, {
+                    position: 'absolute',
+                    bottom: 8,
+                    right: 8,
+                    flexDirection: 'row',
+                    gap: 6,
+                  }]}>
+                    {enrichedCommunities.slice(0, 2).map((community: any) => (
+                      <View
+                        key={community.community_id}
+                        style={[styles.communityBadge, {
+                          backgroundColor: community.community_color,
+                          paddingHorizontal: theme.spacing.sm,
+                          paddingVertical: theme.spacing.xs,
+                          borderRadius: theme.borderRadius.full,
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          gap: 4,
+                          ...theme.shadows.small,
+                        }]}
+                      >
+                        <Text style={{ fontSize: 12 }}>{community.community_icon}</Text>
+                        <Text variant="caption" style={{
+                          color: theme.colors.text.inverse,
+                          fontWeight: '600',
+                        }}>
+                          {community.community_name}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                )}
               </View>
 
               {/* Event Information */}
@@ -393,89 +452,128 @@ const EventModal: React.FC<EventModalProps> = ({ visible, event, onClose }) => {
                     </TouchableOpacity>
                   )}
 
-                  {/* Primary Action Button */}
-                  <TouchableOpacity
-                    style={[styles.primaryActionButton, {
-                      backgroundColor: theme.colors.secondary[500],
-                      paddingVertical: theme.spacing.md,
-                      paddingHorizontal: theme.spacing.lg,
-                      borderRadius: theme.borderRadius.lg,
-                      alignItems: 'center',
-                      marginTop: theme.spacing.sm,
-                      marginBottom: theme.spacing.md,
-                      ...theme.shadows.medium,
-                    }]}
-                    onPress={handleEventLink}
-                  >
-                    <Text variant="body1" style={{ 
-                      color: theme.colors.text.inverse, 
-                      fontWeight: '700',
-                      textAlign: 'center',
-                      fontSize: 16,
-                    }}>
-                      {buttonInfo.text}
-                    </Text>
-                  </TouchableOpacity>
+                  {/* Primary Actions - Ticket Purchase + Quick Actions */}
+                  <View style={[styles.primaryActionsContainer, { 
+                    marginTop: theme.spacing.md,
+                    marginBottom: theme.spacing.lg,
+                    gap: theme.spacing.sm,
+                  }]}>
+                    {/* Ticket Button - Primary CTA */}
+                    {event.ticket_page_url && (
+                      <TouchableOpacity
+                        style={[styles.ticketButton, {
+                          backgroundColor: theme.colors.secondary[500],
+                          paddingVertical: theme.spacing.lg,
+                          paddingHorizontal: theme.spacing.xl,
+                          borderRadius: theme.borderRadius.lg,
+                          alignItems: 'center',
+                          ...theme.shadows.medium,
+                        }]}
+                        onPress={() => Linking.openURL(event.ticket_page_url!)}
+                      >
+                        <Text variant="h3" style={{ 
+                          color: theme.colors.text.inverse, 
+                          fontWeight: '700',
+                        }}>
+                          🎫 Get Tickets
+                        </Text>
+                        {event.price && (
+                          <Text variant="body2" style={{ 
+                            color: theme.colors.text.inverse,
+                            marginTop: theme.spacing.xs,
+                            opacity: 0.9,
+                          }}>
+                            {event.price}
+                          </Text>
+                        )}
+                      </TouchableOpacity>
+                    )}
 
-                  {/* Add to Calendar Buttons - Only visible for logged in users */}
-                  {isLoggedIn && event.event_date && (
-                    <View style={[styles.calendarButtonsContainer, { marginBottom: theme.spacing.md }]}>
-                      <Text variant="body2" style={{ 
-                        color: theme.colors.text.secondary,
-                        marginBottom: theme.spacing.sm,
-                        fontWeight: '600',
-                      }}>
-                        Add to Calendar
-                      </Text>
-                      <View style={styles.calendarButtons}>
+                    {/* Quick Actions Row */}
+                    <View style={[styles.quickActionsRow, { 
+                      flexDirection: 'row',
+                      gap: theme.spacing.sm,
+                    }]}>
+                      {/* Add to Calendar */}
+                      {isLoggedIn && event.event_date && (
                         <TouchableOpacity
-                          style={[styles.calendarButton, {
-                            backgroundColor: theme.colors.background.primary,
+                          style={[styles.quickActionButton, {
+                            flex: 1,
+                            backgroundColor: theme.colors.primary[50],
                             borderColor: theme.colors.primary[500],
                             borderWidth: 1.5,
-                            paddingVertical: theme.spacing.sm,
+                            paddingVertical: theme.spacing.md,
                             paddingHorizontal: theme.spacing.md,
                             borderRadius: theme.borderRadius.md,
-                            flex: 1,
-                            marginRight: theme.spacing.xs,
+                            flexDirection: 'row',
                             alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: theme.spacing.xs,
                           }]}
                           onPress={handleAddToGoogleCalendar}
                         >
+                          <Text style={{ fontSize: 16 }}>📅</Text>
                           <Text variant="body2" style={{ 
-                            color: theme.colors.primary[600], 
+                            color: theme.colors.primary[700], 
                             fontWeight: '600',
-                            fontSize: 13,
                           }}>
-                            📅 Google
+                            Calendar
                           </Text>
                         </TouchableOpacity>
-                        
-                        <TouchableOpacity
-                          style={[styles.calendarButton, {
-                            backgroundColor: theme.colors.background.primary,
-                            borderColor: theme.colors.primary[500],
-                            borderWidth: 1.5,
-                            paddingVertical: theme.spacing.sm,
-                            paddingHorizontal: theme.spacing.md,
-                            borderRadius: theme.borderRadius.md,
-                            flex: 1,
-                            marginLeft: theme.spacing.xs,
-                            alignItems: 'center',
-                          }]}
-                          onPress={handleAddToAppleCalendar}
-                        >
-                          <Text variant="body2" style={{ 
-                            color: theme.colors.primary[600], 
-                            fontWeight: '600',
-                            fontSize: 13,
-                          }}>
-                            📅 Apple
-                          </Text>
-                        </TouchableOpacity>
-                      </View>
+                      )}
+
+                      {/* Share Button */}
+                      <TouchableOpacity
+                        style={[styles.quickActionButton, {
+                          flex: isLoggedIn && event.event_date ? 1 : 0,
+                          backgroundColor: theme.colors.background.secondary,
+                          borderColor: theme.colors.border.light,
+                          borderWidth: 1,
+                          paddingVertical: theme.spacing.md,
+                          paddingHorizontal: theme.spacing.lg,
+                          borderRadius: theme.borderRadius.md,
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: theme.spacing.xs,
+                        }]}
+                        onPress={() => {
+                          // Simple share - could expand this with proper share API
+                          const shareUrl = event.detail_page_url || event.root_url;
+                          if (shareUrl) {
+                            Linking.openURL(`mailto:?subject=${encodeURIComponent(event.title || 'Event')}&body=${encodeURIComponent(shareUrl)}`);
+                          }
+                        }}
+                      >
+                        <Text style={{ fontSize: 16 }}>↗️</Text>
+                        <Text variant="body2" style={{ 
+                          color: theme.colors.text.primary, 
+                          fontWeight: '600',
+                        }}>
+                          Share
+                        </Text>
+                      </TouchableOpacity>
                     </View>
-                  )}
+
+                    {/* Secondary Link - More Info (only if no ticket link) */}
+                    {!event.ticket_page_url && (event.detail_page_url || event.root_url || venue?.url) && (
+                      <TouchableOpacity
+                        style={[styles.secondaryLinkButton, {
+                          paddingVertical: theme.spacing.sm,
+                          paddingHorizontal: theme.spacing.md,
+                          alignItems: 'center',
+                        }]}
+                        onPress={handleEventLink}
+                      >
+                        <Text variant="body2" style={{
+                          color: theme.colors.primary[600],
+                          fontWeight: '600',
+                        }}>
+                          View Event Website →
+                        </Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
 
                   {/* Show music genres if available */}
                   {(() => {
@@ -495,6 +593,39 @@ const EventModal: React.FC<EventModalProps> = ({ visible, event, onClose }) => {
                     }
                     return null;
                   })()}
+                  
+                  {/* Labels Section */}
+                  {enrichedCommunities.some((c: any) => c.labels && c.labels.length > 0) && (
+                    <View style={[styles.labelsSection, {
+                      marginTop: theme.spacing.sm,
+                      flexDirection: 'row',
+                      flexWrap: 'wrap',
+                      gap: theme.spacing.xs,
+                    }]}>
+                      {enrichedCommunities.flatMap((community: any) => 
+                        (community.labels || []).map((label: string) => (
+                          <View
+                            key={`${community.community_id}-${label}`}
+                            style={[styles.labelPill, {
+                              backgroundColor: theme.colors.background.secondary,
+                              borderColor: community.community_color,
+                              borderWidth: 1,
+                              paddingHorizontal: theme.spacing.sm,
+                              paddingVertical: theme.spacing.xs,
+                              borderRadius: theme.borderRadius.full,
+                            }]}
+                          >
+                            <Text variant="caption" style={{
+                              color: theme.colors.text.primary,
+                              fontWeight: '600',
+                            }}>
+                              {label}
+                            </Text>
+                          </View>
+                        ))
+                      )}
+                    </View>
+                  )}
                 </View>
 
                 {/* Event Description */}

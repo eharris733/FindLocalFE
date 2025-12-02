@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../supabase';
 import { Text } from './ui';
 import { useTheme } from '../context/ThemeContext';
 import { logger } from '../utils/logger';
+import { STORAGE_KEYS } from '../constants/storage-keys';
 
 export default function AuthCallback() {
   const { theme } = useTheme();
@@ -168,6 +170,10 @@ export default function AuthCallback() {
           
           // Sync user metadata to profile
           await syncUserMetadataToProfile(session.user.id);
+          
+          // Mark onboarding as completed for OAuth users
+          // This prevents the onboarding modal from showing again
+          await AsyncStorage.setItem(STORAGE_KEYS.ONBOARDING_COMPLETED, 'true');
           
           logger.info('Redirecting to home...');
           

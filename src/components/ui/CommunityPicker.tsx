@@ -48,10 +48,22 @@ export const CommunityPicker: React.FC<CommunityPickerProps> = ({
 
   const isAllSelected = pendingSelection.length === 0;
 
+  const formatCommunityName = (name: string) => {
+    const lower = name.toLowerCase();
+    if (lower === 'theater') {
+      return 'Theater';
+    }
+    if (lower === 'culture') {
+      return 'Culture';
+    }
+    // Default: capitalize first letter
+    return name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
+  };
+
   const getDisplayText = () => {
     if (isAllSelected) return 'Everything';
-    if (pendingSelection.length === 1) return pendingSelection[0];
-    if (pendingSelection.length === 2) return pendingSelection.join(' • ');
+    if (pendingSelection.length === 1) return formatCommunityName(pendingSelection[0]);
+    if (pendingSelection.length === 2) return pendingSelection.map(formatCommunityName).join(' • ');
     return `${pendingSelection.length} Communities`;
   };
 
@@ -167,7 +179,7 @@ export const CommunityPicker: React.FC<CommunityPickerProps> = ({
                               color={isSelected ? 'primary' : 'secondary'}
                               style={{ fontWeight: isSelected ? '700' : '600' }}
                             >
-                              {community.name}
+                              {formatCommunityName(community.name)}
                             </Text>
                             {community.description && (
                               <Text variant="caption" color="tertiary" style={{ marginTop: 2 }}>
