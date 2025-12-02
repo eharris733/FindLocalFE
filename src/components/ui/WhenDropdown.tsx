@@ -196,28 +196,37 @@ export const WhenDropdown: React.FC<WhenDropdownProps> = ({
         >
           <SafeAreaView style={[styles.modal, { backgroundColor: theme.colors.background.primary }]}>
             <View style={[styles.modalHeader, { borderBottomColor: theme.colors.border.light }]}>
-              <View style={{ flex: 1 }} />
+              <Text variant="h3" color="primary">Select Date</Text>
               <TouchableOpacity onPress={handleClose}>
                 <Text variant="h3" color="secondary">✕</Text>
               </TouchableOpacity>
             </View>
             
             <View style={styles.modalContent}>
-              {quickOptions.map((option) => (
-                <TouchableOpacity
-                  key={option.label}
-                  style={[styles.quickButton, {
-                    backgroundColor: theme.colors.background.secondary,
-                    borderColor: theme.colors.border.light,
-                    marginBottom: 8,
-                  }]}
-                  onPress={() => handleQuickSelect(option)}
-                >
-                  <Text variant="body1">
-                    {option.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+              {quickOptions.map((option) => {
+                const isSelected = selectedOption === option.id;
+                return (
+                  <TouchableOpacity
+                    key={option.label}
+                    style={[styles.quickButton, {
+                      backgroundColor: isSelected ? theme.colors.primary[500] : theme.colors.background.secondary,
+                      borderColor: isSelected ? theme.colors.primary[500] : theme.colors.border.light,
+                      marginBottom: 12,
+                    }]}
+                    onPress={() => handleQuickSelect(option)}
+                  >
+                    <Text 
+                      variant="body1"
+                      style={{
+                        color: isSelected ? '#FFFFFF' : theme.colors.text.primary,
+                        fontWeight: isSelected ? '600' : '400'
+                      }}
+                    >
+                      {option.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
           </SafeAreaView>
         </Modal>
@@ -397,18 +406,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 20,
+    padding: 16,
     borderBottomWidth: 1,
   },
   modalContent: {
-    flex: 1,
-    padding: 20,
+    padding: 16,
   },
   quickButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderWidth: 1,
-    borderRadius: 8,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderWidth: 2,
+    borderRadius: 12,
     alignItems: 'center',
   },
 });

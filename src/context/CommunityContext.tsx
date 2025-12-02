@@ -4,11 +4,6 @@ import { Community, CommunityLabelsGrouped } from '../api/communities';
 import { logger } from '../utils/logger';
 import { STORAGE_KEYS } from '../constants/storage-keys';
 
-// Legacy storage key for city (kept for backward compatibility with existing data)
-const LEGACY_STORAGE_KEYS = {
-  SELECTED_CITY: '@findlocal_selected_city',
-};
-
 interface CommunityContextType {
   selectedCommunities: string[]; // Array of community names (e.g., ["Music", "Dance"])
   selectedCity: string; // Current city (still needed for labels/venues)
@@ -39,20 +34,16 @@ export const CommunityProvider: React.FC<CommunityProviderProps> = ({ children }
   useEffect(() => {
     const loadPreferences = async () => {
       try {
-        const [savedCommunities, savedCity, legacyCity] = await Promise.all([
-          AsyncStorage.getItem(STORAGE_KEYS.SELECTED_INTERESTS), // Use global key for communities
-          AsyncStorage.getItem(STORAGE_KEYS.PREFERRED_CITY), // Try global key first
-          AsyncStorage.getItem(LEGACY_STORAGE_KEYS.SELECTED_CITY), // Fallback to legacy key
+        const [savedCommunities, savedCity] = await Promise.all([
+          AsyncStorage.getItem(STORAGE_KEYS.SELECTED_INTERESTS),
+          AsyncStorage.getItem(STORAGE_KEYS.PREFERRED_CITY),
         ]);
 
         if (savedCommunities) {
           setSelectedCommunities(JSON.parse(savedCommunities));
         }
-        // Use preferred city from global key, or fallback to legacy
         if (savedCity) {
           setSelectedCity(savedCity);
-        } else if (legacyCity) {
-          setSelectedCity(legacyCity);
         }
 
         setHasLoadedPreferences(true);
@@ -134,11 +125,7 @@ export const CommunityProvider: React.FC<CommunityProviderProps> = ({ children }
     setSelectedCity(city);
 
     try {
-      // Save to both global key and legacy key for compatibility
-      await Promise.all([
-        AsyncStorage.setItem(STORAGE_KEYS.PREFERRED_CITY, city),
-        AsyncStorage.setItem(LEGACY_STORAGE_KEYS.SELECTED_CITY, city),
-      ]);
+      await AsyncStorage.setItem(STORAGE_KEYS.PREFERRED_CITY, city);
       
       // Reload communities and labels for new city
       const { getCommunitiesForCity, getAllLabelsForCity } = await import('../api/communities');

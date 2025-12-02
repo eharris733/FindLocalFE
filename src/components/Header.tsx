@@ -22,7 +22,13 @@ export default function Header({ onFeedbackPress }: HeaderProps = {}) {
     };
 
     return (
-        <SafeAreaView edges={['top']} style={{ backgroundColor: theme.colors.background.primary }}>
+        <SafeAreaView 
+            edges={['top']} 
+            style={{ 
+                backgroundColor: theme.colors.background.primary,
+                flex: 0,
+            }}
+        >
             <TopNavigation onNavLinkPress={handleNavLinkPress} onFeedbackPress={onFeedbackPress} />
         </SafeAreaView>
     );

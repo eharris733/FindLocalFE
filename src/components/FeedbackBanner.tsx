@@ -67,7 +67,7 @@ export default function FeedbackBanner({ onFeedbackPress }: FeedbackBannerProps)
       <View style={styles.content}>
         <View style={styles.textContainer}>
           <Text variant="body2" style={styles.text}>
-            You're using an early version of find local! Help us improve by sharing your thoughts.
+            Help us improve by sharing your thoughts.
           </Text>
         </View>
         <View style={styles.buttonsContainer}>
