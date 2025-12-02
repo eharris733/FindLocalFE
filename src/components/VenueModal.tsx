@@ -12,6 +12,7 @@ import {
 import { useTheme } from '../context/ThemeContext';
 import { Text } from './ui';
 import type { Venue } from '../types/venues';
+import type { Community } from '../api/communities';
 import { getCompactVenueSizeLabel } from '../utils/venueUtils';
 import { analytics } from '../utils/analytics';
 import { useModalTimeTracking } from '../hooks/useTimeTracking';
@@ -20,11 +21,36 @@ interface VenueModalProps {
   visible: boolean;
   venue: Venue | null;
   onClose: () => void;
+  communities?: Community[]; // Available communities
+  venueCommunities?: Array<{ // Venue-community relationships
+    community_id: string;
+    priority?: 'high' | 'medium' | 'low' | null;
+  }>;
 }
 
-export default function VenueModal({ visible, venue, onClose }: VenueModalProps) {
+export default function VenueModal({ visible, venue, onClose, communities = [], venueCommunities = [] }: VenueModalProps) {
   const { theme } = useTheme();
   const { getDuration } = useModalTimeTracking();
+  
+  // Enrich venue communities with full community data
+  const enrichedCommunities = React.useMemo(() => {
+    if (!venueCommunities.length || !communities.length) return [];
+    
+    return venueCommunities
+      .map(vc => {
+        const community = communities.find(c => c.id === vc.community_id);
+        if (!community) return null;
+        
+        return {
+          id: community.id,
+          name: community.name,
+          icon: community.metadata?.icon || '🎵',
+          color: community.metadata?.color || '#6366f1',
+          priority: vc.priority,
+        };
+      })
+      .filter(Boolean);
+  }, [venueCommunities, communities]);
 
   React.useEffect(() => {
     if (visible && venue) {
@@ -113,6 +139,53 @@ export default function VenueModal({ visible, venue, onClose }: VenueModalProps)
               <Text variant="h2" style={[styles.venueName, { color: theme.colors.text.primary }]}>
                 {venue.name}
               </Text>
+              
+              {/* Venue Communities */}
+              {enrichedCommunities.length > 0 && (
+                <View style={[styles.communitiesSection, { marginBottom: theme.spacing.md }]}>
+                  <Text variant="caption" style={{
+                    color: theme.colors.text.tertiary,
+                    textTransform: 'uppercase',
+                    fontWeight: '600',
+                    marginBottom: theme.spacing.xs,
+                  }}>
+                    Communities
+                  </Text>
+                  <View style={[styles.communityBadges, {
+                    flexDirection: 'row',
+                    flexWrap: 'wrap',
+                    gap: theme.spacing.xs,
+                  }]}>
+                    {enrichedCommunities.map((community: any) => (
+                      <View
+                        key={community.id}
+                        style={[styles.communityBadge, {
+                          backgroundColor: `${community.color}20`,
+                          borderColor: community.color,
+                          borderWidth: 1.5,
+                          paddingHorizontal: theme.spacing.sm,
+                          paddingVertical: theme.spacing.xs,
+                          borderRadius: theme.borderRadius.full,
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          gap: 4,
+                        }]}
+                      >
+                        <Text style={{ fontSize: 12 }}>{community.icon}</Text>
+                        <Text variant="caption" style={{
+                          color: theme.colors.text.primary,
+                          fontWeight: '600',
+                        }}>
+                          {community.name}
+                        </Text>
+                        {community.priority === 'high' && (
+                          <Text style={{ fontSize: 10 }}>⭐</Text>
+                        )}
+                      </View>
+                    ))}
+                  </View>
+                </View>
+              )}
 
               {/* Address */}
               {venue.address && (
@@ -284,6 +357,9 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginBottom: 16,
   },
+  communitiesSection: {},
+  communityBadges: {},
+  communityBadge: {},
   infoRow: {
     flexDirection: 'row',
     alignItems: 'center',

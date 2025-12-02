@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Modal, TouchableOpacity, Pressable, ScrollView } from 'react-native';
+import { View, StyleSheet, Modal, TouchableOpacity, Pressable, ScrollView, Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '../context/ThemeContext';
 import { Text } from './ui';
 import { useCommunity } from '../context/CommunityContext';
+import { useCityLocation } from '../context/CityContext';
 import { useRouter } from 'expo-router';
 import AppleSignInButton from './user/AppleSignInButton';
-import GoogleSignInButton from './user/GoogleSignInButton'; 
+import GoogleSignInButton from './user/GoogleSignInButton';
+import { STORAGE_KEYS } from '../constants/storage-keys'; 
 
 interface OnboardingModalProps {
   visible: boolean;
@@ -16,7 +19,8 @@ const AVAILABLE_CITIES = ['Boston', 'New York'];
 
 export default function OnboardingModal({ visible, onComplete }: Readonly<OnboardingModalProps>) {
   const { theme } = useTheme();
-  const { allCommunities, onCommunitiesChange, onCityChange } = useCommunity();
+  const { allCommunities, onCommunitiesChange, onCityChange: onCommunityCityChange } = useCommunity();
+  const { onCityChange: onCityLocationChange } = useCityLocation();
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [selectedCity, setSelectedCity] = useState<string>('Boston');
@@ -24,23 +28,31 @@ export default function OnboardingModal({ visible, onComplete }: Readonly<Onboar
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
 
-  const handleCitySelect = (city: string) => {
+  const handleCitySelect = async (city: string) => {
     setSelectedCity(city);
+    // Save city to BOTH contexts to ensure it persists everywhere
+    await Promise.all([
+      onCityLocationChange(city), // Saves to CityContext (uses STORAGE_KEYS.PREFERRED_CITY)
+      onCommunityCityChange(city)  // Saves to CommunityContext (uses its own storage key)
+    ]);
   };
 
   const handleCommunityToggle = (communityName: string) => {
     setSelectedCommunityIds(prev => {
-      if (prev.includes(communityName)) {
-        return prev.filter(id => id !== communityName);
-      } else {
-        return [...prev, communityName];
-      }
+      const newSelection = prev.includes(communityName)
+        ? prev.filter(id => id !== communityName)
+        : [...prev, communityName];
+      
+      // Save immediately to CommunityContext (which saves to AsyncStorage)
+      onCommunitiesChange(newSelection);
+      
+      return newSelection;
     });
   };
 
   const handleNext = async () => {
     if (step === 1) {
-      // Move to next step immediately, city will be saved on completion
+      // City is already saved when selected, just move to next step
       setStep(2);
     } else if (step === 2) {
       setStep(3);
@@ -58,9 +70,23 @@ export default function OnboardingModal({ visible, onComplete }: Readonly<Onboar
     setStep(3);
   };
 
+  // Common function to save onboarding preferences
+  const saveOnboardingPreferences = async () => {
+    // City and communities are already saved immediately when selected/toggled
+    // Just ensure they're saved one more time before completing
+    await Promise.all([
+      onCityLocationChange(selectedCity),
+      onCommunityCityChange(selectedCity),
+      onCommunitiesChange(selectedCommunityIds)
+    ]);
+    // Save onboarding completion flag to prevent modal from showing again
+    await AsyncStorage.setItem(STORAGE_KEYS.ONBOARDING_COMPLETED, 'true');
+  };
+
   const handleAppleSignInSuccess = async () => {
-    await onCityChange(selectedCity);
-    await onCommunitiesChange(selectedCommunityIds);
+    // Save preferences BEFORE OAuth redirect to prevent modal from showing again
+    await saveOnboardingPreferences();
+    // Call onComplete to close the modal
     onComplete(selectedCommunityIds);
   };
 
@@ -69,9 +95,8 @@ export default function OnboardingModal({ visible, onComplete }: Readonly<Onboar
   };
 
   const handleCreateAccount = async () => {
-    // Save city and communities before closing modal
-    await onCityChange(selectedCity);
-    await onCommunitiesChange(selectedCommunityIds);
+    // Save preferences before navigating to signup page
+    await saveOnboardingPreferences();
     // Close modal first, then navigate
     onComplete(selectedCommunityIds);
     // Navigate after a brief delay to ensure modal is closed
@@ -81,8 +106,7 @@ export default function OnboardingModal({ visible, onComplete }: Readonly<Onboar
   };
 
   const handleContinueAsGuest = async () => {
-    await onCityChange(selectedCity);
-    await onCommunitiesChange(selectedCommunityIds);
+    await saveOnboardingPreferences();
     onComplete(selectedCommunityIds);
   };
 
