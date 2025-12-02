@@ -9,6 +9,7 @@ import {
   Dimensions,
   Modal,
   ActivityIndicator,
+  Share,
 } from 'react-native';
 import type { Venue } from '../types/venues';
 import type { Event } from '../types/events';
@@ -537,11 +538,18 @@ const EventModal: React.FC<EventModalProps> = ({ visible, event, onClose, commun
                           justifyContent: 'center',
                           gap: theme.spacing.xs,
                         }]}
-                        onPress={() => {
-                          // Simple share - could expand this with proper share API
+                        onPress={async () => {
                           const shareUrl = event.detail_page_url || event.root_url;
                           if (shareUrl) {
-                            Linking.openURL(`mailto:?subject=${encodeURIComponent(event.title || 'Event')}&body=${encodeURIComponent(shareUrl)}`);
+                            try {
+                              await Share.share({
+                                message: `Check out this event: ${event.title || 'Event'}\n${shareUrl}`,
+                                url: shareUrl,
+                                title: event.title || 'Event'
+                              });
+                            } catch (error) {
+                              logger.error('Error sharing event:', error);
+                            }
                           }
                         }}
                       >

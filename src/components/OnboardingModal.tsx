@@ -73,13 +73,7 @@ export default function OnboardingModal({ visible, onComplete }: Readonly<Onboar
   // Common function to save onboarding preferences
   const saveOnboardingPreferences = async () => {
     // City and communities are already saved immediately when selected/toggled
-    // Just ensure they're saved one more time before completing
-    await Promise.all([
-      onCityLocationChange(selectedCity),
-      onCommunityCityChange(selectedCity),
-      onCommunitiesChange(selectedCommunityIds)
-    ]);
-    // Save onboarding completion flag to prevent modal from showing again
+    // Only need to save onboarding completion flag to prevent modal from showing again
     await AsyncStorage.setItem(STORAGE_KEYS.ONBOARDING_COMPLETED, 'true');
   };
 
@@ -233,7 +227,7 @@ export default function OnboardingModal({ visible, onComplete }: Readonly<Onboar
                         ]}
                         onPress={() => handleCommunityToggle(community.name)}
                       >
-                        <Text variant="h4" style={{ fontSize: 28, marginBottom: 4 }}>
+                        <Text variant="h4" style={{ fontSize: 24, marginBottom: 2 }}>
                           {community.metadata.icon}
                         </Text>
                         <Text
@@ -243,7 +237,8 @@ export default function OnboardingModal({ visible, onComplete }: Readonly<Onboar
                               ? theme.colors.primary[700]
                               : theme.colors.text.primary,
                             fontWeight: isSelected ? '600' : '500',
-                            fontSize: 14,
+                            fontSize: 13,
+                            textAlign: 'center',
                           }}
                         >
                           {community.name}
@@ -255,8 +250,8 @@ export default function OnboardingModal({ visible, onComplete }: Readonly<Onboar
                               color: isSelected
                                 ? theme.colors.primary[700]
                                 : theme.colors.text.tertiary,
-                              marginTop: 2,
-                              fontSize: 11,
+                              marginTop: 1,
+                              fontSize: 10,
                               textAlign: 'center',
                             }}
                           >
@@ -380,13 +375,13 @@ const styles = StyleSheet.create({
   modalContent: {
     width: '100%',
     maxWidth: 500,
-    maxHeight: '90%',
+    maxHeight: '85%',
     borderRadius: 16,
     overflow: 'hidden',
   },
   header: {
-    padding: 20,
-    paddingTop: 16,
+    padding: 16,
+    paddingTop: 12,
     borderBottomWidth: 1,
   },
   headerNav: {
@@ -410,12 +405,11 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   content: {
-    padding: 20,
-    maxHeight: 400,
+    padding: 16,
   },
   description: {
-    marginBottom: 20,
-    lineHeight: 22,
+    marginBottom: 16,
+    lineHeight: 20,
   },
   cityOptions: {
     gap: 12,
@@ -433,12 +427,12 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   interestButton: {
-    width: '47%', // 2 columns
-    padding: 10,
-    minHeight: 70,
+    width: '48%', // 2 columns
+    padding: 8,
+    minHeight: 80,
     borderRadius: 12,
     borderWidth: 2,
-    alignItems: 'flex-start',
+    alignItems: 'center',
     justifyContent: 'center',
   },
   accountOptions: {
@@ -472,7 +466,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'flex-end',
     alignItems: 'center',
-    padding: 20,
+    padding: 16,
     borderTopWidth: 1,
   },
   nextButton: {
