@@ -71,7 +71,7 @@ export default function GalleryView({
   // Show loading indicator when loading and no events
   if (loading && events.length === 0) {
     return (
-      <View style={[styles.container, styles.centerContent, { backgroundColor: theme.colors.background.primary }]}>
+      <View style={[styles.container, styles.centerContent, { backgroundColor: theme.colors.background.secondary }]}>
         <Text variant="body1" style={{ color: theme.colors.text.secondary }}>
           Loading events...
         </Text>
@@ -82,7 +82,7 @@ export default function GalleryView({
   // Show empty state when not loading and no events
   if (!loading && events.length === 0) {
     return (
-      <View style={[styles.container, styles.centerContent, { backgroundColor: theme.colors.background.primary }]}>
+      <View style={[styles.container, styles.centerContent, { backgroundColor: theme.colors.background.secondary }]}>
         <Text variant="body1" style={{ color: theme.colors.text.secondary }}>
           No events found
         </Text>
@@ -91,7 +91,7 @@ export default function GalleryView({
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background.primary }]}>
+    <View style={[styles.container, { backgroundColor: theme.colors.background.secondary }]}>
       <FlatList
         data={events}
         keyExtractor={(item) => item.id}

@@ -106,7 +106,7 @@ export default function VenueGroupedListView({
   // 2. Venues are still loading (wait for them to avoid "Unknown Venue" flash)
   if ((loading && events.length === 0) || venuesLoading) {
     return (
-      <View style={[styles.container, styles.centerContent, { backgroundColor: theme.colors.background.primary }]}>
+      <View style={[styles.container, styles.centerContent, { backgroundColor: theme.colors.background.secondary }]}>
         <Text variant="body1" style={{ color: theme.colors.text.secondary }}>
           Loading events...
         </Text>
@@ -117,7 +117,7 @@ export default function VenueGroupedListView({
   // Show empty state when not loading and no events
   if (!loading && events.length === 0) {
     return (
-      <View style={[styles.container, styles.centerContent, { backgroundColor: theme.colors.background.primary }]}>
+      <View style={[styles.container, styles.centerContent, { backgroundColor: theme.colors.background.secondary }]}>
         <Text variant="body1" style={{ color: theme.colors.text.secondary }}>
           No events found
         </Text>
