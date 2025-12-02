@@ -1014,7 +1014,6 @@ const styles = StyleSheet.create({
   compactFavoriteIcon: {
     fontSize: 16,
   },
-  communityIndicators: {},
   
   // Grouped variant styles
   groupedCard: {
