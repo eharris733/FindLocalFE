@@ -30,6 +30,7 @@
     "web": {
       "favicon": "./assets/monocle.png",
       "bundler": "metro",
+      "output": "static",
       "build": {
         "babel": {
           "include": [

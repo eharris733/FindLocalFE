@@ -1,9 +1,16 @@
-import { Html, Head, Main, Scripts } from 'expo-router';
+import { ScrollViewStyleReset } from 'expo-router/html';
 
-export default function Document() {
+// This file is web-only and used to configure the root HTML for every
+// web page during static rendering.
+export default function Root({ children }: { children: React.ReactNode }) {
   return (
-    <Html lang="en">
-      <Head>
+    <html lang="en">
+      <head>
+        <meta charSet="utf-8" />
+        <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+        
+        {/* Primary SEO */}
         <title>Find Local - Discover Events in Boston & New York | Concerts, Comedy & More</title>
         <meta name="description" content="Discover local events in your city. Find concerts, comedy shows, theater, dance performances, and more. Browse thousands of events in Boston and New York, updated daily." />
         <meta name="keywords" content="local events, concerts, comedy shows, theater, live music, Boston events, New York events" />
@@ -24,11 +31,10 @@ export default function Document() {
         <meta property="twitter:title" content="Find Local - Discover Events in Boston & New York" />
         <meta property="twitter:description" content="Discover local events in your city. Find concerts, comedy shows, theater, dance performances, and more." />
         <meta property="twitter:image" content="https://findlocal.community/og-image.jpg" />
-      </Head>
-      <body>
-        <Main />
-        <Scripts />
-      </body>
-    </Html>
+
+        <ScrollViewStyleReset />
+      </head>
+      <body>{children}</body>
+    </html>
   );
 }
