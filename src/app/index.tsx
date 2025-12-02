@@ -90,21 +90,6 @@ export default function IndexRoute() {
             barStyle={isDark ? "light-content" : "dark-content"}
             backgroundColor={theme.colors.background.primary}
         />
-        {/* Hidden H1 for SEO - positioned off-screen but accessible to search engines */}
-        <Text 
-            accessibilityRole="header" 
-            aria-level={1}
-            style={{
-                position: 'absolute',
-                left: -10000,
-                top: 'auto',
-                width: 1,
-                height: 1,
-                overflow: 'hidden'
-            }}
-        >
-            Find Local Events in {selectedCity || 'Your City'}: Concerts, Comedy, Theater & More
-        </Text>
         <MainLayout
             events={filteredEvents}
             loading={loading}
