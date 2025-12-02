@@ -17,7 +17,6 @@ import {useAuth} from "../hooks/useAuth";
 import AuthProvider from "../providers/auth-provider";
 import {SplashScreenController} from "../components/SplashScreenController";
 import { logger } from "../utils/logger";
-import FeedbackBanner from "../components/FeedbackBanner";
 import FeedbackModal from "../components/FeedbackModal";
 import { View } from 'react-native';
 import { analytics } from '../utils/analytics';
@@ -106,7 +105,6 @@ function RootNavigator() {
 
     return (
         <View style={{ flex: 1 }}>
-            <FeedbackBanner onFeedbackPress={handleFeedbackPress} />
             <Stack 
                 screenOptions={{ 
                     header: renderHeader
