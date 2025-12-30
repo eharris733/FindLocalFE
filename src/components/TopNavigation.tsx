@@ -20,7 +20,10 @@ interface TopNavigationProps {
 export default function TopNavigation({ onNavLinkPress, onFeedbackPress }: TopNavigationProps) {
   const { theme } = useTheme();
   const { isMobile, isTablet } = useDeviceInfo();
-  const { isLoggedIn } = useAuth();
+  const { isLoggedIn, profile } = useAuth();
+  
+  // Check if user is a creator
+  const isCreator = profile?.account_type === 'creator';
   
   // Use collapsed nav (hamburger menu) for mobile AND tablet to prevent overflow
   // Show full nav only on desktop (>= 1024px)
@@ -198,11 +201,18 @@ export default function TopNavigation({ onNavLinkPress, onFeedbackPress }: TopNa
             )}
             
             <TouchableOpacity
-              style={[styles.profileButton, { backgroundColor: theme.colors.background.secondary }]}
+              style={[styles.profileButton, { 
+                backgroundColor: isCreator ? theme.colors.secondary[500] : theme.colors.background.secondary,
+              }]}
               onPress={handleProfilePress}
             >
-              <Text variant="body2" color="primary" style={styles.profileText}>
-                {isLoggedIn ? 'Account' : 'Sign In'}
+              {isCreator && (
+                <Text variant="caption" style={{ color: '#fff', marginRight: 4, fontWeight: '700' }}>
+                  ★
+                </Text>
+              )}
+              <Text variant="body2" style={[styles.profileText, { color: isCreator ? '#fff' : theme.colors.text.primary }]}>
+                {isLoggedIn ? (isCreator ? 'Creator' : 'Account') : 'Sign In'}
               </Text>
             </TouchableOpacity>
           </View>
@@ -241,6 +251,15 @@ export default function TopNavigation({ onNavLinkPress, onFeedbackPress }: TopNa
                   </Text>
                 </TouchableOpacity>
               </View>
+
+              {/* Creator Banner - show when logged in as creator */}
+              {isLoggedIn && isCreator && (
+                <View style={[styles.creatorBanner, { backgroundColor: theme.colors.secondary[500] }]}>
+                  <Text variant="body2" style={{ color: '#fff', fontWeight: '700' }}>
+                    ★ Creator Account
+                  </Text>
+                </View>
+              )}
 
               {/* Menu links */}
               <View style={styles.menuLinks}>
@@ -307,7 +326,7 @@ export default function TopNavigation({ onNavLinkPress, onFeedbackPress }: TopNa
                   <>
                     <View style={[styles.menuSectionHeader, { borderBottomColor: theme.colors.border.light }]}>
                       <Text variant="caption" color="tertiary" style={{ fontWeight: '600', letterSpacing: 0.5 }}>
-                        SOCIAL
+                        DISCOVER
                       </Text>
                     </View>
                     <TouchableOpacity
@@ -321,6 +340,12 @@ export default function TopNavigation({ onNavLinkPress, onFeedbackPress }: TopNa
                         🎭 Discover Creators
                       </Text>
                     </TouchableOpacity>
+                    
+                    <View style={[styles.menuSectionHeader, { borderBottomColor: theme.colors.border.light }]}>
+                      <Text variant="caption" color="tertiary" style={{ fontWeight: '600', letterSpacing: 0.5 }}>
+                        FOLLOWING
+                      </Text>
+                    </View>
                     <TouchableOpacity
                       style={[styles.sideNavLink, { borderBottomColor: theme.colors.border.light }]}
                       onPress={() => {
@@ -329,7 +354,29 @@ export default function TopNavigation({ onNavLinkPress, onFeedbackPress }: TopNa
                       }}
                     >
                       <Text variant="body1" color="secondary" style={styles.sideNavLinkText}>
-                        📰 Following Feed
+                        📰 Activity Feed
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.sideNavLink, { borderBottomColor: theme.colors.border.light }]}
+                      onPress={() => {
+                        closeMobileMenu();
+                        router.push('/followers');
+                      }}
+                    >
+                      <Text variant="body1" color="secondary" style={styles.sideNavLinkText}>
+                        👥 People
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.sideNavLink, { borderBottomColor: theme.colors.border.light }]}
+                      onPress={() => {
+                        closeMobileMenu();
+                        router.push('/followed-venues');
+                      }}
+                    >
+                      <Text variant="body1" color="secondary" style={styles.sideNavLinkText}>
+                        🏛️ Venues
                       </Text>
                     </TouchableOpacity>
                     <TouchableOpacity
@@ -465,6 +512,8 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   profileButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
@@ -510,6 +559,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderBottomWidth: 1,
+  },
+  creatorBanner: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    alignItems: 'center',
   },
   closeButton: {
     width: 30,

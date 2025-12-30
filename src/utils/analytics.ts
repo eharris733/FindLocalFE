@@ -38,6 +38,35 @@ interface FilterUsage {
   metadata?: Record<string, any>;
 }
 
+interface SocialMetric {
+  actionType: 
+    // Friends
+    | 'friend_request_sent' 
+    | 'friend_request_accepted' 
+    | 'friend_request_rejected'
+    | 'friend_request_canceled'
+    | 'friendship_removed'
+    // Followers
+    | 'user_followed'
+    | 'user_unfollowed'
+    // Invitations
+    | 'invitation_created'
+    | 'invitation_viewed'
+    | 'rsvp_submitted'
+    // Venue follows
+    | 'venue_followed'
+    | 'venue_unfollowed'
+    // Creator
+    | 'creator_mode_enabled'
+    | 'creator_mode_disabled'
+    // Page views
+    | 'social_page_view';
+  targetId?: string; // ID of user, venue, event, or invitation being acted upon
+  targetType?: 'user' | 'venue' | 'event' | 'invitation';
+  source?: string; // Where the action was triggered from (e.g., 'event_page', 'profile', 'discover')
+  metadata?: Record<string, any>;
+}
+
 interface SessionUpdate {
   pageViews?: number;
   eventsViewed?: number;

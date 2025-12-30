@@ -317,30 +317,10 @@ export default function ProfileModal({ visible, onClose, onFeedbackPress }: Prof
                 style={[styles.socialItem, { borderBottomColor: theme.colors.border.light }]}
                 onPress={() => {
                   onClose();
-                  router.push('/followers');
-                }}
-              >
-                <Text variant="body1">⭐ Followers</Text>
-                <Text variant="body2" color="secondary">›</Text>
-              </TouchableOpacity>
-              <TouchableOpacity 
-                style={[styles.socialItem, { borderBottomColor: theme.colors.border.light }]}
-                onPress={() => {
-                  onClose();
                   router.push('/discover-creators');
                 }}
               >
                 <Text variant="body1">🎭 Discover Creators</Text>
-                <Text variant="body2" color="secondary">›</Text>
-              </TouchableOpacity>
-              <TouchableOpacity 
-                style={[styles.socialItem, { borderBottomColor: theme.colors.border.light }]}
-                onPress={() => {
-                  onClose();
-                  router.push('/following-activity');
-                }}
-              >
-                <Text variant="body1">📰 Following Activity</Text>
                 <Text variant="body2" color="secondary">›</Text>
               </TouchableOpacity>
               <TouchableOpacity 
@@ -351,6 +331,45 @@ export default function ProfileModal({ visible, onClose, onFeedbackPress }: Prof
                 }}
               >
                 <Text variant="body1">✉️ My Invitations</Text>
+                <Text variant="body2" color="secondary">›</Text>
+              </TouchableOpacity>
+            </Card>
+          )}
+
+          {/* Following Section - Only show for logged in users */}
+          {isLoggedIn && (
+            <Card style={styles.section}>
+              <Text variant="h4" style={styles.sectionTitle}>
+                Following
+              </Text>
+              <TouchableOpacity 
+                style={[styles.socialItem, { borderBottomColor: theme.colors.border.light }]}
+                onPress={() => {
+                  onClose();
+                  router.push('/following-activity');
+                }}
+              >
+                <Text variant="body1">📰 Activity Feed</Text>
+                <Text variant="body2" color="secondary">›</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.socialItem, { borderBottomColor: theme.colors.border.light }]}
+                onPress={() => {
+                  onClose();
+                  router.push('/followers');
+                }}
+              >
+                <Text variant="body1">👥 People</Text>
+                <Text variant="body2" color="secondary">›</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.socialItem}
+                onPress={() => {
+                  onClose();
+                  router.push('/followed-venues');
+                }}
+              >
+                <Text variant="body1">🏛️ Venues</Text>
                 <Text variant="body2" color="secondary">›</Text>
               </TouchableOpacity>
             </Card>

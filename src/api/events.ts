@@ -378,3 +378,30 @@ export async function getEventsFromFollowedCreators(
     return [];
   }
 }
+
+/**
+ * Get upcoming events for a specific venue
+ */
+export async function getUpcomingEventsForVenue(venueId: string, limit: number = 3): Promise<Event[]> {
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    
+    const { data, error } = await supabase
+      .from('events_gold')
+      .select('*')
+      .eq('venue_id', venueId)
+      .gte('event_date', today)
+      .order('event_date', { ascending: true })
+      .limit(limit);
+
+    if (error) {
+      logger.error('Error fetching upcoming events for venue:', error);
+      return [];
+    }
+
+    return (data || []) as Event[];
+  } catch (error: any) {
+    logger.error('Error fetching upcoming events for venue:', error);
+    return [];
+  }
+}

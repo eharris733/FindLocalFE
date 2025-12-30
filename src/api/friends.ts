@@ -2,6 +2,7 @@
 import { supabase } from '../supabase';
 import { logger } from '../utils/logger';
 import { Profile } from './profiles';
+import type { Venue } from '../types/venues';
 
 // ============================================
 // Types
@@ -39,6 +40,15 @@ export interface FollowerRelation {
   // Joined profile data
   follower?: Profile;
   following?: Profile;
+}
+
+export interface VenueFollow {
+  id: string;
+  user_id: string;
+  venue_id: string;
+  created_at: string;
+  // Joined venue data
+  venue?: Venue;
 }
 
 export interface FriendWithProfile {
@@ -769,5 +779,195 @@ export async function getFriendSuggestions(limit: number = 10): Promise<{ data: 
   } catch (err) {
     logger.error('Error in getFriendSuggestions:', err);
     return { data: [], error: err };
+  }
+}
+
+// ============================================
+// Venue Follows
+// ============================================
+
+/**
+ * Follow a venue
+ */
+export async function followVenue(venueId: string): Promise<{ success: boolean; error: any }> {
+  try {
+    const { data: user } = await supabase.auth.getUser();
+    if (!user.user) {
+      return { success: false, error: { message: 'Not authenticated' } };
+    }
+
+    const { error } = await supabase
+      .from('venue_follows')
+      .insert({
+        user_id: user.user.id,
+        venue_id: venueId,
+      });
+
+    if (error) {
+      logger.error('Error following venue:', error);
+      return { success: false, error };
+    }
+
+    return { success: true, error: null };
+  } catch (err) {
+    logger.error('Error in followVenue:', err);
+    return { success: false, error: err };
+  }
+}
+
+/**
+ * Unfollow a venue
+ */
+export async function unfollowVenue(venueId: string): Promise<{ success: boolean; error: any }> {
+  try {
+    const { data: user } = await supabase.auth.getUser();
+    if (!user.user) {
+      return { success: false, error: { message: 'Not authenticated' } };
+    }
+
+    const { error } = await supabase
+      .from('venue_follows')
+      .delete()
+      .eq('user_id', user.user.id)
+      .eq('venue_id', venueId);
+
+    if (error) {
+      logger.error('Error unfollowing venue:', error);
+      return { success: false, error };
+    }
+
+    return { success: true, error: null };
+  } catch (err) {
+    logger.error('Error in unfollowVenue:', err);
+    return { success: false, error: err };
+  }
+}
+
+/**
+ * Check if current user is following a venue
+ */
+export async function checkFollowingVenue(venueId: string): Promise<{ isFollowing: boolean; error: any }> {
+  try {
+    const { data: user } = await supabase.auth.getUser();
+    if (!user.user) {
+      return { isFollowing: false, error: { message: 'Not authenticated' } };
+    }
+
+    const { data, error } = await supabase
+      .from('venue_follows')
+      .select('id')
+      .eq('user_id', user.user.id)
+      .eq('venue_id', venueId)
+      .maybeSingle();
+
+    if (error) {
+      logger.error('Error checking venue follow:', error);
+      return { isFollowing: false, error };
+    }
+
+    return { isFollowing: data !== null, error: null };
+  } catch (err) {
+    logger.error('Error in checkFollowingVenue:', err);
+    return { isFollowing: false, error: err };
+  }
+}
+
+/**
+ * Get venues that the current user is following
+ */
+export async function getFollowedVenues(): Promise<{ data: VenueFollow[]; error: any }> {
+  try {
+    const { data: user } = await supabase.auth.getUser();
+    if (!user.user) {
+      return { data: [], error: { message: 'Not authenticated' } };
+    }
+
+    // First get the venue follow relations
+    const { data: relations, error: relationsError } = await supabase
+      .from('venue_follows')
+      .select('*')
+      .eq('user_id', user.user.id)
+      .order('created_at', { ascending: false });
+
+    if (relationsError) {
+      logger.error('Error fetching followed venues:', relationsError);
+      return { data: [], error: relationsError };
+    }
+
+    if (!relations || relations.length === 0) {
+      return { data: [], error: null };
+    }
+
+    // Get venue details separately
+    const venueIds = relations.map(r => r.venue_id);
+    const { data: venues, error: venuesError } = await supabase
+      .from('venues')
+      .select('*')
+      .in('id', venueIds);
+
+    if (venuesError) {
+      logger.error('Error fetching venue details:', venuesError);
+      return { data: [], error: venuesError };
+    }
+
+    // Combine data
+    const data = relations.map(r => ({
+      ...r,
+      venue: venues?.find(v => v.id === r.venue_id),
+    }));
+
+    return { data: data as VenueFollow[], error: null };
+  } catch (err) {
+    logger.error('Error in getFollowedVenues:', err);
+    return { data: [], error: err };
+  }
+}
+
+/**
+ * Get follower count for a venue
+ */
+export async function getVenueFollowerCount(venueId: string): Promise<{ count: number; error: any }> {
+  try {
+    const { count, error } = await supabase
+      .from('venue_follows')
+      .select('*', { count: 'exact', head: true })
+      .eq('venue_id', venueId);
+
+    if (error) {
+      logger.error('Error getting venue follower count:', error);
+      return { count: 0, error };
+    }
+
+    return { count: count || 0, error: null };
+  } catch (err) {
+    logger.error('Error in getVenueFollowerCount:', err);
+    return { count: 0, error: err };
+  }
+}
+
+/**
+ * Get count of venues the current user is following
+ */
+export async function getFollowedVenueCount(): Promise<{ count: number; error: any }> {
+  try {
+    const { data: user } = await supabase.auth.getUser();
+    if (!user.user) {
+      return { count: 0, error: { message: 'Not authenticated' } };
+    }
+
+    const { count, error } = await supabase
+      .from('venue_follows')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.user.id);
+
+    if (error) {
+      logger.error('Error getting followed venue count:', error);
+      return { count: 0, error };
+    }
+
+    return { count: count || 0, error: null };
+  } catch (err) {
+    logger.error('Error in getFollowedVenueCount:', err);
+    return { count: 0, error: err };
   }
 }

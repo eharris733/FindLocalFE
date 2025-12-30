@@ -30,6 +30,7 @@ import { EventPageSchema } from '../../components/EventPageSchema';
 import { InviteModal } from '../../components/InviteModal';
 import { RsvpModal } from '../../components/RsvpModal';
 import { getEventSocialStats, EventSocialStats } from '../../api/invitations';
+import { followVenue, unfollowVenue, checkFollowingVenue, getVenueFollowerCount } from '../../api/friends';
 
 const { width, height } = Dimensions.get('window');
 
@@ -72,6 +73,11 @@ export default function EventPage() {
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [showRsvpModal, setShowRsvpModal] = useState(false);
   const [socialStats, setSocialStats] = useState<EventSocialStats | null>(null);
+  
+  // Venue follow state
+  const [isFollowingVenue, setIsFollowingVenue] = useState(false);
+  const [venueFollowerCount, setVenueFollowerCount] = useState(0);
+  const [venueFollowLoading, setVenueFollowLoading] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -86,6 +92,21 @@ export default function EventPage() {
       setShowRsvpModal(true);
     }
   }, [invite, event]);
+
+  // Check venue follow status when venue loads
+  useEffect(() => {
+    const checkVenueFollowStatus = async () => {
+      if (venue?.id && isLoggedIn) {
+        const [followResult, countResult] = await Promise.all([
+          checkFollowingVenue(venue.id),
+          getVenueFollowerCount(venue.id),
+        ]);
+        setIsFollowingVenue(followResult.isFollowing);
+        setVenueFollowerCount(countResult.count);
+      }
+    };
+    checkVenueFollowStatus();
+  }, [venue?.id, isLoggedIn]);
 
   useEffect(() => {
     if (event) {
@@ -351,6 +372,34 @@ export default function EventPage() {
       const encodedAddress = encodeURIComponent(venue.address);
       const mapsUrl = `https://maps.google.com/?q=${encodedAddress}`;
       Linking.openURL(mapsUrl);
+    }
+  };
+
+  const handleToggleVenueFollow = async () => {
+    if (!venue?.id || !isLoggedIn) {
+      router.push('/user/signin');
+      return;
+    }
+
+    setVenueFollowLoading(true);
+    try {
+      if (isFollowingVenue) {
+        const { success } = await unfollowVenue(venue.id);
+        if (success) {
+          setIsFollowingVenue(false);
+          setVenueFollowerCount(prev => Math.max(0, prev - 1));
+        }
+      } else {
+        const { success } = await followVenue(venue.id);
+        if (success) {
+          setIsFollowingVenue(true);
+          setVenueFollowerCount(prev => prev + 1);
+        }
+      }
+    } catch (err) {
+      logger.error('Error toggling venue follow:', err);
+    } finally {
+      setVenueFollowLoading(false);
     }
   };
 
@@ -881,32 +930,70 @@ export default function EventPage() {
                   />
                 )}
 
-                <Text variant="h4" style={{
-                  color: theme.colors.text.primary,
-                  marginBottom: theme.spacing.xs,
-                  fontWeight: '600',
-                }}>
-                  {venue.name}
-                </Text>
+                <TouchableOpacity onPress={() => router.push(`/venue/${venue.id}`)}>
+                  <Text variant="h4" style={{
+                    color: theme.colors.text.primary,
+                    marginBottom: theme.spacing.xs,
+                    fontWeight: '600',
+                  }}>
+                    {venue.name}
+                  </Text>
+                </TouchableOpacity>
 
-                {venue.type && (
-                  <View style={[styles.venueTypeBadge, {
-                    backgroundColor: theme.colors.primary[100],
-                    paddingHorizontal: theme.spacing.sm,
-                    paddingVertical: theme.spacing.xs,
-                    borderRadius: theme.borderRadius.md,
-                    alignSelf: 'flex-start',
-                    marginBottom: theme.spacing.sm,
-                  }]}>
-                    <Text variant="caption" style={{
-                      color: theme.colors.primary[700],
-                      fontWeight: '600',
-                      textTransform: 'uppercase',
-                    }}>
-                      {venue.type}
-                    </Text>
+                {/* Venue type badge and follow button row */}
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: theme.spacing.md }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                    {venue.type && (
+                      <View style={[styles.venueTypeBadge, {
+                        backgroundColor: theme.colors.primary[100],
+                        paddingHorizontal: theme.spacing.sm,
+                        paddingVertical: theme.spacing.xs,
+                        borderRadius: theme.borderRadius.md,
+                        marginRight: theme.spacing.sm,
+                      }]}>
+                        <Text variant="caption" style={{
+                          color: theme.colors.primary[700],
+                          fontWeight: '600',
+                          textTransform: 'uppercase',
+                        }}>
+                          {venue.type}
+                        </Text>
+                      </View>
+                    )}
+                    {venueFollowerCount > 0 && (
+                      <Text variant="caption" style={{ color: theme.colors.text.tertiary }}>
+                        {venueFollowerCount} follower{venueFollowerCount !== 1 ? 's' : ''}
+                      </Text>
+                    )}
                   </View>
-                )}
+                  
+                  {/* Follow Venue Button */}
+                  <TouchableOpacity
+                    style={{
+                      backgroundColor: isFollowingVenue ? 'transparent' : theme.colors.primary[500],
+                      borderWidth: isFollowingVenue ? 2 : 0,
+                      borderColor: theme.colors.primary[500],
+                      paddingHorizontal: theme.spacing.md,
+                      paddingVertical: theme.spacing.sm,
+                      borderRadius: theme.borderRadius.full,
+                      minWidth: 100,
+                      alignItems: 'center',
+                    }}
+                    onPress={handleToggleVenueFollow}
+                    disabled={venueFollowLoading}
+                  >
+                    {venueFollowLoading ? (
+                      <ActivityIndicator size="small" color={isFollowingVenue ? theme.colors.primary[500] : '#fff'} />
+                    ) : (
+                      <Text variant="body2" style={{
+                        color: isFollowingVenue ? theme.colors.primary[500] : '#fff',
+                        fontWeight: '600',
+                      }}>
+                        {isFollowingVenue ? '✓ Following' : '+ Follow'}
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+                </View>
 
                 {venueSizeLabel && (
                   <View style={[styles.metaRow, { marginBottom: theme.spacing.sm }]}>
