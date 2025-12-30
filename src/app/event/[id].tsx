@@ -14,7 +14,7 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import type { Venue } from '../../types/venues';
 import type { Event } from '../../types/events';
-import { getEventById } from '../../api/events';
+import { getEventById, getEventsWithCommunities } from '../../api/events';
 import { getVenueById, getVenuesByCity } from '../../api/venues';
 import { useTheme } from '../../context/ThemeContext';
 import { Text } from '../../components/ui';
@@ -62,6 +62,7 @@ export default function EventPage() {
   const [error, setError] = useState<string | null>(null);
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [showFullVenueDescription, setShowFullVenueDescription] = useState(false);
+  const [relatedEvents, setRelatedEvents] = useState<Event[]>([]);
   const { getDuration } = useModalTimeTracking();
 
   useEffect(() => {
@@ -100,6 +101,69 @@ export default function EventPage() {
     };
   }, [event]);
 
+  const fetchRelatedEvents = async (currentEvent: Event) => {
+    try {
+      // Fetch events from same city
+      const allCityEvents = await getEventsWithCommunities(currentEvent.city);
+      
+      // Filter out current event and only future events
+      const now = new Date();
+      const otherEvents = allCityEvents.filter(e => {
+        if (e.id === currentEvent.id) return false;
+        if (e.event_date && new Date(e.event_date) < now) return false;
+        return true;
+      });
+      
+      // Score events by similarity
+      const scoredEvents = otherEvents.map(event => {
+        let score = 0;
+        
+        // Same community (highest priority)
+        if (currentEvent.event_community_assignments && event.event_community_assignments) {
+          const currentCommunities = currentEvent.event_community_assignments.map(a => a.community_id);
+          const eventCommunities = event.event_community_assignments.map(a => a.community_id);
+          const sharedCommunities = currentCommunities.filter(c => eventCommunities.includes(c));
+          score += sharedCommunities.length * 10;
+        }
+        
+        // Same event_type categories (legacy support)
+        if (currentEvent.event_type && event.event_type) {
+          const sharedTypes = currentEvent.event_type.filter(t => event.event_type?.includes(t));
+          score += sharedTypes.length * 5;
+        }
+        
+        // Same region (MOST IMPORTTANT)
+        if (currentEvent.region && event.region === currentEvent.region) {
+          score += 30;
+        }
+        
+        // Similar date (within 7 days)
+        if (currentEvent.event_date && event.event_date) {
+          const dateDiff = Math.abs(
+            new Date(event.event_date).getTime() - new Date(currentEvent.event_date).getTime()
+          );
+          const daysDiff = dateDiff / (1000 * 60 * 60 * 24);
+          if (daysDiff <= 7) {
+            score += 2;
+          }
+        }
+        
+        return { event, score };
+      });
+      
+      // Sort by score and take top 3
+      const topRelated = scoredEvents
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 3)
+        .map(item => item.event);
+      
+      setRelatedEvents(topRelated);
+      logger.info(`Found ${topRelated.length} related events`);
+    } catch (error) {
+      logger.error('Error fetching related events:', error);
+    }
+  };
+
   const fetchEventData = async () => {
     if (!id) return;
     
@@ -117,6 +181,9 @@ export default function EventPage() {
       }
       
       setEvent(eventData);
+      
+      // Fetch related events
+      fetchRelatedEvents(eventData);
       
       // Fetch venue if available
       if (eventData.venue_id) {
@@ -821,6 +888,102 @@ export default function EventPage() {
                 )}
               </View>
             )}
+
+            {/* Related Events Section */}
+            {relatedEvents.length > 0 && (
+              <View style={[styles.relatedEventsSection, {
+                backgroundColor: theme.colors.background.secondary,
+                padding: theme.spacing.lg,
+                marginBottom: theme.spacing.lg,
+                borderRadius: theme.borderRadius.lg,
+              }]}>
+                <Text variant="h3" style={{
+                  color: theme.colors.text.primary,
+                  marginBottom: theme.spacing.md,
+                  fontWeight: '600',
+                }}>
+                  You Might Also Like
+                </Text>
+                
+                {relatedEvents.map((relatedEvent) => (
+                  <TouchableOpacity
+                    key={relatedEvent.id}
+                    style={[styles.relatedEventCard, {
+                      backgroundColor: theme.colors.background.primary,
+                      padding: theme.spacing.md,
+                      marginBottom: theme.spacing.sm,
+                      borderRadius: theme.borderRadius.md,
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      borderWidth: 1,
+                      borderColor: theme.colors.border.light,
+                    }]}
+                    onPress={() => {
+                      // Track related event click
+                      analytics.trackEventMetric({
+                        eventId: relatedEvent.id,
+                        metricType: 'click',
+                        city: relatedEvent.city,
+                        metadata: {
+                          source: 'related_events',
+                          sourceEventId: event?.id,
+                        },
+                      });
+                      
+                      // Navigate to related event
+                      router.push(`/event/${relatedEvent.id}`);
+                    }}
+                  >
+                    {relatedEvent.image_url && (
+                      <Image
+                        source={{ uri: relatedEvent.image_url }}
+                        style={{
+                          width: 80,
+                          height: 80,
+                          borderRadius: theme.borderRadius.sm,
+                          marginRight: theme.spacing.md,
+                          backgroundColor: theme.colors.gray[100],
+                        }}
+                        resizeMode="cover"
+                      />
+                    )}
+                    
+                    <View style={{ flex: 1 }}>
+                      <Text variant="body1" style={{
+                        color: theme.colors.text.primary,
+                        fontWeight: '600',
+                        marginBottom: theme.spacing.xs,
+                      }} numberOfLines={2}>
+                        {relatedEvent.title}
+                      </Text>
+                      
+                      {relatedEvent.event_date && (
+                        <Text variant="caption" style={{
+                          color: theme.colors.text.secondary,
+                          marginBottom: 2,
+                        }}>
+                          📅 {new Date(relatedEvent.event_date).toLocaleDateString('en-US', {
+                            weekday: 'short',
+                            month: 'short',
+                            day: 'numeric'
+                          })}
+                        </Text>
+                      )}
+                      
+                      {relatedEvent.region && (
+                        <Text variant="caption" style={{
+                          color: theme.colors.text.tertiary,
+                        }}>
+                          📍 {relatedEvent.region}
+                        </Text>
+                      )}
+                    </View>
+                    
+                    <Text style={{ color: theme.colors.primary[600], fontSize: 20 }}>›</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
           </View>
         </View>
       </ScrollView>
@@ -926,4 +1089,10 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   calendarButton: {},
+  relatedEventsSection: {
+    marginHorizontal: 0,
+  },
+  relatedEventCard: {
+    // Styles defined inline
+  },
 });
