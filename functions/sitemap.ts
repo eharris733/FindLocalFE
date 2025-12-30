@@ -1,6 +1,12 @@
-// src/app/sitemap+api.ts
-import { supabase } from '../supabase';
-import { logger } from '../utils/logger';
+// Cloudflare Function for dynamic sitemap generation
+// This will be available at /sitemap
+
+import { createClient } from '@supabase/supabase-js';
+
+interface Env {
+  EXPO_PUBLIC_SUPABASE_URL: string;
+  EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: string;
+}
 
 interface SitemapEvent {
   id: string;
@@ -9,22 +15,29 @@ interface SitemapEvent {
   created_at: string | null;
 }
 
-export async function GET() {
+export async function onRequest(context: { env: Env }) {
   try {
-    // Fetch all events from the database
+    // Initialize Supabase client with environment variables
+    const supabase = createClient(
+      context.env.EXPO_PUBLIC_SUPABASE_URL,
+      context.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+    );
+
+    // Fetch all future events from the database
     const { data: events, error } = await supabase
       .from('events_gold')
       .select('id, event_date, city, created_at')
-      .gte('event_date', new Date().toISOString().split('T')[0]) // Only future events
+      .gte('event_date', new Date().toISOString().split('T')[0])
       .order('event_date', { ascending: true })
-      .limit(50000); // Sitemap limit
+      .limit(50000);
 
     if (error) {
-      logger.error('Error fetching events for sitemap:', error);
+      console.error('Error fetching events for sitemap:', error);
       return new Response('Error generating sitemap', { status: 500 });
     }
 
     const baseUrl = 'https://findlocal.community';
+    const today = new Date().toISOString().split('T')[0];
     
     // Build sitemap XML
     const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
@@ -32,25 +45,25 @@ export async function GET() {
   <!-- Static Pages -->
   <url>
     <loc>${baseUrl}/</loc>
-    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
+    <lastmod>${today}</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
     <loc>${baseUrl}/about</loc>
-    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
+    <lastmod>${today}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>${baseUrl}/privacy</loc>
-    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
+    <lastmod>${today}</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
     <loc>${baseUrl}/terms</loc>
-    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
+    <lastmod>${today}</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
@@ -58,23 +71,23 @@ export async function GET() {
   <!-- Event Pages -->
 ${(events || []).map((event: SitemapEvent) => `  <url>
     <loc>${baseUrl}/event/${event.id}</loc>
-    <lastmod>${event.created_at || event.event_date || new Date().toISOString().split('T')[0]}</lastmod>
+    <lastmod>${event.created_at || event.event_date || today}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>`).join('\n')}
 </urlset>`;
 
-    logger.info(`Generated sitemap with ${events?.length || 0} event URLs`);
+    console.log(`Generated sitemap with ${events?.length || 0} event URLs`);
 
     return new Response(sitemap, {
       status: 200,
       headers: {
-        'Content-Type': 'application/xml',
-        'Cache-Control': 'public, max-age=3600, s-maxage=3600', // Cache for 1 hour
+        'Content-Type': 'application/xml; charset=utf-8',
+        'Cache-Control': 'public, max-age=3600, s-maxage=3600',
       },
     });
   } catch (error) {
-    logger.error('Error generating sitemap:', error);
+    console.error('Error generating sitemap:', error);
     return new Response('Error generating sitemap', { status: 500 });
   }
 }
