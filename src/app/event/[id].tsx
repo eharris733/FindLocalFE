@@ -76,7 +76,7 @@ export default function EventPage() {
       // Track page view
       analytics.trackEventMetric({
         eventId: event.id,
-        metricType: 'detail_view',
+        metricType: 'modal_open',
         city: event.city,
         metadata: {
           hasVenue: !!event.venue_id,
@@ -90,7 +90,7 @@ export default function EventPage() {
         const duration = getDuration();
         analytics.trackEventMetric({
           eventId: event.id,
-          metricType: 'detail_close',
+          metricType: 'modal_close',
           city: event.city,
           durationMs: duration,
           metadata: {
@@ -259,7 +259,7 @@ export default function EventPage() {
         // For web, try to use the Web Share API if available
         if (navigator.share) {
           await navigator.share({
-            title: event.title,
+            title: event.title ?? '',
             text: message,
             url: shareUrl,
           });
@@ -273,7 +273,7 @@ export default function EventPage() {
         await Share.share({
           message: `${message}\n${shareUrl}`,
           url: shareUrl,
-          title: event.title,
+          title: event.title ?? '',
         });
       }
     } catch (err: any) {
