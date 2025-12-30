@@ -12,6 +12,7 @@ import {CityProvider} from "../context/CityContext";
 import {CommunityProvider} from "../context/CommunityContext";
 import {ThemeProvider} from "../context/ThemeContext";
 import {FavoritesProvider} from "../context/FavoritesContext";
+import {FriendsProvider} from "../context/FriendsContext";
 import Header from "../components/Header";
 import {useAuth} from "../hooks/useAuth";
 import AuthProvider from "../providers/auth-provider";
@@ -76,8 +77,10 @@ export default function RootLayout() {
                 <CityProvider>
                     <CommunityProvider>
                         <FavoritesProvider>
-                            <SplashScreenController />
-                            <RootNavigator />
+                            <FriendsProvider>
+                                <SplashScreenController />
+                                <RootNavigator />
+                            </FriendsProvider>
                         </FavoritesProvider>
                     </CommunityProvider>
                 </CityProvider>

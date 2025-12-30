@@ -27,6 +27,9 @@ import { useModalTimeTracking } from '../../hooks/useTimeTracking';
 import { addToGoogleCalendar, addToAppleCalendar } from '../../utils/calendarUtils';
 import { useAuth } from '../../hooks/useAuth';
 import { EventPageSchema } from '../../components/EventPageSchema';
+import { InviteModal } from '../../components/InviteModal';
+import { RsvpModal } from '../../components/RsvpModal';
+import { getEventSocialStats, EventSocialStats } from '../../api/invitations';
 
 const { width, height } = Dimensions.get('window');
 
@@ -52,7 +55,7 @@ function formatMilitaryTime(time: string): string {
 }
 
 export default function EventPage() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, invite } = useLocalSearchParams<{ id: string; invite?: string }>();
   const router = useRouter();
   const { theme } = useTheme();
   const { isLoggedIn } = useAuth();
@@ -64,12 +67,25 @@ export default function EventPage() {
   const [showFullVenueDescription, setShowFullVenueDescription] = useState(false);
   const [relatedEvents, setRelatedEvents] = useState<Event[]>([]);
   const { getDuration } = useModalTimeTracking();
+  
+  // Social/Invitation state
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [showRsvpModal, setShowRsvpModal] = useState(false);
+  const [socialStats, setSocialStats] = useState<EventSocialStats | null>(null);
 
   useEffect(() => {
     if (id) {
       fetchEventData();
+      fetchSocialStats();
     }
   }, [id]);
+
+  // Open RSVP modal if invite token is present in URL
+  useEffect(() => {
+    if (invite && event) {
+      setShowRsvpModal(true);
+    }
+  }, [invite, event]);
 
   useEffect(() => {
     if (event) {
@@ -100,6 +116,31 @@ export default function EventPage() {
       }
     };
   }, [event]);
+
+  const fetchSocialStats = async () => {
+    if (!id) return;
+    try {
+      const { data } = await getEventSocialStats(id);
+      setSocialStats(data);
+    } catch (err) {
+      logger.warn('Could not fetch social stats:', err);
+    }
+  };
+
+  const handleRsvpSuccess = (response: 'yes' | 'no' | 'maybe') => {
+    // Refresh social stats after RSVP
+    fetchSocialStats();
+    logger.info(`User RSVPed: ${response}`);
+  };
+
+  const handleInvitePress = () => {
+    if (!isLoggedIn) {
+      // Could show login prompt here
+      logger.info('User must be logged in to create invite');
+      return;
+    }
+    setShowInviteModal(true);
+  };
 
   const fetchRelatedEvents = async (currentEvent: Event) => {
     try {
@@ -437,14 +478,26 @@ export default function EventPage() {
         <Text variant="h3" style={[styles.headerTitle, { color: theme.colors.text.primary }]}>
           Event Details
         </Text>
-        <TouchableOpacity 
-          style={[styles.shareButton, { backgroundColor: theme.colors.primary[100] }]} 
-          onPress={handleShare}
-        >
-          <Text variant="body1" style={{ color: theme.colors.primary[600], fontWeight: '600' }}>
-            Share
-          </Text>
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          <TouchableOpacity 
+            style={[styles.shareButton, { backgroundColor: theme.colors.gray[100], marginRight: 8 }]} 
+            onPress={handleShare}
+          >
+            <Text variant="body1" style={{ color: theme.colors.text.secondary, fontWeight: '600' }}>
+              Share
+            </Text>
+          </TouchableOpacity>
+          {isLoggedIn && (
+            <TouchableOpacity 
+              style={[styles.shareButton, { backgroundColor: theme.colors.primary[100] }]} 
+              onPress={handleInvitePress}
+            >
+              <Text variant="body1" style={{ color: theme.colors.primary[600], fontWeight: '600' }}>
+                Invite
+              </Text>
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
@@ -527,6 +580,49 @@ export default function EventPage() {
             }]}>
               {event.title}
             </Text>
+            
+            {/* Social Stats Bar */}
+            {socialStats && (socialStats.total_attending > 0 || socialStats.share_count > 0) && (
+              <View style={[styles.socialStatsBar, {
+                backgroundColor: theme.colors.background.secondary,
+                padding: theme.spacing.md,
+                borderRadius: theme.borderRadius.md,
+                marginBottom: theme.spacing.md,
+                flexDirection: 'row',
+                alignItems: 'center',
+              }]}>
+                {socialStats.total_attending > 0 && (
+                  <View style={styles.statItem}>
+                    <Text variant="body1" style={{ color: theme.colors.success, fontWeight: '700' }}>
+                      {socialStats.total_attending}
+                    </Text>
+                    <Text variant="caption" style={{ color: theme.colors.text.secondary, marginLeft: 4 }}>
+                      going
+                    </Text>
+                  </View>
+                )}
+                {socialStats.rsvp_maybe_count > 0 && (
+                  <View style={[styles.statItem, { marginLeft: theme.spacing.md }]}>
+                    <Text variant="body1" style={{ color: theme.colors.warning, fontWeight: '700' }}>
+                      {socialStats.rsvp_maybe_count}
+                    </Text>
+                    <Text variant="caption" style={{ color: theme.colors.text.secondary, marginLeft: 4 }}>
+                      maybe
+                    </Text>
+                  </View>
+                )}
+                {socialStats.share_count > 0 && (
+                  <View style={[styles.statItem, { marginLeft: theme.spacing.md }]}>
+                    <Text variant="body1" style={{ color: theme.colors.primary[500], fontWeight: '700' }}>
+                      {socialStats.share_count}
+                    </Text>
+                    <Text variant="caption" style={{ color: theme.colors.text.secondary, marginLeft: 4 }}>
+                      shares
+                    </Text>
+                  </View>
+                )}
+              </View>
+            )}
             
             {/* Event Meta Info */}
             <View style={[styles.eventMetaContainer, { marginBottom: theme.spacing.lg }]}>
@@ -987,6 +1083,28 @@ export default function EventPage() {
           </View>
         </View>
       </ScrollView>
+      
+      {/* Invite Modal */}
+      {event && (
+        <InviteModal
+          visible={showInviteModal}
+          onClose={() => setShowInviteModal(false)}
+          eventId={event.id}
+          eventTitle={event.title || 'Event'}
+        />
+      )}
+      
+      {/* RSVP Modal (shown when visiting with invite token) */}
+      {event && invite && (
+        <RsvpModal
+          visible={showRsvpModal}
+          onClose={() => setShowRsvpModal(false)}
+          inviteToken={invite}
+          eventId={event.id}
+          eventTitle={event.title || 'Event'}
+          onRsvpSuccess={handleRsvpSuccess}
+        />
+      )}
     </View>
   );
 }
@@ -1074,6 +1192,15 @@ const styles = StyleSheet.create({
   metaIcon: {
     marginRight: 8,
     fontSize: 14,
+  },
+  socialStatsBar: {},
+  statItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   descriptionSection: {},
   venueSection: {},
