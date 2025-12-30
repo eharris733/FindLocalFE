@@ -253,7 +253,7 @@ export default function ProfileModal({ visible, onClose, onFeedbackPress }: Prof
                   <>
                     <Text variant="h5">{profile?.full_name || 'User'}</Text>
                     <Text variant="body2" color="secondary">
-                      {session?.user?.email}
+                      {profile?.username ? `@${profile.username}` : session?.user?.email}
                     </Text>
                   </>
                 ) : (
@@ -268,6 +268,15 @@ export default function ProfileModal({ visible, onClose, onFeedbackPress }: Prof
             </View>
             {isLoggedIn ? (
               <View style={styles.authButtonContainer}>
+                <Button 
+                  variant="primary" 
+                  style={styles.authButton} 
+                  title="Edit Profile" 
+                  onPress={() => {
+                    onClose();
+                    router.push('/profile');
+                  }}
+                />
                 <SignOutButton />
               </View>
             ) : (
@@ -287,6 +296,65 @@ export default function ProfileModal({ visible, onClose, onFeedbackPress }: Prof
               </View>
             )}
           </Card>
+
+          {/* Social Section - Only show for logged in users */}
+          {isLoggedIn && (
+            <Card style={styles.section}>
+              <Text variant="h4" style={styles.sectionTitle}>
+                Social
+              </Text>
+              <TouchableOpacity 
+                style={[styles.socialItem, { borderBottomColor: theme.colors.border.light }]}
+                onPress={() => {
+                  onClose();
+                  router.push('/friends');
+                }}
+              >
+                <Text variant="body1">👥 Friends</Text>
+                <Text variant="body2" color="secondary">›</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.socialItem, { borderBottomColor: theme.colors.border.light }]}
+                onPress={() => {
+                  onClose();
+                  router.push('/followers');
+                }}
+              >
+                <Text variant="body1">⭐ Followers</Text>
+                <Text variant="body2" color="secondary">›</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.socialItem, { borderBottomColor: theme.colors.border.light }]}
+                onPress={() => {
+                  onClose();
+                  router.push('/discover-creators');
+                }}
+              >
+                <Text variant="body1">🎭 Discover Creators</Text>
+                <Text variant="body2" color="secondary">›</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.socialItem, { borderBottomColor: theme.colors.border.light }]}
+                onPress={() => {
+                  onClose();
+                  router.push('/following-activity');
+                }}
+              >
+                <Text variant="body1">📰 Following Activity</Text>
+                <Text variant="body2" color="secondary">›</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.socialItem}
+                onPress={() => {
+                  onClose();
+                  router.push('/my-invites');
+                }}
+              >
+                <Text variant="body1">✉️ My Invitations</Text>
+                <Text variant="body2" color="secondary">›</Text>
+              </TouchableOpacity>
+            </Card>
+          )}
 
           {/* Preferences Section - Combined City Picker and Default Location */}
           <Card style={styles.section}>
@@ -589,6 +657,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: 12,
+    borderBottomWidth: 1,
+  },
+  socialItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 14,
     borderBottomWidth: 1,
   },
   deleteButton: {

@@ -7,6 +7,7 @@ import { useCityLocation } from "../../context/CityContext";
 import { useCommunity } from "../../context/CommunityContext";
 import { useFriends } from "../../context/FriendsContext";
 import { useState, useEffect } from 'react';
+import { useRouter } from 'expo-router';
 import { useTheme } from '../../context/ThemeContext';
 import { 
     updateUsername, 
@@ -17,6 +18,7 @@ import {
     AccountType,
     ActivityVisibility 
 } from '../../api/profiles';
+import { getFollowerCount, getFollowingCount } from '../../api/friends';
 import { logger } from '../../utils/logger';
 
 // Username Edit Modal Component
@@ -225,8 +227,9 @@ function VisibilitySettingsModal({
 }
 
 export default function ProfileRoute() {
-    const { profile, session } = useAuth();
+    const { profile, session, refreshProfile } = useAuth();
     const { theme } = useTheme();
+    const router = useRouter();
     const { selectedCity, selectedRegions, onCityChange, onRegionsChange } = useCityLocation();
     const { selectedCommunities } = useCommunity();
     const { stats } = useFriends();
@@ -240,6 +243,10 @@ export default function ProfileRoute() {
     const [accountType, setAccountType] = useState<AccountType>(profile?.account_type || 'personal');
     const [bio, setBio] = useState(profile?.bio || '');
     const [isEditingBio, setIsEditingBio] = useState(false);
+    
+    // Follower/Following counts for creators
+    const [followerCount, setFollowerCount] = useState(0);
+    const [followingCount, setFollowingCount] = useState(0);
 
     useEffect(() => {
         if (profile) {
@@ -247,12 +254,30 @@ export default function ProfileRoute() {
             setBio(profile.bio || '');
         }
     }, [profile]);
+    
+    // Load follower/following counts
+    useEffect(() => {
+        const loadFollowCounts = async () => {
+            if (session?.user?.id) {
+                const [followers, following] = await Promise.all([
+                    getFollowerCount(session.user.id),
+                    getFollowingCount(session.user.id),
+                ]);
+                setFollowerCount(followers.count);
+                setFollowingCount(following.count);
+            }
+        };
+        loadFollowCounts();
+    }, [session?.user?.id]);
 
     const handleUsernameUpdate = async (newUsername: string) => {
         if (!session?.user?.id) return;
         const { error } = await updateUsername(session.user.id, newUsername);
         if (error) {
             logger.error('Error updating username:', error);
+        } else {
+            // Refresh profile to update UI
+            await refreshProfile?.();
         }
     };
 
@@ -265,6 +290,8 @@ export default function ProfileRoute() {
         if (error) {
             logger.error('Error updating account type:', error);
             setAccountType(previousType); // Revert on error
+        } else {
+            await refreshProfile?.();
         }
     };
 
@@ -273,6 +300,8 @@ export default function ProfileRoute() {
         const { error } = await updateActivityVisibility(session.user.id, visibility);
         if (error) {
             logger.error('Error updating visibility:', error);
+        } else {
+            await refreshProfile?.();
         }
     };
 
@@ -281,6 +310,8 @@ export default function ProfileRoute() {
         const { error } = await updateBio(session.user.id, bio);
         if (error) {
             logger.error('Error updating bio:', error);
+        } else {
+            await refreshProfile?.();
         }
         setIsEditingBio(false);
     };
@@ -324,8 +355,24 @@ export default function ProfileRoute() {
     };
 
     return (
-        <PageView title="Profile & Settings">
+        <PageView title="">
             <ScrollView showsVerticalScrollIndicator={false}>
+                {/* Header with Back Button */}
+                <View style={styles.pageHeader}>
+                    <TouchableOpacity 
+                        style={styles.backButton}
+                        onPress={() => router.back()}
+                    >
+                        <Text variant="body1" style={{ color: theme.colors.primary[500] }}>
+                            ← Back
+                        </Text>
+                    </TouchableOpacity>
+                    <Text variant="h3" style={{ flex: 1, textAlign: 'center' }}>
+                        Profile & Settings
+                    </Text>
+                    <View style={{ width: 60 }} />
+                </View>
+
                 {/* Account Type Toggle */}
                 <View style={[styles.accountTypeToggle, { backgroundColor: theme.colors.background.secondary }]}>
                     <TouchableOpacity
@@ -368,24 +415,60 @@ export default function ProfileRoute() {
 
                     {/* Stats Row */}
                     <View style={styles.statsRow}>
-                        <View style={[styles.statItem, { backgroundColor: theme.colors.primary[500] + '20' }]}>
-                            <Text variant="h4" style={{ color: theme.colors.primary[500] }}>
-                                {stats.friendCount}
-                            </Text>
-                            <Text variant="caption" color="secondary">FRIENDS</Text>
-                        </View>
-                        <View style={[styles.statItem, { backgroundColor: theme.colors.secondary[500] + '20' }]}>
-                            <Text variant="h4" style={{ color: theme.colors.secondary[500] }}>
-                                {0} {/* TODO: Get attended count */}
-                            </Text>
-                            <Text variant="caption" color="secondary">ATTENDED</Text>
-                        </View>
-                        <View style={[styles.statItem, { backgroundColor: theme.colors.accent[500] + '20' }]}>
-                            <Text variant="h4" style={{ color: theme.colors.accent[500] }}>
-                                {profile?.favorite_events?.length || 0}
-                            </Text>
-                            <Text variant="caption" color="secondary">SAVED</Text>
-                        </View>
+                        {accountType === 'creator' ? (
+                            // Creator stats: Followers, Following, Saved
+                            <>
+                                <TouchableOpacity
+                                    style={[styles.statItem, { backgroundColor: theme.colors.primary[500] + '20' }]}
+                                    onPress={() => router.push('/followers?tab=followers')}
+                                >
+                                    <Text variant="h4" style={{ color: theme.colors.primary[500] }}>
+                                        {followerCount}
+                                    </Text>
+                                    <Text variant="caption" color="secondary">FOLLOWERS</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={[styles.statItem, { backgroundColor: theme.colors.secondary[500] + '20' }]}
+                                    onPress={() => router.push('/followers?tab=following')}
+                                >
+                                    <Text variant="h4" style={{ color: theme.colors.secondary[500] }}>
+                                        {followingCount}
+                                    </Text>
+                                    <Text variant="caption" color="secondary">FOLLOWING</Text>
+                                </TouchableOpacity>
+                                <View style={[styles.statItem, { backgroundColor: theme.colors.accent[500] + '20' }]}>
+                                    <Text variant="h4" style={{ color: theme.colors.accent[500] }}>
+                                        {profile?.favorite_events?.length || 0}
+                                    </Text>
+                                    <Text variant="caption" color="secondary">SAVED</Text>
+                                </View>
+                            </>
+                        ) : (
+                            // Personal stats: Friends, Attended, Saved
+                            <>
+                                <TouchableOpacity
+                                    style={[styles.statItem, { backgroundColor: theme.colors.primary[500] + '20' }]}
+                                    onPress={() => router.push('/friends')}
+                                >
+                                    <Text variant="h4" style={{ color: theme.colors.primary[500] }}>
+                                        {stats.friendCount}
+                                    </Text>
+                                    <Text variant="caption" color="secondary">FRIENDS</Text>
+                                </TouchableOpacity>
+                                <View style={[styles.statItem, { backgroundColor: theme.colors.secondary[500] + '20' }]}>
+                                    <Text variant="h4" style={{ color: theme.colors.secondary[500] }}>
+                                        {0} {/* TODO: Get attended count */}
+                                    </Text>
+                                    <Text variant="caption" color="secondary">ATTENDED</Text>
+                                </View>
+                                <View style={[styles.statItem, { backgroundColor: theme.colors.accent[500] + '20' }]}>
+                                    <Text variant="h4" style={{ color: theme.colors.accent[500] }}>
+                                        {profile?.favorite_events?.length || 0}
+                                    </Text>
+                                    <Text variant="caption" color="secondary">SAVED</Text>
+                                </View>
+                            </>
+                        )}
                     </View>
                 </View>
 
@@ -527,6 +610,15 @@ export default function ProfileRoute() {
     )
 }
 const styles = StyleSheet.create({
+    pageHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 24,
+    },
+    backButton: {
+        padding: 8,
+        minWidth: 60,
+    },
     accountTypeToggle: {
         flexDirection: 'row',
         borderRadius: 25,

@@ -19,8 +19,12 @@ interface TopNavigationProps {
 
 export default function TopNavigation({ onNavLinkPress, onFeedbackPress }: TopNavigationProps) {
   const { theme } = useTheme();
-  const {isMobile} = useDeviceInfo();
+  const { isMobile, isTablet } = useDeviceInfo();
   const { isLoggedIn } = useAuth();
+  
+  // Use collapsed nav (hamburger menu) for mobile AND tablet to prevent overflow
+  // Show full nav only on desktop (>= 1024px)
+  const useCollapsedNav = isMobile || isTablet;
   const { selectedCity, onCityChange, selectedRegions, onRegionsChange } = useCityLocation();
   const { selectedCommunities } = useCommunity();
   const router = useRouter();
@@ -97,7 +101,7 @@ export default function TopNavigation({ onNavLinkPress, onFeedbackPress }: TopNa
     <>
       <View style={[
           styles.container,
-          isMobile ? styles.condensed : styles.roomy,
+          useCollapsedNav ? styles.condensed : styles.roomy,
         {
         backgroundColor: theme.colors.background.primary,
         borderBottomColor: theme.colors.border.light,
@@ -106,7 +110,7 @@ export default function TopNavigation({ onNavLinkPress, onFeedbackPress }: TopNa
         <View style={styles.content}>
           {/* Left section - Mobile menu button + Desktop city badge */}
           <View style={styles.leftSection}>
-            {isMobile ? (
+            {useCollapsedNav ? (
               <TouchableOpacity
                 style={[styles.menuButton, { backgroundColor: theme.colors.background.secondary }]}
                 onPress={handleMobileMenuPress}
@@ -150,13 +154,13 @@ export default function TopNavigation({ onNavLinkPress, onFeedbackPress }: TopNa
           
           <View style={styles.centerSection}>
             <Pressable onPress={() => handleNavLinkPress('')}>
-              <Logo isMobile={isMobile}/>
+              <Logo isMobile={useCollapsedNav}/>
             </Pressable>
           </View>
           
           {/* Right section with nav links and profile */}
           <View style={styles.rightSection}>
-            {!isMobile && (
+            {!useCollapsedNav && (
               <View style={styles.navLinks}>
                 {navLinks.map((link) => (
                   <TouchableOpacity
@@ -169,6 +173,27 @@ export default function TopNavigation({ onNavLinkPress, onFeedbackPress }: TopNa
                     </Text>
                   </TouchableOpacity>
                 ))}
+                {/* Social links for logged-in users on desktop */}
+                {isLoggedIn && (
+                  <>
+                    <TouchableOpacity
+                      style={styles.navLink}
+                      onPress={() => router.push('/discover-creators')}
+                    >
+                      <Text variant="body2" color="secondary" style={styles.navLinkText}>
+                        Creators
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.navLink}
+                      onPress={() => router.push('/following-activity')}
+                    >
+                      <Text variant="body2" color="secondary" style={styles.navLinkText}>
+                        Following
+                      </Text>
+                    </TouchableOpacity>
+                  </>
+                )}
               </View>
             )}
             
@@ -184,8 +209,8 @@ export default function TopNavigation({ onNavLinkPress, onFeedbackPress }: TopNa
         </View>
       </View>
 
-      {/* Mobile Side Modal */}
-      {isMobile && (
+      {/* Mobile/Tablet Side Modal */}
+      {useCollapsedNav && (
         <Modal
           visible={showMobileMenu}
           transparent={true}
@@ -205,7 +230,7 @@ export default function TopNavigation({ onNavLinkPress, onFeedbackPress }: TopNa
             >
               {/* Menu header */}
               <View style={[styles.menuHeader, { borderBottomColor: theme.colors.border.light }]}>
-                <Logo isMobile={isMobile} isMenu={true} />
+                <Logo isMobile={useCollapsedNav} isMenu={true} />
 
                 <TouchableOpacity
                   style={[styles.closeButton, { backgroundColor: theme.colors.background.secondary }]}
@@ -276,6 +301,50 @@ export default function TopNavigation({ onNavLinkPress, onFeedbackPress }: TopNa
                     </Text>
                   </TouchableOpacity>
                 ))}
+                
+                {/* Social Links - Only show when logged in */}
+                {isLoggedIn && (
+                  <>
+                    <View style={[styles.menuSectionHeader, { borderBottomColor: theme.colors.border.light }]}>
+                      <Text variant="caption" color="tertiary" style={{ fontWeight: '600', letterSpacing: 0.5 }}>
+                        SOCIAL
+                      </Text>
+                    </View>
+                    <TouchableOpacity
+                      style={[styles.sideNavLink, { borderBottomColor: theme.colors.border.light }]}
+                      onPress={() => {
+                        closeMobileMenu();
+                        router.push('/discover-creators');
+                      }}
+                    >
+                      <Text variant="body1" color="secondary" style={styles.sideNavLinkText}>
+                        🎭 Discover Creators
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.sideNavLink, { borderBottomColor: theme.colors.border.light }]}
+                      onPress={() => {
+                        closeMobileMenu();
+                        router.push('/following-activity');
+                      }}
+                    >
+                      <Text variant="body1" color="secondary" style={styles.sideNavLinkText}>
+                        📰 Following Feed
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.sideNavLink, { borderBottomColor: theme.colors.border.light }]}
+                      onPress={() => {
+                        closeMobileMenu();
+                        router.push('/my-invites');
+                      }}
+                    >
+                      <Text variant="body1" color="secondary" style={styles.sideNavLinkText}>
+                        ✉️ My Invitations
+                      </Text>
+                    </TouchableOpacity>
+                  </>
+                )}
               </View>
             </Animated.View>
             
@@ -473,6 +542,12 @@ const styles = StyleSheet.create({
   sideNavLinkText: {
     fontWeight: '500',
     fontSize: 16,
+  },
+  menuSectionHeader: {
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    paddingTop: 20,
+    borderBottomWidth: 1,
   },
   // City Badge Styles
   communityBadge: {
