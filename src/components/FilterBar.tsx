@@ -200,7 +200,7 @@ export default function FilterBar({
       style={[
         styles.container, 
         { 
-          backgroundColor: theme.colors.background.primary,
+          backgroundColor: theme.colors.background.secondary,
           borderBottomColor: theme.colors.border.light,
         },
         animatedStyle
