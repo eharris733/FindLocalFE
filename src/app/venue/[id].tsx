@@ -22,6 +22,7 @@ import { getVenueSizeLabel } from '../../utils/venueUtils';
 import { logger } from '../../utils/logger';
 import { useAuth } from '../../hooks/useAuth';
 import { followVenue, unfollowVenue, checkFollowingVenue, getVenueFollowerCount } from '../../api/friends';
+import { analytics } from '../../utils/analytics';
 import PageView from '../../components/ui/PageView';
 
 const { width } = Dimensions.get('window');
@@ -104,6 +105,18 @@ export default function VenuePage() {
       }
       
       setVenue(venueData);
+      
+      // Track page view
+      analytics.trackPageView(`/venue/${id}`, {
+        venue_id: id,
+        venue_name: venueData.name,
+      });
+      analytics.trackSocialMetric({
+        actionType: 'social_page_view',
+        targetId: id,
+        targetType: 'venue',
+        source: 'venue_page',
+      });
       
       // Fetch upcoming events for this venue
       const events = await getUpcomingEventsForVenue(id, 3);

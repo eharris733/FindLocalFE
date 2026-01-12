@@ -444,6 +444,37 @@ class AnalyticsService {
   }
 
   /**
+   * Track social feature metrics (friends, followers, invitations, venue follows)
+   */
+  async trackSocialMetric({ actionType, targetId, targetType, source, metadata }: SocialMetric) {
+    if (!this.analyticsEnabled && this.optInChecked) return;
+
+    this.recordActivity();
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+
+      const { error } = await supabase
+        .from('social_metrics')
+        .insert({
+          user_id: user?.id || null,
+          session_id: this.sessionId,
+          action_type: actionType,
+          target_id: targetId,
+          target_type: targetType,
+          source,
+          metadata,
+        });
+
+      if (error) {
+        logger.error('Error tracking social metric:', error);
+      }
+    } catch (error) {
+      logger.error('Error in trackSocialMetric:', error);
+    }
+  }
+
+  /**
    * Track filter usage
    */
   async trackFilterUsage({ filterType, filterValue, applied, resultsCount, city, metadata }: FilterUsage) {

@@ -1,6 +1,7 @@
 // src/api/friends.ts
 import { supabase } from '../supabase';
 import { logger } from '../utils/logger';
+import { analytics } from '../utils/analytics';
 import { Profile } from './profiles';
 import type { Venue } from '../types/venues';
 
@@ -112,6 +113,14 @@ export async function sendFriendRequest(
       return { data: null, error };
     }
 
+    // Track analytics
+    analytics.trackSocialMetric({
+      actionType: 'friend_request_sent',
+      targetId: recipientId,
+      targetType: 'user',
+      source: 'profile',
+    });
+
     return { data: data as FriendRequest, error: null };
   } catch (err) {
     logger.error('Error in sendFriendRequest:', err);
@@ -132,6 +141,14 @@ export async function acceptFriendRequest(requestId: string): Promise<{ success:
       logger.error('Error accepting friend request:', error);
       return { success: false, error };
     }
+
+    // Track analytics
+    analytics.trackSocialMetric({
+      actionType: 'friend_request_accepted',
+      targetId: requestId,
+      targetType: 'user',
+      source: 'friends_page',
+    });
 
     return { success: true, error: null };
   } catch (err) {
@@ -154,6 +171,14 @@ export async function rejectFriendRequest(requestId: string): Promise<{ success:
       return { success: false, error };
     }
 
+    // Track analytics
+    analytics.trackSocialMetric({
+      actionType: 'friend_request_rejected',
+      targetId: requestId,
+      targetType: 'user',
+      source: 'friends_page',
+    });
+
     return { success: true, error: null };
   } catch (err) {
     logger.error('Error in rejectFriendRequest:', err);
@@ -175,6 +200,14 @@ export async function cancelFriendRequest(requestId: string): Promise<{ success:
       logger.error('Error canceling friend request:', error);
       return { success: false, error };
     }
+
+    // Track analytics
+    analytics.trackSocialMetric({
+      actionType: 'friend_request_canceled',
+      targetId: requestId,
+      targetType: 'user',
+      source: 'friends_page',
+    });
 
     return { success: true, error: null };
   } catch (err) {
@@ -369,6 +402,14 @@ export async function removeFriend(friendshipId: string): Promise<{ success: boo
       return { success: false, error };
     }
 
+    // Track analytics
+    analytics.trackSocialMetric({
+      actionType: 'friendship_removed',
+      targetId: friendshipId,
+      targetType: 'user',
+      source: 'friends_page',
+    });
+
     return { success: true, error: null };
   } catch (err) {
     logger.error('Error in removeFriend:', err);
@@ -459,6 +500,14 @@ export async function followUser(userIdToFollow: string): Promise<{ success: boo
       return { success: false, error };
     }
 
+    // Track analytics
+    analytics.trackSocialMetric({
+      actionType: 'user_followed',
+      targetId: userIdToFollow,
+      targetType: 'user',
+      source: 'profile',
+    });
+
     return { success: true, error: null };
   } catch (err) {
     logger.error('Error in followUser:', err);
@@ -486,6 +535,14 @@ export async function unfollowUser(userIdToUnfollow: string): Promise<{ success:
       logger.error('Error unfollowing user:', error);
       return { success: false, error };
     }
+
+    // Track analytics
+    analytics.trackSocialMetric({
+      actionType: 'user_unfollowed',
+      targetId: userIdToUnfollow,
+      targetType: 'user',
+      source: 'profile',
+    });
 
     return { success: true, error: null };
   } catch (err) {
@@ -808,6 +865,14 @@ export async function followVenue(venueId: string): Promise<{ success: boolean; 
       return { success: false, error };
     }
 
+    // Track analytics
+    analytics.trackSocialMetric({
+      actionType: 'venue_followed',
+      targetId: venueId,
+      targetType: 'venue',
+      source: 'event_page',
+    });
+
     return { success: true, error: null };
   } catch (err) {
     logger.error('Error in followVenue:', err);
@@ -835,6 +900,14 @@ export async function unfollowVenue(venueId: string): Promise<{ success: boolean
       logger.error('Error unfollowing venue:', error);
       return { success: false, error };
     }
+
+    // Track analytics
+    analytics.trackSocialMetric({
+      actionType: 'venue_unfollowed',
+      targetId: venueId,
+      targetType: 'venue',
+      source: 'event_page',
+    });
 
     return { success: true, error: null };
   } catch (err) {

@@ -506,7 +506,7 @@ getUpcomingEventsForVenue(venueId: string, limit?: number): Promise<Event[]>
 
 ## 11. SQL Observability Queries
 
-See [database/analytics_queries.sql](../database/analytics_queries.sql) for comprehensive SQL queries to monitor social feature usage in Supabase dashboard.
+See [database/social_analytics_queries.sql](../database/social_analytics_queries.sql) for comprehensive SQL queries to monitor social feature usage in Supabase dashboard.
 
 ### Quick Reference Queries
 
@@ -530,6 +530,18 @@ GROUP BY DATE(created_at)
 ORDER BY date DESC;
 ```
 
+#### Social Metrics by Action Type (requires migration)
+```sql
+SELECT 
+  action_type,
+  COUNT(*) as total_actions,
+  COUNT(DISTINCT user_id) as unique_users
+FROM social_metrics
+WHERE created_at >= NOW() - INTERVAL '30 days'
+GROUP BY action_type
+ORDER BY total_actions DESC;
+```
+
 ---
 
 ## Related Documentation
@@ -543,3 +555,5 @@ ORDER BY date DESC;
 - `database/migration_social_features_phase1.sql` - Friends & Followers
 - `database/migration_social_features_phase2.sql` - Invitations
 - `database/migration_venue_follows.sql` - Venue follows
+- `database/migration_add_social_analytics.sql` - Social metrics table
+- `database/social_analytics_queries.sql` - Observability queries

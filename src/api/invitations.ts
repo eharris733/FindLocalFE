@@ -1,6 +1,7 @@
 // src/api/invitations.ts
 import { supabase } from '../supabase';
 import { logger } from '../utils/logger';
+import { analytics } from '../utils/analytics';
 import { Profile } from './profiles';
 
 // ============================================
@@ -146,6 +147,20 @@ export async function createEventInvitation(
       return { data: null, error: fetchError };
     }
 
+    // Track analytics
+    analytics.trackSocialMetric({
+      actionType: 'invitation_created',
+      targetId: params.eventId,
+      targetType: 'event',
+      source: 'event_page',
+      metadata: {
+        allowAnonymous: params.allowAnonymous,
+        allowPlusOne: params.allowPlusOne,
+        hasMaxUses: !!params.maxUses,
+        hasExpiry: !!params.expiresAt,
+      },
+    });
+
     return {
       data: { id: invitation.id, token: invitation.invite_token },
       error: null,
@@ -175,6 +190,14 @@ export async function getInvitationByToken(
     if (!data || data.length === 0) {
       return { data: null, error: { message: 'Invitation not found' } };
     }
+
+    // Track analytics - invitation viewed
+    analytics.trackSocialMetric({
+      actionType: 'invitation_viewed',
+      targetId: token,
+      targetType: 'invitation',
+      source: 'invite_page',
+    });
 
     return { data: data[0] as InvitationDetails, error: null };
   } catch (err) {
@@ -215,6 +238,19 @@ export async function submitRsvp(
     if (!result.success) {
       return { success: false, error: result.error_message };
     }
+
+    // Track analytics
+    analytics.trackSocialMetric({
+      actionType: 'rsvp_submitted',
+      targetId: params.token,
+      targetType: 'invitation',
+      source: 'invite_page',
+      metadata: {
+        response: params.response,
+        isAnonymous: !!params.anonymousName,
+        hasPlusOne: (params.plusOneCount || 0) > 0,
+      },
+    });
 
     return { success: true, rsvpId: result.rsvp_id };
   } catch (err: any) {

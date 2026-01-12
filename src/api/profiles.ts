@@ -1,5 +1,6 @@
 import { supabase } from '../supabase';
 import { logger } from '../utils/logger';
+import { analytics } from '../utils/analytics';
 
 export type AccountType = 'personal' | 'creator';
 export type ActivityVisibility = 'everyone' | 'friends' | 'followers' | 'none';
@@ -127,6 +128,17 @@ export async function updateAccountType(userId: string, accountType: AccountType
     .eq('id', userId)
     .select()
     .maybeSingle();
+  
+  // Track creator mode toggle
+  if (!res.error) {
+    analytics.trackSocialMetric({
+      actionType: accountType === 'creator' ? 'creator_mode_enabled' : 'creator_mode_disabled',
+      targetId: userId,
+      targetType: 'user',
+      source: 'profile_settings',
+    });
+  }
+  
   return { data: res.data as Profile | null, error: res.error };
 }
 
