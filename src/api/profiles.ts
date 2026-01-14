@@ -1,5 +1,9 @@
 import { supabase } from '../supabase';
 import { logger } from '../utils/logger';
+import { analytics } from '../utils/analytics';
+
+export type AccountType = 'personal' | 'creator';
+export type ActivityVisibility = 'everyone' | 'friends' | 'followers' | 'none';
 
 export interface Profile {
   id: string;
@@ -13,6 +17,11 @@ export interface Profile {
   marketing_opt_in?: boolean | null; // User consent for marketing emails
   agreed_to_terms?: boolean | null; // User agreed to Terms of Service
   agreed_to_terms_date?: string | null; // Server-side timestamp (ISO string) - cannot be manipulated by client
+  // Social features
+  username?: string | null; // Unique public username (e.g., @arivera)
+  account_type?: AccountType | null; // 'personal' or 'creator'
+  activity_visibility?: ActivityVisibility | null; // Who can see attending/hosting activity
+  bio?: string | null; // User bio/description
 }
 
 export async function getProfile(userId: string): Promise<{ data: Profile | null; error: any }> {
@@ -87,4 +96,100 @@ export async function deleteUserAccount(userId: string): Promise<{ success: bool
     logger.error('Error in deleteUserAccount:', err);
     return { success: false, error: err };
   }
+}
+
+// ============================================
+// Social Profile Functions
+// ============================================
+
+export async function updateUsername(userId: string, username: string): Promise<{ data: Profile | null; error: any }> {
+  // Validate username format (alphanumeric and underscores only, 3-20 chars)
+  const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
+  if (!usernameRegex.test(username)) {
+    return { 
+      data: null, 
+      error: { message: 'Username must be 3-20 characters and contain only letters, numbers, and underscores' } 
+    };
+  }
+
+  const res = await supabase
+    .from('profiles')
+    .update({ username: username.toLowerCase() })
+    .eq('id', userId)
+    .select()
+    .maybeSingle();
+  return { data: res.data as Profile | null, error: res.error };
+}
+
+export async function updateAccountType(userId: string, accountType: AccountType): Promise<{ data: Profile | null; error: any }> {
+  const res = await supabase
+    .from('profiles')
+    .update({ account_type: accountType })
+    .eq('id', userId)
+    .select()
+    .maybeSingle();
+  
+  // Track creator mode toggle
+  if (!res.error) {
+    analytics.trackSocialMetric({
+      actionType: accountType === 'creator' ? 'creator_mode_enabled' : 'creator_mode_disabled',
+      targetId: userId,
+      targetType: 'user',
+      source: 'profile_settings',
+    });
+  }
+  
+  return { data: res.data as Profile | null, error: res.error };
+}
+
+export async function updateActivityVisibility(userId: string, visibility: ActivityVisibility): Promise<{ data: Profile | null; error: any }> {
+  const res = await supabase
+    .from('profiles')
+    .update({ activity_visibility: visibility })
+    .eq('id', userId)
+    .select()
+    .maybeSingle();
+  return { data: res.data as Profile | null, error: res.error };
+}
+
+export async function updateBio(userId: string, bio: string): Promise<{ data: Profile | null; error: any }> {
+  const res = await supabase
+    .from('profiles')
+    .update({ bio })
+    .eq('id', userId)
+    .select()
+    .maybeSingle();
+  return { data: res.data as Profile | null, error: res.error };
+}
+
+export async function checkUsernameAvailability(username: string): Promise<{ available: boolean; error: any }> {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('username', username.toLowerCase())
+    .maybeSingle();
+
+  if (error) {
+    return { available: false, error };
+  }
+
+  return { available: data === null, error: null };
+}
+
+export async function getProfileByUsername(username: string): Promise<{ data: Profile | null; error: any }> {
+  const res = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('username', username.toLowerCase())
+    .maybeSingle();
+  return { data: res.data as Profile | null, error: res.error };
+}
+
+export async function searchProfiles(searchTerm: string, limit: number = 20): Promise<{ data: Profile[]; error: any }> {
+  const res = await supabase
+    .from('profiles')
+    .select('id, username, full_name, avatar_url, account_type, bio')
+    .or(`username.ilike.%${searchTerm}%,full_name.ilike.%${searchTerm}%`)
+    .limit(limit);
+  return { data: (res.data as Profile[]) || [], error: res.error };
 }

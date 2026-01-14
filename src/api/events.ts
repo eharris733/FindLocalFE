@@ -254,3 +254,154 @@ export async function getEventsWithCommunities(
   }
 }
 
+/**
+ * Get events that followed creators have shared (created invitations for)
+ * Returns events with creator profile info
+ */
+export interface CreatorEventActivity {
+  event: Event;
+  creator: {
+    id: string;
+    username: string | null;
+    full_name: string | null;
+    avatar_url: string | null;
+  };
+  activity_type: 'shared' | 'attending';
+  activity_date: string;
+}
+
+export async function getEventsFromFollowedCreators(
+  userId: string
+): Promise<CreatorEventActivity[]> {
+  try {
+    // Get list of creators the user follows
+    const { data: followingData, error: followingError } = await supabase
+      .from('followers')
+      .select('following_id')
+      .eq('follower_id', userId);
+
+    if (followingError) {
+      logger.error('Error fetching following list:', followingError);
+      return [];
+    }
+
+    if (!followingData || followingData.length === 0) {
+      return [];
+    }
+
+    const followingIds = followingData.map((f) => f.following_id);
+
+    // Get invitations created by followed creators
+    const { data: invitations, error: invitationsError } = await supabase
+      .from('event_invitations')
+      .select('event_id, inviter_id, created_at')
+      .in('inviter_id', followingIds)
+      .eq('is_active', true)
+      .order('created_at', { ascending: false })
+      .limit(50);
+
+    if (invitationsError) {
+      logger.error('Error fetching creator invitations:', invitationsError);
+      return [];
+    }
+
+    if (!invitations || invitations.length === 0) {
+      return [];
+    }
+
+    // Get unique event IDs
+    const eventIds = [...new Set(invitations.map((i) => i.event_id))];
+
+    // Fetch the events
+    const { data: events, error: eventsError } = await supabase
+      .from('events_gold')
+      .select('*')
+      .in('id', eventIds);
+
+    if (eventsError) {
+      logger.error('Error fetching events:', eventsError);
+      return [];
+    }
+
+    // Fetch creator profiles
+    const creatorIds = [...new Set(invitations.map((i) => i.inviter_id))];
+    const { data: profiles, error: profilesError } = await supabase
+      .from('profiles')
+      .select('id, username, full_name, avatar_url')
+      .in('id', creatorIds);
+
+    if (profilesError) {
+      logger.error('Error fetching creator profiles:', profilesError);
+    }
+
+    // Build a map for quick lookup
+    const eventMap = new Map((events || []).map((e) => [e.id, e]));
+    const profileMap = new Map((profiles || []).map((p) => [p.id, p]));
+
+    // Combine the data
+    const activities: (CreatorEventActivity | null)[] = invitations
+      .map((invitation) => {
+        const event = eventMap.get(invitation.event_id);
+        const creator = profileMap.get(invitation.inviter_id);
+        
+        if (!event || !creator) return null;
+
+        return {
+          event: event as Event,
+          creator: {
+            id: creator.id as string,
+            username: creator.username as string | null,
+            full_name: creator.full_name as string | null,
+            avatar_url: creator.avatar_url as string | null,
+          },
+          activity_type: 'shared' as const,
+          activity_date: invitation.created_at as string,
+        };
+      });
+    
+    // Filter out nulls
+    const validActivities = activities.filter((a): a is CreatorEventActivity => a !== null);
+
+    // Remove duplicates (keep first activity per event)
+    const seen = new Set<string>();
+    const uniqueActivities = validActivities.filter((a) => {
+      const key = `${a.event.id}-${a.creator.id}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
+    logger.info(`Found ${uniqueActivities.length} events from followed creators`);
+    return uniqueActivities;
+  } catch (error: any) {
+    logger.error('Error fetching events from followed creators:', error);
+    return [];
+  }
+}
+
+/**
+ * Get upcoming events for a specific venue
+ */
+export async function getUpcomingEventsForVenue(venueId: string, limit: number = 3): Promise<Event[]> {
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    
+    const { data, error } = await supabase
+      .from('events_gold')
+      .select('*')
+      .eq('venue_id', venueId)
+      .gte('event_date', today)
+      .order('event_date', { ascending: true })
+      .limit(limit);
+
+    if (error) {
+      logger.error('Error fetching upcoming events for venue:', error);
+      return [];
+    }
+
+    return (data || []) as Event[];
+  } catch (error: any) {
+    logger.error('Error fetching upcoming events for venue:', error);
+    return [];
+  }
+}

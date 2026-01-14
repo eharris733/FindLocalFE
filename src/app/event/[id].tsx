@@ -27,6 +27,10 @@ import { useModalTimeTracking } from '../../hooks/useTimeTracking';
 import { addToGoogleCalendar, addToAppleCalendar } from '../../utils/calendarUtils';
 import { useAuth } from '../../hooks/useAuth';
 import { EventPageSchema } from '../../components/EventPageSchema';
+import { InviteModal } from '../../components/InviteModal';
+import { RsvpModal } from '../../components/RsvpModal';
+import { getEventSocialStats, EventSocialStats } from '../../api/invitations';
+import { followVenue, unfollowVenue, checkFollowingVenue, getVenueFollowerCount } from '../../api/friends';
 
 const { width, height } = Dimensions.get('window');
 
@@ -52,7 +56,7 @@ function formatMilitaryTime(time: string): string {
 }
 
 export default function EventPage() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, invite } = useLocalSearchParams<{ id: string; invite?: string }>();
   const router = useRouter();
   const { theme } = useTheme();
   const { isLoggedIn } = useAuth();
@@ -64,19 +68,52 @@ export default function EventPage() {
   const [showFullVenueDescription, setShowFullVenueDescription] = useState(false);
   const [relatedEvents, setRelatedEvents] = useState<Event[]>([]);
   const { getDuration } = useModalTimeTracking();
+  
+  // Social/Invitation state
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [showRsvpModal, setShowRsvpModal] = useState(false);
+  const [socialStats, setSocialStats] = useState<EventSocialStats | null>(null);
+  
+  // Venue follow state
+  const [isFollowingVenue, setIsFollowingVenue] = useState(false);
+  const [venueFollowerCount, setVenueFollowerCount] = useState(0);
+  const [venueFollowLoading, setVenueFollowLoading] = useState(false);
 
   useEffect(() => {
     if (id) {
       fetchEventData();
+      fetchSocialStats();
     }
   }, [id]);
+
+  // Open RSVP modal if invite token is present in URL
+  useEffect(() => {
+    if (invite && event) {
+      setShowRsvpModal(true);
+    }
+  }, [invite, event]);
+
+  // Check venue follow status when venue loads
+  useEffect(() => {
+    const checkVenueFollowStatus = async () => {
+      if (venue?.id && isLoggedIn) {
+        const [followResult, countResult] = await Promise.all([
+          checkFollowingVenue(venue.id),
+          getVenueFollowerCount(venue.id),
+        ]);
+        setIsFollowingVenue(followResult.isFollowing);
+        setVenueFollowerCount(countResult.count);
+      }
+    };
+    checkVenueFollowStatus();
+  }, [venue?.id, isLoggedIn]);
 
   useEffect(() => {
     if (event) {
       // Track page view
       analytics.trackEventMetric({
         eventId: event.id,
-        metricType: 'detail_view',
+        metricType: 'modal_open',
         city: event.city,
         metadata: {
           hasVenue: !!event.venue_id,
@@ -90,7 +127,7 @@ export default function EventPage() {
         const duration = getDuration();
         analytics.trackEventMetric({
           eventId: event.id,
-          metricType: 'detail_close',
+          metricType: 'modal_close',
           city: event.city,
           durationMs: duration,
           metadata: {
@@ -100,6 +137,31 @@ export default function EventPage() {
       }
     };
   }, [event]);
+
+  const fetchSocialStats = async () => {
+    if (!id) return;
+    try {
+      const { data } = await getEventSocialStats(id);
+      setSocialStats(data);
+    } catch (err) {
+      logger.warn('Could not fetch social stats:', err);
+    }
+  };
+
+  const handleRsvpSuccess = (response: 'yes' | 'no' | 'maybe') => {
+    // Refresh social stats after RSVP
+    fetchSocialStats();
+    logger.info(`User RSVPed: ${response}`);
+  };
+
+  const handleInvitePress = () => {
+    if (!isLoggedIn) {
+      // Could show login prompt here
+      logger.info('User must be logged in to create invite');
+      return;
+    }
+    setShowInviteModal(true);
+  };
 
   const fetchRelatedEvents = async (currentEvent: Event) => {
     try {
@@ -259,7 +321,7 @@ export default function EventPage() {
         // For web, try to use the Web Share API if available
         if (navigator.share) {
           await navigator.share({
-            title: event.title,
+            title: event.title ?? '',
             text: message,
             url: shareUrl,
           });
@@ -273,7 +335,7 @@ export default function EventPage() {
         await Share.share({
           message: `${message}\n${shareUrl}`,
           url: shareUrl,
-          title: event.title,
+          title: event.title ?? '',
         });
       }
     } catch (err: any) {
@@ -310,6 +372,34 @@ export default function EventPage() {
       const encodedAddress = encodeURIComponent(venue.address);
       const mapsUrl = `https://maps.google.com/?q=${encodedAddress}`;
       Linking.openURL(mapsUrl);
+    }
+  };
+
+  const handleToggleVenueFollow = async () => {
+    if (!venue?.id || !isLoggedIn) {
+      router.push('/user/signin');
+      return;
+    }
+
+    setVenueFollowLoading(true);
+    try {
+      if (isFollowingVenue) {
+        const { success } = await unfollowVenue(venue.id);
+        if (success) {
+          setIsFollowingVenue(false);
+          setVenueFollowerCount(prev => Math.max(0, prev - 1));
+        }
+      } else {
+        const { success } = await followVenue(venue.id);
+        if (success) {
+          setIsFollowingVenue(true);
+          setVenueFollowerCount(prev => prev + 1);
+        }
+      }
+    } catch (err) {
+      logger.error('Error toggling venue follow:', err);
+    } finally {
+      setVenueFollowLoading(false);
     }
   };
 
@@ -437,14 +527,26 @@ export default function EventPage() {
         <Text variant="h3" style={[styles.headerTitle, { color: theme.colors.text.primary }]}>
           Event Details
         </Text>
-        <TouchableOpacity 
-          style={[styles.shareButton, { backgroundColor: theme.colors.primary[100] }]} 
-          onPress={handleShare}
-        >
-          <Text variant="body1" style={{ color: theme.colors.primary[600], fontWeight: '600' }}>
-            Share
-          </Text>
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          <TouchableOpacity 
+            style={[styles.shareButton, { backgroundColor: theme.colors.gray[100], marginRight: 8 }]} 
+            onPress={handleShare}
+          >
+            <Text variant="body1" style={{ color: theme.colors.text.secondary, fontWeight: '600' }}>
+              Share
+            </Text>
+          </TouchableOpacity>
+          {isLoggedIn && (
+            <TouchableOpacity 
+              style={[styles.shareButton, { backgroundColor: theme.colors.primary[100] }]} 
+              onPress={handleInvitePress}
+            >
+              <Text variant="body1" style={{ color: theme.colors.primary[600], fontWeight: '600' }}>
+                Invite
+              </Text>
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
@@ -527,6 +629,49 @@ export default function EventPage() {
             }]}>
               {event.title}
             </Text>
+            
+            {/* Social Stats Bar */}
+            {socialStats && (socialStats.total_attending > 0 || socialStats.share_count > 0) && (
+              <View style={[styles.socialStatsBar, {
+                backgroundColor: theme.colors.background.secondary,
+                padding: theme.spacing.md,
+                borderRadius: theme.borderRadius.md,
+                marginBottom: theme.spacing.md,
+                flexDirection: 'row',
+                alignItems: 'center',
+              }]}>
+                {socialStats.total_attending > 0 && (
+                  <View style={styles.statItem}>
+                    <Text variant="body1" style={{ color: theme.colors.success, fontWeight: '700' }}>
+                      {socialStats.total_attending}
+                    </Text>
+                    <Text variant="caption" style={{ color: theme.colors.text.secondary, marginLeft: 4 }}>
+                      going
+                    </Text>
+                  </View>
+                )}
+                {socialStats.rsvp_maybe_count > 0 && (
+                  <View style={[styles.statItem, { marginLeft: theme.spacing.md }]}>
+                    <Text variant="body1" style={{ color: theme.colors.warning, fontWeight: '700' }}>
+                      {socialStats.rsvp_maybe_count}
+                    </Text>
+                    <Text variant="caption" style={{ color: theme.colors.text.secondary, marginLeft: 4 }}>
+                      maybe
+                    </Text>
+                  </View>
+                )}
+                {socialStats.share_count > 0 && (
+                  <View style={[styles.statItem, { marginLeft: theme.spacing.md }]}>
+                    <Text variant="body1" style={{ color: theme.colors.primary[500], fontWeight: '700' }}>
+                      {socialStats.share_count}
+                    </Text>
+                    <Text variant="caption" style={{ color: theme.colors.text.secondary, marginLeft: 4 }}>
+                      shares
+                    </Text>
+                  </View>
+                )}
+              </View>
+            )}
             
             {/* Event Meta Info */}
             <View style={[styles.eventMetaContainer, { marginBottom: theme.spacing.lg }]}>
@@ -785,32 +930,70 @@ export default function EventPage() {
                   />
                 )}
 
-                <Text variant="h4" style={{
-                  color: theme.colors.text.primary,
-                  marginBottom: theme.spacing.xs,
-                  fontWeight: '600',
-                }}>
-                  {venue.name}
-                </Text>
+                <TouchableOpacity onPress={() => router.push(`/venue/${venue.id}`)}>
+                  <Text variant="h4" style={{
+                    color: theme.colors.text.primary,
+                    marginBottom: theme.spacing.xs,
+                    fontWeight: '600',
+                  }}>
+                    {venue.name}
+                  </Text>
+                </TouchableOpacity>
 
-                {venue.type && (
-                  <View style={[styles.venueTypeBadge, {
-                    backgroundColor: theme.colors.primary[100],
-                    paddingHorizontal: theme.spacing.sm,
-                    paddingVertical: theme.spacing.xs,
-                    borderRadius: theme.borderRadius.md,
-                    alignSelf: 'flex-start',
-                    marginBottom: theme.spacing.sm,
-                  }]}>
-                    <Text variant="caption" style={{
-                      color: theme.colors.primary[700],
-                      fontWeight: '600',
-                      textTransform: 'uppercase',
-                    }}>
-                      {venue.type}
-                    </Text>
+                {/* Venue type badge and follow button row */}
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: theme.spacing.md }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                    {venue.type && (
+                      <View style={[styles.venueTypeBadge, {
+                        backgroundColor: theme.colors.primary[100],
+                        paddingHorizontal: theme.spacing.sm,
+                        paddingVertical: theme.spacing.xs,
+                        borderRadius: theme.borderRadius.md,
+                        marginRight: theme.spacing.sm,
+                      }]}>
+                        <Text variant="caption" style={{
+                          color: theme.colors.primary[700],
+                          fontWeight: '600',
+                          textTransform: 'uppercase',
+                        }}>
+                          {venue.type}
+                        </Text>
+                      </View>
+                    )}
+                    {venueFollowerCount > 0 && (
+                      <Text variant="caption" style={{ color: theme.colors.text.tertiary }}>
+                        {venueFollowerCount} follower{venueFollowerCount !== 1 ? 's' : ''}
+                      </Text>
+                    )}
                   </View>
-                )}
+                  
+                  {/* Follow Venue Button */}
+                  <TouchableOpacity
+                    style={{
+                      backgroundColor: isFollowingVenue ? 'transparent' : theme.colors.primary[500],
+                      borderWidth: isFollowingVenue ? 2 : 0,
+                      borderColor: theme.colors.primary[500],
+                      paddingHorizontal: theme.spacing.md,
+                      paddingVertical: theme.spacing.sm,
+                      borderRadius: theme.borderRadius.full,
+                      minWidth: 100,
+                      alignItems: 'center',
+                    }}
+                    onPress={handleToggleVenueFollow}
+                    disabled={venueFollowLoading}
+                  >
+                    {venueFollowLoading ? (
+                      <ActivityIndicator size="small" color={isFollowingVenue ? theme.colors.primary[500] : '#fff'} />
+                    ) : (
+                      <Text variant="body2" style={{
+                        color: isFollowingVenue ? theme.colors.primary[500] : '#fff',
+                        fontWeight: '600',
+                      }}>
+                        {isFollowingVenue ? '✓ Following' : '+ Follow'}
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+                </View>
 
                 {venueSizeLabel && (
                   <View style={[styles.metaRow, { marginBottom: theme.spacing.sm }]}>
@@ -987,6 +1170,28 @@ export default function EventPage() {
           </View>
         </View>
       </ScrollView>
+      
+      {/* Invite Modal */}
+      {event && (
+        <InviteModal
+          visible={showInviteModal}
+          onClose={() => setShowInviteModal(false)}
+          eventId={event.id}
+          eventTitle={event.title || 'Event'}
+        />
+      )}
+      
+      {/* RSVP Modal (shown when visiting with invite token) */}
+      {event && invite && (
+        <RsvpModal
+          visible={showRsvpModal}
+          onClose={() => setShowRsvpModal(false)}
+          inviteToken={invite}
+          eventId={event.id}
+          eventTitle={event.title || 'Event'}
+          onRsvpSuccess={handleRsvpSuccess}
+        />
+      )}
     </View>
   );
 }
@@ -1074,6 +1279,15 @@ const styles = StyleSheet.create({
   metaIcon: {
     marginRight: 8,
     fontSize: 14,
+  },
+  socialStatsBar: {},
+  statItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   descriptionSection: {},
   venueSection: {},

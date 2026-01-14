@@ -11,6 +11,7 @@ export const AuthContext = createContext<AuthData>({
     profile: undefined,
     isLoading: true,
     isLoggedIn: false,
+    refreshProfile: async () => {},
 });
 
 export default function AuthProvider({ children }: PropsWithChildren) {
@@ -62,6 +63,18 @@ export default function AuthProvider({ children }: PropsWithChildren) {
             subscription.unsubscribe()
         }
     }, [])
+    // Function to refresh profile data
+    const refreshProfile = async () => {
+        if (session) {
+            const { data } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', session.user.id)
+                .single()
+            setProfile(data)
+        }
+    }
+
     // Fetch the profile when the session changes
     useEffect(() => {
         const fetchProfile = async () => {
@@ -87,6 +100,7 @@ export default function AuthProvider({ children }: PropsWithChildren) {
                 isLoading,
                 profile,
                 isLoggedIn: session != undefined,
+                refreshProfile,
             }}
         >
             {children}

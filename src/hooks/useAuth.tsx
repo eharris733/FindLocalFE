@@ -7,6 +7,7 @@ export type AuthData = {
     profile?: any | null
     isLoading: boolean
     isLoggedIn: boolean
+    refreshProfile?: () => Promise<void>
 }
 
 
