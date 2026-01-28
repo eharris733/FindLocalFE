@@ -13,7 +13,6 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../hooks/useAuth';
 import { Text } from '../components/ui';
-import PageView from '../components/ui/PageView';
 import {
   getFollowers,
   getFollowing,
@@ -249,30 +248,9 @@ export default function FollowersPage() {
     </View>
   );
 
-  if (!isLoggedIn) {
-    return (
-      <PageView title="Followers">
-        <View style={styles.emptyContainer}>
-          <Text variant="h4" style={{ color: theme.colors.text.primary, marginBottom: 8 }}>
-            Sign in to see your followers
-          </Text>
-          <TouchableOpacity
-            style={[styles.discoverButton, { backgroundColor: theme.colors.primary[500] }]}
-            onPress={() => router.push('/user/signin')}
-          >
-            <Text variant="body1" style={{ color: '#fff', fontWeight: '600' }}>
-              Sign In
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </PageView>
-    );
-  }
-
-  const currentList = activeTab === 'followers' ? followers : following;
-
-  return (
-    <PageView title="Followers">
+  const renderHeader = () => (
+    <View>
+      <Text variant="h3" style={{ marginBottom: 20 }}>Followers</Text>
       {/* Tabs */}
       <View style={[styles.tabContainer, { backgroundColor: theme.colors.background.secondary }]}>
         <TouchableOpacity
@@ -316,42 +294,94 @@ export default function FollowersPage() {
           </Text>
         </TouchableOpacity>
       </View>
+    </View>
+  );
 
-      {/* List */}
-      {loading ? (
+  if (!isLoggedIn) {
+    return (
+      <View style={[styles.container, { backgroundColor: theme.colors.background.primary }]}>
+        <View style={styles.headerContainer}>
+          <Text variant="h3" style={{ marginBottom: 20 }}>Followers</Text>
+        </View>
+        <View style={styles.emptyContainer}>
+          <Text variant="h4" style={{ color: theme.colors.text.primary, marginBottom: 8 }}>
+            Sign in to see your followers
+          </Text>
+          <TouchableOpacity
+            style={[styles.discoverButton, { backgroundColor: theme.colors.primary[500] }]}
+            onPress={() => router.push('/user/signin')}
+          >
+            <Text variant="body1" style={{ color: '#fff', fontWeight: '600' }}>
+              Sign In
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
+  if (loading) {
+    return (
+      <View style={[styles.container, { backgroundColor: theme.colors.background.primary }]}>
+        <View style={styles.headerContainer}>
+          <Text variant="h3" style={{ marginBottom: 20 }}>Followers</Text>
+        </View>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.colors.primary[500]} />
         </View>
-      ) : (
-        <FlatList
-          data={currentList}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <FollowerItem
-              profile={item}
-              isFollowing={followingMap[item.id]}
-              onToggleFollow={handleToggleFollow}
-              onPress={handleUserPress}
-              theme={theme}
-              isOwnProfile={item.id === user?.id}
-            />
-          )}
-          ListEmptyComponent={renderEmptyState}
-          contentContainerStyle={currentList.length === 0 ? { flex: 1 } : { paddingBottom: 20 }}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={handleRefresh}
-              tintColor={theme.colors.primary[500]}
-            />
-          }
+      </View>
+    );
+  }
+
+  const currentList = activeTab === 'followers' ? followers : following;
+
+  return (
+    <FlatList
+      style={[styles.container, { backgroundColor: theme.colors.background.primary }]}
+      contentContainerStyle={currentList.length === 0 ? styles.emptyContentContainer : styles.contentContainer}
+      data={currentList}
+      keyExtractor={(item) => item.id}
+      ListHeaderComponent={renderHeader}
+      renderItem={({ item }) => (
+        <FollowerItem
+          profile={item}
+          isFollowing={followingMap[item.id]}
+          onToggleFollow={handleToggleFollow}
+          onPress={handleUserPress}
+          theme={theme}
+          isOwnProfile={item.id === user?.id}
         />
       )}
-    </PageView>
+      ListEmptyComponent={renderEmptyState}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={handleRefresh}
+          tintColor={theme.colors.primary[500]}
+        />
+      }
+    />
   );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  headerContainer: {
+    padding: 20,
+    paddingTop: 60,
+  },
+  contentContainer: {
+    padding: 20,
+    paddingTop: 60,
+    paddingBottom: 20,
+  },
+  emptyContentContainer: {
+    flex: 1,
+    padding: 20,
+    paddingTop: 60,
+  },
   tabContainer: {
     flexDirection: 'row',
     borderRadius: 12,
@@ -374,6 +404,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 32,
+    marginTop: -60,
   },
   followerItem: {
     flexDirection: 'row',

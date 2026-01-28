@@ -5,6 +5,11 @@ import { logger } from '../utils/logger';
 
 const PAGE_SIZE = 1000;
 
+export interface EventWithExpiredStatus {
+  event: Event | null;
+  isExpired: boolean;
+}
+
 export async function getEvents(city?: string, region?: string): Promise<Event[]> {
     try {
       let allEvents: Event[] = [];
@@ -147,6 +152,55 @@ export async function getEventById(eventId: string): Promise<Event | null> {
     return data as Event;
   } catch (error: any) {
     logger.error('Error fetching event by ID:', error);
+    throw new Error(`Failed to fetch event: ${error.message}`);
+  }
+}
+
+/**
+ * Fetch an event by ID with fallback to old_events table
+ * Returns the event and whether it came from the archive (expired)
+ */
+export async function getEventByIdWithFallback(eventId: string): Promise<EventWithExpiredStatus> {
+  try {
+    // 1. Try events_gold first (active events)
+    const { data: goldEvent, error: goldError } = await supabase
+      .from('events_gold')
+      .select('*')
+      .eq('id', eventId)
+      .single();
+
+    if (goldEvent) {
+      logger.info(`Fetched active event with ID: ${eventId}`);
+      return { event: goldEvent as Event, isExpired: false };
+    }
+
+    // Log the gold error for debugging, but continue to fallback
+    if (goldError && goldError.code !== 'PGRST116') {
+      logger.warn('Error fetching from events_gold (continuing to fallback):', goldError);
+    }
+
+    // 2. Fallback to old_events (archived events)
+    logger.info(`Event not found in events_gold, checking old_events for ID: ${eventId}`);
+    const { data: oldEvent, error: oldError } = await supabase
+      .from('old_events')
+      .select('*')
+      .eq('id', eventId)
+      .single();
+
+    if (oldEvent) {
+      logger.info(`Fetched expired event from archive with ID: ${eventId}`);
+      return { event: oldEvent as Event, isExpired: true };
+    }
+
+    // Event not found in either table
+    if (oldError) {
+      logger.warn('Error fetching from old_events:', oldError);
+    }
+
+    logger.warn(`No event found with ID: ${eventId} in either events_gold or old_events`);
+    return { event: null, isExpired: false };
+  } catch (error: any) {
+    logger.error('Error fetching event by ID with fallback:', error);
     throw new Error(`Failed to fetch event: ${error.message}`);
   }
 }

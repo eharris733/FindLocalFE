@@ -290,6 +290,155 @@ export async function getUserRsvp(
   }
 }
 
+/**
+ * Get user's RSVP status for an event (across all invitations)
+ * Returns the user's RSVP if they have one, regardless of which invitation link they used
+ */
+export async function getUserEventRsvpStatus(
+  eventId: string
+): Promise<{ data: EventRsvp | null; error: any }> {
+  try {
+    const { data: user } = await supabase.auth.getUser();
+    if (!user.user) {
+      return { data: null, error: null }; // Not authenticated is OK, just no RSVP
+    }
+
+    const { data, error } = await supabase
+      .from('event_rsvps')
+      .select('*')
+      .eq('event_id', eventId)
+      .eq('user_id', user.user.id)
+      .maybeSingle();
+
+    if (error) {
+      logger.error('Error getting user event RSVP:', error);
+      return { data: null, error };
+    }
+
+    return { data: data as EventRsvp | null, error: null };
+  } catch (err) {
+    logger.error('Error in getUserEventRsvpStatus:', err);
+    return { data: null, error: err };
+  }
+}
+
+/**
+ * Get attendee list for an event (public RSVPs only)
+ * Returns users who are going/maybe with public visibility
+ */
+export async function getEventAttendees(
+  eventId: string,
+  limit: number = 10
+): Promise<{ data: RsvpWithProfile[]; going: number; maybe: number; error: any }> {
+  try {
+    // Get all RSVPs for this event
+    const { data: rsvps, error } = await supabase
+      .from('event_rsvps')
+      .select('id, user_id, anonymous_name, response, plus_one_count, created_at')
+      .eq('event_id', eventId)
+      .in('response', ['yes', 'maybe'])
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (error) {
+      logger.error('Error getting event attendees:', error);
+      return { data: [], going: 0, maybe: 0, error };
+    }
+
+    // Get unique user IDs (filter out null/anonymous)
+    const userIds = [...new Set(rsvps?.filter(r => r.user_id).map(r => r.user_id) || [])];
+
+    // Fetch profiles for those users
+    let profilesMap: Record<string, any> = {};
+    if (userIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, username, full_name, avatar_url')
+        .in('id', userIds);
+
+      if (profiles) {
+        profilesMap = profiles.reduce((acc, profile) => {
+          acc[profile.id] = profile;
+          return acc;
+        }, {} as Record<string, any>);
+      }
+    }
+
+    // Format the data
+    const attendees: RsvpWithProfile[] = (rsvps || []).map((rsvp: any) => {
+      const profile = rsvp.user_id ? profilesMap[rsvp.user_id] : null;
+      return {
+        rsvp_id: rsvp.id,
+        user_id: rsvp.user_id,
+        username: profile?.username,
+        full_name: profile?.full_name,
+        avatar_url: profile?.avatar_url,
+        anonymous_name: rsvp.anonymous_name,
+        response: rsvp.response,
+        plus_one_count: rsvp.plus_one_count,
+        created_at: rsvp.created_at,
+      };
+    });
+
+    // Get counts for all RSVPs (not just limited)
+    const { data: counts } = await supabase
+      .from('event_rsvps')
+      .select('response')
+      .eq('event_id', eventId);
+
+    const goingCount = (counts || []).filter((r: any) => r.response === 'yes').length;
+    const maybeCount = (counts || []).filter((r: any) => r.response === 'maybe').length;
+
+    return {
+      data: attendees,
+      going: goingCount,
+      maybe: maybeCount,
+      error: null,
+    };
+  } catch (err) {
+    logger.error('Error in getEventAttendees:', err);
+    return { data: [], going: 0, maybe: 0, error: err };
+  }
+}
+
+/**
+ * Update an existing RSVP response
+ */
+export async function updateRsvp(
+  rsvpId: string,
+  response: 'yes' | 'no' | 'maybe',
+  plusOneCount?: number
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const { error } = await supabase
+      .from('event_rsvps')
+      .update({
+        response,
+        plus_one_count: plusOneCount ?? 0,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', rsvpId);
+
+    if (error) {
+      logger.error('Error updating RSVP:', error);
+      return { success: false, error: error.message };
+    }
+
+    analytics.trackSocialMetric({
+      actionType: 'rsvp_updated',
+      targetId: rsvpId,
+      targetType: 'rsvp',
+      source: 'event_page',
+      metadata: { response },
+    });
+
+    return { success: true };
+  } catch (err: any) {
+    logger.error('Error in updateRsvp:', err);
+    return { success: false, error: err.message };
+  }
+}
+
 // ============================================
 // Host Functions (View RSVPs)
 // ============================================

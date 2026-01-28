@@ -459,9 +459,11 @@ export default function FriendsRoute() {
     setLoadingActions((prev) => ({ ...prev, [userId]: true }));
     const { data } = await sendFriendRequest(userId);
     if (data) {
+      // Remove from suggestions and search results
       setSuggestions((prev) => prev.filter((s) => s.id !== userId));
       setSearchResults((prev) => prev.filter((s) => s.id !== userId));
-      await fetchData();
+      // Add to sent requests list
+      setSentRequests((prev) => [...prev, data]);
     }
     setLoadingActions((prev) => ({ ...prev, [userId]: false }));
   };

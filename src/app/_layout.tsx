@@ -19,8 +19,10 @@ import AuthProvider from "../providers/auth-provider";
 import {SplashScreenController} from "../components/SplashScreenController";
 import { logger } from "../utils/logger";
 import FeedbackModal from "../components/FeedbackModal";
-import { View } from 'react-native';
+import BottomTabBar from "../components/BottomTabBar";
+import { View, Platform } from 'react-native';
 import { analytics } from '../utils/analytics';
+import { useDeviceInfo } from '../hooks/useDeviceInfo';
 
 // Prevent auto hide with error handling for Expo Go
 SplashScreen.preventAutoHideAsync().catch((error) => {
@@ -92,6 +94,7 @@ export default function RootLayout() {
 // Separate this into a new component so it can access the SessionProvider context later
 function RootNavigator() {
     const { isLoggedIn } = useAuth();
+    const { isMobile, isTablet } = useDeviceInfo();
     const [showFeedbackModal, setShowFeedbackModal] = useState(false);
 
     const handleFeedbackPress = useCallback(() => {
@@ -121,6 +124,7 @@ function RootNavigator() {
                     <Stack.Screen name="user/signin" />
                 </Stack.Protected>
             </Stack>
+            {Platform.OS !== 'web' && (isMobile || isTablet) && <BottomTabBar />}
             <FeedbackModal visible={showFeedbackModal} onClose={handleCloseFeedback} />
         </View>
     );

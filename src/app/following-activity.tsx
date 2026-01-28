@@ -13,7 +13,6 @@ import { useRouter } from 'expo-router';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../hooks/useAuth';
 import { Text } from '../components/ui';
-import PageView from '../components/ui/PageView';
 import { getEventsFromFollowedCreators, CreatorEventActivity } from '../api/events';
 import { logger } from '../utils/logger';
 
@@ -204,59 +203,121 @@ export default function FollowingActivityPage() {
     </View>
   );
 
-  if (!isLoggedIn) {
-    return <PageView title="Following">{renderSignInPrompt()}</PageView>;
-  }
-
-  return (
-    <PageView title="Following">
+  const renderHeader = () => (
+    <View>
+      <View style={styles.headerTop}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <Text variant="body1" style={{ color: theme.colors.primary[500] }}>← Back</Text>
+        </TouchableOpacity>
+        <Text variant="h3">Following</Text>
+      </View>
       {/* Header info */}
       <View style={[styles.headerInfo, { backgroundColor: theme.colors.background.secondary }]}>
-        <Text variant="body2" color="secondary">
+        <Text variant="body2" color="secondary" style={{ flex: 1, marginRight: 12 }}>
           Events shared by creators you follow
         </Text>
-        <TouchableOpacity onPress={() => router.push('/discover-creators')}>
+        <TouchableOpacity
+          onPress={() => router.push('/discover-creators')}
+          style={styles.findCreatorsButton}
+        >
           <Text variant="body2" style={{ color: theme.colors.primary[500], fontWeight: '600' }}>
-            Find More Creators
+            Find More
           </Text>
         </TouchableOpacity>
       </View>
+    </View>
+  );
 
-      {loading ? (
+  if (!isLoggedIn) {
+    return (
+      <View style={[styles.container, { backgroundColor: theme.colors.background.primary }]}>
+        <View style={styles.headerContainer}>
+          <View style={styles.headerTop}>
+            <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+              <Text variant="body1" style={{ color: theme.colors.primary[500] }}>← Back</Text>
+            </TouchableOpacity>
+            <Text variant="h3">Following</Text>
+          </View>
+        </View>
+        {renderSignInPrompt()}
+      </View>
+    );
+  }
+
+  if (loading) {
+    return (
+      <View style={[styles.container, { backgroundColor: theme.colors.background.primary }]}>
+        <View style={styles.headerContainer}>
+          <View style={styles.headerTop}>
+            <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+              <Text variant="body1" style={{ color: theme.colors.primary[500] }}>← Back</Text>
+            </TouchableOpacity>
+            <Text variant="h3">Following</Text>
+          </View>
+        </View>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.colors.primary[500]} />
           <Text variant="body2" color="secondary" style={{ marginTop: 12 }}>
             Loading activity...
           </Text>
         </View>
-      ) : (
-        <FlatList
-          data={activities}
-          keyExtractor={(item) => `${item.event.id}-${item.creator.id}-${item.activity_date}`}
-          renderItem={({ item }) => (
-            <ActivityCard
-              activity={item}
-              onEventPress={handleEventPress}
-              onCreatorPress={handleCreatorPress}
-              theme={theme}
-            />
-          )}
-          ListEmptyComponent={renderEmptyState}
-          contentContainerStyle={activities.length === 0 ? { flex: 1 } : { paddingBottom: 20 }}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={handleRefresh}
-              tintColor={theme.colors.primary[500]}
-            />
-          }
+      </View>
+    );
+  }
+
+  return (
+    <FlatList
+      style={[styles.container, { backgroundColor: theme.colors.background.primary }]}
+      contentContainerStyle={activities.length === 0 ? styles.emptyContentContainer : styles.contentContainer}
+      data={activities}
+      keyExtractor={(item) => `${item.event.id}-${item.creator.id}-${item.activity_date}`}
+      ListHeaderComponent={renderHeader}
+      renderItem={({ item }) => (
+        <ActivityCard
+          activity={item}
+          onEventPress={handleEventPress}
+          onCreatorPress={handleCreatorPress}
+          theme={theme}
         />
       )}
-    </PageView>
+      ListEmptyComponent={renderEmptyState}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={handleRefresh}
+          tintColor={theme.colors.primary[500]}
+        />
+      }
+    />
   );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  headerContainer: {
+    padding: 20,
+    paddingTop: 60,
+  },
+  headerTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  backButton: {
+    marginRight: 12,
+  },
+  contentContainer: {
+    padding: 20,
+    paddingTop: 60,
+    paddingBottom: 20,
+  },
+  emptyContentContainer: {
+    flex: 1,
+    padding: 20,
+    paddingTop: 60,
+  },
   headerInfo: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -264,6 +325,12 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 12,
     marginBottom: 16,
+  },
+  findCreatorsButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
   },
   loadingContainer: {
     flex: 1,

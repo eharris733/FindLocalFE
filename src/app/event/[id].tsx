@@ -11,10 +11,11 @@ import {
   Share,
   Platform,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import type { Venue } from '../../types/venues';
 import type { Event } from '../../types/events';
-import { getEventById, getEventsWithCommunities } from '../../api/events';
+import { getEventById, getEventsWithCommunities, getEventByIdWithFallback } from '../../api/events';
 import { getVenueById, getVenuesByCity } from '../../api/venues';
 import { useTheme } from '../../context/ThemeContext';
 import { Text } from '../../components/ui';
@@ -29,8 +30,19 @@ import { useAuth } from '../../hooks/useAuth';
 import { EventPageSchema } from '../../components/EventPageSchema';
 import { InviteModal } from '../../components/InviteModal';
 import { RsvpModal } from '../../components/RsvpModal';
-import { getEventSocialStats, EventSocialStats } from '../../api/invitations';
+import { RsvpStatusBanner } from '../../components/RsvpStatusBanner';
+import { AttendeesList } from '../../components/AttendeesList';
+import {
+  getEventSocialStats,
+  EventSocialStats,
+  getUserEventRsvpStatus,
+  getEventAttendees,
+  getInvitationByToken,
+  EventRsvp,
+  RsvpWithProfile,
+} from '../../api/invitations';
 import { followVenue, unfollowVenue, checkFollowingVenue, getVenueFollowerCount } from '../../api/friends';
+import { openLink, openMaps } from '../../utils/linkUtils';
 
 const { width, height } = Dimensions.get('window');
 
@@ -64,6 +76,7 @@ export default function EventPage() {
   const [venue, setVenue] = useState<Venue | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isExpired, setIsExpired] = useState(false);
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [showFullVenueDescription, setShowFullVenueDescription] = useState(false);
   const [relatedEvents, setRelatedEvents] = useState<Event[]>([]);
@@ -73,7 +86,13 @@ export default function EventPage() {
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [showRsvpModal, setShowRsvpModal] = useState(false);
   const [socialStats, setSocialStats] = useState<EventSocialStats | null>(null);
-  
+
+  // RSVP status and attendees
+  const [userRsvp, setUserRsvp] = useState<EventRsvp | null>(null);
+  const [attendees, setAttendees] = useState<RsvpWithProfile[]>([]);
+  const [attendeeCounts, setAttendeeCounts] = useState({ going: 0, maybe: 0 });
+  const [inviterInfo, setInviterInfo] = useState<{ name?: string; username?: string } | null>(null);
+
   // Venue follow state
   const [isFollowingVenue, setIsFollowingVenue] = useState(false);
   const [venueFollowerCount, setVenueFollowerCount] = useState(0);
@@ -83,8 +102,21 @@ export default function EventPage() {
     if (id) {
       fetchEventData();
       fetchSocialStats();
+      fetchAttendees();
     }
   }, [id]);
+
+  useEffect(() => {
+    if (id && isLoggedIn) {
+      fetchUserRsvpStatus();
+    }
+  }, [id, isLoggedIn]);
+
+  useEffect(() => {
+    if (invite) {
+      fetchInviterInfo();
+    }
+  }, [invite]);
 
   // Open RSVP modal if invite token is present in URL
   useEffect(() => {
@@ -148,10 +180,52 @@ export default function EventPage() {
     }
   };
 
+  const fetchUserRsvpStatus = async () => {
+    if (!id || !isLoggedIn) return;
+    try {
+      const { data } = await getUserEventRsvpStatus(id);
+      setUserRsvp(data);
+    } catch (err) {
+      logger.warn('Could not fetch user RSVP status:', err);
+    }
+  };
+
+  const fetchAttendees = async () => {
+    if (!id) return;
+    try {
+      const { data, going, maybe } = await getEventAttendees(id, 10);
+      setAttendees(data);
+      setAttendeeCounts({ going, maybe });
+    } catch (err) {
+      logger.warn('Could not fetch attendees:', err);
+    }
+  };
+
+  const fetchInviterInfo = async () => {
+    if (!invite) return;
+    try {
+      const { data } = await getInvitationByToken(invite);
+      if (data) {
+        setInviterInfo({
+          name: data.inviter_name || undefined,
+          username: data.inviter_username || undefined,
+        });
+      }
+    } catch (err) {
+      logger.warn('Could not fetch inviter info:', err);
+    }
+  };
+
   const handleRsvpSuccess = (response: 'yes' | 'no' | 'maybe') => {
-    // Refresh social stats after RSVP
+    // Refresh all RSVP-related data after RSVP
     fetchSocialStats();
+    fetchUserRsvpStatus();
+    fetchAttendees();
     logger.info(`User RSVPed: ${response}`);
+  };
+
+  const handleChangeRsvp = () => {
+    setShowRsvpModal(true);
   };
 
   const handleInvitePress = () => {
@@ -228,21 +302,22 @@ export default function EventPage() {
 
   const fetchEventData = async () => {
     if (!id) return;
-    
+
     setLoading(true);
     setError(null);
-    
+
     try {
-      // Fetch event
-      const eventData = await getEventById(id);
-      
+      // Fetch event with fallback to archive
+      const { event: eventData, isExpired: expired } = await getEventByIdWithFallback(id);
+
       if (!eventData) {
         setError('Event not found');
         setLoading(false);
         return;
       }
-      
+
       setEvent(eventData);
+      setIsExpired(expired);
       
       // Fetch related events
       fetchRelatedEvents(eventData);
@@ -348,11 +423,11 @@ export default function EventPage() {
 
   const handleEventLink = () => {
     if (!event) return;
-    
+
     // Priority: ticket_page_url -> detail_page_url -> root_url -> venue.url
     const linkUrl = event.ticket_page_url || event.detail_page_url || event.root_url || venue?.url;
     if (linkUrl) {
-      Linking.openURL(linkUrl);
+      openLink(linkUrl, { toolbarColor: theme.colors.primary[500] });
     }
   };
 
@@ -369,9 +444,7 @@ export default function EventPage() {
 
   const handleAddressPress = () => {
     if (venue?.address) {
-      const encodedAddress = encodeURIComponent(venue.address);
-      const mapsUrl = `https://maps.google.com/?q=${encodedAddress}`;
-      Linking.openURL(mapsUrl);
+      openMaps(venue.address);
     }
   };
 
@@ -462,31 +535,31 @@ export default function EventPage() {
 
   if (loading) {
     return (
-      <View style={[styles.container, { backgroundColor: theme.colors.background.primary }]}>
+      <SafeAreaView edges={['top', 'bottom']} style={[styles.container, { backgroundColor: theme.colors.background.primary }]}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.colors.primary[500]} />
-          <Text variant="body1" style={[styles.loadingText, { 
+          <Text variant="body1" style={[styles.loadingText, {
             color: theme.colors.text.secondary,
             marginTop: theme.spacing.md,
           }]}>
             Loading event...
           </Text>
         </View>
-      </View>
+      </SafeAreaView>
     );
   }
 
   if (error || !event) {
     return (
-      <View style={[styles.container, { backgroundColor: theme.colors.background.primary }]}>
+      <SafeAreaView edges={['top', 'bottom']} style={[styles.container, { backgroundColor: theme.colors.background.primary }]}>
         <View style={styles.errorContainer}>
-          <Text variant="h3" style={[styles.errorText, { 
+          <Text variant="h3" style={[styles.errorText, {
             color: theme.colors.text.secondary,
             marginBottom: theme.spacing.sm,
           }]}>
             😔 {error || 'Event not found'}
           </Text>
-          <TouchableOpacity 
+          <TouchableOpacity
             onPress={handleBack}
             style={[styles.backButton, {
               backgroundColor: theme.colors.primary[500],
@@ -501,12 +574,12 @@ export default function EventPage() {
             </Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background.primary }]}>
+    <SafeAreaView edges={['top', 'bottom']} style={[styles.container, { backgroundColor: theme.colors.background.primary }]}>
       {/* SEO and structured data */}
       <EventPageSchema event={event} venue={venue} />
       
@@ -528,29 +601,51 @@ export default function EventPage() {
           Event Details
         </Text>
         <View style={styles.headerActions}>
-          <TouchableOpacity 
-            style={[styles.shareButton, { backgroundColor: theme.colors.gray[100], marginRight: 8 }]} 
-            onPress={handleShare}
-          >
-            <Text variant="body1" style={{ color: theme.colors.text.secondary, fontWeight: '600' }}>
-              Share
-            </Text>
-          </TouchableOpacity>
-          {isLoggedIn && (
-            <TouchableOpacity 
-              style={[styles.shareButton, { backgroundColor: theme.colors.primary[100] }]} 
-              onPress={handleInvitePress}
-            >
-              <Text variant="body1" style={{ color: theme.colors.primary[600], fontWeight: '600' }}>
-                Invite
-              </Text>
-            </TouchableOpacity>
+          {!isExpired && (
+            <>
+              <TouchableOpacity
+                style={[styles.shareButton, { backgroundColor: theme.colors.gray[100], marginRight: 8 }]}
+                onPress={handleShare}
+              >
+                <Text variant="body1" style={{ color: theme.colors.text.secondary, fontWeight: '600' }}>
+                  Share
+                </Text>
+              </TouchableOpacity>
+              {isLoggedIn && (
+                <TouchableOpacity
+                  style={[styles.shareButton, { backgroundColor: theme.colors.primary[100] }]}
+                  onPress={handleInvitePress}
+                >
+                  <Text variant="body1" style={{ color: theme.colors.primary[600], fontWeight: '600' }}>
+                    Invite
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </>
           )}
         </View>
       </View>
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.content}>
+          {/* Expired Event Banner */}
+          {isExpired && (
+            <View style={[styles.expiredBanner, {
+              backgroundColor: theme.colors.warning + '20',
+              borderColor: theme.colors.warning,
+            }]}>
+              <Text variant="body1" style={{ fontSize: 20, marginRight: 8 }}>⏰</Text>
+              <View style={{ flex: 1 }}>
+                <Text variant="h4" style={{ color: theme.colors.text.primary, marginBottom: 4 }}>
+                  This event has already passed
+                </Text>
+                <Text variant="caption" color="secondary">
+                  You're viewing an archived event. Sharing and interactions are disabled.
+                </Text>
+              </View>
+            </View>
+          )}
+
           {/* Main Event Image */}
           <View style={styles.imageContainer}>
             <Image
@@ -672,7 +767,55 @@ export default function EventPage() {
                 )}
               </View>
             )}
-            
+
+            {/* User's RSVP Status - show if user has RSVPed (not for expired events) */}
+            {!isExpired && userRsvp && (
+              <RsvpStatusBanner
+                rsvp={userRsvp}
+                inviterName={inviterInfo?.name || inviterInfo?.username}
+                onChangeResponse={handleChangeRsvp}
+              />
+            )}
+
+            {/* Inviter info banner - show when visiting via invite link but not yet RSVPed (not for expired events) */}
+            {!isExpired && invite && inviterInfo && !userRsvp && (
+              <View style={[{
+                backgroundColor: theme.colors.primary[100],
+                padding: theme.spacing.md,
+                borderRadius: theme.borderRadius.md,
+                marginBottom: theme.spacing.md,
+              }]}>
+                <Text variant="body2" style={{ color: theme.colors.primary[700] }}>
+                  You've been invited by {inviterInfo.name || `@${inviterInfo.username}`}
+                </Text>
+                <TouchableOpacity
+                  style={[{
+                    backgroundColor: theme.colors.primary[500],
+                    marginTop: theme.spacing.sm,
+                    paddingVertical: theme.spacing.sm,
+                    paddingHorizontal: theme.spacing.md,
+                    borderRadius: theme.borderRadius.md,
+                    alignItems: 'center',
+                  }]}
+                  onPress={() => setShowRsvpModal(true)}
+                >
+                  <Text variant="body2" style={{ color: '#fff', fontWeight: '600' }}>
+                    RSVP Now
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {/* Attendees List (hide for expired events) */}
+            {!isExpired && (attendeeCounts.going > 0 || attendeeCounts.maybe > 0) && (
+              <AttendeesList
+                attendees={attendees}
+                goingCount={attendeeCounts.going}
+                maybeCount={attendeeCounts.maybe}
+                compact
+              />
+            )}
+
             {/* Event Meta Info */}
             <View style={[styles.eventMetaContainer, { marginBottom: theme.spacing.lg }]}>
               {event.event_date && (
@@ -727,32 +870,34 @@ export default function EventPage() {
                 </TouchableOpacity>
               )}
 
-              {/* Primary Action Button */}
-              <TouchableOpacity
-                style={[styles.primaryActionButton, {
-                  backgroundColor: theme.colors.secondary[500],
-                  paddingVertical: theme.spacing.md,
-                  paddingHorizontal: theme.spacing.lg,
-                  borderRadius: theme.borderRadius.lg,
-                  alignItems: 'center',
-                  marginTop: theme.spacing.sm,
-                  marginBottom: theme.spacing.md,
-                  ...theme.shadows.medium,
-                }]}
-                onPress={handleEventLink}
-              >
-                <Text variant="body1" style={{ 
-                  color: theme.colors.text.inverse, 
-                  fontWeight: '700',
-                  textAlign: 'center',
-                  fontSize: 16,
-                }}>
-                  {buttonInfo.text}
-                </Text>
-              </TouchableOpacity>
+              {/* Primary Action Button (hidden for expired events) */}
+              {!isExpired && (
+                <TouchableOpacity
+                  style={[styles.primaryActionButton, {
+                    backgroundColor: theme.colors.secondary[500],
+                    paddingVertical: theme.spacing.md,
+                    paddingHorizontal: theme.spacing.lg,
+                    borderRadius: theme.borderRadius.lg,
+                    alignItems: 'center',
+                    marginTop: theme.spacing.sm,
+                    marginBottom: theme.spacing.md,
+                    ...theme.shadows.medium,
+                  }]}
+                  onPress={handleEventLink}
+                >
+                  <Text variant="body1" style={{
+                    color: theme.colors.text.inverse,
+                    fontWeight: '700',
+                    textAlign: 'center',
+                    fontSize: 16,
+                  }}>
+                    {buttonInfo.text}
+                  </Text>
+                </TouchableOpacity>
+              )}
 
-              {/* Add to Calendar Buttons - Only visible for logged in users */}
-              {isLoggedIn && event.event_date && (
+              {/* Add to Calendar Buttons - Only visible for logged in users (hidden for expired events) */}
+              {!isExpired && isLoggedIn && event.event_date && (
                 <View style={[styles.calendarButtonsContainer, { marginBottom: theme.spacing.md }]}>
                   <Text variant="body2" style={{ 
                     color: theme.colors.text.secondary,
@@ -874,12 +1019,12 @@ export default function EventPage() {
               
               {/* Link to event detail page or venue website */}
               {(event.detail_page_url || event.root_url || venue?.url) && (
-                <TouchableOpacity 
+                <TouchableOpacity
                   onPress={() => {
                     const url = (event.detail_page_url && event.detail_page_url !== event.ticket_page_url)
                       ? event.detail_page_url
                       : event.root_url || venue?.url;
-                    if (url) Linking.openURL(url);
+                    if (url) openLink(url, { toolbarColor: theme.colors.primary[500] });
                   }}
                   style={{ 
                     marginTop: theme.spacing.md,
@@ -1170,9 +1315,9 @@ export default function EventPage() {
           </View>
         </View>
       </ScrollView>
-      
-      {/* Invite Modal */}
-      {event && (
+
+      {/* Invite Modal (disabled for expired events) */}
+      {event && !isExpired && (
         <InviteModal
           visible={showInviteModal}
           onClose={() => setShowInviteModal(false)}
@@ -1180,19 +1325,20 @@ export default function EventPage() {
           eventTitle={event.title || 'Event'}
         />
       )}
-      
-      {/* RSVP Modal (shown when visiting with invite token) */}
-      {event && invite && (
+
+      {/* RSVP Modal (shown when visiting with invite token OR changing response, disabled for expired events) */}
+      {event && !isExpired && (invite || showRsvpModal) && (
         <RsvpModal
           visible={showRsvpModal}
           onClose={() => setShowRsvpModal(false)}
-          inviteToken={invite}
+          inviteToken={invite || userRsvp?.invitation_id || ''}
           eventId={event.id}
           eventTitle={event.title || 'Event'}
           onRsvpSuccess={handleRsvpSuccess}
+          existingRsvp={userRsvp}
         />
       )}
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -1224,6 +1370,14 @@ const styles = StyleSheet.create({
   headerTitle: {
     flex: 1,
     textAlign: 'center',
+  },
+  expiredBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    marginBottom: 16,
+    borderRadius: 12,
+    borderWidth: 2,
   },
   scrollView: {
     flex: 1,

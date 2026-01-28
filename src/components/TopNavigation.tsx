@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, TouchableOpacity, Modal, Animated, Pressable } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../context/ThemeContext';
 import { Text } from './ui';
 import ProfileModal from './ProfileModal';
@@ -102,15 +103,16 @@ export default function TopNavigation({ onNavLinkPress, onFeedbackPress }: TopNa
 
   return (
     <>
-      <View style={[
-          styles.container,
-          useCollapsedNav ? styles.condensed : styles.roomy,
-        {
-        backgroundColor: theme.colors.background.primary,
-        borderBottomColor: theme.colors.border.light,
-        ...theme.shadows.small,
-      }]}>
-        <View style={styles.content}>
+      <SafeAreaView edges={['top']} style={{ backgroundColor: theme.colors.background.primary }}>
+        <View style={[
+            styles.container,
+            useCollapsedNav ? styles.condensed : styles.roomy,
+          {
+          backgroundColor: theme.colors.background.primary,
+          borderBottomColor: theme.colors.border.light,
+          ...theme.shadows.small,
+        }]}>
+          <View style={styles.content}>
           {/* Left section - Mobile menu button + Desktop city badge */}
           <View style={styles.leftSection}>
             {useCollapsedNav ? (
@@ -218,6 +220,7 @@ export default function TopNavigation({ onNavLinkPress, onFeedbackPress }: TopNa
           </View>
         </View>
       </View>
+      </SafeAreaView>
 
       {/* Mobile/Tablet Side Modal */}
       {useCollapsedNav && (
@@ -229,7 +232,7 @@ export default function TopNavigation({ onNavLinkPress, onFeedbackPress }: TopNa
         >
           <View style={styles.modalOverlay}>
             {/* Side menu */}
-            <Animated.View 
+            <Animated.View
               style={[
                 styles.sideMenu,
                 {
@@ -238,19 +241,20 @@ export default function TopNavigation({ onNavLinkPress, onFeedbackPress }: TopNa
                 }
               ]}
             >
-              {/* Menu header */}
-              <View style={[styles.menuHeader, { borderBottomColor: theme.colors.border.light }]}>
-                <Logo isMobile={useCollapsedNav} isMenu={true} />
+              <SafeAreaView edges={['top']} style={{ flex: 1 }}>
+                {/* Menu header */}
+                <View style={[styles.menuHeader, { borderBottomColor: theme.colors.border.light }]}>
+                  <Logo isMobile={useCollapsedNav} isMenu={true} />
 
-                <TouchableOpacity
-                  style={[styles.closeButton, { backgroundColor: theme.colors.background.secondary }]}
-                  onPress={closeMobileMenu}
-                >
-                  <Text variant="body1" color="primary" style={styles.closeIcon}>
-                    ✕
-                  </Text>
-                </TouchableOpacity>
-              </View>
+                  <TouchableOpacity
+                    style={[styles.closeButton, { backgroundColor: theme.colors.background.secondary }]}
+                    onPress={closeMobileMenu}
+                  >
+                    <Text variant="body1" color="primary" style={styles.closeIcon}>
+                      ✕
+                    </Text>
+                  </TouchableOpacity>
+                </View>
 
               {/* Creator Banner - show when logged in as creator */}
               {isLoggedIn && isCreator && (
@@ -393,8 +397,9 @@ export default function TopNavigation({ onNavLinkPress, onFeedbackPress }: TopNa
                   </>
                 )}
               </View>
+              </SafeAreaView>
             </Animated.View>
-            
+
             {/* Background overlay */}
             <Pressable 
               style={styles.overlayBackground} 

@@ -1,3 +1,5 @@
+export { Avatar, AvatarGroup } from './Avatar';
+export { default as BottomTabBar } from '../BottomTabBar';
 export { Button } from './Button';
 export type {
     ButtonVariant,

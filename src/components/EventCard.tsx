@@ -12,6 +12,7 @@ import { useDeviceInfo } from '../hooks/useDeviceInfo';
 import { getGenresFromEventTypes, getGenreDisplayLabel } from '../constants/eventCategories';
 import { analytics } from '../utils/analytics';
 import type { Community } from '../api/communities';
+import { openLink } from '../utils/linkUtils';
 
 interface EventCardProps {
   event: Event;
@@ -136,7 +137,7 @@ const EventCard: React.FC<EventCardProps> = ({ event, onPress, variant = 'defaul
     if (onPress) {
       onPress(event);
     } else if (event.detail_page_url) {
-      Linking.openURL(event.detail_page_url);
+      openLink(event.detail_page_url);
     }
   };
 

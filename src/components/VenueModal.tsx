@@ -15,6 +15,7 @@ import type { Venue } from '../types/venues';
 import type { Community } from '../api/communities';
 import { getCompactVenueSizeLabel } from '../utils/venueUtils';
 import { analytics } from '../utils/analytics';
+import { openLink } from '../utils/linkUtils';
 import { useModalTimeTracking } from '../hooks/useTimeTracking';
 
 interface VenueModalProps {
@@ -90,7 +91,7 @@ export default function VenueModal({ visible, venue, onClose, communities = [], 
         source: 'event_modal',
       });
       
-      Linking.openURL(venue.url);
+      openLink(venue.url);
     }
   };
 

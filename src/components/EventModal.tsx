@@ -19,6 +19,7 @@ import { Text } from './ui';
 import { getVenueSizeLabel } from '../utils/venueUtils';
 import { EVENT_NO_DESCRIPTION_FALLBACK } from '../utils/eventUtils';
 import { logger } from '../utils/logger';
+import { openLink, openMaps } from '../utils/linkUtils';
 import { getGenresFromEventTypes, getGenreDisplayLabel } from '../constants/eventCategories';
 import { analytics } from '../utils/analytics';
 import { useModalTimeTracking } from '../hooks/useTimeTracking';
@@ -144,7 +145,7 @@ const EventModal: React.FC<EventModalProps> = ({ visible, event, onClose, commun
     // Priority: ticket_page_url -> detail_page_url -> root_url -> venue.url
     const linkUrl = event?.ticket_page_url || event?.detail_page_url || event?.root_url || venue?.url;
     if (linkUrl) {
-      Linking.openURL(linkUrl);
+      openLink(linkUrl);
     }
   };
 
@@ -161,9 +162,7 @@ const EventModal: React.FC<EventModalProps> = ({ visible, event, onClose, commun
 
   const handleAddressPress = () => {
     if (venue?.address) {
-      const encodedAddress = encodeURIComponent(venue.address);
-      const mapsUrl = `https://maps.google.com/?q=${encodedAddress}`;
-      Linking.openURL(mapsUrl);
+      openMaps(venue.address);
     }
   };
 
@@ -470,7 +469,7 @@ const EventModal: React.FC<EventModalProps> = ({ visible, event, onClose, commun
                           alignItems: 'center',
                           ...theme.shadows.medium,
                         }]}
-                        onPress={() => Linking.openURL(event.ticket_page_url!)}
+                        onPress={() => openLink(event.ticket_page_url!)}
                       >
                         <Text variant="h3" style={{ 
                           color: theme.colors.text.inverse, 
@@ -685,7 +684,7 @@ const EventModal: React.FC<EventModalProps> = ({ visible, event, onClose, commun
                         const url = (event.detail_page_url && event.detail_page_url !== event.ticket_page_url)
                           ? event.detail_page_url
                           : event.root_url || venue?.url;
-                        if (url) Linking.openURL(url);
+                        if (url) openLink(url);
                       }}
                       style={{ 
                         marginTop: theme.spacing.md,

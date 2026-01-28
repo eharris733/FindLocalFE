@@ -20,6 +20,7 @@ import { useRouter } from 'expo-router';
 import SignOutButton from './user/SignOutButton';
 import { updateMarketingOptIn, deleteUserAccount } from '../api/profiles';
 import { logger } from '../utils/logger';
+import { openLink } from '../utils/linkUtils';
 
 // Account deletion confirmation messages
 const DELETE_ACCOUNT_MESSAGES = {
@@ -491,7 +492,7 @@ export default function ProfileModal({ visible, onClose, onFeedbackPress }: Prof
                 variant="outline"
                 style={styles.betaButton}
                 title="Sign Up for Beta Testing"
-                onPress={() => Linking.openURL('https://forms.gle/diBZKyejuUXsdQu46')}
+                onPress={() => openLink('https://forms.gle/diBZKyejuUXsdQu46')}
               />
             </View>
           </Card>
