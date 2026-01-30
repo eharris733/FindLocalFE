@@ -93,30 +93,37 @@ class AnalyticsService {
   private selectedCommunities: Set<string> = new Set();
   private optInChecked: boolean = false;
   private analyticsEnabled: boolean = true;
+  private sessionCreated: boolean = false; // Track if we've attempted to create this session
 
   async initialize() {
     // Generate or retrieve session ID
+    const previousSessionId = this.sessionId;
     this.sessionId = await this.getOrCreateSessionId();
     this.sessionStartTime = Date.now();
     this.lastActivityTime = Date.now();
-    
+
+    // Reset session created flag if we got a new session ID
+    if (previousSessionId !== this.sessionId) {
+      this.sessionCreated = false;
+    }
+
     // Check user consent
     await this.checkAnalyticsConsent();
-    
+
     if (!this.analyticsEnabled) {
       logger.info('Analytics disabled by user preference');
       return;
     }
-    
+
     // Create session record
     await this.createSession();
-    
+
     // Start auto-flush
     this.startAutoFlush();
-    
+
     // Start activity monitoring
     this.startActivityMonitoring();
-    
+
     logger.info('Analytics initialized', { sessionId: this.sessionId });
   }
 
@@ -166,13 +173,21 @@ class AnalyticsService {
   private async createSession() {
     if (!this.analyticsEnabled) return;
 
+    // Prevent multiple creation attempts for the same session
+    // (handles both web refreshes and mobile re-renders)
+    if (this.sessionCreated) {
+      logger.info('Session already created in this app lifecycle, skipping');
+      return;
+    }
+
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      
-      // Use upsert to handle case where session already exists (e.g., after reload)
+
+      // Try to insert the session
+      // If it already exists (from previous app session/refresh), ignore duplicate error
       const { error } = await supabase
         .from('session_metrics')
-        .upsert({
+        .insert({
           session_id: this.sessionId,
           user_id: user?.id || null,
           platform: Platform.OS,
@@ -183,16 +198,25 @@ class AnalyticsService {
             modelName: Device.modelName,
             brand: Device.brand,
           },
-        }, {
-          onConflict: 'session_id',
-          ignoreDuplicates: false, // Update if exists
         });
 
       if (error) {
-        logger.error('Error creating session:', error);
+        // Ignore duplicate key errors (code 23505) - session already exists from previous app session
+        if (error.code === '23505') {
+          logger.info('Session already exists in DB, continuing with existing session');
+        } else {
+          logger.error('Error creating session:', error);
+        }
+      } else {
+        logger.info('New session created successfully');
       }
+
+      // Mark as created regardless of success/duplicate to prevent retry attempts
+      this.sessionCreated = true;
     } catch (error) {
       logger.error('Error in createSession:', error);
+      // Still mark as created to prevent infinite retry attempts
+      this.sessionCreated = true;
     }
   }
 
@@ -260,6 +284,7 @@ class AnalyticsService {
         this.sessionId = await this.getOrCreateSessionId();
         this.sessionStartTime = now;
         this.lastActivityTime = now;
+        this.sessionCreated = false; // Reset flag for new session
         await this.createSession();
       }
     }, 60000); // Check every minute
