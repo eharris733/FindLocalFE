@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, Modal, TouchableOpacity, Pressable, ScrollView } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '../context/ThemeContext';
@@ -8,7 +8,10 @@ import { useCityLocation } from '../context/CityContext';
 import { useRouter } from 'expo-router';
 import AppleSignInButton from './user/AppleSignInButton';
 import GoogleSignInButton from './user/GoogleSignInButton';
-import { STORAGE_KEYS } from '../constants/storage-keys'; 
+import { STORAGE_KEYS } from '../constants/storage-keys';
+import { useQueryClient } from '@tanstack/react-query';
+import { getCommunitiesForCity } from '../api/communities';
+import type { Community } from '../api/communities'; 
 
 interface OnboardingModalProps {
   visible: boolean;
@@ -19,14 +22,25 @@ const AVAILABLE_CITIES = ['Boston', 'New York'];
 
 export default function OnboardingModal({ visible, onComplete }: Readonly<OnboardingModalProps>) {
   const { theme } = useTheme();
-  const { allCommunities, onCommunitiesChange, onCityChange: onCommunityCityChange } = useCommunity();
-  const { onCityChange: onCityLocationChange } = useCityLocation();
+  const queryClient = useQueryClient();
+  const { onCommunitiesChange } = useCommunity();
+  const { onCityChange } = useCityLocation();
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [selectedCity, setSelectedCity] = useState<string>('Boston');
   const [selectedCommunityIds, setSelectedCommunityIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [allCommunities, setAllCommunities] = useState<Community[]>([]);
+
+  // Fetch communities for the selected city
+  useEffect(() => {
+    const fetchCommunities = async () => {
+      const communities = await getCommunitiesForCity(selectedCity);
+      setAllCommunities(communities);
+    };
+    fetchCommunities();
+  }, [selectedCity]);
 
   const handleCitySelect = (city: string) => {
     setSelectedCity(city);
@@ -77,20 +91,41 @@ export default function OnboardingModal({ visible, onComplete }: Readonly<Onboar
     // and contexts will load preferences from AsyncStorage on mount
     if (!skipContextUpdate) {
       // Trigger data loading by updating contexts (for guest/email signup flows)
-      await Promise.all([
-        onCityLocationChange(selectedCity),
-        onCommunityCityChange(selectedCity),
-        onCommunitiesChange(selectedCommunityIds),
-      ]);
+      await onCityChange(selectedCity);
+      await onCommunitiesChange(selectedCommunityIds);
     }
   };
 
   const handleAppleSignInSuccess = async () => {
-    // Save preferences BEFORE OAuth redirect to prevent modal from showing again
-    // Skip context updates since app will reload after OAuth and load from AsyncStorage
-    await saveOnboardingPreferences(true);
-    // Call onComplete to close the modal
-    onComplete(selectedCommunityIds);
+    try {
+      setLoading(true);
+
+      // Save preferences to AsyncStorage
+      await AsyncStorage.multiSet([
+        [STORAGE_KEYS.PREFERRED_CITY, selectedCity],
+        [STORAGE_KEYS.SELECTED_INTERESTS, JSON.stringify(selectedCommunityIds)],
+        [STORAGE_KEYS.ONBOARDING_COMPLETED, 'true'],
+      ]);
+
+      // Update city (triggers React Query to fetch data for new city)
+      await onCityChange(selectedCity);
+
+      // Prefetch data for the new city (ensures it's ready)
+      await queryClient.prefetchQuery({
+        queryKey: ['communities', selectedCity],
+        queryFn: () => getCommunitiesForCity(selectedCity),
+      });
+
+      // Update selected communities
+      await onCommunitiesChange(selectedCommunityIds);
+
+      setLoading(false);
+      onComplete(selectedCommunityIds);
+    } catch (error) {
+      console.error('Error in handleAppleSignInSuccess:', error);
+      setLoading(false);
+      onComplete(selectedCommunityIds);
+    }
   };
 
   const handleAppleSignInError = (error: string) => {
@@ -229,7 +264,7 @@ export default function OnboardingModal({ visible, onComplete }: Readonly<Onboar
                               ? theme.colors.primary[100]
                               : theme.colors.background.secondary,
                             borderColor: isSelected
-                              ? community.metadata.color
+                              ? community.metadata?.color
                               : theme.colors.border.light,
                             borderLeftWidth: isSelected ? 4 : 2,
                           }
@@ -237,7 +272,7 @@ export default function OnboardingModal({ visible, onComplete }: Readonly<Onboar
                         onPress={() => handleCommunityToggle(community.name)}
                       >
                         <Text variant="h4" style={{ fontSize: 24, marginBottom: 2 }}>
-                          {community.metadata.icon}
+                          {community.metadata?.icon}
                         </Text>
                         <Text
                           variant="body2"

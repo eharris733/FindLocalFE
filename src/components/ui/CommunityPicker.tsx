@@ -3,6 +3,8 @@ import { View, TouchableOpacity, StyleSheet, Modal, ScrollView, ActivityIndicato
 import { useTheme } from '../../context/ThemeContext';
 import { Text } from './Text';
 import { useCommunity } from '../../context/CommunityContext';
+import { useCityLocation } from '../../context/CityContext';
+import { useCommunitiesQuery } from '../../hooks/queries/useCommunitiesQuery';
 
 interface CommunityPickerProps {
   showTrigger?: boolean;
@@ -16,9 +18,14 @@ export const CommunityPicker: React.FC<CommunityPickerProps> = ({
   onClose,
 }) => {
   const { theme } = useTheme();
-  const { selectedCommunities, allCommunities, onCommunitiesChange, loading } = useCommunity();
+  const { selectedCommunities, onCommunitiesChange } = useCommunity();
+  const { selectedCity } = useCityLocation();
+  const { data: communitiesData, isLoading: loading } = useCommunitiesQuery(selectedCity);
   const [isOpen, setIsOpen] = useState(initiallyOpen);
   const [pendingSelection, setPendingSelection] = useState<string[]>(selectedCommunities);
+
+  // Stabilize allCommunities reference to prevent infinite re-renders
+  const allCommunities = React.useMemo(() => communitiesData ?? [], [communitiesData]);
 
   // Sync pending selection when modal opens
   useEffect(() => {
@@ -160,7 +167,7 @@ export const CommunityPicker: React.FC<CommunityPickerProps> = ({
                         style={{
                           borderLeftWidth: 4,
                           borderLeftColor: isSelected
-                            ? community.metadata.color
+                            ? community.metadata?.color
                             : 'transparent',
                           borderTopLeftRadius: 12,
                           borderBottomLeftRadius: 12,
@@ -182,7 +189,7 @@ export const CommunityPicker: React.FC<CommunityPickerProps> = ({
                         >
                           <View style={styles.communityRow}>
                             <Text variant="h4" style={{ fontSize: 24 }}>
-                              {community.metadata.icon}
+                              {community.metadata?.icon}
                             </Text>
                             <View style={{ marginLeft: 12, flex: 1 }}>
                               <Text

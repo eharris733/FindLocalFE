@@ -1,8 +1,7 @@
 import { useState, useEffect, useMemo, useReducer } from 'react';
 import type { Event, FilterState, FilterAction } from '../types/events';
 import type { Venue } from '../types/venues';
-import { getEventsWithCommunities } from '../api/events';
-import { getVenuesByCity } from '../api/venues';
+import { useCityData } from './queries/useCityData';
 import { 
   startOfDay, 
   endOfDay, 
@@ -156,72 +155,19 @@ interface UseEventsProps {
 }
 
 export const useEvents = ({ selectedCity, favoriteEventIds = [] }: UseEventsProps = {}): UseEventsResult => {
-  const [events, setEvents] = useState<Event[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-  const [venues, setVenues] = useState<Venue[]>([]);
-  const [venuesLoading, setVenuesLoading] = useState<boolean>(true);
+  // Use React Query for data fetching
+  const { venues, events, isLoading, venuesLoading, isReady } = useCityData(selectedCity);
+
   const [filters, dispatchFilters] = useReducer(filterReducer, initialFilterState);
-  
+
   // Capture initial favorites snapshot for sorting - only updates when events are reloaded
   const [initialFavoriteIds, setInitialFavoriteIds] = useState<string[]>(favoriteEventIds);
 
-  useEffect(() => {
-    const fetchEvents = async () => {
-      // Don't fetch if no city is selected
-      if (!selectedCity) {
-        setLoading(false);
-        setEvents([]);
-        return;
-      }
-
-      setLoading(true);
-      setEvents([]); // Clear old events immediately when city changes
-      setError(null);
-      try {
-        // Fetch events with community assignments
-        const data = await getEventsWithCommunities(selectedCity);
-        setEvents(data || []); 
-      } catch (err) {
-        setError("Failed to load events. Please try again.");
-        logger.error('Failed to fetch events:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchEvents();
-  }, [selectedCity]); // Re-fetch when selectedCity changes
-  
   // Update the favorites snapshot when events are loaded (events array reference changes)
   useEffect(() => {
     setInitialFavoriteIds(favoriteEventIds);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [events]); // Only when events array changes, not favoriteEventIds
-
-  // Fetch venues for filtering
-  useEffect(() => {
-    const fetchVenues = async () => {
-      // Don't fetch if no city is selected
-      if (!selectedCity) {
-        setVenuesLoading(false);
-        setVenues([]);
-        return;
-      }
-
-      setVenuesLoading(true);
-      setVenues([]); // Clear old venues immediately when city changes
-      try {
-        // Fetch venues for the selected city only
-        const venueData = await getVenuesByCity(selectedCity);
-        setVenues(venueData);
-      } catch (err) {
-        logger.error('Failed to fetch venues:', err);
-      } finally {
-        setVenuesLoading(false);
-      }
-    };
-    fetchVenues();
-  }, [selectedCity]); // Re-fetch when selectedCity changes
 
   const { availableCategories, availableLocations } = useMemo(() => {
     const categories = new Set(['all']); // Use lowercase 'all' instead of 'ALL'
@@ -252,6 +198,9 @@ export const useEvents = ({ selectedCity, favoriteEventIds = [] }: UseEventsProp
   }, [events]);
 
   const filteredEvents = useMemo(() => {
+    // Guard: wait for data to be ready
+    if (!isReady) return [];
+
     let filtered = events.filter(event => {
       // Skip events without valid date
       if (!event.event_date) return false;
@@ -506,9 +455,10 @@ export const useEvents = ({ selectedCity, favoriteEventIds = [] }: UseEventsProp
 
     return filtered;
   }, [
-    events, 
-    filters, 
-    venues, 
+    events,
+    filters,
+    venues,
+    isReady,
     initialFavoriteIds,
     // Only include favoriteEventIds when in favorites filter mode
     // This prevents recalculation when favoriting in other modes
@@ -770,8 +720,8 @@ export const useEvents = ({ selectedCity, favoriteEventIds = [] }: UseEventsProp
 
   return {
     events,
-    loading,
-    error,
+    loading: isLoading,
+    error: null, // React Query handles errors differently
     filteredEvents,
     filters,
     dispatchFilters,

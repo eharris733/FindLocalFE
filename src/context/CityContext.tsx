@@ -142,25 +142,30 @@ export const CityProvider: React.FC<CityProviderProps> = ({ children }) => {
     useEffect(() => {
         const loadPreferredCity = async () => {
             try {
-                const savedCity = await AsyncStorage.getItem(STORAGE_KEYS.PREFERRED_CITY);
-                if (savedCity) {
-                    setSelectedCity(savedCity);
-                    const regions = await fetchRegionsForCity(savedCity);
-                    setAvailableRegions(regions);
-                    logger.info('✅ Loaded saved city preference:', savedCity);
+                // Check if onboarding is completed
+                const onboardingCompleted = await AsyncStorage.getItem(STORAGE_KEYS.ONBOARDING_COMPLETED);
+
+                // Only load/set city if onboarding is completed
+                if (onboardingCompleted === 'true') {
+                    const savedCity = await AsyncStorage.getItem(STORAGE_KEYS.PREFERRED_CITY);
+                    if (savedCity) {
+                        setSelectedCity(savedCity);
+                        const regions = await fetchRegionsForCity(savedCity);
+                        setAvailableRegions(regions);
+                        logger.info('✅ Loaded saved city preference:', savedCity);
+                    } else {
+                        // Default to Boston only if onboarding complete but no saved preference
+                        setSelectedCity('Boston');
+                        const regions = await fetchRegionsForCity('Boston');
+                        setAvailableRegions(regions);
+                        logger.info('✅ No saved preference, defaulting to Boston');
+                    }
                 } else {
-                    // Default to Boston only if no saved preference
-                    setSelectedCity('Boston');
-                    const regions = await fetchRegionsForCity('Boston');
-                    setAvailableRegions(regions);
-                    logger.info('✅ No saved preference, defaulting to Boston');
+                    // Onboarding not complete - leave city empty (no data fetching)
+                    logger.info('⏸️ Onboarding not complete - city will be set after onboarding');
                 }
             } catch (error) {
                 logger.error('Error loading city preference:', error);
-                // Fallback to Boston on error
-                setSelectedCity('Boston');
-                const regions = await fetchRegionsForCity('Boston');
-                setAvailableRegions(regions);
             } finally {
                 setHasLoadedPreference(true);
             }
@@ -172,17 +177,24 @@ export const CityProvider: React.FC<CityProviderProps> = ({ children }) => {
     // Sync with user's profile preference (cloud wins if different)
     useEffect(() => {
         const syncCityWithProfile = async () => {
-            if (!profile || !hasLoadedPreference) {
+            if (!profile || !hasLoadedPreference || !selectedCity) {
                 return;
             }
 
             const profileCity = profile.preferred_city;
-            if (profileCity && profileCity !== selectedCity) {
+
+            // Check if this is a fresh onboarding completion (within last 10 seconds)
+            const onboardingTimestamp = await AsyncStorage.getItem(STORAGE_KEYS.ONBOARDING_COMPLETED);
+            const isFreshOnboarding = onboardingTimestamp === 'true' ||
+                (onboardingTimestamp && Date.now() - parseInt(onboardingTimestamp) < 10000);
+
+            if (profileCity && profileCity !== selectedCity && !isFreshOnboarding) {
                 // Cloud preference exists and differs from local - cloud wins
+                // BUT: Don't override if this is a fresh onboarding (local is the source of truth)
                 setSelectedCity(profileCity);
                 const regions = await fetchRegionsForCity(profileCity);
                 setAvailableRegions(regions);
-                
+
                 // Update local storage to match cloud
                 try {
                     await AsyncStorage.setItem(STORAGE_KEYS.PREFERRED_CITY, profileCity);
@@ -190,8 +202,8 @@ export const CityProvider: React.FC<CityProviderProps> = ({ children }) => {
                 } catch (error) {
                     logger.error('Error syncing city from profile:', error);
                 }
-            } else if (!profileCity && session?.user?.id) {
-                // No cloud preference exists - save current selection to cloud
+            } else if (selectedCity && session?.user?.id) {
+                // Save current local selection to cloud (either no cloud pref, or fresh onboarding)
                 try {
                     await updatePreferredCity(session.user.id, selectedCity);
                     logger.info('✅ Saved current city to profile:', selectedCity);
@@ -202,7 +214,7 @@ export const CityProvider: React.FC<CityProviderProps> = ({ children }) => {
         };
 
         syncCityWithProfile();
-    }, [profile, hasLoadedPreference, session]);
+    }, [profile, hasLoadedPreference, session, selectedCity]);
 
     // Load cities and regions from database on component mount
     useEffect(() => {

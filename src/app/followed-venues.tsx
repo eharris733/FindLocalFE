@@ -19,6 +19,7 @@ import { getFollowedVenues, unfollowVenue, followVenue, VenueFollow } from '../a
 import { getRecommendedVenues } from '../api/venues';
 import { Venue } from '../types/venues';
 import { logger } from '../utils/logger';
+import { useCommunitiesQuery } from '../hooks/queries/useCommunitiesQuery';
 
 interface VenueItemProps {
   readonly venue: Venue;
@@ -185,8 +186,12 @@ export default function FollowedVenuesPage() {
   const { theme } = useTheme();
   const { isLoggedIn } = useAuth();
   const { selectedCity } = useCityLocation();
-  const { allCommunities, selectedCommunities } = useCommunity();
+  const { selectedCommunities } = useCommunity();
+  const { data: communitiesData } = useCommunitiesQuery(selectedCity);
   const router = useRouter();
+
+  // Stabilize allCommunities reference to prevent infinite re-renders
+  const allCommunities = React.useMemo(() => communitiesData ?? [], [communitiesData]);
 
   const [venues, setVenues] = useState<VenueFollow[]>([]);
   const [recommendedVenues, setRecommendedVenues] = useState<Venue[]>([]);

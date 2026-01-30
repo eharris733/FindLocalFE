@@ -3,6 +3,8 @@ import { View, TouchableOpacity, StyleSheet, ScrollView, Pressable, Modal } from
 import { useTheme } from '../../context/ThemeContext';
 import { Text } from './Text';
 import { useCommunity } from '../../context/CommunityContext';
+import { useCityLocation } from '../../context/CityContext';
+import { useCommunitiesQuery, useLabelsQuery } from '../../hooks/queries/useCommunitiesQuery';
 import { logger } from '../../utils/logger';
 
 interface WhatDropdownProps {
@@ -27,8 +29,15 @@ export const WhatDropdown: React.FC<WhatDropdownProps> = ({
   availableLabels: availableLabelsProp,
 }) => {
   const { theme } = useTheme();
-  const { selectedCommunities, allCommunities, labelsForCity } = useCommunity();
+  const { selectedCommunities } = useCommunity();
+  const { selectedCity } = useCityLocation();
+  const { data: communitiesData } = useCommunitiesQuery(selectedCity);
+  const { data: labelsData } = useLabelsQuery(selectedCity);
   const [showModal, setShowModal] = useState(false);
+
+  // Stabilize references to prevent infinite re-renders
+  const allCommunities = React.useMemo(() => communitiesData ?? [], [communitiesData]);
+  const labelsForCity = React.useMemo(() => labelsData ?? {}, [labelsData]);
 
   // Use new props if provided, otherwise fall back to legacy props
   const selectedLabels = selectedLabelsProp ?? selectedCategories ?? [];
@@ -89,7 +98,7 @@ export const WhatDropdown: React.FC<WhatDropdownProps> = ({
 
   const getCommunityColor = (communityName: string) => {
     const community = allCommunities.find(c => c.name === communityName);
-    return community?.metadata.color || theme.colors.primary[500];
+    return community?.metadata?.color || theme.colors.primary[500];
   };
 
   return (
