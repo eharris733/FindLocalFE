@@ -1,6 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { View, StyleSheet, Platform } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '../context/ThemeContext';
 import FilterBar from './FilterBar';
@@ -58,7 +57,6 @@ export default function MainLayout({
   const { theme } = useTheme();
   const { isMobile } = useDeviceInfo();
   const { session } = useAuth();
-  const insets = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState<'gallery' | 'list' | 'map'>('list');
   const [highlightedEventId, setHighlightedEventId] = useState<string | undefined>();
   const [selectedVenue, setSelectedVenue] = useState<Venue | null>(null);
@@ -147,8 +145,8 @@ export default function MainLayout({
   // Determine if we should show animated filter bar (list and gallery only, not map)
   const shouldAnimateFilterBar = activeTab === 'list' || activeTab === 'gallery';
 
-  // Calculate total top inset (filterBarHeight + safe area)
-  const totalTopInset = filterBarHeight + insets.top;
+  // Calculate total top inset (filter bar height only; header already handles safe area)
+  const totalTopInset = filterBarHeight;
 
   if (isMobile) {
     // Mobile layout with tabs
@@ -156,7 +154,7 @@ export default function MainLayout({
 
       <View style={[styles.container, { backgroundColor: theme.colors.background.secondary }]}>
         {/* Absolutely positioned filter bar and feedback banner */}
-        <View style={[styles.filterBarContainer, { paddingTop: insets.top }]}>
+        <View style={styles.filterBarContainer}>
           {onFeedbackPress && <FeedbackBanner onFeedbackPress={onFeedbackPress} />}
           <FilterBar
             filters={filters}
@@ -173,7 +171,12 @@ export default function MainLayout({
         </View>
 
         {/* Content */}
-        <View style={styles.contentContainer}>
+        <View
+          style={[
+            styles.contentContainer,
+            activeTab === 'map' && { paddingTop: totalTopInset },
+          ]}
+        >
           {activeTab === 'gallery' ? (
             <GalleryView
               events={events}
@@ -224,7 +227,7 @@ export default function MainLayout({
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background.secondary }]}>
       {/* Absolutely positioned filter bar and feedback banner */}
-      <View style={[styles.filterBarContainer, { paddingTop: insets.top }]}>
+      <View style={styles.filterBarContainer}>
         {onFeedbackPress && <FeedbackBanner onFeedbackPress={onFeedbackPress} />}
         <FilterBar
           filters={filters}
@@ -241,7 +244,12 @@ export default function MainLayout({
       </View>
 
       {/* Content */}
-      <View style={styles.contentContainer}>
+      <View
+        style={[
+          styles.contentContainer,
+          activeTab === 'map' && { paddingTop: totalTopInset },
+        ]}
+      >
         {activeTab === 'gallery' ? (
           <GalleryView
             events={events}

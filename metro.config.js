@@ -1,3 +1,4 @@
+//Force metro to resole the correct module
 const { getDefaultConfig } = require('expo/metro-config');
 
 const config = getDefaultConfig(__dirname);
