@@ -3,7 +3,7 @@ import { View, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { useRouter, usePathname } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { Text } from './ui';
+import { Text } from './ui/Text';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../hooks/useAuth';
 import { useDeviceInfo } from '../hooks/useDeviceInfo';
