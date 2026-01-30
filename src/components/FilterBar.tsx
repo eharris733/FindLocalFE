@@ -1,5 +1,5 @@
-import React, { useCallback, useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, Animated, Modal, Pressable } from 'react-native';
+import React, { useCallback, useState, useEffect } from 'react';
+import { View, StyleSheet, TouchableOpacity, Animated, Modal, Pressable, Platform } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import {
   Text,
@@ -31,7 +31,8 @@ interface FilterBarProps {
     regions: string[];
     priceRanges: string[];
     timeRanges: string[];
-    eventTypes: string[];
+    communityIds: string[];
+    labels: string[];
   };
   readonly viewMode?: ViewMode;
   readonly onViewModeChange?: (mode: ViewMode) => void;
@@ -60,11 +61,20 @@ export default function FilterBar({
 }: FilterBarProps) {
   const { theme } = useTheme();
   const { selectedCity } = useCityLocation();
-  const { screenWidth } = useDeviceInfo();
+  const { screenWidth, isMobile } = useDeviceInfo();
+  const isNativeMobile = Platform.OS !== 'web' && isMobile;
   const [showMoreFilters, setShowMoreFilters] = useState(false);
+  const [filtersCollapsed, setFiltersCollapsed] = useState(isNativeMobile);
 
   // Determine if screen is very small (< 400px)
   const isVerySmallScreen = screenWidth < 400;
+
+  // Ensure filters are always expanded off native mobile
+  useEffect(() => {
+    if (!isNativeMobile) {
+      setFiltersCollapsed(false);
+    }
+  }, [isNativeMobile]);
 
   // Screenshot marker for development
   React.useEffect(() => {
@@ -203,6 +213,7 @@ export default function FilterBar({
           backgroundColor: theme.colors.background.secondary,
           borderBottomColor: theme.colors.border.light,
         },
+        filtersCollapsed && isNativeMobile ? styles.containerCollapsed : null,
         animatedStyle
       ]}
       onLayout={handleLayoutMeasure}
@@ -210,96 +221,128 @@ export default function FilterBar({
     >
 
       {/* Search Bar */}
-      <SearchAndToggle
-        searchText={filters.searchText}
-        onSearchChange={handleSearchChange}
-      />
-
-      {/* When, What, Where Filter Row */}
-      <View style={styles.mainFilters}>
-        <View style={styles.primaryFilters}>
-          {/* When Filter */}
-          <WhenDropdown
-            selectedOption={filters.dateRange === 'custom' ? 'custom' : filters.dateRange as any}
-            customDateRange={{ start: filters.startDate, end: filters.endDate }}
-            onOptionChange={handleDateRangeChange}
-            onCustomDateChange={handleCustomDateRangeChange}
+      <View style={styles.searchRow}>
+        <View style={styles.searchFlex}>
+          <SearchAndToggle
+            searchText={filters.searchText}
+            onSearchChange={handleSearchChange}
           />
-          
-          {/* What Filter */}
-          <WhatDropdown
-            selectedLabels={filters.labels}
-            onLabelsChange={handleCategoryChange}
-            availableLabels={availableFilterOptions?.labels}
-          />
-
-          {/* Conditionally render filters based on screen size */}
-          {!isVerySmallScreen && (
-            <>
-              {/* Where Filter */}
-              <WhereDropdown
-                selectedVenueTypes={filters.venueTypes}
-                selectedRegions={filters.regions}
-                selectedSizes={selectedSizes}
-                availableRegions={availableFilterOptions?.regions || []}
-                availableVenueTypes={availableFilterOptions?.venueTypes}
-                availableSizes={availableFilterOptions?.sizes}
-                onVenueTypesChange={handleVenueTypesChange}
-                onRegionsChange={handleRegionsChange}
-                onSizesChange={handleSizeChange}
-              />
-
-              {/* Price Filter */}
-              <PriceDropdown
-                selectedPrice={filters.price}
-                availablePriceRanges={availableFilterOptions?.priceRanges}
-                onPriceChange={handlePriceChange}
-              />
-
-              {/* Time Filter */}
-              <TimeDropdown
-                selectedTime={filters.timeRange}
-                availableTimeRanges={availableFilterOptions?.timeRanges}
-                onTimeChange={handleTimeChange}
-              />
-            </>
-          )}
         </View>
-
-        {/* More Filters button for small screens - positioned to the right */}
-        {isVerySmallScreen && (
-          <View style={styles.moreFiltersWrapper}>
-            <TouchableOpacity
-              onPress={() => setShowMoreFilters(true)}
-            >
-              <Text variant="caption" color="secondary" style={styles.moreFiltersText}>
-                More Filters
-              </Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {/* Clear All Filters Button - Only show if filters are active */}
-        {hasActiveFilters() && (
+        {isNativeMobile && (
           <TouchableOpacity
             style={[
-              styles.clearButton,
+              styles.collapseButton,
               {
                 backgroundColor: theme.colors.background.secondary,
                 borderColor: theme.colors.border.light,
-              }
+              },
             ]}
-            onPress={handleClearAllFilters}
+            onPress={() =>
+              setFiltersCollapsed(prev => {
+                const next = !prev;
+                if (next) {
+                  setShowMoreFilters(false);
+                }
+                return next;
+              })
+            }
           >
-            <Text variant="caption" color="secondary" style={styles.clearButtonText}>
-              Clear All
+            <Text variant="caption" color="secondary" style={styles.collapseButtonText}>
+              {filtersCollapsed ? 'Filters' : 'Hide'}
             </Text>
           </TouchableOpacity>
         )}
       </View>
 
+      {!filtersCollapsed && (
+        <>
+          {/* When, What, Where Filter Row */}
+          <View style={styles.mainFilters}>
+            <View style={styles.primaryFilters}>
+              {/* When Filter */}
+              <WhenDropdown
+                selectedOption={filters.dateRange === 'custom' ? 'custom' : filters.dateRange as any}
+                customDateRange={{ start: filters.startDate, end: filters.endDate }}
+                onOptionChange={handleDateRangeChange}
+                onCustomDateChange={handleCustomDateRangeChange}
+              />
+              
+              {/* What Filter */}
+              <WhatDropdown
+                selectedLabels={filters.labels}
+                onLabelsChange={handleCategoryChange}
+                availableLabels={availableFilterOptions?.labels}
+              />
+
+              {/* Conditionally render filters based on screen size */}
+              {!isVerySmallScreen && (
+                <>
+                  {/* Where Filter */}
+                  <WhereDropdown
+                    selectedVenueTypes={filters.venueTypes}
+                    selectedRegions={filters.regions}
+                    selectedSizes={selectedSizes}
+                    availableRegions={availableFilterOptions?.regions || []}
+                    availableVenueTypes={availableFilterOptions?.venueTypes}
+                    availableSizes={availableFilterOptions?.sizes}
+                    onVenueTypesChange={handleVenueTypesChange}
+                    onRegionsChange={handleRegionsChange}
+                    onSizesChange={handleSizeChange}
+                  />
+
+                  {/* Price Filter */}
+                  <PriceDropdown
+                    selectedPrice={filters.price}
+                    availablePriceRanges={availableFilterOptions?.priceRanges}
+                    onPriceChange={handlePriceChange}
+                  />
+
+                  {/* Time Filter */}
+                  <TimeDropdown
+                    selectedTime={filters.timeRange}
+                    availableTimeRanges={availableFilterOptions?.timeRanges}
+                    onTimeChange={handleTimeChange}
+                  />
+                </>
+              )}
+            </View>
+
+            {/* More Filters button for small screens - positioned to the right */}
+            {isVerySmallScreen && (
+              <View style={styles.moreFiltersWrapper}>
+                <TouchableOpacity
+                  onPress={() => setShowMoreFilters(true)}
+                >
+                  <Text variant="caption" color="secondary" style={styles.moreFiltersText}>
+                    More Filters
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {/* Clear All Filters Button - Only show if filters are active */}
+            {hasActiveFilters() && (
+              <TouchableOpacity
+                style={[
+                  styles.clearButton,
+                  {
+                    backgroundColor: theme.colors.background.secondary,
+                    borderColor: theme.colors.border.light,
+                  }
+                ]}
+                onPress={handleClearAllFilters}
+              >
+                <Text variant="caption" color="secondary" style={styles.clearButtonText}>
+                  Clear All
+                </Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </>
+      )}
+
       {/* More Filters Modal */}
-      {isVerySmallScreen && (
+      {!filtersCollapsed && isVerySmallScreen && (
         <Modal
           visible={showMoreFilters}
           transparent={true}
@@ -364,26 +407,27 @@ export default function FilterBar({
         </Modal>
       )}
       
-      {/* Results count and view toggle row */}
-      <View style={styles.bottomRow}>
-        {resultsCount !== undefined && (
-          <Text
-            variant="body2"
-            style={[styles.resultsText, { color: theme.colors.text.secondary }]}
-          >
-            {loading ? `Loading events in ${selectedCity}...` : `${resultsCount} events found in ${selectedCity}`}
-          </Text>
-        )}
+      {!filtersCollapsed && (
+        <View style={styles.bottomRow}>
+          {resultsCount !== undefined && (
+            <Text
+              variant="body2"
+              style={[styles.resultsText, { color: theme.colors.text.secondary }]}
+            >
+              {loading ? `Loading events in ${selectedCity}...` : `${resultsCount} events found in ${selectedCity}`}
+            </Text>
+          )}
 
-        <View style={styles.spacer} />
+          <View style={styles.spacer} />
 
-        {onViewModeChange && (
-          <ViewToggle
-            viewMode={viewMode}
-            onViewModeChange={onViewModeChange}
-          />
-        )}
-      </View>
+          {onViewModeChange && (
+            <ViewToggle
+              viewMode={viewMode}
+              onViewModeChange={onViewModeChange}
+            />
+          )}
+        </View>
+      )}
     </Animated.View>
   );
 }
@@ -393,6 +437,30 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     paddingHorizontal: 8,
     paddingVertical: 8,
+  },
+  containerCollapsed: {
+    paddingVertical: 4,
+  },
+  searchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  searchFlex: {
+    flex: 1,
+  },
+  collapseButton: {
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    minHeight: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  collapseButtonText: {
+    fontSize: 12,
+    fontWeight: '600',
   },
   mainFilters: {
     flexDirection: 'row',

@@ -1,11 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Platform, View, StyleSheet } from 'react-native';
 import type { Event } from '../types/events';
 import type { Venue } from '../types/venues';
 import { getAllVenues, getVenuesByCity } from '../api/venues';
-import { useTheme } from '../context/ThemeContext';
 import { useCityLocation } from '../context/CityContext';
-import { Text } from './ui';
 import { logger } from '../utils/logger';
 
 interface MapViewComponentProps {
@@ -21,7 +18,6 @@ const MapViewComponent: React.FC<MapViewComponentProps> = ({
   onVenuePress,
   highlightedEventId,
 }) => {
-  const { theme } = useTheme();
   const { selectedCity } = useCityLocation();
   const [venues, setVenues] = useState<Venue[]>([]);
   const [venuesLoading, setVenuesLoading] = useState(true);
@@ -55,80 +51,19 @@ const MapViewComponent: React.FC<MapViewComponentProps> = ({
     fetchVenues();
   }, [selectedCity]); // Re-fetch when selectedCity changes
 
-  // For web platform, use the web map component
-  if (Platform.OS === 'web') {
-    const MapViewWeb = require('./MapView.web').default;
-    return (
-      <MapViewWeb 
-        key={`map-${selectedCity}`} // Force complete re-render when city changes
-        events={events} 
-        venues={venues}
-        venuesLoading={venuesLoading}
-        onEventPress={onEventPress}
-        onVenuePress={onVenuePress}
-        highlightedEventId={highlightedEventId}
-        selectedCity={selectedCity}
-      />
-    );
-  }
-
-  // For mobile platforms, show a placeholder for now
+  const EventMap = require('./EventMap').default;
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background.secondary }]}>
-      <View style={styles.placeholder}>
-        <Text variant="h3" style={[styles.placeholderTitle, { 
-          color: theme.colors.text.primary,
-          marginBottom: theme.spacing.md,
-        }]}>
-          📱 Mobile Map
-        </Text>
-        <Text variant="body1" style={[styles.placeholderText, {
-          color: theme.colors.text.secondary,
-          marginBottom: theme.spacing.sm,
-        }]}>
-          Map view for mobile platforms will be implemented with react-native-maps
-        </Text>
-        <Text variant="body2" style={[styles.placeholderSubtext, {
-          color: theme.colors.text.tertiary,
-        }]}>
-          {events.length} events • {venues.length} venues with coordinates in {selectedCity}
-        </Text>
-        {highlightedEventId && (
-          <Text variant="caption" style={[styles.highlightText, {
-            color: theme.colors.primary[600],
-            marginTop: theme.spacing.sm,
-          }]}>
-            Event {highlightedEventId} highlighted
-          </Text>
-        )}
-      </View>
-    </View>
+    <EventMap 
+      key={`map-${selectedCity}`} // Force complete re-render when city changes
+      events={events} 
+      venues={venues}
+      venuesLoading={venuesLoading}
+      onEventPress={onEventPress}
+      onVenuePress={onVenuePress}
+      highlightedEventId={highlightedEventId}
+      selectedCity={selectedCity}
+    />
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  placeholder: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 32,
-  },
-  placeholderTitle: {
-    textAlign: 'center',
-  },
-  placeholderText: {
-    textAlign: 'center',
-  },
-  placeholderSubtext: {
-    textAlign: 'center',
-  },
-  highlightText: {
-    textAlign: 'center',
-    fontWeight: '600',
-  },
-});
 
 export default MapViewComponent;
