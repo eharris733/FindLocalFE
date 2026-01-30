@@ -28,13 +28,9 @@ export default function OnboardingModal({ visible, onComplete }: Readonly<Onboar
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
 
-  const handleCitySelect = async (city: string) => {
+  const handleCitySelect = (city: string) => {
     setSelectedCity(city);
-    // Save city to BOTH contexts to ensure it persists everywhere
-    await Promise.all([
-      onCityLocationChange(city), // Saves to CityContext (uses STORAGE_KEYS.PREFERRED_CITY)
-      onCommunityCityChange(city)  // Saves to CommunityContext (uses its own storage key)
-    ]);
+    // During onboarding, just update local state - don't trigger data fetches
   };
 
   const handleCommunityToggle = (communityName: string) => {
@@ -42,10 +38,8 @@ export default function OnboardingModal({ visible, onComplete }: Readonly<Onboar
       const newSelection = prev.includes(communityName)
         ? prev.filter(id => id !== communityName)
         : [...prev, communityName];
-      
-      // Save immediately to CommunityContext (which saves to AsyncStorage)
-      onCommunitiesChange(newSelection);
-      
+
+      // During onboarding, just update local state - don't trigger data fetches
       return newSelection;
     });
   };
@@ -71,15 +65,30 @@ export default function OnboardingModal({ visible, onComplete }: Readonly<Onboar
   };
 
   // Common function to save onboarding preferences
-  const saveOnboardingPreferences = async () => {
-    // City and communities are already saved immediately when selected/toggled
-    // Only need to save onboarding completion flag to prevent modal from showing again
-    await AsyncStorage.setItem(STORAGE_KEYS.ONBOARDING_COMPLETED, 'true');
+  const saveOnboardingPreferences = async (skipContextUpdate = false) => {
+    // Save preferences to AsyncStorage
+    await AsyncStorage.multiSet([
+      [STORAGE_KEYS.PREFERRED_CITY, selectedCity],
+      [STORAGE_KEYS.SELECTED_INTERESTS, JSON.stringify(selectedCommunityIds)],
+      [STORAGE_KEYS.ONBOARDING_COMPLETED, 'true'],
+    ]);
+
+    // For OAuth flows (Apple, Google), skip context updates as the app will reload
+    // and contexts will load preferences from AsyncStorage on mount
+    if (!skipContextUpdate) {
+      // Trigger data loading by updating contexts (for guest/email signup flows)
+      await Promise.all([
+        onCityLocationChange(selectedCity),
+        onCommunityCityChange(selectedCity),
+        onCommunitiesChange(selectedCommunityIds),
+      ]);
+    }
   };
 
   const handleAppleSignInSuccess = async () => {
     // Save preferences BEFORE OAuth redirect to prevent modal from showing again
-    await saveOnboardingPreferences();
+    // Skip context updates since app will reload after OAuth and load from AsyncStorage
+    await saveOnboardingPreferences(true);
     // Call onComplete to close the modal
     onComplete(selectedCommunityIds);
   };

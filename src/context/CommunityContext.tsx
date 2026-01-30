@@ -102,7 +102,7 @@ export const CommunityProvider: React.FC<CommunityProviderProps> = ({ children }
 
     try {
       await AsyncStorage.setItem(
-        STORAGE_KEYS.SELECTED_COMMUNITIES,
+        STORAGE_KEYS.SELECTED_INTERESTS,
         JSON.stringify(communities)
       );
       

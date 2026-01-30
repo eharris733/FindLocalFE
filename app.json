@@ -22,7 +22,15 @@
         "CFBundleAllowMixedLocalizations": true,
         "ITSAppUsesNonExemptEncryption": false,
         "NSPhotoLibraryUsageDescription": "This app needs access to your photo library to add cover photos to your events.",
-        "NSCameraUsageDescription": "This app needs access to your camera to take photos for your events."
+        "NSCameraUsageDescription": "This app needs access to your camera to take photos for your events.",
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": true,
+          "NSExceptionDomains": {
+            "localhost": {
+              "NSExceptionAllowsInsecureHTTPLoads": true
+            }
+          }
+        }
       },
       "usesAppleSignIn": true
     },
