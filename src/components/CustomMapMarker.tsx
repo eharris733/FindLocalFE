@@ -1,13 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, StyleSheet, Image, Platform, TouchableOpacity } from 'react-native';
+import { Platform, View, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { Event } from '../types/events';
 import { Venue } from '../types/venues';
 import { Text } from './ui/Text';
 import { useTheme } from '../context/ThemeContext';
 
-// Import using require to bypass TypeScript issues with this library
-const { Marker, Callout } = require('@teovilla/react-native-web-maps');
-
+// Import using require to bypass TypeScript issues with platform-specific modules
+const { Marker, Callout } = require('./MapComponents');
 
 interface CustomMapMarkerProps {
   venue: Venue;
@@ -21,8 +20,6 @@ interface CustomMapMarkerProps {
   onVenuePress?: (venue: Venue) => void;
   onMarkerPress?: (latitude: number, longitude: number) => void; // Callback to center map
 }
-
-const isWeb = Platform.OS === 'web';
 
 const CustomMapMarker: React.FC<CustomMapMarkerProps> = ({
   venue,
