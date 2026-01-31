@@ -11,7 +11,6 @@ import {
   Share,
   Platform,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import type { Venue } from '../../types/venues';
 import type { Event } from '../../types/events';
@@ -535,7 +534,7 @@ export default function EventPage() {
 
   if (loading) {
     return (
-      <SafeAreaView edges={['top', 'bottom']} style={[styles.container, { backgroundColor: theme.colors.background.primary }]}>
+      <View style={[styles.container, { backgroundColor: theme.colors.background.primary }]}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.colors.primary[500]} />
           <Text variant="body1" style={[styles.loadingText, {
@@ -545,13 +544,13 @@ export default function EventPage() {
             Loading event...
           </Text>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   if (error || !event) {
     return (
-      <SafeAreaView edges={['top', 'bottom']} style={[styles.container, { backgroundColor: theme.colors.background.primary }]}>
+      <View style={[styles.container, { backgroundColor: theme.colors.background.primary }]}>
         <View style={styles.errorContainer}>
           <Text variant="h3" style={[styles.errorText, {
             color: theme.colors.text.secondary,
@@ -574,12 +573,12 @@ export default function EventPage() {
             </Text>
           </TouchableOpacity>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView edges={['top', 'bottom']} style={[styles.container, { backgroundColor: theme.colors.background.primary }]}>
+    <View  style={[styles.container, { backgroundColor: theme.colors.background.primary }]}>
       {/* SEO and structured data */}
       <EventPageSchema event={event} venue={venue} />
       
@@ -1338,7 +1337,7 @@ export default function EventPage() {
           existingRsvp={userRsvp}
         />
       )}
-    </SafeAreaView>
+    </View>
   );
 }
 

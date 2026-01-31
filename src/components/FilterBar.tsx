@@ -436,7 +436,8 @@ const styles = StyleSheet.create({
   container: {
     borderBottomWidth: 1,
     paddingHorizontal: 8,
-    paddingVertical: 8,
+    paddingTop: 0,
+    paddingBottom: 8,
   },
   containerCollapsed: {
     paddingVertical: 4,

@@ -1,10 +1,11 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { Platform, View, StyleSheet } from 'react-native';
+import { Platform, View, StyleSheet, TouchableOpacity, Image, Modal } from 'react-native';
 import { Event } from '../types/events';
 import { Venue } from '../types/venues';
 import { useTheme } from '../context/ThemeContext';
 import CustomMapMarker from './CustomMapMarker';
 import { logger } from '../utils/logger';
+import { Text } from './ui/Text';
 const MapView = require('./MapView').default;
 
 
@@ -69,6 +70,11 @@ const EventMap: React.FC<MapViewWebProps> = ({
   const [activeCalloutId, setActiveCalloutId] = useState<string | null>(null);
   const markerClickedRef = useRef<boolean>(false);
   const lastActionRef = useRef<{ type: 'marker' | 'map' | 'callout', timestamp: number } | null>(null);
+  const hasUserInteractedRef = useRef<boolean>(false);
+
+  // Mobile bottom sheet state
+  const [selectedVenue, setSelectedVenue] = useState<{ venue: Venue; events: Event[] } | null>(null);
+  const [currentEventIndex, setCurrentEventIndex] = useState(0);
 
   // Debug activeCalloutId changes
   useEffect(() => {
@@ -116,12 +122,12 @@ const EventMap: React.FC<MapViewWebProps> = ({
   }, []); // Run only on mount
 
   useEffect(() => {
-    // Simple auto-fit to venues when venues are loaded
-    if (!venuesLoading && venues.length > 0 && mapRef.current) {
+    // Simple auto-fit to venues when venues are loaded, but only if user hasn't interacted
+    if (!venuesLoading && venues.length > 0 && mapRef.current && !hasUserInteractedRef.current) {
       const coords = venues
-        .map(v => ({ 
-          latitude: Number(v.latitude), 
-          longitude: Number(v.longitude) 
+        .map(v => ({
+          latitude: Number(v.latitude),
+          longitude: Number(v.longitude)
         }))
         .filter(c => !Number.isNaN(c.latitude) && !Number.isNaN(c.longitude) && c.latitude !== 0 && c.longitude !== 0);
 
@@ -156,19 +162,36 @@ const EventMap: React.FC<MapViewWebProps> = ({
 
   // Handle callout toggle with logging
   const handleCalloutToggle = (venueId: string | null) => {
-    // console.log('📍 Callout toggle requested:', { 
-    //   from: activeCalloutId, 
+    // Mark that user has interacted to prevent auto-fit from interfering
+    if (venueId !== null) {
+      hasUserInteractedRef.current = true;
+    }
+
+    // console.log('📍 Callout toggle requested:', {
+    //   from: activeCalloutId,
     //   to: venueId,
     //   isClosing: venueId === null,
     //   isSwitching: activeCalloutId !== null && venueId !== null && activeCalloutId !== venueId,
     //   timestamp: new Date().toISOString()
     // });
-    
+
     // Use functional update to ensure we have the latest state
     setActiveCalloutId(prevState => {
       // console.log('📍 State update: prev =', prevState, ', new =', venueId);
       return venueId;
     });
+
+    // Close bottom sheet on mobile when callout is closed
+    if (Platform.OS !== 'web' && venueId === null) {
+      setSelectedVenue(null);
+      setCurrentEventIndex(0);
+    }
+  };
+
+  // Handle marker selection for mobile bottom sheet
+  const handleMarkerSelect = (venue: Venue, events: Event[]) => {
+    setSelectedVenue({ venue, events });
+    setCurrentEventIndex(0);
   };
 
   const handleMapClick = (e: any) => {
@@ -202,12 +225,13 @@ const EventMap: React.FC<MapViewWebProps> = ({
 
   // Function to center map on a specific coordinate
   const centerMapOnMarker = (latitude: number, longitude: number) => {
+    hasUserInteractedRef.current = true; // Mark user interaction
     if (mapRef.current) {
       // console.log('🎯 Centering map on marker:', { latitude, longitude });
       mapRef.current.animateCamera({
         center: { latitude, longitude },
-        zoom: 15, // Zoom in closer when focusing on a marker
-      }, { duration: 500 }); // Smooth 500ms animation
+        zoom: Platform.OS === 'web' ? 15 : 14, // Slightly less zoom on mobile
+      }, { duration: Platform.OS === 'web' ? 500 : 300 }); // Faster animation on mobile
     }
   };
 
@@ -251,7 +275,6 @@ const EventMap: React.FC<MapViewWebProps> = ({
       <MapView
         ref={mapRef}
         style={styles.map}
-        provider="google"
         initialCamera={initialCamera}
         showsUserLocation={false}
         showsMyLocationButton={false}
@@ -259,6 +282,8 @@ const EventMap: React.FC<MapViewWebProps> = ({
         scrollEnabled={true}
         customMapStyle={customMapStyle}
         onPress={handleMapClick}
+        onPanDrag={() => { hasUserInteractedRef.current = true; }}
+        onRegionChangeComplete={() => { hasUserInteractedRef.current = true; }}
         {...webOnlyProps}
       >
   {!venuesLoading && sortedVenueEntries.map(({ venue, venueEvents, isHighlighted, isActive }) => {
@@ -285,13 +310,14 @@ const EventMap: React.FC<MapViewWebProps> = ({
               onEventPress={onEventPress}
               onVenuePress={onVenuePress}
               onMarkerPress={centerMapOnMarker}
+              onMarkerSelect={handleMarkerSelect}
             />
           );
         })}
       </MapView>
       
       {/* Debug overlay - uncomment if necessary */}
-      {/* <View style={[styles.debugOverlay, { 
+      {/* <View style={[styles.debugOverlay, {
         backgroundColor: theme.colors.background.primary + 'CC',
         borderColor: theme.colors.border.light,
       }]}>
@@ -299,6 +325,98 @@ const EventMap: React.FC<MapViewWebProps> = ({
           📍 {venues.length} venues • {events.length} events {highlightedEventId ? `• Highlighting: ${highlightedEventId}` : ''} • API: {process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY ? 'OK' : 'Missing'}
         </Text>
       </View> */}
+
+      {/* Mobile Bottom Sheet */}
+      {Platform.OS !== 'web' && selectedVenue && (
+        <View style={[styles.bottomSheet, { backgroundColor: theme.colors.background.primary, borderColor: theme.colors.border.light }]}>
+          {/* Event Image */}
+          <Image
+            source={
+              selectedVenue.events[currentEventIndex]?.image_url
+                ? { uri: selectedVenue.events[currentEventIndex].image_url }
+                : selectedVenue.venue?.image
+                ? { uri: selectedVenue.venue.image }
+                : require('../../assets/record.png')
+            }
+            style={styles.bottomSheetImage}
+            resizeMode="cover"
+          />
+
+          {/* Close button */}
+          <TouchableOpacity
+            style={[styles.bottomSheetClose, { backgroundColor: theme.colors.background.secondary }]}
+            onPress={() => {
+              setSelectedVenue(null);
+              handleCalloutToggle(null);
+            }}
+          >
+            <Text style={[styles.bottomSheetCloseText, { color: theme.colors.text.primary }]}>×</Text>
+          </TouchableOpacity>
+
+          {/* Navigation arrows for multiple events */}
+          {selectedVenue.events.length > 1 && (
+            <>
+              <TouchableOpacity
+                style={[styles.bottomSheetNavArrow, styles.bottomSheetNavArrowLeft, { backgroundColor: theme.colors.background.secondary }]}
+                onPress={() => setCurrentEventIndex(prev => prev === 0 ? selectedVenue.events.length - 1 : prev - 1)}
+              >
+                <Text style={[styles.bottomSheetArrowText, { color: theme.colors.text.primary }]}>‹</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.bottomSheetNavArrow, styles.bottomSheetNavArrowRight, { backgroundColor: theme.colors.background.secondary }]}
+                onPress={() => setCurrentEventIndex(prev => prev === selectedVenue.events.length - 1 ? 0 : prev + 1)}
+              >
+                <Text style={[styles.bottomSheetArrowText, { color: theme.colors.text.primary }]}>›</Text>
+              </TouchableOpacity>
+            </>
+          )}
+
+          {/* Content */}
+          <View style={styles.bottomSheetContent}>
+            <Text variant="h6" style={[styles.bottomSheetTitle, { color: theme.colors.text.primary }]} numberOfLines={2}>
+              {selectedVenue.events[currentEventIndex]?.title}
+            </Text>
+            <Text variant="body2" style={[styles.bottomSheetVenue, { color: theme.colors.text.secondary }]}>
+              {selectedVenue.venue.name}
+            </Text>
+
+            {selectedVenue.events.length > 1 && (
+              <Text variant="caption" style={[styles.bottomSheetIndicator, { color: theme.colors.text.tertiary }]}>
+                {currentEventIndex + 1} of {selectedVenue.events.length}
+              </Text>
+            )}
+
+            {/* Action Buttons */}
+            <View style={styles.bottomSheetButtons}>
+              <TouchableOpacity
+                style={[styles.bottomSheetButton, { backgroundColor: theme.colors.primary[500] }]}
+                onPress={() => {
+                  onEventPress(selectedVenue.events[currentEventIndex]);
+                }}
+              >
+                <Text variant="caption" style={[styles.bottomSheetButtonText, { color: theme.colors.text.inverse }]}>
+                  See Event
+                </Text>
+              </TouchableOpacity>
+              {onVenuePress && (
+                <TouchableOpacity
+                  style={[styles.bottomSheetButton, styles.bottomSheetVenueButton, {
+                    backgroundColor: theme.colors.background.secondary,
+                    borderColor: theme.colors.border.medium
+                  }]}
+                  onPress={() => {
+                    onVenuePress(selectedVenue.venue);
+                  }}
+                >
+                  <Text variant="caption" style={[styles.bottomSheetButtonText, { color: theme.colors.text.primary }]}>
+                    See Venue
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+        </View>
+      )}
     </View>
   );
 };
@@ -323,6 +441,99 @@ const styles = StyleSheet.create({
   },
   debugText: {
     textAlign: 'center',
+  },
+  // Bottom sheet styles
+  bottomSheet: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    borderTopWidth: 1,
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: -4 },
+    elevation: 8,
+  },
+  bottomSheetImage: {
+    width: '100%',
+    height: 120,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    backgroundColor: '#f0f0f0',
+  },
+  bottomSheetClose: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
+  },
+  bottomSheetCloseText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    lineHeight: 22,
+  },
+  bottomSheetNavArrow: {
+    position: 'absolute',
+    top: 60,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
+  },
+  bottomSheetNavArrowLeft: {
+    left: 12,
+  },
+  bottomSheetNavArrowRight: {
+    right: 12,
+  },
+  bottomSheetArrowText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    lineHeight: 22,
+  },
+  bottomSheetContent: {
+    padding: 16,
+  },
+  bottomSheetTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  bottomSheetVenue: {
+    fontSize: 14,
+    marginBottom: 8,
+  },
+  bottomSheetIndicator: {
+    fontSize: 12,
+    marginBottom: 12,
+  },
+  bottomSheetButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  bottomSheetButton: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  bottomSheetVenueButton: {
+    borderWidth: 1,
+  },
+  bottomSheetButtonText: {
+    fontSize: 14,
+    fontWeight: '500',
   },
 });
 

@@ -540,7 +540,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    paddingTop: Platform.OS === 'ios' ? 60 : 12,
     borderBottomWidth: 1,
   },
   publishButton: {

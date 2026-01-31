@@ -10,10 +10,9 @@ import type { Event } from '../types/events';
 
 interface DiscoverPageContentProps {
   onEventPress: (event: Event) => void;
-  onFeedbackPress: () => void;
 }
 
-export function DiscoverPageContent({ onEventPress, onFeedbackPress }: DiscoverPageContentProps) {
+export function DiscoverPageContent({ onEventPress }: DiscoverPageContentProps) {
   const { selectedCity, selectedRegions } = useCityLocation();
   const { selectedCommunities } = useCommunity();
   const { data: communitiesData } = useCommunitiesQuery(selectedCity);
@@ -69,7 +68,6 @@ export function DiscoverPageContent({ onEventPress, onFeedbackPress }: DiscoverP
       venuesLoading={venuesLoading}
       availableFilterOptions={availableFilterOptions}
       onEventPress={onEventPress}
-      onFeedbackPress={onFeedbackPress}
     />
   );
 }

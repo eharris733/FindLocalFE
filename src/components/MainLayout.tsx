@@ -2,7 +2,6 @@ import React, { useState, useCallback } from 'react';
 import { View, StyleSheet, Platform } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import FilterBar from './FilterBar';
-import FeedbackBanner from './FeedbackBanner';
 import { SetupScreen } from './SetupScreen';
 import GalleryView from './GalleryView';
 import VenueGroupedListView from './VenueGroupedListView';
@@ -34,7 +33,6 @@ interface MainLayoutProps {
     labels: string[];
   };
   onEventPress: (event: Event) => void;
-  onFeedbackPress?: () => void;
 }
 
 export default function MainLayout({
@@ -48,7 +46,6 @@ export default function MainLayout({
   venuesLoading,
   availableFilterOptions,
   onEventPress,
-  onFeedbackPress,
 }: Readonly<MainLayoutProps>) {
   const { theme } = useTheme();
   const { isMobile } = useDeviceInfo();
@@ -111,9 +108,8 @@ export default function MainLayout({
     return (
 
       <View style={[styles.container, { backgroundColor: theme.colors.background.secondary }]}>
-        {/* Absolutely positioned filter bar and feedback banner */}
+        {/* Absolutely positioned filter bar */}
         <View style={styles.filterBarContainer}>
-          {onFeedbackPress && <FeedbackBanner onFeedbackPress={onFeedbackPress} />}
           <FilterBar
             filters={filters}
             dispatchFilters={dispatchFilters}
@@ -179,9 +175,8 @@ export default function MainLayout({
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background.secondary }]}>
-      {/* Absolutely positioned filter bar and feedback banner */}
+      {/* Absolutely positioned filter bar */}
       <View style={styles.filterBarContainer}>
-        {onFeedbackPress && <FeedbackBanner onFeedbackPress={onFeedbackPress} />}
         <FilterBar
           filters={filters}
           dispatchFilters={dispatchFilters}

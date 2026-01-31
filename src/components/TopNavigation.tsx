@@ -442,7 +442,8 @@ export default function TopNavigation({ onNavLinkPress, onFeedbackPress }: TopNa
 
 const styles = StyleSheet.create({
   container: {
-    paddingVertical: 8,
+    paddingTop: 8,
+    paddingBottom: 0,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
     zIndex: 1000,

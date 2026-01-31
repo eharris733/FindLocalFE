@@ -1,5 +1,5 @@
 import React from 'react';
-import { Platform, Linking } from 'react-native';
+import { Platform} from 'react-native';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as WebBrowser from 'expo-web-browser';
 import { supabase, getAuthRedirectUrl } from '../../supabase';
