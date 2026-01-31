@@ -5,6 +5,7 @@ import {supabase, getAuthRedirectUrl} from "../../supabase";
 import React, {useState, useEffect} from "react";
 import Input from "../ui/Input";
 import {useRouter} from "expo-router";
+import * as WebBrowser from 'expo-web-browser';
 import * as Linking from "expo-linking";
 import { useTheme } from "../../context/ThemeContext";
 import { logger } from "../../utils/logger";
@@ -236,13 +237,25 @@ export default function SignIn() {
     async function signInWithGoogle() {
         setLoading(true);
         try {
-            const redirectTo = Platform.OS === 'web' 
-                ? `${window.location.origin}/auth/callback`
+            const redirectTo = Platform.OS === 'web'
+                ? `${globalThis.window.location.origin}/auth/callback`
                 : Linking.createURL('/auth/callback');
+            logger.info('[SignIn/GoogleSignIn] Generated redirect URL:', redirectTo);
+            logger.info('[SignIn/GoogleSignIn] Platform:', Platform.OS);
+
             const { data, error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
-                options: { redirectTo },
+                options: {
+                    redirectTo,
+                    queryParams: {
+                        prompt: 'select_account', // Force Google to show account selection
+                    },
+                },
             });
+
+            if (data?.url) {
+                logger.info('[SignIn/GoogleSignIn] OAuth URL from Supabase:', data.url);
+            }
 
             if (error) {
                 // Handle OAuth-specific errors
@@ -258,13 +271,18 @@ export default function SignIn() {
             }
 
             if (data?.url && Platform.OS !== 'web') {
-                const supported = await Linking.canOpenURL(data.url);
-                if (supported) {
-                    await Linking.openURL(data.url);
-                } else {
-                    logger.warn('Cannot open URL from Supabase OAuth', data.url);
-                    setFeedback('Unable to open sign-in page. Please try again.');
+                // Open in-app browser for mobile OAuth
+                // This will open the OAuth flow in an in-app browser
+                // When OAuth completes, Supabase redirects to findlocal://auth/callback
+                // which triggers a deep link back to the app and dismisses the browser
+                const result = await WebBrowser.openBrowserAsync(data.url);
+
+                // The browser was dismissed
+                if (result.type === 'cancel') {
+                    logger.info('Google sign-in canceled by user');
                 }
+                // Note: We don't set feedback here because the deep link
+                // will be handled by the /auth/callback route
             }
         } catch (err: any) {
             logger.error('Unexpected Google sign-in error:', err);
@@ -313,9 +331,9 @@ export default function SignIn() {
         setLoading(true);
         try {
             const redirectTo = getAuthRedirectUrl('/auth/callback');
-            const { data, error } = await supabase.auth.signInWithOtp({ 
-                email: values.email.trim(), 
-                options: { emailRedirectTo: redirectTo } 
+            const { error } = await supabase.auth.signInWithOtp({
+                email: values.email.trim(),
+                options: { emailRedirectTo: redirectTo }
             });
             
             if (error) {

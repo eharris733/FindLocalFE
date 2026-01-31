@@ -1,12 +1,19 @@
 import { useEffect, useState } from 'react';
-import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, ActivityIndicator, StyleSheet, Platform } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as WebBrowser from 'expo-web-browser';
 import { supabase } from '../supabase';
 import { Text } from './ui';
 import { useTheme } from '../context/ThemeContext';
 import { logger } from '../utils/logger';
 import { STORAGE_KEYS } from '../constants/storage-keys';
+
+// Complete the auth session when the component mounts
+// This tells expo-web-browser that we're handling the redirect
+if (Platform.OS !== 'web') {
+  WebBrowser.maybeCompleteAuthSession();
+}
 
 export default function AuthCallback() {
   const { theme } = useTheme();
@@ -95,28 +102,35 @@ export default function AuthCallback() {
     const handleAuthCallback = async () => {
       // Prevent multiple simultaneous executions
       if (isProcessing || hasProcessed) {
-        logger.debug('Already processing auth callback, skipping...');
+        logger.debug('[AuthCallback] Already processing auth callback, skipping...');
         return;
       }
-      
+
+      logger.info('[AuthCallback] Starting auth callback handler');
+      logger.info('[AuthCallback] Params received:', JSON.stringify(params));
+      logger.info('[AuthCallback] Platform:', Platform.OS);
+
       setIsProcessing(true);
       setHasProcessed(true);
-      
+
       try {
         // For web, extract type from URL directly before Supabase processes it
         let authType = params.type as string | undefined;
-        
+
         // On web, also check the URL hash/search params directly
         if (typeof window !== 'undefined' && !authType) {
           const urlParams = new URLSearchParams(window.location.search);
           const hashParams = new URLSearchParams(window.location.hash.substring(1));
           authType = urlParams.get('type') || hashParams.get('type') || undefined;
         }
-        logger.info('URL search:', window.location.search);
-        logger.info('URL hash:', window.location.hash);
-        logger.info('authType from params:', params.type);
-        logger.info('authType extracted:', authType);
-        logger.info('Full window location:', window.location.href);
+
+        if (Platform.OS === 'web') {
+          logger.info('[AuthCallback] URL search:', window.location.search);
+          logger.info('[AuthCallback] URL hash:', window.location.hash);
+          logger.info('[AuthCallback] Full window location:', window.location.href);
+        }
+        logger.info('[AuthCallback] authType from params:', params.type);
+        logger.info('[AuthCallback] authType extracted:', authType);
 
         // Check for URL errors first
         const { 
@@ -148,17 +162,20 @@ export default function AuthCallback() {
 
         // detectSessionInUrl should have already handled the URL tokens
         // So we just need to check if a session exists
+        logger.info('[AuthCallback] Checking for session...');
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        
+
+        logger.info('[AuthCallback] Session check result:', session ? 'Session found' : 'No session');
+
         if (sessionError) {
-          logger.error('Auth callback error:', sessionError);
+          logger.error('[AuthCallback] Session error:', sessionError);
           setError(sessionError.message);
           router.replace('/user/signin');
           return;
         }
 
         if (session) {
-          logger.info('Session found for user:', session.user.email);
+          logger.info('[AuthCallback] Session found for user:', session.user.email);
           
           // Check if this is a password recovery flow
           if (authType === 'recovery') {

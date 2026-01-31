@@ -2,7 +2,7 @@ import React from 'react';
 import { Platform } from 'react-native';
 import { Button } from '../ui';
 import { supabase, getAuthRedirectUrl } from '../../supabase';
-import * as Linking from 'expo-linking';
+import * as WebBrowser from 'expo-web-browser';
 import { logger } from '../../utils/logger';
 
 interface GoogleSignInButtonProps {
@@ -21,10 +21,22 @@ export default function GoogleSignInButton({
     setLoading?.(true);
     try {
       const redirectTo = getAuthRedirectUrl('/auth/callback');
+      logger.info('[GoogleSignIn] Generated redirect URL:', redirectTo);
+      logger.info('[GoogleSignIn] Platform:', Platform.OS);
+
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
-        options: { redirectTo },
+        options: {
+          redirectTo,
+          queryParams: {
+            prompt: 'select_account', // Force Google to show account selection
+          },
+        },
       });
+
+      if (data?.url) {
+        logger.info('[GoogleSignIn] OAuth URL from Supabase:', data.url);
+      }
 
       if (error) {
         // Handle OAuth sign-in errors
@@ -36,18 +48,28 @@ export default function GoogleSignInButton({
         } else {
           errorMessage = `Google sign-in failed: ${error.message || 'Please try again.'}`;
         }
-        
+
         onError?.(errorMessage);
       }
 
       if (data?.url && Platform.OS !== 'web') {
-        const supported = await Linking.canOpenURL(data.url);
-        if (supported) {
-          await Linking.openURL(data.url);
-        } else {
-          logger.warn('Cannot open URL from Supabase OAuth', data.url);
-          onError?.('Unable to open sign-in page. Please try again.');
+        // Open in-app browser for mobile OAuth
+        // This will open the OAuth flow in an in-app browser
+        // When OAuth completes, Supabase redirects to findlocal://auth/callback
+        // which triggers a deep link back to the app and dismisses the browser
+        logger.info('[GoogleSignIn] Opening browser with URL:', data.url);
+        const result = await WebBrowser.openBrowserAsync(data.url);
+
+        logger.info('[GoogleSignIn] Browser result:', JSON.stringify(result));
+
+        // The browser was dismissed
+        if (result.type === 'cancel') {
+          logger.info('[GoogleSignIn] User canceled sign-in');
+        } else if (result.type === 'dismiss') {
+          logger.info('[GoogleSignIn] Browser was dismissed (likely via deep link)');
         }
+        // Note: We don't call onSuccess here because the deep link
+        // will be handled by the /auth/callback route
       } else if (data?.url && Platform.OS === 'web') {
         // On web, OAuth will redirect automatically
         onSuccess?.();

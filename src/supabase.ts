@@ -2,6 +2,8 @@ import { createClient } from '@supabase/supabase-js';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AppState, Platform } from 'react-native';
 import * as Linking from 'expo-linking';
+import Constants from 'expo-constants';
+import { makeRedirectUri } from 'expo-auth-session';
 
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const supabasePublishableKey = process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
@@ -45,11 +47,27 @@ if (Platform.OS === 'web') {
 // Helper function to get the correct redirect URL for auth flows
 export const getAuthRedirectUrl = (path: string = '/auth/callback') => {
   if (Platform.OS === 'web') {
-    return `${window.location.origin}${path}`;
+    const url = `${globalThis.window.location.origin}${path}`;
+    console.log('[getAuthRedirectUrl] Web URL:', url);
+    return url;
   }
-  
-  // For mobile, use the custom scheme
-  return Linking.createURL(path);
+
+  // For mobile, use expo-auth-session's makeRedirectUri
+  // This automatically handles development (exp://10.0.0.129:8081) vs production (findlocal://)
+  const url = makeRedirectUri({
+    scheme: 'findlocal',
+    path: path.startsWith('/') ? path.substring(1) : path,
+    preferLocalhost: true, // Use localhost in development
+    isTripleSlashed: false, // Use double slash format
+  });
+
+  console.log('[getAuthRedirectUrl] Mobile URL:', url);
+  console.log('[getAuthRedirectUrl] Path:', path);
+  console.log('[getAuthRedirectUrl] Platform:', Platform.OS);
+  console.log('[getAuthRedirectUrl] __DEV__:', __DEV__);
+  console.log('[getAuthRedirectUrl] Constants.expoConfig?.scheme:', Constants.expoConfig?.scheme);
+
+  return url;
 };
 
 // Tells Supabase Auth to continuously refresh the session automatically
