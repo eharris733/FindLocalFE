@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, ScrollView, StyleSheet } from 'react-native';
 import type { Event } from '../../../types/events';
 import type { Community } from '../../../api/communities';
@@ -9,6 +9,7 @@ import { useAuth } from '../../../hooks/useAuth';
 import { useEventsQuery } from '../../../hooks/queries/useEventsQuery';
 import { useCommunitiesQuery } from '../../../hooks/queries/useCommunitiesQuery';
 import { useVenuesQuery } from '../../../hooks/queries/useVenuesQuery';
+import { useUserRsvpsQuery } from '../../../hooks/queries/useUserRsvpsQuery';
 import { useRouter } from 'expo-router';
 
 import {
@@ -37,6 +38,15 @@ export const AuthenticatedAppLayout: React.FC<AuthenticatedAppLayoutProps> = ({
   const { data: events, isLoading: loadingEvents } = useEventsQuery(selectedCity);
   const { data: communities, isLoading: loadingCommunities } = useCommunitiesQuery(selectedCity);
   const { data: venues } = useVenuesQuery(selectedCity);
+  const { data: rsvps } = useUserRsvpsQuery();
+
+  // Check if user has upcoming plans
+  const hasUpcomingPlans = useMemo(() => {
+    if (!rsvps || rsvps.length === 0 || !events) return false;
+    const today = new Date().toISOString().split('T')[0];
+    const eventIdsSet = new Set(rsvps.map(r => r.event_id));
+    return events.some(e => eventIdsSet.has(e.id) && e.event_date && e.event_date >= today);
+  }, [events, rsvps]);
 
   const handleCommunityPress = (community: Community) => {
     router.push({
@@ -90,13 +100,16 @@ export const AuthenticatedAppLayout: React.FC<AuthenticatedAppLayoutProps> = ({
         communities={communities}
       />
 
-      <YourRsvpsSection
-        events={events || []}
-        onEventPress={onEventPress}
-        onSeeAll={handleSeeAllRsvps}
-        venues={venues}
-        communities={communities}
-      />
+      {/* Show Your Plans prominently only when user has upcoming plans */}
+      {hasUpcomingPlans && (
+        <YourRsvpsSection
+          events={events || []}
+          onEventPress={onEventPress}
+          onSeeAll={handleSeeAllRsvps}
+          venues={venues}
+          communities={communities}
+        />
+      )}
 
       <InvitedByFriendsSection
         events={events || []}
@@ -132,6 +145,17 @@ export const AuthenticatedAppLayout: React.FC<AuthenticatedAppLayoutProps> = ({
         venues={venues}
         communities={communities}
       />
+
+      {/* Show Your Plans at bottom when user has no upcoming plans */}
+      {!hasUpcomingPlans && (
+        <YourRsvpsSection
+          events={events || []}
+          onEventPress={onEventPress}
+          onSeeAll={handleSeeAllRsvps}
+          venues={venues}
+          communities={communities}
+        />
+      )}
 
       {/* Bottom spacing for tab bar */}
       <View style={styles.bottomSpacer} />
