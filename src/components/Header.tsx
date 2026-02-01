@@ -10,8 +10,11 @@ export default function Header({ onFeedbackPress }: HeaderProps = {}) {
     const router = useRouter();
 
     const handleNavLinkPress = (link: string) => {
-        // Map 'Events' to home page, others to their respective routes
-        if (link.toLowerCase() === 'events') {
+        // Empty string = logo click, go to home
+        if (link === '') {
+            router.navigate('/home');
+        } else if (link.toLowerCase() === 'events') {
+            // Events goes to discover page
             router.navigate('/');
         } else {
             router.navigate(`/${link.toLowerCase()}`);

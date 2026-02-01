@@ -674,6 +674,102 @@ export async function getEventSocialStats(
 }
 
 // ============================================
+// User RSVPs & Pending Invitations (Home Page)
+// ============================================
+
+/**
+ * Get user's upcoming RSVPs (events they're attending)
+ * Returns events where the user has responded 'yes' or 'maybe'
+ */
+export async function getUserUpcomingRsvps(): Promise<{
+  data: Array<{ event_id: string; response: 'yes' | 'no' | 'maybe'; rsvp_id: string; created_at: string }>;
+  error: any;
+}> {
+  try {
+    const { data: user } = await supabase.auth.getUser();
+    if (!user.user) {
+      return { data: [], error: null };
+    }
+
+    const today = new Date().toISOString().split('T')[0];
+
+    const { data, error } = await supabase
+      .from('event_rsvps')
+      .select(`
+        id,
+        event_id,
+        response,
+        created_at
+      `)
+      .eq('user_id', user.user.id)
+      .in('response', ['yes', 'maybe'])
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      logger.error('Error getting user upcoming RSVPs:', error);
+      return { data: [], error };
+    }
+
+    return {
+      data: (data || []).map((rsvp: any) => ({
+        event_id: rsvp.event_id,
+        response: rsvp.response,
+        rsvp_id: rsvp.id,
+        created_at: rsvp.created_at,
+      })),
+      error: null,
+    };
+  } catch (err) {
+    logger.error('Error in getUserUpcomingRsvps:', err);
+    return { data: [], error: err };
+  }
+}
+
+/**
+ * Get pending event invitations TO the user (unanswered)
+ * Returns invitations where user hasn't RSVPed yet
+ */
+export async function getPendingInvitationsToUser(): Promise<{
+  data: Array<{
+    invitation_id: string;
+    event_id: string;
+    inviter_id: string;
+    inviter_username?: string | null;
+    inviter_name?: string | null;
+    inviter_avatar?: string | null;
+    message?: string | null;
+    created_at: string;
+  }>;
+  error: any;
+}> {
+  try {
+    const { data: user } = await supabase.auth.getUser();
+    if (!user.user) {
+      return { data: [], error: null };
+    }
+
+    // Get invitations where user is the recipient (we'll need a recipient field or check RSVPs)
+    // For now, get all active invitations and filter by those without user RSVP
+    const { data: rsvps } = await supabase
+      .from('event_rsvps')
+      .select('invitation_id')
+      .eq('user_id', user.user.id);
+
+    const rsvpedInvitationIds = (rsvps || []).map((r: any) => r.invitation_id);
+
+    // Get invitations where this user was explicitly invited
+    // This assumes we have an invitation_recipients table or similar
+    // For now, we'll return empty as this needs backend support
+    // TODO: Add invitation_recipients table to track who was invited
+
+    return { data: [], error: null };
+  } catch (err) {
+    logger.error('Error in getPendingInvitationsToUser:', err);
+    return { data: [], error: err };
+  }
+}
+
+// ============================================
 // URL Helpers
 // ============================================
 

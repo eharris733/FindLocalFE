@@ -191,7 +191,7 @@ function RootNavigator() {
                 screenOptions={{
                     header: renderHeader
                 }}
-                initialRouteName="index"
+                initialRouteName="home"
             >
                 <Stack.Protected guard={isLoggedIn}>
                     <Stack.Screen name="(private)" options={{ headerShown: false }} />
