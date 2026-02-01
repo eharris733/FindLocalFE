@@ -517,6 +517,61 @@ export async function getMyInvitations(): Promise<{ data: EventInvitation[]; err
   }
 }
 
+/**
+ * Get invitations created by the current user for a specific event
+ * Returns invitation stats if user has created invites for this event
+ */
+export async function getMyInvitationsForEvent(
+  eventId: string
+): Promise<{ data: EventInvitation[]; stats: { going: number; maybe: number; no: number; total: number } | null; error: any }> {
+  try {
+    const { data: user } = await supabase.auth.getUser();
+    if (!user.user) {
+      return { data: [], stats: null, error: null };
+    }
+
+    // Get user's invitations for this event
+    const { data: invitations, error } = await supabase
+      .from('event_invitations')
+      .select('*')
+      .eq('inviter_id', user.user.id)
+      .eq('event_id', eventId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      logger.error('Error getting my invitations for event:', error);
+      return { data: [], stats: null, error };
+    }
+
+    if (!invitations || invitations.length === 0) {
+      return { data: [], stats: null, error: null };
+    }
+
+    // Get RSVP stats for these invitations
+    const invitationIds = invitations.map(inv => inv.id);
+    const { data: rsvps, error: rsvpError } = await supabase
+      .from('event_rsvps')
+      .select('response')
+      .in('invitation_id', invitationIds);
+
+    if (rsvpError) {
+      logger.warn('Could not fetch RSVP stats:', rsvpError);
+    }
+
+    const stats = {
+      going: (rsvps || []).filter(r => r.response === 'yes').length,
+      maybe: (rsvps || []).filter(r => r.response === 'maybe').length,
+      no: (rsvps || []).filter(r => r.response === 'no').length,
+      total: (rsvps || []).length,
+    };
+
+    return { data: invitations as EventInvitation[], stats, error: null };
+  } catch (err) {
+    logger.error('Error in getMyInvitationsForEvent:', err);
+    return { data: [], stats: null, error: err };
+  }
+}
+
 // ============================================
 // Manage Invitations
 // ============================================

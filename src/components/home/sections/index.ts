@@ -8,5 +8,6 @@ export { SocialNotificationBar } from './SocialNotificationBar';
 export { YourEventsSection } from './YourEventsSection';
 export { YourRsvpsSection } from './YourRsvpsSection';
 export { InvitedByFriendsSection } from './InvitedByFriendsSection';
+export { FromYourNetworkSection } from './FromYourNetworkSection';
 export { FavoritesSection } from './FavoritesSection';
 export { SuggestedForYouSection } from './SuggestedForYouSection';

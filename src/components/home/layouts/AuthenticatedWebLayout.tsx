@@ -15,6 +15,7 @@ import {
   YourEventsSection,
   YourRsvpsSection,
   InvitedByFriendsSection,
+  FromYourNetworkSection,
   FavoritesSection,
   SuggestedForYouSection,
   CommunityBrowseSection,
@@ -85,6 +86,13 @@ export const AuthenticatedWebLayout: React.FC<AuthenticatedWebLayoutProps> = ({
         events={events || []}
         onEventPress={onEventPress}
         onSeeAll={handleSeeAllRsvps}
+        venues={venues}
+        communities={communities}
+      />
+
+      <FromYourNetworkSection
+        events={events || []}
+        onEventPress={onEventPress}
         venues={venues}
         communities={communities}
       />

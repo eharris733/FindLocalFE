@@ -1,15 +1,12 @@
 import React, { useMemo } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useQuery } from '@tanstack/react-query';
 import type { Event } from '../../../types/events';
 import type { Venue } from '../../../types/venues';
 import type { Community } from '../../../api/communities';
 import { SectionHeader, HorizontalEventList, EmptyState } from '../shared';
 import { useTheme } from '../../../context/ThemeContext';
-import { useAuth } from '../../../hooks/useAuth';
 import { useUserRsvpsQuery } from '../../../hooks/queries/useUserRsvpsQuery';
-import { getMyInvitations } from '../../../api/invitations';
 
 interface YourRsvpsSectionProps {
   events: Event[];
@@ -28,37 +25,15 @@ export const YourRsvpsSection: React.FC<YourRsvpsSectionProps> = ({
 }) => {
   const { theme } = useTheme();
   const router = useRouter();
-  const { isLoggedIn, session } = useAuth();
-  const { data: rsvps, isLoading: rsvpsLoading } = useUserRsvpsQuery();
+  const { data: rsvps, isLoading } = useUserRsvpsQuery();
 
-  // Get user's created invitations to include those events in "Your Plans"
-  const { data: myInvitations, isLoading: invitationsLoading } = useQuery({
-    queryKey: ['myInvitations', session?.user?.id],
-    queryFn: async () => {
-      const result = await getMyInvitations();
-      return result.data;
-    },
-    enabled: isLoggedIn && !!session?.user?.id,
-  });
-
-  const isLoading = rsvpsLoading || invitationsLoading;
-
-  // Combine events where user has RSVPed OR created invitations
+  // Only show events where user has RSVPed (not events they created invitations for)
   const yourPlanEvents = useMemo(() => {
-    const eventIdsSet = new Set<string>();
     const today = new Date().toISOString().split('T')[0];
 
-    // Add events user has RSVPed to
-    if (rsvps && rsvps.length > 0) {
-      rsvps.forEach(r => eventIdsSet.add(r.event_id));
-    }
+    if (!rsvps || rsvps.length === 0) return [];
 
-    // Add events user has created invitations for
-    if (myInvitations && myInvitations.length > 0) {
-      myInvitations.forEach(inv => eventIdsSet.add(inv.event_id));
-    }
-
-    if (eventIdsSet.size === 0) return [];
+    const eventIdsSet = new Set(rsvps.map(r => r.event_id));
 
     return events
       .filter(e => eventIdsSet.has(e.id) && e.event_date && e.event_date >= today)
@@ -67,7 +42,7 @@ export const YourRsvpsSection: React.FC<YourRsvpsSectionProps> = ({
         const dateB = b.event_date || '';
         return dateA.localeCompare(dateB);
       });
-  }, [events, rsvps, myInvitations]);
+  }, [events, rsvps]);
 
   const handleDiscoverPress = () => {
     router.push('/');

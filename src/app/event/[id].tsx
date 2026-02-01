@@ -31,6 +31,8 @@ import { InviteModal } from '../../components/InviteModal';
 import { RsvpModal } from '../../components/RsvpModal';
 import { RsvpStatusBanner } from '../../components/RsvpStatusBanner';
 import { AttendeesList } from '../../components/AttendeesList';
+import { HostRsvpModal } from '../../components/HostRsvpModal';
+import { useEventInvitationsQuery } from '../../hooks/queries/useEventInvitationsQuery';
 import {
   getEventSocialStats,
   EventSocialStats,
@@ -84,7 +86,11 @@ export default function EventPage() {
   // Social/Invitation state
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [showRsvpModal, setShowRsvpModal] = useState(false);
+  const [showHostModal, setShowHostModal] = useState(false);
   const [socialStats, setSocialStats] = useState<EventSocialStats | null>(null);
+
+  // Host management - check if user has created invitations for this event
+  const { data: hostData } = useEventInvitationsQuery(id);
 
   // RSVP status and attendees
   const [userRsvp, setUserRsvp] = useState<EventRsvp | null>(null);
@@ -611,14 +617,25 @@ export default function EventPage() {
                 </Text>
               </TouchableOpacity>
               {isLoggedIn && (
-                <TouchableOpacity
-                  style={[styles.shareButton, { backgroundColor: theme.colors.primary[100] }]}
-                  onPress={handleInvitePress}
-                >
-                  <Text variant="body1" style={{ color: theme.colors.primary[600], fontWeight: '600' }}>
-                    Invite
-                  </Text>
-                </TouchableOpacity>
+                hostData?.isEventHost ? (
+                  <TouchableOpacity
+                    style={[styles.shareButton, { backgroundColor: theme.colors.secondary[100] }]}
+                    onPress={() => setShowHostModal(true)}
+                  >
+                    <Text variant="body1" style={{ color: theme.colors.secondary[600], fontWeight: '600' }}>
+                      Manage
+                    </Text>
+                  </TouchableOpacity>
+                ) : (
+                  <TouchableOpacity
+                    style={[styles.shareButton, { backgroundColor: theme.colors.primary[100] }]}
+                    onPress={handleInvitePress}
+                  >
+                    <Text variant="body1" style={{ color: theme.colors.primary[600], fontWeight: '600' }}>
+                      Invite
+                    </Text>
+                  </TouchableOpacity>
+                )
               )}
             </>
           )}
@@ -1335,6 +1352,17 @@ export default function EventPage() {
           eventTitle={event.title || 'Event'}
           onRsvpSuccess={handleRsvpSuccess}
           existingRsvp={userRsvp}
+        />
+      )}
+
+      {/* Host Management Modal (for managing invitations the user created) */}
+      {event && !isExpired && (
+        <HostRsvpModal
+          visible={showHostModal}
+          onClose={() => setShowHostModal(false)}
+          eventId={event.id}
+          eventTitle={event.title || 'Event'}
+          onCreateNewInvite={() => setShowInviteModal(true)}
         />
       )}
     </View>
