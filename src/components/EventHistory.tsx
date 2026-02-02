@@ -47,7 +47,7 @@ const EventHistory: React.FC<EventHistoryProps> = ({
   const [attendedTotal, setAttendedTotal] = useState(0);
   const [hostedTotal, setHostedTotal] = useState(0);
 
-  const loadData = useCallback(async (isRefresh = false) => {
+  const loadData = useCallback(async (isRefresh = false, isMounted = { current: true }) => {
     if (isRefresh) {
       setRefreshing(true);
     } else {
@@ -56,9 +56,12 @@ const EventHistory: React.FC<EventHistoryProps> = ({
 
     try {
       const [attendedResult, hostedResult] = await Promise.all([
-        getUserEventHistory({ includeFriends: true, limit: maxItems || 50 }),
-        getUserHostedEvents({ limit: maxItems || 50 }),
+        getUserEventHistory({ includeFriends: true, limit: maxItems ?? 50 }),
+        getUserHostedEvents({ limit: maxItems ?? 50 }),
       ]);
+
+      // Only update state if still mounted
+      if (!isMounted.current) return;
 
       if (!attendedResult.error) {
         setAttendedEvents(attendedResult.data);
@@ -72,13 +75,17 @@ const EventHistory: React.FC<EventHistoryProps> = ({
     } catch (err) {
       logger.error('Error loading event history:', err);
     } finally {
-      setLoading(false);
-      setRefreshing(false);
+      if (isMounted.current) {
+        setLoading(false);
+        setRefreshing(false);
+      }
     }
   }, [maxItems]);
 
   useEffect(() => {
-    loadData();
+    const isMounted = { current: true };
+    loadData(false, isMounted);
+    return () => { isMounted.current = false; };
   }, [loadData]);
 
   const handleEventPress = (eventId: string) => {

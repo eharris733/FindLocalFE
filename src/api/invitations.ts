@@ -1267,7 +1267,7 @@ export async function getMutualEventsWithFriend(
     // Get friend's RSVPs for same events
     const { data: friendRsvps, count } = await supabase
       .from('event_rsvps')
-      .select('event_id, created_at', { count: 'exact' })
+      .select('event_id, response, created_at', { count: 'exact' })
       .eq('user_id', friendUserId)
       .in('event_id', myEventIds)
       .in('response', ['yes', 'maybe'])
@@ -1333,7 +1333,7 @@ export async function getMutualEventsWithFriend(
         event_image_url: event?.image_url || null,
         venue_name: event?.venue_id ? venueMap.get(event.venue_id) || null : null,
         venue_id: event?.venue_id || null,
-        response: 'yes' as const,
+        response: rsvp.response as 'yes' | 'no' | 'maybe',
         rsvp_date: rsvp.created_at,
         is_past: isPast,
         friends_attending: friendProfile ? [{

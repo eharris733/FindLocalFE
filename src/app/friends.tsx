@@ -373,6 +373,7 @@ export default function FriendsRoute() {
   const [selectedFriend, setSelectedFriend] = useState<FriendWithProfile | null>(null);
   const [mutualEvents, setMutualEvents] = useState<UserEventHistoryItem[]>([]);
   const [loadingMutualEvents, setLoadingMutualEvents] = useState(false);
+  const [mutualEventsError, setMutualEventsError] = useState<string | null>(null);
 
   // Fetch data on mount and when tab changes
   const fetchData = useCallback(async () => {
@@ -485,11 +486,18 @@ export default function FriendsRoute() {
     setSelectedFriend(friend);
     setShowMutualEventsModal(true);
     setLoadingMutualEvents(true);
+    setMutualEventsError(null);
 
     try {
-      const { data } = await getMutualEventsWithFriend(friend.friend_id);
-      setMutualEvents(data);
+      const result = await getMutualEventsWithFriend(friend.friend_id);
+      if (result.error) {
+        setMutualEventsError('Failed to load mutual events');
+        logger.error('Error fetching mutual events:', result.error);
+      } else {
+        setMutualEvents(result.data);
+      }
     } catch (error) {
+      setMutualEventsError('Failed to load mutual events');
       logger.error('Error fetching mutual events:', error);
     } finally {
       setLoadingMutualEvents(false);
@@ -904,6 +912,12 @@ export default function FriendsRoute() {
         visible={showMutualEventsModal}
         animationType="slide"
         presentationStyle="pageSheet"
+        onRequestClose={() => {
+          setShowMutualEventsModal(false);
+          setSelectedFriend(null);
+          setMutualEvents([]);
+          setMutualEventsError(null);
+        }}
       >
         <View style={[styles.mutualEventsModal, { backgroundColor: theme.colors.background.primary }]}>
           <View style={styles.mutualEventsHeader}>
@@ -920,6 +934,7 @@ export default function FriendsRoute() {
                 setShowMutualEventsModal(false);
                 setSelectedFriend(null);
                 setMutualEvents([]);
+                setMutualEventsError(null);
               }}
               style={styles.closeButton}
             >
@@ -930,6 +945,15 @@ export default function FriendsRoute() {
           {loadingMutualEvents ? (
             <View style={styles.mutualEventsLoading}>
               <ActivityIndicator size="large" color={theme.colors.primary[500]} />
+            </View>
+          ) : mutualEventsError ? (
+            <View style={styles.mutualEventsEmpty}>
+              <Text variant="h4" style={{ marginBottom: 8, textAlign: 'center' }}>
+                Something went wrong
+              </Text>
+              <Text variant="body2" color="secondary" style={{ textAlign: 'center' }}>
+                {mutualEventsError}
+              </Text>
             </View>
           ) : mutualEvents.length === 0 ? (
             <View style={styles.mutualEventsEmpty}>

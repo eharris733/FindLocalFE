@@ -261,6 +261,7 @@ export default function ProfileRoute() {
 
     // Load follower/following counts and attended count
     useEffect(() => {
+        let isMounted = true;
         const loadCounts = async () => {
             if (session?.user?.id) {
                 const [followers, following, attended] = await Promise.all([
@@ -268,12 +269,15 @@ export default function ProfileRoute() {
                     getFollowingCount(session.user.id),
                     getUserAttendedCount(),
                 ]);
-                setFollowerCount(followers.count);
-                setFollowingCount(following.count);
-                setAttendedCount(attended.count);
+                if (isMounted) {
+                    if (!followers.error) setFollowerCount(followers.count);
+                    if (!following.error) setFollowingCount(following.count);
+                    if (!attended.error) setAttendedCount(attended.count);
+                }
             }
         };
         loadCounts();
+        return () => { isMounted = false; };
     }, [session?.user?.id]);
 
     const handleUsernameUpdate = async (newUsername: string) => {
@@ -634,7 +638,12 @@ export default function ProfileRoute() {
             )}
 
             {/* Event History Modal */}
-            <Modal visible={showEventHistory} animationType="slide" presentationStyle="pageSheet">
+            <Modal
+                visible={showEventHistory}
+                animationType="slide"
+                presentationStyle="pageSheet"
+                onRequestClose={() => setShowEventHistory(false)}
+            >
                 <View style={[styles.eventHistoryModal, { backgroundColor: theme.colors.background.primary }]}>
                     <View style={styles.eventHistoryHeader}>
                         <Text variant="h3">Event History</Text>
