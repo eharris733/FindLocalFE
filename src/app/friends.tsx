@@ -10,7 +10,11 @@ import {
   Share,
   Platform,
   Image,
+  Modal,
+  FlatList,
 } from 'react-native';
+import { useRouter } from 'expo-router';
+import { format } from 'date-fns';
 import { Text, Button, Card } from '../components/ui';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../hooks/useAuth';
@@ -30,6 +34,7 @@ import {
   FriendRequest,
 } from '../api/friends';
 import { searchProfiles, Profile } from '../api/profiles';
+import { getMutualEventsWithFriend, UserEventHistoryItem } from '../api/invitations';
 
 type TabType = 'connections' | 'requests' | 'suggestions';
 
@@ -163,16 +168,16 @@ function ConnectionItem({
       </View>
 
       <View style={styles.connectionActions}>
-        {isCreator && onViewEvents && (
+        {onViewEvents && (
           <TouchableOpacity
             style={[
               styles.eventsButton,
-              { backgroundColor: theme.colors.background.tertiary },
+              { backgroundColor: theme.colors.secondary[500] + '20' },
             ]}
             onPress={() => onViewEvents(friend.friend_id)}
           >
-            <Text variant="caption" style={{ fontWeight: '500' }}>
-              Events
+            <Text variant="caption" style={{ fontWeight: '500', color: theme.colors.secondary[600] }}>
+              Mutual Events
             </Text>
           </TouchableOpacity>
         )}
@@ -348,6 +353,7 @@ function SuggestionItem({
 export default function FriendsRoute() {
   const { theme } = useTheme();
   const { isLoggedIn, profile } = useAuth();
+  const router = useRouter();
 
   const [activeTab, setActiveTab] = useState<TabType>('connections');
   const [searchQuery, setSearchQuery] = useState('');
@@ -361,6 +367,12 @@ export default function FriendsRoute() {
   const [suggestions, setSuggestions] = useState<Profile[]>([]);
   const [searchResults, setSearchResults] = useState<Profile[]>([]);
   const [loadingActions, setLoadingActions] = useState<Record<string, boolean>>({});
+
+  // Mutual events modal state
+  const [showMutualEventsModal, setShowMutualEventsModal] = useState(false);
+  const [selectedFriend, setSelectedFriend] = useState<FriendWithProfile | null>(null);
+  const [mutualEvents, setMutualEvents] = useState<UserEventHistoryItem[]>([]);
+  const [loadingMutualEvents, setLoadingMutualEvents] = useState(false);
 
   // Fetch data on mount and when tab changes
   const fetchData = useCallback(async () => {
@@ -466,6 +478,22 @@ export default function FriendsRoute() {
       setSentRequests((prev) => [...prev, data]);
     }
     setLoadingActions((prev) => ({ ...prev, [userId]: false }));
+  };
+
+  // Handle viewing mutual events with a friend
+  const handleViewMutualEvents = async (friend: FriendWithProfile) => {
+    setSelectedFriend(friend);
+    setShowMutualEventsModal(true);
+    setLoadingMutualEvents(true);
+
+    try {
+      const { data } = await getMutualEventsWithFriend(friend.friend_id);
+      setMutualEvents(data);
+    } catch (error) {
+      logger.error('Error fetching mutual events:', error);
+    } finally {
+      setLoadingMutualEvents(false);
+    }
   };
 
   const handleShareLink = async () => {
@@ -774,6 +802,7 @@ export default function FriendsRoute() {
                     key={friend.friendship_id}
                     friend={friend}
                     onRemove={handleRemoveFriend}
+                    onViewEvents={() => handleViewMutualEvents(friend)}
                   />
                 ))
               )}
@@ -869,6 +898,98 @@ export default function FriendsRoute() {
         {/* Bottom spacing */}
         <View style={{ height: 100 }} />
       </ScrollView>
+
+      {/* Mutual Events Modal */}
+      <Modal
+        visible={showMutualEventsModal}
+        animationType="slide"
+        presentationStyle="pageSheet"
+      >
+        <View style={[styles.mutualEventsModal, { backgroundColor: theme.colors.background.primary }]}>
+          <View style={styles.mutualEventsHeader}>
+            <View>
+              <Text variant="h3">Mutual Events</Text>
+              {selectedFriend && (
+                <Text variant="body2" color="secondary">
+                  With {selectedFriend.profile?.full_name || selectedFriend.profile?.username}
+                </Text>
+              )}
+            </View>
+            <TouchableOpacity
+              onPress={() => {
+                setShowMutualEventsModal(false);
+                setSelectedFriend(null);
+                setMutualEvents([]);
+              }}
+              style={styles.closeButton}
+            >
+              <Text variant="body1" style={{ color: theme.colors.primary[500] }}>Done</Text>
+            </TouchableOpacity>
+          </View>
+
+          {loadingMutualEvents ? (
+            <View style={styles.mutualEventsLoading}>
+              <ActivityIndicator size="large" color={theme.colors.primary[500]} />
+            </View>
+          ) : mutualEvents.length === 0 ? (
+            <View style={styles.mutualEventsEmpty}>
+              <Text variant="h4" style={{ marginBottom: 8, textAlign: 'center' }}>
+                No mutual events yet
+              </Text>
+              <Text variant="body2" color="secondary" style={{ textAlign: 'center' }}>
+                When you both attend events, they'll show up here so you can reminisce!
+              </Text>
+            </View>
+          ) : (
+            <FlatList
+              data={mutualEvents}
+              keyExtractor={(item) => item.event_id}
+              contentContainerStyle={styles.mutualEventsList}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={[styles.mutualEventCard, { backgroundColor: theme.colors.background.secondary }]}
+                  onPress={() => {
+                    setShowMutualEventsModal(false);
+                    router.push(`/event/${item.event_id}`);
+                  }}
+                >
+                  <Image
+                    source={
+                      item.event_image_url
+                        ? { uri: item.event_image_url }
+                        : require('../../assets/record.png')
+                    }
+                    style={[styles.mutualEventImage, { backgroundColor: theme.colors.gray[100] }]}
+                    resizeMode="cover"
+                  />
+                  <View style={styles.mutualEventDetails}>
+                    <Text variant="body1" numberOfLines={2} style={{ fontWeight: '600' }}>
+                      {item.event_title || 'Untitled Event'}
+                    </Text>
+                    {item.venue_name && (
+                      <Text variant="caption" color="secondary" numberOfLines={1}>
+                        📍 {item.venue_name}
+                      </Text>
+                    )}
+                    {item.event_date && (
+                      <Text variant="caption" color="secondary">
+                        📅 {format(new Date(item.event_date), 'MMM d, yyyy')}
+                      </Text>
+                    )}
+                    {item.is_past && (
+                      <View style={[styles.pastBadge, { backgroundColor: theme.colors.gray[200] }]}>
+                        <Text variant="caption" style={{ color: theme.colors.gray[600], fontSize: 10 }}>
+                          PAST
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                </TouchableOpacity>
+              )}
+            />
+          )}
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -1072,5 +1193,60 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     minWidth: 70,
     alignItems: 'center',
+  },
+  // Mutual Events Modal styles
+  mutualEventsModal: {
+    flex: 1,
+    paddingTop: 60,
+    paddingHorizontal: 16,
+  },
+  mutualEventsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 20,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e5e5',
+  },
+  closeButton: {
+    padding: 8,
+  },
+  mutualEventsLoading: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  mutualEventsEmpty: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 32,
+  },
+  mutualEventsList: {
+    paddingBottom: 24,
+  },
+  mutualEventCard: {
+    flexDirection: 'row',
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 12,
+  },
+  mutualEventImage: {
+    width: 70,
+    height: 70,
+    borderRadius: 8,
+  },
+  mutualEventDetails: {
+    flex: 1,
+    marginLeft: 12,
+    justifyContent: 'center',
+  },
+  pastBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    marginTop: 4,
   },
 });
