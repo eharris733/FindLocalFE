@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { View, TouchableOpacity, StyleSheet, Platform } from 'react-native';
-import { useRouter, usePathname, useLocalSearchParams } from 'expo-router';
+import { useRouter, usePathname } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Text } from './ui/Text';
@@ -21,7 +21,7 @@ const TABS: TabConfig[] = [
   { name: 'Discover', route: '/', icon: 'compass-outline', activeIcon: 'compass' },
   { name: 'Create', route: '/create', icon: 'add-circle-outline', activeIcon: 'add-circle' },
   { name: 'Friends', route: '/friends', icon: 'people-outline', activeIcon: 'people' },
-  { name: 'Map', route: '/?view=map', icon: 'map-outline', activeIcon: 'map' },
+  { name: 'Map', route: '/map', icon: 'map-outline', activeIcon: 'map' },
 ];
 
 export default function BottomTabBar() {
@@ -30,25 +30,7 @@ export default function BottomTabBar() {
   const { isLoggedIn } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
-  const searchParams = useLocalSearchParams<{ view?: string }>();
   const insets = useSafeAreaInsets();
-
-  // Track if user navigated via Map tab (for highlighting purposes)
-  const [mapTabActive, setMapTabActive] = useState(false);
-
-  // Reset map tab state when navigating away from home
-  useEffect(() => {
-    if (pathname !== '/' && pathname !== '/index') {
-      setMapTabActive(false);
-    }
-  }, [pathname]);
-
-  // Sync map tab state with URL query param
-  useEffect(() => {
-    if ((pathname === '/' || pathname === '/index') && searchParams.view === 'map') {
-      setMapTabActive(true);
-    }
-  }, [pathname, searchParams.view]);
 
   // Only render on native mobile/tablet (iOS/Android), not on web
   if (Platform.OS === 'web') {
@@ -61,28 +43,20 @@ export default function BottomTabBar() {
   }
 
   const isActiveTab = (route: string) => {
-    // Special handling for Map tab
-    if (route === '/?view=map') {
-      return (pathname === '/' || pathname === '/index') && mapTabActive;
-    }
-    // Handle Discover tab (only active when on home AND not in map mode)
+    // Handle Discover tab (matches / or /index)
     if (route === '/') {
-      return (pathname === '/' || pathname === '/index') && !mapTabActive;
+      return pathname === '/' || pathname === '/index';
     }
-    // For other routes, check if pathname starts with route
-    return pathname.startsWith(route);
+    // For other routes, check exact match or if pathname starts with route
+    if (pathname === route) return true;
+    // Handle nested routes (e.g., /map matches /map/*)
+    return pathname.startsWith(route + '/');
   };
 
   const handlePress = (tab: TabConfig) => {
     if (tab.requiresAuth && !isLoggedIn) {
       router.push('/user/signin');
     } else {
-      // Track Map tab presses
-      if (tab.route === '/?view=map') {
-        setMapTabActive(true);
-      } else if (tab.route === '/') {
-        setMapTabActive(false);
-      }
       router.push(tab.route as any);
     }
   };

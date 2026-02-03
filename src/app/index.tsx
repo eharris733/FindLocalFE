@@ -1,5 +1,4 @@
 import { StatusBar, StyleSheet, View, ActivityIndicator } from "react-native";
-import FeedbackModal from "../components/FeedbackModal";
 import { DiscoverPageContent } from "../components/DiscoverPageContent";
 import React from "react";
 import { useTheme } from "../context/ThemeContext";
@@ -8,18 +7,13 @@ import type { Event } from "../types/events";
 import { analytics } from '../utils/analytics';
 import { useFocusEffect } from '@react-navigation/native';
 import { StructuredData } from '../components/StructuredData';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useRouter } from 'expo-router';
 
 export default function IndexRoute() {
     const { theme, isDark } = useTheme();
     const { selectedCity } = useCityLocation();
     const router = useRouter();
-    const searchParams = useLocalSearchParams<{ view?: string }>();
-    const [showFeedbackModal, setShowFeedbackModal] = React.useState(false);
     const [shouldRenderContent, setShouldRenderContent] = React.useState(false);
-
-    // Determine initial view mode from query params
-    const initialViewMode = searchParams.view === 'map' ? 'map' : 'list';
 
     // Defer rendering the heavy component until after navigation completes
     React.useEffect(() => {
@@ -48,14 +42,6 @@ export default function IndexRoute() {
         router.push(`/event/${event.id}`);
     };
 
-    const handleFeedbackPress = React.useCallback(() => {
-        setShowFeedbackModal(true);
-    }, []);
-
-    const handleCloseFeedback = React.useCallback(() => {
-        setShowFeedbackModal(false);
-    }, []);
-
     return (
         <View style={[styles.container, { backgroundColor: theme.colors.background.secondary }]}>
             <StructuredData city={selectedCity} />
@@ -66,15 +52,14 @@ export default function IndexRoute() {
             {shouldRenderContent ? (
                 <DiscoverPageContent
                     onEventPress={handleEventPress}
-                    initialViewMode={initialViewMode}
                 />
             ) : (
                 <View style={styles.loadingContainer}>
                     <ActivityIndicator size="large" color={theme.colors.primary[500]} />
                 </View>
             )}
-            <FeedbackModal visible={showFeedbackModal} onClose={handleCloseFeedback} />
-    </View>);
+        </View>
+    );
 }
 
 const styles = StyleSheet.create({
@@ -85,21 +70,5 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-    },
-    loadingText: {
-        marginTop: 16,
-    },
-    errorContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: 32,
-    },
-    errorTitle: {
-        marginBottom: 16,
-        textAlign: 'center',
-    },
-    errorText: {
-        textAlign: 'center',
     },
 });

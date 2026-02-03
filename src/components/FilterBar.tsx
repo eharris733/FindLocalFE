@@ -4,7 +4,6 @@ import { useTheme } from '../context/ThemeContext';
 import {
   Text,
   SearchAndToggle,
-  ViewToggle,
   WhenDropdown,
   WhatDropdown,
   WhereDropdown,
@@ -14,8 +13,6 @@ import {
 import type { FilterState, FilterAction } from '../hooks/useEvents';
 import { screenshotMarker } from '../utils/screenshot';
 import { useDeviceInfo } from '../hooks/useDeviceInfo';
-
-type ViewMode = 'list' | 'map';
 
 interface DateRange {
   start: Date | null;
@@ -34,8 +31,6 @@ interface FilterBarProps {
     communityIds: string[];
     labels: string[];
   };
-  readonly viewMode?: ViewMode;
-  readonly onViewModeChange?: (mode: ViewMode) => void;
   readonly resultsCount?: number;
   readonly loading?: boolean;
   readonly animatedStyle?: any;
@@ -47,12 +42,10 @@ import { useCityLocation } from "../context/CityContext";
 import { ALL_VENUES } from '../constants';
 import { analytics } from '../utils/analytics';
 
-export default function FilterBar({ 
-  filters, 
+export default function FilterBar({
+  filters,
   dispatchFilters,
   availableFilterOptions,
-  viewMode = 'list',
-  onViewModeChange,
   resultsCount = 0,
   loading = false,
   animatedStyle,
@@ -117,13 +110,6 @@ export default function FilterBar({
       analytics.trackSearch(text, resultsCount, selectedCity);
     }
   }, [dispatchFilters, resultsCount, selectedCity]);
-
-  const handleViewModeChange = useCallback((mode: ViewMode) => {
-    // Track view mode change
-    analytics.trackViewModeChange(mode, selectedCity);
-    
-    onViewModeChange?.(mode);
-  }, [onViewModeChange, selectedCity]);
 
   const handleCustomDateRangeChange = useCallback((range: DateRange) => {
     dispatchFilters({ type: 'SET_START_DATE', payload: range.start });
@@ -416,15 +402,6 @@ export default function FilterBar({
             >
               {loading ? `Loading events in ${selectedCity}...` : `${resultsCount} events found in ${selectedCity}`}
             </Text>
-          )}
-
-          <View style={styles.spacer} />
-
-          {onViewModeChange && (
-            <ViewToggle
-              viewMode={viewMode}
-              onViewModeChange={onViewModeChange}
-            />
           )}
         </View>
       )}

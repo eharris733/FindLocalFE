@@ -27,7 +27,7 @@ FindLocal is a cross-platform event discovery application built with React Nativ
 
 **Key Features:**
 - Event discovery with advanced filtering (category, location, price, time)
-- Multiple view modes: Gallery, List, Map
+- Multiple view modes: List, Map
 - User authentication (Email, Google OAuth, Apple Sign-In)
 - Favorites and RSVP management
 - Venue following and social features
@@ -382,6 +382,61 @@ const hasUserInteractedRef = useRef<boolean>(false);
 - `src/app/index.tsx` - Removed onFeedbackPress from DiscoverPageContent call
 
 **Note:** FeedbackModal still available via other navigation paths
+
+### Navigation UI Simplification (February 2026)
+
+**Changes:** Simplified mobile navigation for beta release
+
+**Mobile navigation (TopNavigation.tsx):**
+- Top left: Hamburger menu → City picker button (shows city name + dropdown arrow)
+- Top right: Account text → Profile icon (navigates to `/profile` page or `/user/signin`)
+- Web navigation unchanged (full nav links remain)
+
+**Bottom tab bar (BottomTabBar.tsx):**
+- Replaced Profile tab with Map tab
+- Map is now a dedicated route: `/map` (separate page, not a view toggle)
+- Tabs: Home, Discover, Create, Friends, Map
+
+**Discover and Map are separate pages:**
+- `/` (Discover) - List view only, no view toggle
+- `/map` - Map view only, dedicated page
+- Removed ViewToggle component usage from FilterBar
+- MainLayout now only renders list view (no activeTab state)
+
+**Profile consolidation:**
+- Deleted `ProfileModal.tsx`
+- All settings/preferences moved to Profile page (`src/app/(private)/profile.tsx`)
+
+**Files changed:**
+- `src/components/TopNavigation.tsx` - Mobile city picker + profile icon
+- `src/components/BottomTabBar.tsx` - Map tab routes to `/map`
+- `src/components/MainLayout.tsx` - List view only, removed view mode switching
+- `src/app/map.tsx` - NEW: Dedicated map page
+- `src/app/index.tsx` - Simplified, list view only
+- Deleted: `GalleryView.tsx`, `ProfileModal.tsx`
+
+### Map Zoom & Safe Area Fixes (February 2026)
+
+**Issue:** Map zooming in too far by default when venues are clustered; bottom sheet not respecting safe area on notched devices; map not auto-fitting on subsequent visits
+
+**Solutions:**
+1. Added `minZoomLevel={10}` and `maxZoomLevel={18}` to MapView to constrain zoom range
+2. Added `edgePadding` to `fitToCoordinates()` call to prevent extreme zoom when fitting to venues
+3. Used `useSafeAreaInsets()` to add proper bottom padding to the mobile bottom sheet
+4. Reset `hasUserInteractedRef` when `selectedCity` changes to allow auto-fit on fresh navigations
+
+**Key pattern for overlays on mobile:**
+```tsx
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+const insets = useSafeAreaInsets();
+
+// Apply to bottom-positioned elements
+<View style={{ paddingBottom: insets.bottom }}>
+```
+
+**Files changed:**
+- `src/components/EventMap.tsx` - Zoom limits, edge padding, safe area insets, auto-fit reset
 
 ---
 

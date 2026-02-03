@@ -25,6 +25,20 @@ export default function TopNavigation({ onNavLinkPress }: TopNavigationProps) {
   // Check if user is a creator
   const isCreator = profile?.account_type === 'creator';
 
+  // Get user initials for avatar
+  const getUserInitials = () => {
+    if (profile?.full_name) {
+      return profile.full_name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+    }
+    if (profile?.username) {
+      return profile.username[0].toUpperCase();
+    }
+    return '?';
+  };
+
+  // Avatar color - use primary to match profile page
+  const avatarColor = theme.colors.primary[500];
+
   // Use collapsed nav for mobile AND tablet to prevent overflow
   // Show full nav only on desktop (>= 1024px)
   const useCollapsedNav = isMobile || isTablet;
@@ -173,15 +187,21 @@ export default function TopNavigation({ onNavLinkPress }: TopNavigationProps) {
             {useCollapsedNav ? (
               <TouchableOpacity
                 style={[styles.mobileProfileButton, {
-                  backgroundColor: isCreator ? theme.colors.secondary[500] : theme.colors.background.secondary,
+                  backgroundColor: isLoggedIn ? avatarColor : theme.colors.background.secondary,
                 }]}
                 onPress={handleProfilePress}
               >
-                <Ionicons
-                  name={isLoggedIn ? "person-circle" : "person-circle-outline"}
-                  size={28}
-                  color={isCreator ? '#fff' : theme.colors.text.primary}
-                />
+                {isLoggedIn ? (
+                  <Text style={styles.avatarInitials}>
+                    {getUserInitials()}
+                  </Text>
+                ) : (
+                  <Ionicons
+                    name="person-circle-outline"
+                    size={28}
+                    color={theme.colors.text.primary}
+                  />
+                )}
               </TouchableOpacity>
             ) : (
               <TouchableOpacity
@@ -328,6 +348,11 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  avatarInitials: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+    fontSize: 14,
   },
   // Desktop City Badge Styles
   communityBadge: {
