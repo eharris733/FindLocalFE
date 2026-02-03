@@ -85,44 +85,21 @@ const EventMap: React.FC<MapViewWebProps> = ({
     // });
   }, [activeCalloutId]);
 
-  // Calculate initial camera based on selected city (not venues)
-  const getInitialCamera = () => {
-    // console.log('🗺️ getInitialCamera called with selectedCity:', selectedCity);
-    
-    // Always use city center for initial camera to avoid flashing
+  // Calculate initial region based on selected city (not venues)
+  const getInitialRegion = () => {
     const cityCenter = getCityCenter(selectedCity);
-    // console.log('🗺️ Using city center for initial camera:', cityCenter, 'for city:', selectedCity);
-
-    const camera = {
-      center: cityCenter,
-      zoom: 12,
-      heading: 0,
-      pitch: 0,
+    return {
+      ...cityCenter,
+      latitudeDelta: 0.15,  // ~10 miles vertical span - good city view
+      longitudeDelta: 0.15,
     };
-
-    // console.log('🗺️ Final camera object:', camera);
-    return camera;
   };
 
-  const initialCamera = getInitialCamera();
-  // console.log('🗺️ MapView initialCamera set to:', initialCamera);
+  const initialRegion = getInitialRegion();
 
-  // Add effect to force camera update when component mounts
+  // Web only: fit to venues when they load
   useEffect(() => {
-    if (mapRef.current) {
-      // console.log('🗺️ Map mounted, forcing camera to:', initialCamera.center);
-      // Force immediate camera update after mount
-      setTimeout(() => {
-        mapRef.current?.animateCamera({
-          center: initialCamera.center,
-          zoom: initialCamera.zoom,
-        }, { duration: 0 });
-      }, 100);
-    }
-  }, []); // Run only on mount
-
-  useEffect(() => {
-    // Simple auto-fit to venues when venues are loaded, but only if user hasn't interacted
+    if (Platform.OS !== 'web') return;
     if (!venuesLoading && venues.length > 0 && mapRef.current && !hasUserInteractedRef.current) {
       const coords = venues
         .map(v => ({
@@ -132,16 +109,12 @@ const EventMap: React.FC<MapViewWebProps> = ({
         .filter(c => !Number.isNaN(c.latitude) && !Number.isNaN(c.longitude) && c.latitude !== 0 && c.longitude !== 0);
 
       if (coords.length > 0) {
-        // console.log('🗺️ Fitting map to venue coordinates:', coords);
-        // Simple timeout then fit to coordinates - no padding
         setTimeout(() => {
           mapRef.current?.fitToCoordinates(coords, {
             animated: true,
           });
         }, 500);
       }
-    } else {
-      // console.log('🗺️ Not fitting to venues. Venues count:', venues.length, 'Loading:', venuesLoading);
     }
   }, [venuesLoading, venues]);
 
@@ -275,7 +248,7 @@ const EventMap: React.FC<MapViewWebProps> = ({
       <MapView
         ref={mapRef}
         style={styles.map}
-        initialCamera={initialCamera}
+        initialRegion={initialRegion}
         showsUserLocation={false}
         showsMyLocationButton={false}
         zoomEnabled={true}
