@@ -558,24 +558,42 @@ export default function EventPage() {
     return (
       <View style={[styles.container, { backgroundColor: theme.colors.background.primary }]}>
         <View style={styles.errorContainer}>
+          <Text variant="h1" style={{ marginBottom: theme.spacing.md }}>
+            🔍
+          </Text>
           <Text variant="h3" style={[styles.errorText, {
-            color: theme.colors.text.secondary,
+            color: theme.colors.text.primary,
             marginBottom: theme.spacing.sm,
           }]}>
-            😔 {error || 'Event not found'}
+            Event Not Found
+          </Text>
+          <Text variant="body1" style={{
+            color: theme.colors.text.secondary,
+            textAlign: 'center',
+            marginBottom: theme.spacing.lg,
+            paddingHorizontal: theme.spacing.lg,
+          }}>
+            We couldn't find the event you're looking for. It may have been removed or the link may be incorrect.
           </Text>
           <TouchableOpacity
             onPress={handleBack}
-            style={[styles.backButton, {
+            style={[styles.errorBackButton, {
               backgroundColor: theme.colors.primary[500],
               paddingVertical: theme.spacing.md,
-              paddingHorizontal: theme.spacing.lg,
+              paddingHorizontal: theme.spacing.xl,
               borderRadius: theme.borderRadius.md,
-              marginTop: theme.spacing.lg,
             }]}
           >
             <Text variant="body1" style={{ color: theme.colors.text.inverse, fontWeight: '600' }}>
               ← Go Back
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => router.push('/')}
+            style={{ marginTop: theme.spacing.md }}
+          >
+            <Text variant="body2" style={{ color: theme.colors.primary[500], fontWeight: '500' }}>
+              Browse Events
             </Text>
           </TouchableOpacity>
         </View>
@@ -1425,6 +1443,11 @@ const styles = StyleSheet.create({
   },
   errorText: {
     textAlign: 'center',
+  },
+  errorBackButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 140,
   },
   content: {
     flex: 1,
