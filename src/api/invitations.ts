@@ -849,3 +849,505 @@ export function getEventInviteUrl(eventId: string, token: string, baseUrl?: stri
   }
   return `${base}/event/${eventId}?invite=${token}`;
 }
+
+// ============================================
+// User Event History
+// ============================================
+
+export interface UserEventHistoryItem {
+  event_id: string;
+  event_title: string | null;
+  event_date: string | null;
+  event_image_url: string | null;
+  venue_name: string | null;
+  venue_id: string | null;
+  response: 'yes' | 'no' | 'maybe';
+  rsvp_date: string;
+  is_past: boolean;
+  friends_attending?: Array<{
+    user_id: string;
+    username: string | null;
+    full_name: string | null;
+    avatar_url: string | null;
+  }>;
+}
+
+export interface UserHostedEventItem {
+  event_id: string;
+  event_title: string | null;
+  event_date: string | null;
+  event_image_url: string | null;
+  venue_name: string | null;
+  venue_id: string | null;
+  invitation_count: number;
+  total_rsvps: number;
+  yes_count: number;
+  maybe_count: number;
+  created_at: string;
+  is_past: boolean;
+}
+
+/**
+ * Get user's event history (past events they attended)
+ * Returns events where the user RSVPed 'yes' or 'maybe' and the event date has passed
+ */
+export async function getUserEventHistory(options?: {
+  includeFriends?: boolean;
+  limit?: number;
+  offset?: number;
+}): Promise<{ data: UserEventHistoryItem[]; total: number; error: any }> {
+  try {
+    const { data: user } = await supabase.auth.getUser();
+    if (!user.user) {
+      return { data: [], total: 0, error: { message: 'Not authenticated' } };
+    }
+
+    const today = new Date().toISOString().split('T')[0];
+    const limit = options?.limit || 20;
+    const offset = options?.offset || 0;
+
+    // Get user's RSVPs
+    const { data: rsvps, error: rsvpError, count } = await supabase
+      .from('event_rsvps')
+      .select('id, event_id, response, created_at', { count: 'exact' })
+      .eq('user_id', user.user.id)
+      .in('response', ['yes', 'maybe'])
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1);
+
+    if (rsvpError) {
+      logger.error('Error getting user event history:', rsvpError);
+      return { data: [], total: 0, error: rsvpError };
+    }
+
+    if (!rsvps || rsvps.length === 0) {
+      return { data: [], total: 0, error: null };
+    }
+
+    const eventIds = rsvps.map(r => r.event_id);
+
+    // Try to get events from events_gold first, then old_events for any missing
+    const { data: goldEvents } = await supabase
+      .from('events_gold')
+      .select('id, title, event_date, image_url, venue_id')
+      .in('id', eventIds);
+
+    const foundGoldIds = new Set((goldEvents || []).map(e => e.id));
+    const missingIds = eventIds.filter(id => !foundGoldIds.has(id));
+
+    let oldEvents: any[] = [];
+    if (missingIds.length > 0) {
+      const { data: archived } = await supabase
+        .from('old_events')
+        .select('id, title, event_date, image_url, venue_id')
+        .in('id', missingIds);
+      oldEvents = archived || [];
+    }
+
+    const allEvents = [...(goldEvents || []), ...oldEvents];
+    const eventMap = new Map(allEvents.map(e => [e.id, e]));
+
+    // Get venue names
+    const venueIds = [...new Set(allEvents.map(e => e.venue_id).filter(Boolean))];
+    let venueMap = new Map<string, string>();
+    if (venueIds.length > 0) {
+      const { data: venues } = await supabase
+        .from('venues')
+        .select('id, name')
+        .in('id', venueIds);
+      venueMap = new Map((venues || []).map(v => [v.id, v.name]));
+    }
+
+    // Get friends attending (if requested)
+    let friendsAttendingMap = new Map<string, any[]>();
+    if (options?.includeFriends) {
+      // Get user's friends
+      const { data: friendships } = await supabase
+        .from('friendships')
+        .select('user_id_1, user_id_2')
+        .or(`user_id_1.eq.${user.user.id},user_id_2.eq.${user.user.id}`);
+
+      if (friendships && friendships.length > 0) {
+        const friendIds = friendships.map(f =>
+          f.user_id_1 === user.user.id ? f.user_id_2 : f.user_id_1
+        );
+
+        // Get friend RSVPs for same events
+        const { data: friendRsvps } = await supabase
+          .from('event_rsvps')
+          .select('event_id, user_id')
+          .in('user_id', friendIds)
+          .in('event_id', eventIds)
+          .in('response', ['yes', 'maybe']);
+
+        if (friendRsvps && friendRsvps.length > 0) {
+          // Get friend profiles
+          const friendUserIds = [...new Set(friendRsvps.map(r => r.user_id))];
+          const { data: friendProfiles } = await supabase
+            .from('profiles')
+            .select('id, username, full_name, avatar_url')
+            .in('id', friendUserIds);
+
+          const profileMap = new Map((friendProfiles || []).map(p => [p.id, p]));
+
+          // Group by event
+          for (const rsvp of friendRsvps) {
+            const profile = profileMap.get(rsvp.user_id);
+            if (profile) {
+              const existing = friendsAttendingMap.get(rsvp.event_id) || [];
+              existing.push({
+                user_id: profile.id,
+                username: profile.username,
+                full_name: profile.full_name,
+                avatar_url: profile.avatar_url,
+              });
+              friendsAttendingMap.set(rsvp.event_id, existing);
+            }
+          }
+        }
+      }
+    }
+
+    // Build the result
+    const historyItems: UserEventHistoryItem[] = rsvps.map(rsvp => {
+      const event = eventMap.get(rsvp.event_id);
+      const eventDate = event?.event_date?.split('T')[0] || null;
+      const isPast = eventDate ? eventDate < today : false;
+
+      return {
+        event_id: rsvp.event_id,
+        event_title: event?.title || null,
+        event_date: event?.event_date || null,
+        event_image_url: event?.image_url || null,
+        venue_name: event?.venue_id ? venueMap.get(event.venue_id) || null : null,
+        venue_id: event?.venue_id || null,
+        response: rsvp.response as 'yes' | 'no' | 'maybe',
+        rsvp_date: rsvp.created_at,
+        is_past: isPast,
+        friends_attending: friendsAttendingMap.get(rsvp.event_id) || [],
+      };
+    });
+
+    return { data: historyItems, total: count || historyItems.length, error: null };
+  } catch (err) {
+    logger.error('Error in getUserEventHistory:', err);
+    return { data: [], total: 0, error: err };
+  }
+}
+
+/**
+ * Get events the user has hosted (created invitations for)
+ */
+export async function getUserHostedEvents(options?: {
+  limit?: number;
+  offset?: number;
+}): Promise<{ data: UserHostedEventItem[]; total: number; error: any }> {
+  try {
+    const { data: user } = await supabase.auth.getUser();
+    if (!user.user) {
+      return { data: [], total: 0, error: { message: 'Not authenticated' } };
+    }
+
+    const today = new Date().toISOString().split('T')[0];
+    const limit = options?.limit || 20;
+    const offset = options?.offset || 0;
+
+    // Get invitations created by user, grouped by event
+    const { data: invitations, error: invError } = await supabase
+      .from('event_invitations')
+      .select('id, event_id, created_at')
+      .eq('inviter_id', user.user.id)
+      .order('created_at', { ascending: false });
+
+    if (invError) {
+      logger.error('Error getting user hosted events:', invError);
+      return { data: [], total: 0, error: invError };
+    }
+
+    if (!invitations || invitations.length === 0) {
+      return { data: [], total: 0, error: null };
+    }
+
+    // Group invitations by event
+    const eventInvitations = new Map<string, any[]>();
+    for (const inv of invitations) {
+      const existing = eventInvitations.get(inv.event_id) || [];
+      existing.push(inv);
+      eventInvitations.set(inv.event_id, existing);
+    }
+
+    const eventIds = [...eventInvitations.keys()];
+    const total = eventIds.length;
+
+    // Apply pagination to unique event IDs
+    const paginatedEventIds = eventIds.slice(offset, offset + limit);
+
+    // Try to get events from events_gold first, then old_events
+    const { data: goldEvents } = await supabase
+      .from('events_gold')
+      .select('id, title, event_date, image_url, venue_id')
+      .in('id', paginatedEventIds);
+
+    const foundGoldIds = new Set((goldEvents || []).map(e => e.id));
+    const missingIds = paginatedEventIds.filter(id => !foundGoldIds.has(id));
+
+    let oldEvents: any[] = [];
+    if (missingIds.length > 0) {
+      const { data: archived } = await supabase
+        .from('old_events')
+        .select('id, title, event_date, image_url, venue_id')
+        .in('id', missingIds);
+      oldEvents = archived || [];
+    }
+
+    const allEvents = [...(goldEvents || []), ...oldEvents];
+    const eventMap = new Map(allEvents.map(e => [e.id, e]));
+
+    // Get venue names
+    const venueIds = [...new Set(allEvents.map(e => e.venue_id).filter(Boolean))];
+    let venueMap = new Map<string, string>();
+    if (venueIds.length > 0) {
+      const { data: venues } = await supabase
+        .from('venues')
+        .select('id, name')
+        .in('id', venueIds);
+      venueMap = new Map((venues || []).map(v => [v.id, v.name]));
+    }
+
+    // Get RSVP counts for all invitations
+    const allInvitationIds = invitations
+      .filter(inv => paginatedEventIds.includes(inv.event_id))
+      .map(inv => inv.id);
+
+    const { data: rsvpCounts } = await supabase
+      .from('event_rsvps')
+      .select('invitation_id, response')
+      .in('invitation_id', allInvitationIds);
+
+    // Build RSVP stats per event
+    const eventRsvpStats = new Map<string, { total: number; yes: number; maybe: number }>();
+    for (const eventId of paginatedEventIds) {
+      eventRsvpStats.set(eventId, { total: 0, yes: 0, maybe: 0 });
+    }
+
+    if (rsvpCounts) {
+      // Map invitation IDs to event IDs
+      const invToEvent = new Map(invitations.map(inv => [inv.id, inv.event_id]));
+
+      for (const rsvp of rsvpCounts) {
+        const eventId = invToEvent.get(rsvp.invitation_id);
+        if (eventId && eventRsvpStats.has(eventId)) {
+          const stats = eventRsvpStats.get(eventId)!;
+          stats.total++;
+          if (rsvp.response === 'yes') stats.yes++;
+          if (rsvp.response === 'maybe') stats.maybe++;
+        }
+      }
+    }
+
+    // Build the result
+    const hostedItems: UserHostedEventItem[] = paginatedEventIds.map(eventId => {
+      const event = eventMap.get(eventId);
+      const invs = eventInvitations.get(eventId) || [];
+      const stats = eventRsvpStats.get(eventId) || { total: 0, yes: 0, maybe: 0 };
+      const eventDate = event?.event_date?.split('T')[0] || null;
+      const isPast = eventDate ? eventDate < today : false;
+
+      return {
+        event_id: eventId,
+        event_title: event?.title || null,
+        event_date: event?.event_date || null,
+        event_image_url: event?.image_url || null,
+        venue_name: event?.venue_id ? venueMap.get(event.venue_id) || null : null,
+        venue_id: event?.venue_id || null,
+        invitation_count: invs.length,
+        total_rsvps: stats.total,
+        yes_count: stats.yes,
+        maybe_count: stats.maybe,
+        created_at: invs[0]?.created_at || '',
+        is_past: isPast,
+      };
+    });
+
+    return { data: hostedItems, total, error: null };
+  } catch (err) {
+    logger.error('Error in getUserHostedEvents:', err);
+    return { data: [], total: 0, error: err };
+  }
+}
+
+/**
+ * Get count of past events user attended
+ */
+export async function getUserAttendedCount(): Promise<{ count: number; error: any }> {
+  try {
+    const { data: user } = await supabase.auth.getUser();
+    if (!user.user) {
+      return { count: 0, error: null };
+    }
+
+    const today = new Date().toISOString().split('T')[0];
+
+    // Get user's RSVPs with yes/maybe
+    const { data: rsvps, error: rsvpError } = await supabase
+      .from('event_rsvps')
+      .select('event_id')
+      .eq('user_id', user.user.id)
+      .in('response', ['yes', 'maybe']);
+
+    if (rsvpError || !rsvps) {
+      return { count: 0, error: rsvpError };
+    }
+
+    if (rsvps.length === 0) {
+      return { count: 0, error: null };
+    }
+
+    const eventIds = rsvps.map(r => r.event_id);
+
+    // Check events_gold for past events
+    const { data: goldEvents } = await supabase
+      .from('events_gold')
+      .select('id')
+      .in('id', eventIds)
+      .lt('event_date', today);
+
+    const goldCount = goldEvents?.length || 0;
+
+    // Check old_events (all are past by definition)
+    const foundGoldIds = new Set((goldEvents || []).map(e => e.id));
+    const missingIds = eventIds.filter(id => !foundGoldIds.has(id));
+
+    let oldCount = 0;
+    if (missingIds.length > 0) {
+      const { data: oldEvents } = await supabase
+        .from('old_events')
+        .select('id')
+        .in('id', missingIds);
+      oldCount = oldEvents?.length || 0;
+    }
+
+    return { count: goldCount + oldCount, error: null };
+  } catch (err) {
+    logger.error('Error in getUserAttendedCount:', err);
+    return { count: 0, error: err };
+  }
+}
+
+/**
+ * Get mutual attendance with a specific friend
+ * Returns events where both the current user and the friend attended
+ */
+export async function getMutualEventsWithFriend(
+  friendUserId: string,
+  options?: { limit?: number; offset?: number }
+): Promise<{ data: UserEventHistoryItem[]; total: number; error: any }> {
+  try {
+    const { data: user } = await supabase.auth.getUser();
+    if (!user.user) {
+      return { data: [], total: 0, error: { message: 'Not authenticated' } };
+    }
+
+    const limit = options?.limit || 20;
+    const offset = options?.offset || 0;
+
+    // Get current user's RSVPs
+    const { data: myRsvps } = await supabase
+      .from('event_rsvps')
+      .select('event_id')
+      .eq('user_id', user.user.id)
+      .in('response', ['yes', 'maybe']);
+
+    if (!myRsvps || myRsvps.length === 0) {
+      return { data: [], total: 0, error: null };
+    }
+
+    const myEventIds = myRsvps.map(r => r.event_id);
+
+    // Get friend's RSVPs for same events
+    const { data: friendRsvps, count } = await supabase
+      .from('event_rsvps')
+      .select('event_id, response, created_at', { count: 'exact' })
+      .eq('user_id', friendUserId)
+      .in('event_id', myEventIds)
+      .in('response', ['yes', 'maybe'])
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1);
+
+    if (!friendRsvps || friendRsvps.length === 0) {
+      return { data: [], total: 0, error: null };
+    }
+
+    const mutualEventIds = friendRsvps.map(r => r.event_id);
+
+    // Get event details
+    const { data: goldEvents } = await supabase
+      .from('events_gold')
+      .select('id, title, event_date, image_url, venue_id')
+      .in('id', mutualEventIds);
+
+    const foundGoldIds = new Set((goldEvents || []).map(e => e.id));
+    const missingIds = mutualEventIds.filter(id => !foundGoldIds.has(id));
+
+    let oldEvents: any[] = [];
+    if (missingIds.length > 0) {
+      const { data: archived } = await supabase
+        .from('old_events')
+        .select('id, title, event_date, image_url, venue_id')
+        .in('id', missingIds);
+      oldEvents = archived || [];
+    }
+
+    const allEvents = [...(goldEvents || []), ...oldEvents];
+    const eventMap = new Map(allEvents.map(e => [e.id, e]));
+
+    // Get venue names
+    const venueIds = [...new Set(allEvents.map(e => e.venue_id).filter(Boolean))];
+    let venueMap = new Map<string, string>();
+    if (venueIds.length > 0) {
+      const { data: venues } = await supabase
+        .from('venues')
+        .select('id, name')
+        .in('id', venueIds);
+      venueMap = new Map((venues || []).map(v => [v.id, v.name]));
+    }
+
+    // Get friend profile
+    const { data: friendProfile } = await supabase
+      .from('profiles')
+      .select('id, username, full_name, avatar_url')
+      .eq('id', friendUserId)
+      .single();
+
+    const today = new Date().toISOString().split('T')[0];
+
+    const historyItems: UserEventHistoryItem[] = friendRsvps.map(rsvp => {
+      const event = eventMap.get(rsvp.event_id);
+      const eventDate = event?.event_date?.split('T')[0] || null;
+      const isPast = eventDate ? eventDate < today : false;
+
+      return {
+        event_id: rsvp.event_id,
+        event_title: event?.title || null,
+        event_date: event?.event_date || null,
+        event_image_url: event?.image_url || null,
+        venue_name: event?.venue_id ? venueMap.get(event.venue_id) || null : null,
+        venue_id: event?.venue_id || null,
+        response: rsvp.response as 'yes' | 'no' | 'maybe',
+        rsvp_date: rsvp.created_at,
+        is_past: isPast,
+        friends_attending: friendProfile ? [{
+          user_id: friendProfile.id,
+          username: friendProfile.username,
+          full_name: friendProfile.full_name,
+          avatar_url: friendProfile.avatar_url,
+        }] : [],
+      };
+    });
+
+    return { data: historyItems, total: count || historyItems.length, error: null };
+  } catch (err) {
+    logger.error('Error in getMutualEventsWithFriend:', err);
+    return { data: [], total: 0, error: err };
+  }
+}

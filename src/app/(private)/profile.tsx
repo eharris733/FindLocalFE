@@ -9,16 +9,18 @@ import { useFriends } from "../../context/FriendsContext";
 import { useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import { useTheme } from '../../context/ThemeContext';
-import { 
-    updateUsername, 
-    updateAccountType, 
-    updateActivityVisibility, 
+import {
+    updateUsername,
+    updateAccountType,
+    updateActivityVisibility,
     updateBio,
     checkUsernameAvailability,
     AccountType,
-    ActivityVisibility 
+    ActivityVisibility
 } from '../../api/profiles';
 import { getFollowerCount, getFollowingCount } from '../../api/friends';
+import { getUserAttendedCount } from '../../api/invitations';
+import EventHistory from '../../components/EventHistory';
 import { logger } from '../../utils/logger';
 
 // Username Edit Modal Component
@@ -247,6 +249,8 @@ export default function ProfileRoute() {
     // Follower/Following counts for creators
     const [followerCount, setFollowerCount] = useState(0);
     const [followingCount, setFollowingCount] = useState(0);
+    const [attendedCount, setAttendedCount] = useState(0);
+    const [showEventHistory, setShowEventHistory] = useState(false);
 
     useEffect(() => {
         if (profile) {
@@ -254,20 +258,26 @@ export default function ProfileRoute() {
             setBio(profile.bio || '');
         }
     }, [profile]);
-    
-    // Load follower/following counts
+
+    // Load follower/following counts and attended count
     useEffect(() => {
-        const loadFollowCounts = async () => {
+        let isMounted = true;
+        const loadCounts = async () => {
             if (session?.user?.id) {
-                const [followers, following] = await Promise.all([
+                const [followers, following, attended] = await Promise.all([
                     getFollowerCount(session.user.id),
                     getFollowingCount(session.user.id),
+                    getUserAttendedCount(),
                 ]);
-                setFollowerCount(followers.count);
-                setFollowingCount(following.count);
+                if (isMounted) {
+                    if (!followers.error) setFollowerCount(followers.count);
+                    if (!following.error) setFollowingCount(following.count);
+                    if (!attended.error) setAttendedCount(attended.count);
+                }
             }
         };
-        loadFollowCounts();
+        loadCounts();
+        return () => { isMounted = false; };
     }, [session?.user?.id]);
 
     const handleUsernameUpdate = async (newUsername: string) => {
@@ -455,12 +465,15 @@ export default function ProfileRoute() {
                                     </Text>
                                     <Text variant="caption" color="secondary">FRIENDS</Text>
                                 </TouchableOpacity>
-                                <View style={[styles.statItem, { backgroundColor: theme.colors.secondary[500] + '20' }]}>
+                                <TouchableOpacity
+                                    style={[styles.statItem, { backgroundColor: theme.colors.secondary[500] + '20' }]}
+                                    onPress={() => setShowEventHistory(true)}
+                                >
                                     <Text variant="h4" style={{ color: theme.colors.secondary[500] }}>
-                                        {0} {/* TODO: Get attended count */}
+                                        {attendedCount}
                                     </Text>
                                     <Text variant="caption" color="secondary">ATTENDED</Text>
-                                </View>
+                                </TouchableOpacity>
                                 <View style={[styles.statItem, { backgroundColor: theme.colors.accent[500] + '20' }]}>
                                     <Text variant="h4" style={{ color: theme.colors.accent[500] }}>
                                         {profile?.favorite_events?.length || 0}
@@ -546,16 +559,33 @@ export default function ProfileRoute() {
                 {/* Community Settings */}
                 <View style={styles.settingSection}>
                     <Text variant="caption" color="tertiary" style={styles.sectionLabel}>COMMUNITIES</Text>
-                    <TouchableOpacity 
+                    <TouchableOpacity
                         style={[styles.settingRow, { backgroundColor: theme.colors.background.secondary }]}
                         onPress={() => setShowCommunityPicker(true)}
                     >
                         <View style={styles.settingInfo}>
                             <Text variant="body1" style={styles.settingTitle}>Selected Communities</Text>
                             <Text variant="body2" color="secondary">
-                                {selectedCommunities.length === 0 
-                                    ? 'Everything' 
+                                {selectedCommunities.length === 0
+                                    ? 'Everything'
                                     : selectedCommunities.join(', ')}
+                            </Text>
+                        </View>
+                        <Text variant="body2" color="tertiary">›</Text>
+                    </TouchableOpacity>
+                </View>
+
+                {/* Event History Section */}
+                <View style={[styles.settingSection, { borderTopColor: theme.colors.border.light }]}>
+                    <Text variant="caption" color="tertiary" style={styles.sectionLabel}>EVENT HISTORY</Text>
+                    <TouchableOpacity
+                        style={[styles.settingRow, { backgroundColor: theme.colors.background.secondary }]}
+                        onPress={() => setShowEventHistory(true)}
+                    >
+                        <View style={styles.settingInfo}>
+                            <Text variant="body1" style={styles.settingTitle}>View Past Events</Text>
+                            <Text variant="body2" color="secondary">
+                                See events you attended and hosted
                             </Text>
                         </View>
                         <Text variant="body2" color="tertiary">›</Text>
@@ -606,6 +636,32 @@ export default function ProfileRoute() {
                     onClose={() => setShowCommunityPicker(false)}
                 />
             )}
+
+            {/* Event History Modal */}
+            <Modal
+                visible={showEventHistory}
+                animationType="slide"
+                presentationStyle="pageSheet"
+                onRequestClose={() => setShowEventHistory(false)}
+            >
+                <View style={[styles.eventHistoryModal, { backgroundColor: theme.colors.background.primary }]}>
+                    <View style={styles.eventHistoryHeader}>
+                        <Text variant="h3">Event History</Text>
+                        <TouchableOpacity
+                            onPress={() => setShowEventHistory(false)}
+                            style={styles.closeButton}
+                        >
+                            <Text variant="body1" style={{ color: theme.colors.primary[500] }}>Done</Text>
+                        </TouchableOpacity>
+                    </View>
+                    <EventHistory
+                        onEventPress={(eventId) => {
+                            setShowEventHistory(false);
+                            router.push(`/event/${eventId}`);
+                        }}
+                    />
+                </View>
+            </Modal>
         </PageView>
     )
 }
@@ -745,5 +801,22 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         borderWidth: 1,
         marginBottom: 8,
+    },
+    eventHistoryModal: {
+        flex: 1,
+        paddingTop: 60,
+        paddingHorizontal: 16,
+    },
+    eventHistoryHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 20,
+        paddingBottom: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: '#e5e5e5',
+    },
+    closeButton: {
+        padding: 8,
     },
 });
