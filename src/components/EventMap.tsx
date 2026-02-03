@@ -1,6 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { Platform, View, StyleSheet, TouchableOpacity, Image } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Platform, View, StyleSheet, TouchableOpacity, Image, Modal } from 'react-native';
 import { Event } from '../types/events';
 import { Venue } from '../types/venues';
 import { useTheme } from '../context/ThemeContext';
@@ -57,8 +56,8 @@ const customMapStyle = [
   { featureType: 'administrative', elementType: 'labels', stylers: [{ visibility: 'on' }] },
 ];
 
-const EventMap: React.FC<MapViewWebProps> = ({
-  events,
+const EventMap: React.FC<MapViewWebProps> = ({ 
+  events, 
   venues,
   venuesLoading,
   onEventPress,
@@ -67,32 +66,64 @@ const EventMap: React.FC<MapViewWebProps> = ({
   selectedCity
 }) => {
   const { theme } = useTheme();
-  const insets = useSafeAreaInsets();
   const mapRef = useRef<any>(null);
   const [activeCalloutId, setActiveCalloutId] = useState<string | null>(null);
   const markerClickedRef = useRef<boolean>(false);
   const lastActionRef = useRef<{ type: 'marker' | 'map' | 'callout', timestamp: number } | null>(null);
+  const hasUserInteractedRef = useRef<boolean>(false);
 
   // Mobile bottom sheet state
   const [selectedVenue, setSelectedVenue] = useState<{ venue: Venue; events: Event[] } | null>(null);
   const [currentEventIndex, setCurrentEventIndex] = useState(0);
 
-  // Calculate initial camera based on selected city
+  // Debug activeCalloutId changes
+  useEffect(() => {
+    // console.log('🔄 activeCalloutId STATE CHANGED:', { 
+    //   previous: 'see prev log', 
+    //   current: activeCalloutId,
+    //   timestamp: new Date().toISOString()
+    // });
+  }, [activeCalloutId]);
+
+  // Calculate initial camera based on selected city (not venues)
   const getInitialCamera = () => {
+    // console.log('🗺️ getInitialCamera called with selectedCity:', selectedCity);
+    
+    // Always use city center for initial camera to avoid flashing
     const cityCenter = getCityCenter(selectedCity);
-    return {
+    // console.log('🗺️ Using city center for initial camera:', cityCenter, 'for city:', selectedCity);
+
+    const camera = {
       center: cityCenter,
       zoom: 12,
       heading: 0,
       pitch: 0,
     };
+
+    // console.log('🗺️ Final camera object:', camera);
+    return camera;
   };
 
   const initialCamera = getInitialCamera();
+  // console.log('🗺️ MapView initialCamera set to:', initialCamera);
 
-  // Fit to venues when they load - only runs once per mount
+  // Add effect to force camera update when component mounts
   useEffect(() => {
-    if (!venuesLoading && venues.length > 0 && mapRef.current) {
+    if (mapRef.current) {
+      // console.log('🗺️ Map mounted, forcing camera to:', initialCamera.center);
+      // Force immediate camera update after mount
+      setTimeout(() => {
+        mapRef.current?.animateCamera({
+          center: initialCamera.center,
+          zoom: initialCamera.zoom,
+        }, { duration: 0 });
+      }, 100);
+    }
+  }, []); // Run only on mount
+
+  useEffect(() => {
+    // Simple auto-fit to venues when venues are loaded, but only if user hasn't interacted
+    if (!venuesLoading && venues.length > 0 && mapRef.current && !hasUserInteractedRef.current) {
       const coords = venues
         .map(v => ({
           latitude: Number(v.latitude),
@@ -101,16 +132,18 @@ const EventMap: React.FC<MapViewWebProps> = ({
         .filter(c => !Number.isNaN(c.latitude) && !Number.isNaN(c.longitude) && c.latitude !== 0 && c.longitude !== 0);
 
       if (coords.length > 0) {
-        // Fit to coordinates with edge padding
+        // console.log('🗺️ Fitting map to venue coordinates:', coords);
+        // Simple timeout then fit to coordinates - no padding
         setTimeout(() => {
           mapRef.current?.fitToCoordinates(coords, {
-            edgePadding: { top: 100, right: 50, bottom: 150, left: 50 },
-            animated: false,
+            animated: true,
           });
-        }, 100);
+        }, 500);
       }
+    } else {
+      // console.log('🗺️ Not fitting to venues. Venues count:', venues.length, 'Loading:', venuesLoading);
     }
-  }, [venuesLoading]);
+  }, [venuesLoading, venues]);
 
   // Close active callout when highlighted event changes
   useEffect(() => {
@@ -127,8 +160,13 @@ const EventMap: React.FC<MapViewWebProps> = ({
     );
   };
 
-  // Handle callout toggle
+  // Handle callout toggle with logging
   const handleCalloutToggle = (venueId: string | null) => {
+    // Mark that user has interacted to prevent auto-fit from interfering
+    if (venueId !== null) {
+      hasUserInteractedRef.current = true;
+    }
+
     // console.log('📍 Callout toggle requested:', {
     //   from: activeCalloutId,
     //   to: venueId,
@@ -187,6 +225,7 @@ const EventMap: React.FC<MapViewWebProps> = ({
 
   // Function to center map on a specific coordinate
   const centerMapOnMarker = (latitude: number, longitude: number) => {
+    hasUserInteractedRef.current = true; // Mark user interaction
     if (mapRef.current) {
       // console.log('🎯 Centering map on marker:', { latitude, longitude });
       mapRef.current.animateCamera({
@@ -241,10 +280,10 @@ const EventMap: React.FC<MapViewWebProps> = ({
         showsMyLocationButton={false}
         zoomEnabled={true}
         scrollEnabled={true}
-        minZoomLevel={10}
-        maxZoomLevel={18}
         customMapStyle={customMapStyle}
         onPress={handleMapClick}
+        onPanDrag={() => { hasUserInteractedRef.current = true; }}
+        onRegionChangeComplete={() => { hasUserInteractedRef.current = true; }}
         {...webOnlyProps}
       >
   {!venuesLoading && sortedVenueEntries.map(({ venue, venueEvents, isHighlighted, isActive }) => {
@@ -289,7 +328,7 @@ const EventMap: React.FC<MapViewWebProps> = ({
 
       {/* Mobile Bottom Sheet */}
       {Platform.OS !== 'web' && selectedVenue && (
-        <View style={[styles.bottomSheet, { backgroundColor: theme.colors.background.primary, borderColor: theme.colors.border.light, paddingBottom: insets.bottom }]}>
+        <View style={[styles.bottomSheet, { backgroundColor: theme.colors.background.primary, borderColor: theme.colors.border.light }]}>
           {/* Event Image */}
           <Image
             source={
