@@ -104,6 +104,16 @@ export default function UserProfilePage() {
     }
   };
 
+  const handleBack = () => {
+    // Use Expo Router's canGoBack() to check if there's a previous screen in the stack
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      // No previous screen in the app's navigation stack, go to home
+      router.replace('/');
+    }
+  };
+
   const handleFollow = async () => {
     if (!profile || !isLoggedIn) return;
 
@@ -188,7 +198,7 @@ export default function UserProfilePage() {
           </Text>
           <TouchableOpacity
             style={[styles.button, { backgroundColor: theme.colors.primary[500] }]}
-            onPress={() => router.back()}
+            onPress={handleBack}
           >
             <Text variant="body1" style={{ color: '#fff', fontWeight: '600' }}>
               Go Back
@@ -205,7 +215,7 @@ export default function UserProfilePage() {
     <View style={[styles.container, { backgroundColor: theme.colors.background.primary }]}>
       {/* Header */}
       <View style={[styles.header, { borderBottomColor: theme.colors.border.light }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+        <TouchableOpacity onPress={handleBack} style={styles.backButton}>
           <Text variant="body1" style={{ color: theme.colors.text.secondary }}>
             ← Back
           </Text>

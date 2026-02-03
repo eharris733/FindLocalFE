@@ -353,21 +353,13 @@ export default function EventPage() {
   };
 
   const handleBack = () => {
-    // Check if we can go back in history
-    if (Platform.OS === 'web' && typeof globalThis.window !== 'undefined') {
-      if (globalThis.window.history.length > 1) {
-        router.back();
-      } else {
-        // No history, navigate to home
-        router.push('/');
-      }
+    // Use Expo Router's canGoBack() to check if there's a previous screen in the stack
+    // This works across all platforms (web, iOS, Android)
+    if (router.canGoBack()) {
+      router.back();
     } else {
-      // On mobile, canGoBack should work
-      if (router.canGoBack()) {
-        router.back();
-      } else {
-        router.push('/');
-      }
+      // No previous screen in the app's navigation stack, go to home
+      router.replace('/');
     }
   };
 
