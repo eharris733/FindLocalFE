@@ -88,10 +88,12 @@ const EventMap: React.FC<MapViewWebProps> = ({
   // Calculate initial region based on selected city (not venues)
   const getInitialRegion = () => {
     const cityCenter = getCityCenter(selectedCity);
+    // Web needs tighter zoom (smaller delta = more zoomed in)
+    const delta = Platform.OS === 'web' ? 0.05 : 0.15;
     return {
       ...cityCenter,
-      latitudeDelta: 0.15,  // ~10 miles vertical span - good city view
-      longitudeDelta: 0.15,
+      latitudeDelta: delta,
+      longitudeDelta: delta,
     };
   };
 
@@ -112,6 +114,7 @@ const EventMap: React.FC<MapViewWebProps> = ({
         setTimeout(() => {
           mapRef.current?.fitToCoordinates(coords, {
             animated: true,
+            edgePadding: { top: 100, right: 100, bottom: 100, left: 100 },
           });
         }, 500);
       }
@@ -237,9 +240,16 @@ const EventMap: React.FC<MapViewWebProps> = ({
   const webOnlyProps =
     Platform.OS === 'web'
       ? {
+          provider: 'google' as const,
           googleMapsApiKey: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY,
-          options: { clickableIcons: false },
-          zoomControlEnabled: true,
+          options: {
+            clickableIcons: false,
+            mapTypeControl: false,
+            streetViewControl: false,
+            fullscreenControl: false,
+            zoomControl: false,
+          },
+          zoomControlEnabled: false,
         }
       : {};
 
@@ -397,10 +407,12 @@ const EventMap: React.FC<MapViewWebProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    ...(Platform.OS === 'web' && { height: '100%', width: '100%' }),
   },
   map: {
     flex: 1,
     width: '100%',
+    ...(Platform.OS === 'web' && { height: '100%' }),
   },
   debugOverlay: {
     position: 'absolute',

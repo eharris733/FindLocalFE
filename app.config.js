@@ -52,7 +52,7 @@ module.exports = {
     web: {
       favicon: "./assets/monocle.png",
       bundler: "metro",
-      output: "static",
+      output: "single",
       build: {
         babel: {
           include: ["@expo-google-fonts/work-sans"]

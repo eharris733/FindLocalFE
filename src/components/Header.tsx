@@ -7,10 +7,10 @@ export default function Header() {
 
     const handleNavLinkPress = (link: string) => {
         // Empty string = logo click, go to home
-        if (link === '') {
+        if (link === '' || link.toLowerCase() === 'home') {
             router.navigate('/home');
-        } else if (link.toLowerCase() === 'events') {
-            // Events goes to discover page
+        } else if (link.toLowerCase() === 'discover') {
+            // Discover goes to root page
             router.navigate('/');
         } else {
             router.navigate(`/${link.toLowerCase()}`);
