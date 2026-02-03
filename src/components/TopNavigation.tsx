@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, TouchableOpacity, Pressable, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { Text } from './ui';
 import { CityPicker } from './ui/CityPicker';
@@ -52,6 +51,15 @@ export default function TopNavigation({ onNavLinkPress }: TopNavigationProps) {
   const [showHamburgerMenu, setShowHamburgerMenu] = useState(false);
 
   const navLinks = ['Home', 'Discover', 'Create', 'Friends', 'Map'];
+
+  // Emoji mappings for nav items (used in hamburger menu on mobile web)
+  const navLinkEmojis: Record<string, string> = {
+    'Home': '🏠',
+    'Discover': '🧭',
+    'Create': '➕',
+    'Friends': '👥',
+    'Map': '🗺️',
+  };
 
   const formatCommunityName = (name: string) => {
     const lower = name.toLowerCase();
@@ -105,7 +113,7 @@ export default function TopNavigation({ onNavLinkPress }: TopNavigationProps) {
                 style={[styles.hamburgerButton, { backgroundColor: theme.colors.background.secondary }]}
                 onPress={() => setShowHamburgerMenu(!showHamburgerMenu)}
               >
-                <Ionicons name="menu" size={24} color={theme.colors.text.primary} />
+                <Text style={{ fontSize: 20, lineHeight: 20, marginTop: -2, color: theme.colors.text.primary }}>☰</Text>
               </TouchableOpacity>
             ) : useCollapsedNav ? (
               // NATIVE MOBILE/TABLET: City picker button (UNCHANGED)
@@ -188,11 +196,7 @@ export default function TopNavigation({ onNavLinkPress }: TopNavigationProps) {
                   {getUserInitials()}
                 </Text>
               ) : (
-                <Ionicons
-                  name="person-circle-outline"
-                  size={28}
-                  color={theme.colors.text.primary}
-                />
+                <Text style={{ fontSize: 20, lineHeight: 20 }}>👤</Text>
               )}
             </TouchableOpacity>
           </View>
@@ -244,11 +248,11 @@ export default function TopNavigation({ onNavLinkPress }: TopNavigationProps) {
                 handleCityPickerOpen();
               }}
             >
-              <Ionicons name="location-outline" size={20} color={theme.colors.text.primary} />
+              <Text style={{ fontSize: 18 }}>📍</Text>
               <Text variant="body1" color="primary" style={styles.hamburgerItemText}>
                 {selectedCity}
               </Text>
-              <Ionicons name="chevron-forward" size={16} color={theme.colors.text.tertiary} />
+              <Text style={{ fontSize: 16, color: theme.colors.text.tertiary }}>›</Text>
             </TouchableOpacity>
 
             {/* Nav links */}
@@ -264,17 +268,7 @@ export default function TopNavigation({ onNavLinkPress }: TopNavigationProps) {
                   setShowHamburgerMenu(false);
                 }}
               >
-                <Ionicons
-                  name={
-                    link === 'Home' ? 'home-outline' :
-                    link === 'Discover' ? 'compass-outline' :
-                    link === 'Create' ? 'add-circle-outline' :
-                    link === 'Friends' ? 'people-outline' :
-                    link === 'Map' ? 'map-outline' : 'ellipse-outline'
-                  }
-                  size={20}
-                  color={theme.colors.text.primary}
-                />
+                <Text style={{ fontSize: 18 }}>{navLinkEmojis[link] || '•'}</Text>
                 <Text variant="body1" color="primary" style={styles.hamburgerItemText}>
                   {link}
                 </Text>
@@ -290,7 +284,7 @@ export default function TopNavigation({ onNavLinkPress }: TopNavigationProps) {
 const styles = StyleSheet.create({
   container: {
     paddingTop: 8,
-    paddingBottom: 0,
+    paddingBottom: 8,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
     zIndex: 1000,
