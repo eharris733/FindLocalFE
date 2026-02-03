@@ -313,10 +313,10 @@ function SuggestionItem({
       <UserAvatar user={profile} size={44} />
       <View style={styles.suggestionInfo}>
         <Text variant="body1" style={{ fontWeight: '600' }}>
-          {profile.full_name || profile.username || 'Unknown'}
+          {profile?.full_name || profile?.username || 'Unknown'}
         </Text>
         <Text variant="caption" color="secondary">
-          @{profile.username}
+          @{profile?.username}
         </Text>
         {profile.bio && (
           <Text
@@ -740,16 +740,8 @@ export default function FriendsRoute() {
 
           <View style={styles.growCardButtons}>
             <Button
-              title="📱 Invite Contacts"
-              variant="secondary"
-              style={{ flex: 1, marginRight: 8 }}
-              onPress={() => {
-                // TODO: Implement contact invite
-              }}
-            />
-            <Button
               title="🔗 Share Link"
-              variant="outline"
+              variant="primary"
               style={{ flex: 1 }}
               onPress={handleShareLink}
             />

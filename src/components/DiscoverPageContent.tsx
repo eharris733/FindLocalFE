@@ -10,9 +10,10 @@ import type { Event } from '../types/events';
 
 interface DiscoverPageContentProps {
   onEventPress: (event: Event) => void;
+  initialViewMode?: 'list' | 'map';
 }
 
-export function DiscoverPageContent({ onEventPress }: DiscoverPageContentProps) {
+export function DiscoverPageContent({ onEventPress, initialViewMode = 'list' }: DiscoverPageContentProps) {
   const { selectedCity, selectedRegions } = useCityLocation();
   const { selectedCommunities } = useCommunity();
   const { data: communitiesData } = useCommunitiesQuery(selectedCity);
@@ -68,6 +69,7 @@ export function DiscoverPageContent({ onEventPress }: DiscoverPageContentProps) 
       venuesLoading={venuesLoading}
       availableFilterOptions={availableFilterOptions}
       onEventPress={onEventPress}
+      initialViewMode={initialViewMode}
     />
   );
 }

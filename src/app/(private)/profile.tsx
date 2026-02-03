@@ -1,5 +1,6 @@
-import {StyleSheet, View, TouchableOpacity, TextInput, Modal, ScrollView, Image, ActivityIndicator} from 'react-native'
+import {StyleSheet, View, TouchableOpacity, TextInput, Modal, ScrollView, Image, ActivityIndicator, Alert, Platform} from 'react-native'
 import { Text, CityPicker, CommunityPicker, Button} from "../../components/ui";
+import { ThemeToggle } from '../../components/ui/ThemeToggle';
 import {useAuth} from "../../hooks/useAuth";
 import PageView from "../../components/ui/PageView";
 import SignOutButton from "../../components/user/SignOutButton";
@@ -15,13 +16,17 @@ import {
     updateActivityVisibility,
     updateBio,
     checkUsernameAvailability,
+    updateMarketingOptIn,
+    deleteUserAccount,
     AccountType,
     ActivityVisibility
 } from '../../api/profiles';
 import { getFollowerCount, getFollowingCount } from '../../api/friends';
 import { getUserAttendedCount } from '../../api/invitations';
 import EventHistory from '../../components/EventHistory';
+import FeedbackModal from '../../components/FeedbackModal';
 import { logger } from '../../utils/logger';
+import { openLink } from '../../utils/linkUtils';
 
 // Username Edit Modal Component
 function UsernameEditModal({
@@ -251,11 +256,18 @@ export default function ProfileRoute() {
     const [followingCount, setFollowingCount] = useState(0);
     const [attendedCount, setAttendedCount] = useState(0);
     const [showEventHistory, setShowEventHistory] = useState(false);
+    const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+    const [marketingOptIn, setMarketingOptIn] = useState(false);
+    const [updatingOptIn, setUpdatingOptIn] = useState(false);
+    const [deletingAccount, setDeletingAccount] = useState(false);
 
     useEffect(() => {
         if (profile) {
             setAccountType(profile.account_type || 'personal');
             setBio(profile.bio || '');
+            if (profile.marketing_opt_in !== undefined && profile.marketing_opt_in !== null) {
+                setMarketingOptIn(profile.marketing_opt_in);
+            }
         }
     }, [profile]);
 
@@ -333,6 +345,93 @@ export default function ProfileRoute() {
             case 'followers': return 'Followers';
             case 'none': return 'Private';
             default: return 'Friends Only';
+        }
+    };
+
+    const handleMarketingOptInToggle = async () => {
+        if (!session?.user?.id) return;
+
+        const newValue = !marketingOptIn;
+        setMarketingOptIn(newValue);
+        setUpdatingOptIn(true);
+
+        try {
+            const { error } = await updateMarketingOptIn(session.user.id, newValue);
+            if (error) {
+                logger.error('Error updating marketing opt-in:', error);
+                setMarketingOptIn(!newValue);
+            }
+        } catch (err) {
+            logger.error('Error updating marketing opt-in:', err);
+            setMarketingOptIn(!newValue);
+        } finally {
+            setUpdatingOptIn(false);
+        }
+    };
+
+    const handleDeleteAccount = () => {
+        const confirmationMessage =
+            'Are you absolutely sure you want to delete your account?\n\n' +
+            'This action cannot be undone. All your data including:\n' +
+            '• Your profile information\n' +
+            '• Saved favorites\n' +
+            '• Preferences and settings\n\n' +
+            'will be permanently deleted.';
+
+        if (Platform.OS === 'web') {
+            const confirmed = window.confirm(`Delete Account\n\n${confirmationMessage}`);
+            if (confirmed) {
+                confirmDeleteAccount();
+            }
+        } else {
+            Alert.alert(
+                'Delete Account',
+                confirmationMessage,
+                [
+                    { text: 'Cancel', style: 'cancel' },
+                    { text: 'Delete Account', style: 'destructive', onPress: confirmDeleteAccount },
+                ],
+                { cancelable: true }
+            );
+        }
+    };
+
+    const confirmDeleteAccount = async () => {
+        if (!session?.user?.id) return;
+
+        setDeletingAccount(true);
+
+        try {
+            const { success, error } = await deleteUserAccount(session.user.id);
+
+            if (error || !success) {
+                logger.error('Error deleting account:', error);
+                const errorMsg = 'Failed to delete account. Please try again or contact support.';
+                if (Platform.OS === 'web') {
+                    window.alert(errorMsg);
+                } else {
+                    Alert.alert('Error', errorMsg, [{ text: 'OK' }]);
+                }
+                return;
+            }
+
+            const successMsg = 'Your account has been successfully deleted.';
+            if (Platform.OS === 'web') {
+                window.alert(successMsg);
+            } else {
+                Alert.alert('Account Deleted', successMsg, [{ text: 'OK', onPress: () => router.replace('/') }]);
+            }
+            router.replace('/');
+        } catch (err) {
+            logger.error('Error in confirmDeleteAccount:', err);
+            const errorMsg = 'An unexpected error occurred. Please try again.';
+            if (Platform.OS === 'web') {
+                window.alert(errorMsg);
+            } else {
+                Alert.alert('Error', errorMsg, [{ text: 'OK' }]);
+            }
+        } finally {
+            setDeletingAccount(false);
         }
     };
 
@@ -512,7 +611,7 @@ export default function ProfileRoute() {
                             </View>
                         </View>
                     ) : (
-                        <TouchableOpacity 
+                        <TouchableOpacity
                             style={[styles.settingRow, { backgroundColor: theme.colors.background.secondary }]}
                             onPress={() => setIsEditingBio(true)}
                         >
@@ -524,10 +623,36 @@ export default function ProfileRoute() {
                     )}
                 </View>
 
+                {/* Navigation Links */}
+                <View style={[styles.settingSection, { borderTopColor: theme.colors.border.light }]}>
+                    <Text variant="caption" color="tertiary" style={styles.sectionLabel}>QUICK ACCESS</Text>
+                    <TouchableOpacity
+                        style={[styles.settingRow, { backgroundColor: theme.colors.background.secondary, marginBottom: 8 }]}
+                        onPress={() => router.push('/followed-venues')}
+                    >
+                        <Text variant="body1">🏛️ Followed Venues</Text>
+                        <Text variant="body2" color="tertiary">›</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={[styles.settingRow, { backgroundColor: theme.colors.background.secondary, marginBottom: 8 }]}
+                        onPress={() => router.push('/my-invites')}
+                    >
+                        <Text variant="body1">✉️ My Invitations</Text>
+                        <Text variant="body2" color="tertiary">›</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={[styles.settingRow, { backgroundColor: theme.colors.background.secondary }]}
+                        onPress={() => router.push('/discover-creators')}
+                    >
+                        <Text variant="body1">🎭 Discover Creators</Text>
+                        <Text variant="body2" color="tertiary">›</Text>
+                    </TouchableOpacity>
+                </View>
+
                 {/* Privacy Settings */}
                 <View style={[styles.settingSection, { borderTopColor: theme.colors.border.light }]}>
                     <Text variant="caption" color="tertiary" style={styles.sectionLabel}>PRIVACY</Text>
-                    <TouchableOpacity 
+                    <TouchableOpacity
                         style={[styles.settingRow, { backgroundColor: theme.colors.background.secondary }]}
                         onPress={() => setShowVisibilityModal(true)}
                     >
@@ -541,43 +666,75 @@ export default function ProfileRoute() {
                     </TouchableOpacity>
                 </View>
 
-                {/* City Settings */}
+                {/* Location Settings */}
                 <View style={[styles.settingSection, { borderTopColor: theme.colors.border.light }]}>
-                    <Text variant="caption" color="tertiary" style={styles.sectionLabel}>LOCATION</Text>
-                    <TouchableOpacity 
-                        style={[styles.settingRow, { backgroundColor: theme.colors.background.secondary }]}
+                    <Text variant="caption" color="tertiary" style={styles.sectionLabel}>PREFERENCES</Text>
+                    <TouchableOpacity
+                        style={[styles.settingRow, { backgroundColor: theme.colors.background.secondary, marginBottom: 8 }]}
                         onPress={() => setShowCityPicker(true)}
                     >
                         <View style={styles.settingInfo}>
-                            <Text variant="body1" style={styles.settingTitle}>City</Text>
+                            <Text variant="body1" style={styles.settingTitle}>Default Location</Text>
                             <Text variant="body2" color="secondary">{selectedCity}</Text>
                         </View>
                         <Text variant="body2" color="tertiary">›</Text>
                     </TouchableOpacity>
-                </View>
-
-                {/* Community Settings */}
-                <View style={styles.settingSection}>
-                    <Text variant="caption" color="tertiary" style={styles.sectionLabel}>COMMUNITIES</Text>
                     <TouchableOpacity
-                        style={[styles.settingRow, { backgroundColor: theme.colors.background.secondary }]}
+                        style={[styles.settingRow, { backgroundColor: theme.colors.background.secondary, marginBottom: 8 }]}
                         onPress={() => setShowCommunityPicker(true)}
                     >
                         <View style={styles.settingInfo}>
-                            <Text variant="body1" style={styles.settingTitle}>Selected Communities</Text>
+                            <Text variant="body1" style={styles.settingTitle}>Communities</Text>
                             <Text variant="body2" color="secondary">
-                                {selectedCommunities.length === 0
-                                    ? 'Everything'
-                                    : selectedCommunities.join(', ')}
+                                {selectedCommunities.length === 0 ? 'Everything' : selectedCommunities.join(', ')}
                             </Text>
                         </View>
                         <Text variant="body2" color="tertiary">›</Text>
                     </TouchableOpacity>
+                    <TouchableOpacity
+                        style={[styles.checkboxRow, { backgroundColor: theme.colors.background.secondary, padding: 16, borderRadius: 12 }]}
+                        onPress={handleMarketingOptInToggle}
+                        activeOpacity={0.7}
+                        disabled={updatingOptIn}
+                    >
+                        <View style={[
+                            styles.checkbox,
+                            { borderColor: theme.colors.border.light },
+                            marketingOptIn && [styles.checkboxChecked, { backgroundColor: theme.colors.primary[500] }]
+                        ]}>
+                            {marketingOptIn && (
+                                <View style={[styles.checkboxInner, { backgroundColor: theme.colors.background.primary }]} />
+                            )}
+                        </View>
+                        <View style={{ flex: 1 }}>
+                            <Text variant="body1" style={styles.settingTitle}>Email Updates</Text>
+                            <Text variant="body2" color="secondary">
+                                Receive event recommendations and FindLocal updates
+                            </Text>
+                        </View>
+                        {updatingOptIn && (
+                            <ActivityIndicator size="small" color={theme.colors.primary[500]} />
+                        )}
+                    </TouchableOpacity>
+                </View>
+
+                {/* Appearance Section */}
+                <View style={[styles.settingSection, { borderTopColor: theme.colors.border.light }]}>
+                    <Text variant="caption" color="tertiary" style={styles.sectionLabel}>APPEARANCE</Text>
+                    <View style={[styles.settingRow, { backgroundColor: theme.colors.background.secondary }]}>
+                        <View style={styles.settingInfo}>
+                            <Text variant="body1" style={styles.settingTitle}>Theme</Text>
+                            <Text variant="body2" color="secondary">
+                                Choose how FindLocal looks to you
+                            </Text>
+                        </View>
+                        <ThemeToggle showLabel={true} />
+                    </View>
                 </View>
 
                 {/* Event History Section */}
                 <View style={[styles.settingSection, { borderTopColor: theme.colors.border.light }]}>
-                    <Text variant="caption" color="tertiary" style={styles.sectionLabel}>EVENT HISTORY</Text>
+                    <Text variant="caption" color="tertiary" style={styles.sectionLabel}>HISTORY</Text>
                     <TouchableOpacity
                         style={[styles.settingRow, { backgroundColor: theme.colors.background.secondary }]}
                         onPress={() => setShowEventHistory(true)}
@@ -592,12 +749,91 @@ export default function ProfileRoute() {
                     </TouchableOpacity>
                 </View>
 
+                {/* Help Us Improve Section */}
+                <View style={[styles.settingSection, { borderTopColor: theme.colors.border.light }]}>
+                    <Text variant="caption" color="tertiary" style={styles.sectionLabel}>HELP US IMPROVE</Text>
+                    <View style={[styles.helpCard, { backgroundColor: theme.colors.background.secondary }]}>
+                        <Text variant="body1" style={styles.settingTitle}>Share Your Feedback</Text>
+                        <Text variant="body2" color="secondary" style={{ marginTop: 4, marginBottom: 12, lineHeight: 20 }}>
+                            Have a bug to report, feature to suggest, or just want to share your thoughts?
+                        </Text>
+                        <Button
+                            variant="primary"
+                            title="Give Feedback"
+                            onPress={() => setShowFeedbackModal(true)}
+                        />
+                    </View>
+                    <View style={[styles.helpCard, { backgroundColor: theme.colors.background.secondary, marginTop: 12 }]}>
+                        <Text variant="body1" style={styles.settingTitle}>Become a Beta Tester</Text>
+                        <Text variant="body2" color="secondary" style={{ marginTop: 4, marginBottom: 12, lineHeight: 20 }}>
+                            Get notified about updates and perks for beta testers!
+                        </Text>
+                        <Button
+                            variant="outline"
+                            title="Sign Up for Beta Testing"
+                            onPress={() => openLink('https://forms.gle/diBZKyejuUXsdQu46')}
+                        />
+                    </View>
+                </View>
+
+                {/* Legal Section */}
+                <View style={[styles.settingSection, { borderTopColor: theme.colors.border.light }]}>
+                    <Text variant="caption" color="tertiary" style={styles.sectionLabel}>LEGAL</Text>
+                    <TouchableOpacity
+                        style={[styles.settingRow, { backgroundColor: theme.colors.background.secondary, marginBottom: 8 }]}
+                        onPress={() => router.push('/about')}
+                    >
+                        <Text variant="body1">About</Text>
+                        <Text variant="body2" color="tertiary">›</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={[styles.settingRow, { backgroundColor: theme.colors.background.secondary, marginBottom: 8 }]}
+                        onPress={() => router.push('/terms')}
+                    >
+                        <Text variant="body1">Terms of Service</Text>
+                        <Text variant="body2" color="tertiary">›</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={[styles.settingRow, { backgroundColor: theme.colors.background.secondary }]}
+                        onPress={() => router.push('/privacy')}
+                    >
+                        <Text variant="body1">Privacy Policy</Text>
+                        <Text variant="body2" color="tertiary">›</Text>
+                    </TouchableOpacity>
+                </View>
+
+                {/* Sign Out */}
                 <View style={styles.settingSection}>
                     <SignOutButton />
                 </View>
 
+                {/* Danger Zone */}
+                <View style={[styles.settingSection, { borderTopColor: theme.colors.error, borderTopWidth: 2 }]}>
+                    <Text variant="caption" style={[styles.sectionLabel, { color: theme.colors.error }]}>DANGER ZONE</Text>
+                    <View style={[styles.helpCard, { backgroundColor: theme.colors.background.secondary }]}>
+                        <Text variant="body2" color="secondary" style={{ marginBottom: 16, lineHeight: 20 }}>
+                            Once you delete your account, there is no going back. All your data will be permanently deleted.
+                        </Text>
+                        <Button
+                            variant="outline"
+                            title={deletingAccount ? "Deleting..." : "Delete Account"}
+                            onPress={handleDeleteAccount}
+                            disabled={deletingAccount}
+                            style={{ borderColor: theme.colors.error }}
+                        />
+                        {deletingAccount && (
+                            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 12 }}>
+                                <ActivityIndicator size="small" color={theme.colors.error} />
+                                <Text variant="body2" color="secondary" style={{ marginLeft: 8 }}>
+                                    Deleting your account...
+                                </Text>
+                            </View>
+                        )}
+                    </View>
+                </View>
+
                 {/* Bottom spacing */}
-                <View style={{ height: 40 }} />
+                <View style={{ height: 100 }} />
             </ScrollView>
 
             {/* Modals */}
@@ -662,6 +898,12 @@ export default function ProfileRoute() {
                     />
                 </View>
             </Modal>
+
+            {/* Feedback Modal */}
+            <FeedbackModal
+                visible={showFeedbackModal}
+                onClose={() => setShowFeedbackModal(false)}
+            />
         </PageView>
     )
 }
@@ -818,5 +1060,31 @@ const styles = StyleSheet.create({
     },
     closeButton: {
         padding: 8,
+    },
+    checkboxRow: {
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        gap: 12,
+    },
+    checkbox: {
+        width: 20,
+        height: 20,
+        borderWidth: 2,
+        borderRadius: 4,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginTop: 2,
+    },
+    checkboxChecked: {
+        borderColor: 'transparent',
+    },
+    checkboxInner: {
+        width: 8,
+        height: 8,
+        borderRadius: 2,
+    },
+    helpCard: {
+        padding: 16,
+        borderRadius: 12,
     },
 });

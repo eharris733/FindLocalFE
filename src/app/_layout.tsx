@@ -18,7 +18,6 @@ import {useAuth} from "../hooks/useAuth";
 import AuthProvider from "../providers/auth-provider";
 import {SplashScreenController} from "../components/SplashScreenController";
 import { logger } from "../utils/logger";
-import FeedbackModal from "../components/FeedbackModal";
 import BottomTabBar from "../components/BottomTabBar";
 import { View, Platform } from 'react-native';
 import { analytics } from '../utils/analytics';
@@ -112,7 +111,6 @@ export default function RootLayout() {
 function RootNavigator() {
     const { isLoggedIn, session } = useAuth();
     const { isMobile, isTablet } = useDeviceInfo();
-    const [showFeedbackModal, setShowFeedbackModal] = useState(false);
     const [showOnboarding, setShowOnboarding] = useState(false);
     const [onboardingCompleted, setOnboardingCompleted] = useState<boolean | null>(null);
 
@@ -173,17 +171,9 @@ function RootNavigator() {
 
     const [loading, setLoading] = useState(false);
 
-    const handleFeedbackPress = useCallback(() => {
-        setShowFeedbackModal(true);
-    }, []);
-
-    const handleCloseFeedback = useCallback(() => {
-        setShowFeedbackModal(false);
-    }, []);
-
     const renderHeader = useCallback((props: any) => (
-        <Header onFeedbackPress={handleFeedbackPress} {...props} />
-    ), [handleFeedbackPress]);
+        <Header {...props} />
+    ), []);
 
     return (
         <View style={{ flex: 1 }}>
@@ -201,7 +191,6 @@ function RootNavigator() {
                 </Stack.Protected>
             </Stack>
             {Platform.OS !== 'web' && (isMobile || isTablet) && <BottomTabBar />}
-            <FeedbackModal visible={showFeedbackModal} onClose={handleCloseFeedback} />
             <OnboardingModal visible={showOnboarding} onComplete={handleOnboardingComplete} />
         </View>
     );

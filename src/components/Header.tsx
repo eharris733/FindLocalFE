@@ -2,11 +2,7 @@ import TopNavigation from "./TopNavigation";
 import React from "react";
 import {useRouter} from "expo-router";
 
-interface HeaderProps {
-    readonly onFeedbackPress?: () => void;
-}
-
-export default function Header({ onFeedbackPress }: HeaderProps = {}) {
+export default function Header() {
     const router = useRouter();
 
     const handleNavLinkPress = (link: string) => {
@@ -21,5 +17,5 @@ export default function Header({ onFeedbackPress }: HeaderProps = {}) {
         }
     };
 
-    return <TopNavigation onNavLinkPress={handleNavLinkPress} onFeedbackPress={onFeedbackPress} />;
+    return <TopNavigation onNavLinkPress={handleNavLinkPress} />;
 }

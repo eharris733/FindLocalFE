@@ -15,7 +15,7 @@ import type { FilterState, FilterAction } from '../hooks/useEvents';
 import { screenshotMarker } from '../utils/screenshot';
 import { useDeviceInfo } from '../hooks/useDeviceInfo';
 
-type ViewMode = 'gallery' | 'list' | 'map';
+type ViewMode = 'list' | 'map';
 
 interface DateRange {
   start: Date | null;
@@ -436,8 +436,7 @@ const styles = StyleSheet.create({
   container: {
     borderBottomWidth: 1,
     paddingHorizontal: 8,
-    paddingTop: 0,
-    paddingBottom: 8,
+    paddingVertical: 8,
   },
   containerCollapsed: {
     paddingVertical: 4,

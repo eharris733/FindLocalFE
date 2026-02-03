@@ -1,4 +1,4 @@
-import { StatusBar, StyleSheet, View, Text, TouchableOpacity, ActivityIndicator } from "react-native";
+import { StatusBar, StyleSheet, View, ActivityIndicator } from "react-native";
 import FeedbackModal from "../components/FeedbackModal";
 import { DiscoverPageContent } from "../components/DiscoverPageContent";
 import React from "react";
@@ -8,14 +8,18 @@ import type { Event } from "../types/events";
 import { analytics } from '../utils/analytics';
 import { useFocusEffect } from '@react-navigation/native';
 import { StructuredData } from '../components/StructuredData';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 
 export default function IndexRoute() {
     const { theme, isDark } = useTheme();
     const { selectedCity } = useCityLocation();
     const router = useRouter();
+    const searchParams = useLocalSearchParams<{ view?: string }>();
     const [showFeedbackModal, setShowFeedbackModal] = React.useState(false);
     const [shouldRenderContent, setShouldRenderContent] = React.useState(false);
+
+    // Determine initial view mode from query params
+    const initialViewMode = searchParams.view === 'map' ? 'map' : 'list';
 
     // Defer rendering the heavy component until after navigation completes
     React.useEffect(() => {
@@ -62,6 +66,7 @@ export default function IndexRoute() {
             {shouldRenderContent ? (
                 <DiscoverPageContent
                     onEventPress={handleEventPress}
+                    initialViewMode={initialViewMode}
                 />
             ) : (
                 <View style={styles.loadingContainer}>

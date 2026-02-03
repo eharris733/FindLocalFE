@@ -1,9 +1,8 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { View, StyleSheet, Platform } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import FilterBar from './FilterBar';
 import { SetupScreen } from './SetupScreen';
-import GalleryView from './GalleryView';
 import VenueGroupedListView from './VenueGroupedListView';
 import MapPanel from './MapPanel';
 import VenueModal from './VenueModal';
@@ -33,6 +32,7 @@ interface MainLayoutProps {
     labels: string[];
   };
   onEventPress: (event: Event) => void;
+  initialViewMode?: 'list' | 'map';
 }
 
 export default function MainLayout({
@@ -46,11 +46,12 @@ export default function MainLayout({
   venuesLoading,
   availableFilterOptions,
   onEventPress,
+  initialViewMode = 'list',
 }: Readonly<MainLayoutProps>) {
   const { theme } = useTheme();
   const { isMobile } = useDeviceInfo();
   const { selectedCity } = useCityLocation();
-  const [activeTab, setActiveTab] = useState<'gallery' | 'list' | 'map'>('list');
+  const [activeTab, setActiveTab] = useState<'list' | 'map'>(initialViewMode);
   const [highlightedEventId, setHighlightedEventId] = useState<string | undefined>();
   const [selectedVenue, setSelectedVenue] = useState<Venue | null>(null);
   const [showVenueModal, setShowVenueModal] = useState(false);
@@ -73,9 +74,14 @@ export default function MainLayout({
     }
   }, [isMobile]);
 
-  const handleViewModeChange = useCallback((mode: 'gallery' | 'list' | 'map') => {
+  const handleViewModeChange = useCallback((mode: 'list' | 'map') => {
     setActiveTab(mode);
   }, []);
+
+  // Sync activeTab when initialViewMode changes (from URL params)
+  useEffect(() => {
+    setActiveTab(initialViewMode);
+  }, [initialViewMode]);
 
   const handleVenuePress = useCallback((venue: Venue) => {
     setSelectedVenue(venue);
@@ -91,8 +97,8 @@ export default function MainLayout({
     setFilterBarHeight(height);
   }, []);
 
-  // Determine if we should show animated filter bar (list and gallery only, not map)
-  const shouldAnimateFilterBar = activeTab === 'list' || activeTab === 'gallery';
+  // Determine if we should show animated filter bar (list only, not map)
+  const shouldAnimateFilterBar = activeTab === 'list';
 
   // Calculate total top inset (filter bar height only; header already handles safe area)
   const totalTopInset = filterBarHeight;
@@ -131,18 +137,7 @@ export default function MainLayout({
             activeTab === 'map' && { paddingTop: totalTopInset },
           ]}
         >
-          {activeTab === 'gallery' ? (
-            <GalleryView
-              events={events}
-              loading={loading}
-              onEventPress={onEventPress}
-              highlightedEventId={highlightedEventId}
-              venues={venues}
-              onScroll={handleScroll}
-              scrollEventThrottle={scrollEventThrottle}
-              contentInsetTop={totalTopInset}
-            />
-          ) : activeTab === 'list' ? (
+          {activeTab === 'list' ? (
             <VenueGroupedListView
               events={events}
               loading={loading}
@@ -198,19 +193,7 @@ export default function MainLayout({
           activeTab === 'map' && { paddingTop: totalTopInset },
         ]}
       >
-        {activeTab === 'gallery' ? (
-          <GalleryView
-            events={events}
-            loading={loading}
-            onEventPress={onEventPress}
-            onEventHover={handleEventHover}
-            highlightedEventId={highlightedEventId}
-            venues={venues}
-            onScroll={handleScroll}
-            scrollEventThrottle={scrollEventThrottle}
-            contentInsetTop={totalTopInset}
-          />
-        ) : activeTab === 'list' ? (
+        {activeTab === 'list' ? (
           <VenueGroupedListView
             events={events}
             loading={loading}
