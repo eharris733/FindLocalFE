@@ -14,6 +14,7 @@ import { useTheme } from '../context/ThemeContext';
 import { Text } from './ui';
 import { getDisplayCityName } from '../utils/cityUtils';
 import { getGenresFromEventTypes, getGenreDisplayLabel } from '../constants/eventCategories';
+import { openLink } from '../utils/linkUtils';
 
 interface EventBottomSheetProps {
   visible: boolean;
@@ -53,7 +54,7 @@ const EventBottomSheet: React.FC<EventBottomSheetProps> = ({ visible, event, onE
     if (onEventPress) {
       onEventPress(event);
     } else if (event.detail_page_url) {
-      Linking.openURL(event.detail_page_url);
+      openLink(event.detail_page_url);
     }
   };
 

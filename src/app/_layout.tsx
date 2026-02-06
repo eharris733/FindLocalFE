@@ -18,13 +18,29 @@ import {useAuth} from "../hooks/useAuth";
 import AuthProvider from "../providers/auth-provider";
 import {SplashScreenController} from "../components/SplashScreenController";
 import { logger } from "../utils/logger";
-import FeedbackModal from "../components/FeedbackModal";
-import { View } from 'react-native';
+import BottomTabBar from "../components/BottomTabBar";
+import { View, Platform } from 'react-native';
 import { analytics } from '../utils/analytics';
+import { useDeviceInfo } from '../hooks/useDeviceInfo';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import OnboardingModal from '../components/OnboardingModal';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { STORAGE_KEYS } from '../constants/storage-keys';
+import { updateInterests, updatePreferredCity } from '../api/profiles';
 
 // Prevent auto hide with error handling for Expo Go
 SplashScreen.preventAutoHideAsync().catch((error) => {
     logger.warn('SplashScreen.preventAutoHideAsync failed:', error);
+});
+
+// Create QueryClient instance
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      gcTime: 30 * 60 * 1000, // 30 minutes (formerly cacheTime)
+    },
+  },
 });
 
 export default function RootLayout() {
@@ -72,47 +88,100 @@ export default function RootLayout() {
     // error state
 
     return (
-        <ThemeProvider>
-            <AuthProvider>
-                <CityProvider>
-                    <CommunityProvider>
-                        <FavoritesProvider>
-                            <FriendsProvider>
-                                <SplashScreenController />
-                                <RootNavigator />
-                            </FriendsProvider>
-                        </FavoritesProvider>
-                    </CommunityProvider>
-                </CityProvider>
-            </AuthProvider>
-        </ThemeProvider>
+        <QueryClientProvider client={queryClient}>
+            <ThemeProvider>
+                <AuthProvider>
+                    <CityProvider>
+                        <CommunityProvider>
+                            <FavoritesProvider>
+                                <FriendsProvider>
+                                    <SplashScreenController />
+                                    <RootNavigator />
+                                </FriendsProvider>
+                            </FavoritesProvider>
+                        </CommunityProvider>
+                    </CityProvider>
+                </AuthProvider>
+            </ThemeProvider>
+        </QueryClientProvider>
     );
 }
 
 // Separate this into a new component so it can access the SessionProvider context later
 function RootNavigator() {
-    const { isLoggedIn } = useAuth();
-    const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+    const { isLoggedIn, session } = useAuth();
+    const { isMobile, isTablet } = useDeviceInfo();
+    const [showOnboarding, setShowOnboarding] = useState(false);
+    const [onboardingCompleted, setOnboardingCompleted] = useState<boolean | null>(null);
 
-    const handleFeedbackPress = useCallback(() => {
-        setShowFeedbackModal(true);
-    }, []);
+    // Check if user has completed onboarding
+    useEffect(() => {
+        const checkOnboarding = async () => {
+            try {
+                const completed = await AsyncStorage.getItem(STORAGE_KEYS.ONBOARDING_COMPLETED);
+                const isCompleted = completed === 'true';
+                setOnboardingCompleted(isCompleted);
 
-    const handleCloseFeedback = useCallback(() => {
-        setShowFeedbackModal(false);
-    }, []);
+                // Show onboarding if not completed and not logged in
+                if (!isCompleted && !session) {
+                    setShowOnboarding(true);
+                }
+            } catch (error) {
+                logger.error('Error checking onboarding status:', error);
+                setOnboardingCompleted(false);
+            }
+        };
+        checkOnboarding();
+    }, [session]);
+
+    const handleOnboardingComplete = useCallback(async (selectedInterests?: string[]) => {
+        try {
+            setLoading(true);
+
+            // Mark onboarding as completed
+            setOnboardingCompleted(true);
+
+            // Save interests locally
+            if (selectedInterests && selectedInterests.length > 0) {
+                await AsyncStorage.setItem(STORAGE_KEYS.SELECTED_INTERESTS, JSON.stringify(selectedInterests));
+            }
+
+            // If user just signed in via OAuth, save preferences to their profile
+            if (session?.user?.id && selectedInterests) {
+                const savedCity = await AsyncStorage.getItem(STORAGE_KEYS.PREFERRED_CITY);
+                if (savedCity) {
+                    // Save city and interests to profile to prevent profile sync from overriding
+                    await Promise.all([
+                        updatePreferredCity(session.user.id, savedCity),
+                        selectedInterests.length > 0 ? updateInterests(session.user.id, selectedInterests) : Promise.resolve(),
+                    ]);
+                    logger.info('✅ Saved onboarding preferences to profile:', { city: savedCity, interests: selectedInterests });
+                }
+            }
+
+            setShowOnboarding(false);
+            setLoading(false);
+        } catch (error) {
+            logger.error('Error saving onboarding data:', error);
+            setShowOnboarding(false);
+            setOnboardingCompleted(true);
+            setLoading(false);
+        }
+    }, [session]);
+
+    const [loading, setLoading] = useState(false);
 
     const renderHeader = useCallback((props: any) => (
-        <Header onFeedbackPress={handleFeedbackPress} {...props} />
-    ), [handleFeedbackPress]);
+        <Header {...props} />
+    ), []);
 
     return (
         <View style={{ flex: 1 }}>
-            <Stack 
-                screenOptions={{ 
+            <Stack
+                screenOptions={{
                     header: renderHeader
-                }} 
-                initialRouteName="index"
+                }}
+                initialRouteName="home"
             >
                 <Stack.Protected guard={isLoggedIn}>
                     <Stack.Screen name="(private)" options={{ headerShown: false }} />
@@ -121,7 +190,8 @@ function RootNavigator() {
                     <Stack.Screen name="user/signin" />
                 </Stack.Protected>
             </Stack>
-            <FeedbackModal visible={showFeedbackModal} onClose={handleCloseFeedback} />
+            {Platform.OS !== 'web' && (isMobile || isTablet) && <BottomTabBar />}
+            <OnboardingModal visible={showOnboarding} onComplete={handleOnboardingComplete} />
         </View>
     );
 }

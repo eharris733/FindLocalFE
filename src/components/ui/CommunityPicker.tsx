@@ -3,6 +3,8 @@ import { View, TouchableOpacity, StyleSheet, Modal, ScrollView, ActivityIndicato
 import { useTheme } from '../../context/ThemeContext';
 import { Text } from './Text';
 import { useCommunity } from '../../context/CommunityContext';
+import { useCityLocation } from '../../context/CityContext';
+import { useCommunitiesQuery } from '../../hooks/queries/useCommunitiesQuery';
 
 interface CommunityPickerProps {
   showTrigger?: boolean;
@@ -16,9 +18,14 @@ export const CommunityPicker: React.FC<CommunityPickerProps> = ({
   onClose,
 }) => {
   const { theme } = useTheme();
-  const { selectedCommunities, allCommunities, onCommunitiesChange, loading } = useCommunity();
+  const { selectedCommunities, onCommunitiesChange } = useCommunity();
+  const { selectedCity } = useCityLocation();
+  const { data: communitiesData, isLoading: loading } = useCommunitiesQuery(selectedCity);
   const [isOpen, setIsOpen] = useState(initiallyOpen);
   const [pendingSelection, setPendingSelection] = useState<string[]>(selectedCommunities);
+
+  // Stabilize allCommunities reference to prevent infinite re-renders
+  const allCommunities = React.useMemo(() => communitiesData ?? [], [communitiesData]);
 
   // Sync pending selection when modal opens
   useEffect(() => {
@@ -55,6 +62,9 @@ export const CommunityPicker: React.FC<CommunityPickerProps> = ({
     }
     if (lower === 'culture') {
       return 'Culture';
+    }
+    if (lower === 'dance'){
+      return 'Dance';
     }
     // Default: capitalize first letter
     return name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
@@ -152,46 +162,55 @@ export const CommunityPicker: React.FC<CommunityPickerProps> = ({
                   {allCommunities.map((community) => {
                     const isSelected = pendingSelection.includes(community.name);
                     return (
-                      <TouchableOpacity
+                      <View
                         key={community.id}
-                        style={[
-                          styles.communityOption,
-                          {
-                            backgroundColor: isSelected
-                              ? theme.colors.primary[50]
-                              : 'transparent',
-                            borderColor: theme.colors.border.light,
-                            borderLeftWidth: 4,
-                            borderLeftColor: isSelected
-                              ? community.metadata.color
-                              : 'transparent',
-                          }
-                        ]}
-                        onPress={() => handleToggleCommunity(community.name)}
+                        style={{
+                          borderLeftWidth: 4,
+                          borderLeftColor: isSelected
+                            ? community.metadata?.color
+                            : 'transparent',
+                          borderTopLeftRadius: 12,
+                          borderBottomLeftRadius: 12,
+                          overflow: 'hidden',
+                        }}
                       >
-                        <View style={styles.communityRow}>
-                          <Text variant="h4" style={{ fontSize: 24 }}>
-                            {community.metadata.icon}
-                          </Text>
-                          <View style={{ marginLeft: 12, flex: 1 }}>
-                            <Text
-                              variant="h4"
-                              color={isSelected ? 'primary' : 'secondary'}
-                              style={{ fontWeight: isSelected ? '700' : '600' }}
-                            >
-                              {formatCommunityName(community.name)}
+                        <TouchableOpacity
+                          style={[
+                            styles.communityOption,
+                            {
+                              backgroundColor: isSelected
+                                ? theme.colors.primary[50]
+                                : 'transparent',
+                              borderColor: theme.colors.border.light,
+                              marginVertical: 0,
+                            }
+                          ]}
+                          onPress={() => handleToggleCommunity(community.name)}
+                        >
+                          <View style={styles.communityRow}>
+                            <Text variant="h4" style={{ fontSize: 24 }}>
+                              {community.metadata?.icon}
                             </Text>
-                            {community.description && (
-                              <Text variant="caption" color="tertiary" style={{ marginTop: 2 }}>
-                                {community.description}
+                            <View style={{ marginLeft: 12, flex: 1 }}>
+                              <Text
+                                variant="h4"
+                                color={isSelected ? 'primary' : 'secondary'}
+                                style={{ fontWeight: isSelected ? '700' : '600' }}
+                              >
+                                {formatCommunityName(community.name)}
                               </Text>
-                            )}
+                              {community.description && (
+                                <Text variant="caption" color="tertiary" style={{ marginTop: 2 }}>
+                                  {community.description}
+                                </Text>
+                              )}
+                            </View>
                           </View>
-                        </View>
-                        {isSelected && (
-                          <Text variant="body1" color="primary">✓</Text>
-                        )}
-                      </TouchableOpacity>
+                          {isSelected && (
+                            <Text variant="body1" color="primary">✓</Text>
+                          )}
+                        </TouchableOpacity>
+                      </View>
                     );
                   })}
                 </>
@@ -273,7 +292,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: 16,
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     marginVertical: 4,
     borderRadius: 12,
     borderWidth: 1,

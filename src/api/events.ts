@@ -5,6 +5,11 @@ import { logger } from '../utils/logger';
 
 const PAGE_SIZE = 1000;
 
+export interface EventWithExpiredStatus {
+  event: Event | null;
+  isExpired: boolean;
+}
+
 export async function getEvents(city?: string, region?: string): Promise<Event[]> {
     try {
       let allEvents: Event[] = [];
@@ -147,6 +152,55 @@ export async function getEventById(eventId: string): Promise<Event | null> {
     return data as Event;
   } catch (error: any) {
     logger.error('Error fetching event by ID:', error);
+    throw new Error(`Failed to fetch event: ${error.message}`);
+  }
+}
+
+/**
+ * Fetch an event by ID with fallback to old_events table
+ * Returns the event and whether it came from the archive (expired)
+ */
+export async function getEventByIdWithFallback(eventId: string): Promise<EventWithExpiredStatus> {
+  try {
+    // 1. Try events_gold first (active events)
+    const { data: goldEvent, error: goldError } = await supabase
+      .from('events_gold')
+      .select('*')
+      .eq('id', eventId)
+      .single();
+
+    if (goldEvent) {
+      logger.info(`Fetched active event with ID: ${eventId}`);
+      return { event: goldEvent as Event, isExpired: false };
+    }
+
+    // Log the gold error for debugging, but continue to fallback
+    if (goldError && goldError.code !== 'PGRST116') {
+      logger.warn('Error fetching from events_gold (continuing to fallback):', goldError);
+    }
+
+    // 2. Fallback to old_events (archived events)
+    logger.info(`Event not found in events_gold, checking old_events for ID: ${eventId}`);
+    const { data: oldEvent, error: oldError } = await supabase
+      .from('old_events')
+      .select('*')
+      .eq('id', eventId)
+      .single();
+
+    if (oldEvent) {
+      logger.info(`Fetched expired event from archive with ID: ${eventId}`);
+      return { event: oldEvent as Event, isExpired: true };
+    }
+
+    // Event not found in either table
+    if (oldError) {
+      logger.warn('Error fetching from old_events:', oldError);
+    }
+
+    logger.warn(`No event found with ID: ${eventId} in either events_gold or old_events`);
+    return { event: null, isExpired: false };
+  } catch (error: any) {
+    logger.error('Error fetching event by ID with fallback:', error);
     throw new Error(`Failed to fetch event: ${error.message}`);
   }
 }
@@ -385,7 +439,7 @@ export async function getEventsFromFollowedCreators(
 export async function getUpcomingEventsForVenue(venueId: string, limit: number = 3): Promise<Event[]> {
   try {
     const today = new Date().toISOString().split('T')[0];
-    
+
     const { data, error } = await supabase
       .from('events_gold')
       .select('*')
@@ -402,6 +456,167 @@ export async function getUpcomingEventsForVenue(venueId: string, limit: number =
     return (data || []) as Event[];
   } catch (error: any) {
     logger.error('Error fetching upcoming events for venue:', error);
+    return [];
+  }
+}
+
+/**
+ * Network event activity - events from user's network with source attribution
+ */
+export interface NetworkEventActivity {
+  event: Event;
+  source_type: 'followed_venue' | 'followed_creator' | 'friend_attending';
+  source_name: string;
+  source_id: string;
+  source_avatar_url?: string | null;
+}
+
+/**
+ * Get events from user's network (followed venues, followed creators, friends attending)
+ * Combines multiple sources and returns with attribution
+ */
+export async function getEventsFromNetwork(userId: string): Promise<NetworkEventActivity[]> {
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    const activities: NetworkEventActivity[] = [];
+    const seenEventIds = new Set<string>();
+
+    // 1. Get events from followed venues
+    const { data: venueFollows } = await supabase
+      .from('venue_follows')
+      .select('venue_id')
+      .eq('user_id', userId);
+
+    if (venueFollows && venueFollows.length > 0) {
+      const venueIds = venueFollows.map(vf => vf.venue_id);
+
+      // Get venue details
+      const { data: venues } = await supabase
+        .from('venues')
+        .select('id, name')
+        .in('id', venueIds);
+
+      const venueMap = new Map((venues || []).map(v => [v.id, v]));
+
+      // Get upcoming events at these venues
+      const { data: venueEvents } = await supabase
+        .from('events_gold')
+        .select('*')
+        .in('venue_id', venueIds)
+        .gte('event_date', today)
+        .order('event_date', { ascending: true })
+        .limit(20);
+
+      if (venueEvents) {
+        for (const event of venueEvents) {
+          if (!seenEventIds.has(event.id)) {
+            seenEventIds.add(event.id);
+            const venue = venueMap.get(event.venue_id);
+            activities.push({
+              event: event as Event,
+              source_type: 'followed_venue',
+              source_name: venue?.name || 'Venue',
+              source_id: event.venue_id,
+              source_avatar_url: null,
+            });
+          }
+        }
+      }
+    }
+
+    // 2. Get events from followed creators
+    const creatorActivities = await getEventsFromFollowedCreators(userId);
+    for (const activity of creatorActivities) {
+      if (!seenEventIds.has(activity.event.id)) {
+        seenEventIds.add(activity.event.id);
+        activities.push({
+          event: activity.event,
+          source_type: 'followed_creator',
+          source_name: activity.creator.full_name || activity.creator.username || 'Creator',
+          source_id: activity.creator.id,
+          source_avatar_url: activity.creator.avatar_url,
+        });
+      }
+    }
+
+    // 3. Get events friends are attending
+    // First get the user's friends
+    const { data: friendships } = await supabase
+      .from('friendships')
+      .select('user_id_1, user_id_2')
+      .or(`user_id_1.eq.${userId},user_id_2.eq.${userId}`);
+
+    if (friendships && friendships.length > 0) {
+      const friendIds = friendships.map(f =>
+        f.user_id_1 === userId ? f.user_id_2 : f.user_id_1
+      );
+
+      // Get RSVPs from friends (yes or maybe)
+      const { data: friendRsvps } = await supabase
+        .from('event_rsvps')
+        .select('event_id, user_id')
+        .in('user_id', friendIds)
+        .in('response', ['yes', 'maybe'])
+        .order('created_at', { ascending: false })
+        .limit(30);
+
+      if (friendRsvps && friendRsvps.length > 0) {
+        // Get friend profiles
+        const { data: friendProfiles } = await supabase
+          .from('profiles')
+          .select('id, username, full_name, avatar_url')
+          .in('id', friendIds);
+
+        const profileMap = new Map((friendProfiles || []).map(p => [p.id, p]));
+
+        // Get unique event IDs from friend RSVPs that we haven't seen
+        const newEventIds = [...new Set(
+          friendRsvps
+            .map(r => r.event_id)
+            .filter(id => !seenEventIds.has(id))
+        )];
+
+        if (newEventIds.length > 0) {
+          const { data: friendEvents } = await supabase
+            .from('events_gold')
+            .select('*')
+            .in('id', newEventIds)
+            .gte('event_date', today)
+            .order('event_date', { ascending: true });
+
+          if (friendEvents) {
+            for (const event of friendEvents) {
+              if (!seenEventIds.has(event.id)) {
+                seenEventIds.add(event.id);
+                // Find a friend attending this event
+                const rsvp = friendRsvps.find(r => r.event_id === event.id);
+                const friend = rsvp ? profileMap.get(rsvp.user_id) : null;
+
+                activities.push({
+                  event: event as Event,
+                  source_type: 'friend_attending',
+                  source_name: friend?.full_name || friend?.username || 'Friend',
+                  source_id: friend?.id || '',
+                  source_avatar_url: friend?.avatar_url,
+                });
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // Sort by event date
+    activities.sort((a, b) => {
+      const dateA = a.event.event_date || '';
+      const dateB = b.event.event_date || '';
+      return dateA.localeCompare(dateB);
+    });
+
+    logger.info(`Found ${activities.length} events from network`);
+    return activities;
+  } catch (error: any) {
+    logger.error('Error fetching events from network:', error);
     return [];
   }
 }

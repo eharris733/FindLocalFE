@@ -1,13 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, StyleSheet, Image, Platform, TouchableOpacity } from 'react-native';
+import { Platform, View, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { Event } from '../types/events';
 import { Venue } from '../types/venues';
 import { Text } from './ui/Text';
 import { useTheme } from '../context/ThemeContext';
 
-// Import using require to bypass TypeScript issues with this library
-const { Marker, Callout } = require('@teovilla/react-native-web-maps');
-
+// Import using require to bypass TypeScript issues with platform-specific modules
+const { Marker, Callout } = require('./MapComponents');
 
 interface CustomMapMarkerProps {
   venue: Venue;
@@ -20,9 +19,8 @@ interface CustomMapMarkerProps {
   onEventPress: (event: Event) => void;
   onVenuePress?: (venue: Venue) => void;
   onMarkerPress?: (latitude: number, longitude: number) => void; // Callback to center map
+  onMarkerSelect?: (venue: Venue, events: Event[]) => void; // Callback for mobile bottom sheet
 }
-
-const isWeb = Platform.OS === 'web';
 
 const CustomMapMarker: React.FC<CustomMapMarkerProps> = ({
   venue,
@@ -35,6 +33,7 @@ const CustomMapMarker: React.FC<CustomMapMarkerProps> = ({
   onEventPress,
   onVenuePress,
   onMarkerPress,
+  onMarkerSelect,
 }) => {
   const { theme } = useTheme();
   const markerRef = useRef<{ showCallout?: () => void; hideCallout?: () => void } | null>(null);
@@ -51,7 +50,11 @@ const CustomMapMarker: React.FC<CustomMapMarkerProps> = ({
   // Keep the native marker callout visibility in sync with our managed state.
   useEffect(() => {
     if (isActive) {
-      markerRef.current?.showCallout?.();
+      // Small delay to ensure previous callout is hidden first
+      const timer = setTimeout(() => {
+        markerRef.current?.showCallout?.();
+      }, Platform.OS === 'web' ? 0 : 50);
+      return () => clearTimeout(timer);
     } else {
       markerRef.current?.hideCallout?.();
     }
@@ -75,14 +78,14 @@ const CustomMapMarker: React.FC<CustomMapMarkerProps> = ({
 
   const handleMarkerPress = (e: any) => {
     if (!hasEvents) return;
-    
+
     const now = Date.now();
     //('🎯 Marker pressed, isActive:', isActive, 'venue:', venue.id, 'timestamp:', now);
-    
+
     // Prevent map click from firing - set this immediately
     markerClickedRef.current = true;
     lastActionRef.current = { type: 'marker', timestamp: now };
-    
+
     e?.stopPropagation?.();
     e?.preventDefault?.();
 
@@ -91,13 +94,21 @@ const CustomMapMarker: React.FC<CustomMapMarkerProps> = ({
       onMarkerPress(latitude, longitude);
     }
 
-    // Toggle callout visibility immediately - no setTimeout needed
-    if (isActive) {
-      //console.log('🎯 Closing callout for venue:', venue.id);
-      onCalloutToggle(null);
+    if (Platform.OS === 'web') {
+      // Web: Toggle callout visibility
+      if (isActive) {
+        onCalloutToggle(null);
+      } else {
+        onCalloutToggle(venue.id);
+      }
     } else {
-      //console.log('🎯 Opening callout for venue:', venue.id);
-      onCalloutToggle(venue.id);
+      // Mobile: Show bottom sheet with venue info
+      if (isActive) {
+        onCalloutToggle(null);
+      } else {
+        onCalloutToggle(venue.id);
+        onMarkerSelect?.(venue, venueEvents);
+      }
     }
 
     // Reset the marker clicked flag after a reasonable delay
@@ -112,7 +123,8 @@ const CustomMapMarker: React.FC<CustomMapMarkerProps> = ({
       key={venue.id}
       coordinate={{ latitude, longitude }}
       anchor={{ x: 0.5, y: 0.5 }}
-      calloutAnchor={{ x: 0.5, y: 1 }}
+      calloutAnchor={Platform.OS === 'web' ? { x: 0.5, y: 1 } : { x: 0.5, y: 0 }}
+      tracksViewChanges={false}
       onPressIn={() => {
         // Preempt the map's onPress as early as possible
         markerClickedRef.current = true;
@@ -144,19 +156,19 @@ const CustomMapMarker: React.FC<CustomMapMarkerProps> = ({
         </View>
       </View>
 
-      {isActive && (
+      {Platform.OS === 'web' && isActive && (
         <Callout tooltip>
           <View style={[styles.calloutContainer, { backgroundColor: theme.colors.background.primary }]}>
-            <View style={[styles.calloutBubble, { 
-              backgroundColor: theme.colors.background.primary, 
-              borderColor: theme.colors.border.light 
+            <View style={[styles.calloutBubble, {
+              backgroundColor: theme.colors.background.primary,
+              borderColor: theme.colors.border.light
             }]}>
               {hasEvents && (
                 <>
                   {/* Event Image with fallback */}
                   <Image
                     source={
-                      typeof getImageUrl(limitedEvents[currentEventIndex]) === 'string' 
+                      typeof getImageUrl(limitedEvents[currentEventIndex]) === 'string'
                         ? { uri: getImageUrl(limitedEvents[currentEventIndex]) }
                         : getImageUrl(limitedEvents[currentEventIndex])
                     }
@@ -184,7 +196,7 @@ const CustomMapMarker: React.FC<CustomMapMarkerProps> = ({
                   >
                     <Text style={[styles.closeButtonText, { color: theme.colors.text.primary }]}>×</Text>
                   </TouchableOpacity>
-                  
+
                   {/* Navigation arrows for multiple events */}
                   {limitedEvents.length > 1 && (
                     <>
@@ -291,9 +303,9 @@ const CustomMapMarker: React.FC<CustomMapMarkerProps> = ({
                 </>
               )}
             </View>
-            <View style={[styles.calloutArrow, { 
+            <View style={[styles.calloutArrow, {
               backgroundColor: theme.colors.background.primary,
-              borderColor: theme.colors.border.light 
+              borderColor: theme.colors.border.light
             }]} />
           </View>
         </Callout>
@@ -366,10 +378,15 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
     display: 'flex',
     position: 'relative',
+    ...(Platform.OS !== 'web' && {
+      // Add padding on iOS to prevent edge clipping
+      paddingHorizontal: 10,
+      paddingVertical: 10,
+    }),
   },
   calloutBubble: {
-    width: 200,
-    height: 280, // Increased height for better layout
+    width: Platform.OS === 'web' ? 200 : 180,
+    height: Platform.OS === 'web' ? 280 : 260,
     borderRadius: 12,
     flexDirection: 'column',
     alignItems: 'center',
@@ -382,8 +399,14 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     display: 'flex',
     boxSizing: 'border-box' as any,
-    marginLeft: -100,
-    marginTop: -10,
+    ...(Platform.OS === 'web' ? {
+      marginLeft: -100,
+      marginTop: -10,
+    } : {
+      // iOS needs different positioning to prevent clipping
+      marginLeft: 0,
+      marginTop: 0,
+    }),
     zIndex: 10,
     overflow: 'hidden',
     position: 'relative',

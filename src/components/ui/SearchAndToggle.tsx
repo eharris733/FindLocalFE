@@ -1,5 +1,6 @@
-import React from 'react';
-import { View, StyleSheet, TextInput } from 'react-native';
+import React, { useRef } from 'react';
+import { View, StyleSheet, TextInput, TouchableOpacity, Platform, Keyboard } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import { Text } from './Text';
 
@@ -13,6 +14,22 @@ export const SearchAndToggle: React.FC<SearchAndToggleProps> = ({
   onSearchChange,
 }) => {
   const { theme } = useTheme();
+  const inputRef = useRef<TextInput>(null);
+  const isNativeMobile = Platform.OS !== 'web';
+
+  const handleClear = () => {
+    onSearchChange('');
+    inputRef.current?.blur();
+    if (isNativeMobile) {
+      Keyboard.dismiss();
+    }
+  };
+
+  const handleSubmitEditing = () => {
+    if (isNativeMobile) {
+      Keyboard.dismiss();
+    }
+  };
 
   return (
       <View style={[
@@ -26,6 +43,7 @@ export const SearchAndToggle: React.FC<SearchAndToggleProps> = ({
           🔍
         </Text>
         <TextInput
+          ref={inputRef}
           style={[
             styles.searchInput,
             {
@@ -36,7 +54,23 @@ export const SearchAndToggle: React.FC<SearchAndToggleProps> = ({
           placeholderTextColor={theme.colors.text.tertiary}
           value={searchText}
           onChangeText={onSearchChange}
+          returnKeyType={isNativeMobile ? 'search' : undefined}
+          onSubmitEditing={isNativeMobile ? handleSubmitEditing : undefined}
         />
+        {isNativeMobile && searchText.length > 0 && (
+          <TouchableOpacity
+            onPress={handleClear}
+            style={styles.clearButton}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            accessibilityLabel="Clear search"
+          >
+            <Ionicons
+              name="close-circle"
+              size={20}
+              color={theme.colors.text.tertiary}
+            />
+          </TouchableOpacity>
+        )}
       </View>
   );
 };
@@ -58,5 +92,11 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     paddingVertical: 0,
+  },
+  clearButton: {
+    marginLeft: 8,
+    padding: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

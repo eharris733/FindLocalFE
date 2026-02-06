@@ -10,10 +10,12 @@ import {
 } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import { Text } from './ui';
-import { 
-  getInvitationByToken, 
-  submitRsvp, 
-  InvitationDetails 
+import {
+  getInvitationByToken,
+  submitRsvp,
+  updateRsvp,
+  InvitationDetails,
+  EventRsvp,
 } from '../api/invitations';
 import { useAuth } from '../hooks/useAuth';
 import { logger } from '../utils/logger';
@@ -25,38 +27,48 @@ interface RsvpModalProps {
   eventId: string;
   eventTitle?: string;
   onRsvpSuccess?: (response: 'yes' | 'no' | 'maybe') => void;
+  existingRsvp?: EventRsvp | null;
 }
 
 type RsvpStep = 'loading' | 'passcode' | 'respond' | 'success' | 'error';
 
-export function RsvpModal({ 
-  visible, 
-  onClose, 
-  inviteToken, 
+export function RsvpModal({
+  visible,
+  onClose,
+  inviteToken,
   eventId,
   eventTitle,
-  onRsvpSuccess 
+  onRsvpSuccess,
+  existingRsvp,
 }: RsvpModalProps) {
   const { theme } = useTheme();
   const { isLoggedIn } = useAuth();
-  
+
   const [step, setStep] = useState<RsvpStep>('loading');
   const [invitation, setInvitation] = useState<InvitationDetails | null>(null);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Form state
   const [passcode, setPasscode] = useState('');
   const [anonymousName, setAnonymousName] = useState('');
   const [plusOneCount, setPlusOneCount] = useState(0);
   const [selectedResponse, setSelectedResponse] = useState<'yes' | 'no' | 'maybe' | null>(null);
-  
+
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   useEffect(() => {
-    if (visible && inviteToken) {
-      loadInvitation();
+    if (visible) {
+      if (existingRsvp) {
+        // Editing mode - pre-fill form and skip to respond step
+        setSelectedResponse(existingRsvp.response);
+        setPlusOneCount(existingRsvp.plus_one_count);
+        setStep('respond');
+      } else if (inviteToken) {
+        // New RSVP mode - load invitation
+        loadInvitation();
+      }
     }
-  }, [visible, inviteToken]);
+  }, [visible, inviteToken, existingRsvp]);
   
   const loadInvitation = async () => {
     setStep('loading');
@@ -121,22 +133,38 @@ export function RsvpModal({
   const submitResponse = async (response: 'yes' | 'no' | 'maybe') => {
     setIsSubmitting(true);
     setError(null);
-    
+
     try {
-      const result = await submitRsvp({
-        token: inviteToken,
-        response,
-        passcode: passcode || undefined,
-        anonymousName: !isLoggedIn ? anonymousName.trim() : undefined,
-        plusOneCount: invitation?.allow_plus_one ? plusOneCount : 0,
-      });
-      
-      if (!result.success) {
-        setError(result.error || 'Failed to submit RSVP');
-        setIsSubmitting(false);
-        return;
+      if (existingRsvp) {
+        // Update existing RSVP
+        const result = await updateRsvp(
+          existingRsvp.id,
+          response,
+          invitation?.allow_plus_one ? plusOneCount : 0
+        );
+
+        if (!result.success) {
+          setError(result.error || 'Failed to update RSVP');
+          setIsSubmitting(false);
+          return;
+        }
+      } else {
+        // Create new RSVP
+        const result = await submitRsvp({
+          token: inviteToken,
+          response,
+          passcode: passcode || undefined,
+          anonymousName: !isLoggedIn ? anonymousName.trim() : undefined,
+          plusOneCount: invitation?.allow_plus_one ? plusOneCount : 0,
+        });
+
+        if (!result.success) {
+          setError(result.error || 'Failed to submit RSVP');
+          setIsSubmitting(false);
+          return;
+        }
       }
-      
+
       setStep('success');
       onRsvpSuccess?.(response);
     } catch (err: any) {

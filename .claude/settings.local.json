@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc:*)",
+      "Bash(grep:*)",
+      "Bash(ls:*)",
+      "mcp__ide__getDiagnostics",
+      "Bash(git -C /Users/elliotharris/FindLocal/FindLocalFE log *)",
+      "Bash(git -C /Users/elliotharris/FindLocal/FindLocalFE show *)"
+    ]
+  }
+}

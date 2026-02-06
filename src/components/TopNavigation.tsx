@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, TouchableOpacity, Modal, Animated, Pressable } from 'react-native';
+import React, { useState } from 'react';
+import { View, StyleSheet, TouchableOpacity, Pressable, Platform } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../context/ThemeContext';
 import { Text } from './ui';
-import ProfileModal from './ProfileModal';
 import { CityPicker } from './ui/CityPicker';
 import { CommunityPicker } from './ui/CommunityPicker';
 import {useDeviceInfo} from "../hooks/useDeviceInfo";
@@ -14,30 +14,52 @@ import { useRouter } from 'expo-router';
 
 interface TopNavigationProps {
   readonly onNavLinkPress?: (link: string) => void;
-  readonly onFeedbackPress?: () => void;
 }
 
-export default function TopNavigation({ onNavLinkPress, onFeedbackPress }: TopNavigationProps) {
+export default function TopNavigation({ onNavLinkPress }: TopNavigationProps) {
   const { theme } = useTheme();
   const { isMobile, isTablet } = useDeviceInfo();
   const { isLoggedIn, profile } = useAuth();
-  
-  // Check if user is a creator
-  const isCreator = profile?.account_type === 'creator';
-  
-  // Use collapsed nav (hamburger menu) for mobile AND tablet to prevent overflow
+
+  // Get user initials for avatar
+  const getUserInitials = () => {
+    if (profile?.full_name) {
+      return profile.full_name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
+    }
+    if (profile?.username) {
+      return profile.username[0].toUpperCase();
+    }
+    return '?';
+  };
+
+  // Avatar color - use primary to match profile page
+  const avatarColor = theme.colors.primary[500];
+
+  // Use collapsed nav for mobile AND tablet to prevent overflow
   // Show full nav only on desktop (>= 1024px)
   const useCollapsedNav = isMobile || isTablet;
+
+  // Platform detection for hamburger menu (web only)
+  const isWeb = Platform.OS === 'web';
+  const needsHamburger = isWeb && useCollapsedNav; // ONLY mobile/tablet web
+
   const { selectedCity, onCityChange, selectedRegions, onRegionsChange } = useCityLocation();
   const { selectedCommunities } = useCommunity();
   const router = useRouter();
-  const [showProfileModal, setShowProfileModal] = useState(false);
   const [showCityPicker, setShowCityPicker] = useState(false);
   const [showCommunityPicker, setShowCommunityPicker] = useState(false);
-  const [showMobileMenu, setShowMobileMenu] = useState(false);
-  const [slideAnim] = useState(new Animated.Value(-250)); // Start off-screen
+  const [showHamburgerMenu, setShowHamburgerMenu] = useState(false);
 
-  const navLinks = ['Events', 'About', 'Friends'];
+  const navLinks = ['Home', 'Discover', 'Create', 'Friends', 'Map'];
+
+  // Emoji mappings for nav items (used in hamburger menu on mobile web)
+  const navLinkEmojis: Record<string, string> = {
+    'Home': '🏠',
+    'Discover': '🧭',
+    'Create': '➕',
+    'Friends': '👥',
+    'Map': '🗺️',
+  };
 
   const formatCommunityName = (name: string) => {
     const lower = name.toLowerCase();
@@ -46,45 +68,16 @@ export default function TopNavigation({ onNavLinkPress, onFeedbackPress }: TopNa
     return name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
   };
 
-  useEffect(() => {
-    if (showMobileMenu) {
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 300,
-        useNativeDriver: true,
-      }).start();
-    } else {
-      Animated.timing(slideAnim, {
-        toValue: -250,
-        duration: 300,
-        useNativeDriver: true,
-      }).start();
-    }
-  }, [showMobileMenu, slideAnim]);
-
   const handleProfilePress = () => {
     if (isLoggedIn) {
-      setShowProfileModal(true);
+      router.push('/(private)/profile');
     } else {
       router.push('/user/signin');
     }
   };
 
-  const handleCloseProfile = () => {
-    setShowProfileModal(false);
-  };
-
-  const handleMobileMenuPress = () => {
-    setShowMobileMenu(!showMobileMenu);
-  };
-
   const handleNavLinkPress = (link: string) => {
     onNavLinkPress?.(link);
-    setShowMobileMenu(false); // Close menu after selection
-  };
-
-  const closeMobileMenu = () => {
-    setShowMobileMenu(false);
   };
 
   const handleCityPickerOpen = () => {
@@ -102,30 +95,42 @@ export default function TopNavigation({ onNavLinkPress, onFeedbackPress }: TopNa
 
   return (
     <>
-      <View style={[
-          styles.container,
-          useCollapsedNav ? styles.condensed : styles.roomy,
-        {
-        backgroundColor: theme.colors.background.primary,
-        borderBottomColor: theme.colors.border.light,
-        ...theme.shadows.small,
-      }]}>
-        <View style={styles.content}>
-          {/* Left section - Mobile menu button + Desktop city badge */}
+      <SafeAreaView edges={['top']} style={{ backgroundColor: theme.colors.background.primary }}>
+        <View style={[
+            styles.container,
+            useCollapsedNav ? styles.condensed : styles.roomy,
+          {
+          backgroundColor: theme.colors.background.primary,
+          borderBottomColor: theme.colors.border.light,
+          ...theme.shadows.small,
+        }]}>
+          <View style={styles.content}>
+          {/* Left section - Hamburger (mobile web) / City picker (native mobile) / Badges (desktop) */}
           <View style={styles.leftSection}>
-            {useCollapsedNav ? (
+            {needsHamburger ? (
+              // MOBILE/TABLET WEB ONLY: Hamburger menu
               <TouchableOpacity
-                style={[styles.menuButton, { backgroundColor: theme.colors.background.secondary }]}
-                onPress={handleMobileMenuPress}
+                style={[styles.hamburgerButton, { backgroundColor: theme.colors.background.secondary }]}
+                onPress={() => setShowHamburgerMenu(!showHamburgerMenu)}
               >
-                <Text variant="body1" color="primary" style={styles.menuIcon}>
-                  {showMobileMenu ? '✕' : '☰'}
+                <Text style={{ fontSize: 20, lineHeight: 20, marginTop: -2, color: theme.colors.text.primary }}>☰</Text>
+              </TouchableOpacity>
+            ) : useCollapsedNav ? (
+              // NATIVE MOBILE/TABLET: City picker button (UNCHANGED)
+              <TouchableOpacity
+                style={[styles.mobileCityButton, { backgroundColor: theme.colors.background.secondary }]}
+                onPress={handleCityPickerOpen}
+              >
+                <Text variant="body2" color="primary" style={styles.mobileCityText} numberOfLines={1}>
+                  {selectedCity}
                 </Text>
+                <Text variant="caption" color="secondary" style={styles.cityArrow}>▼</Text>
               </TouchableOpacity>
             ) : (
+              // DESKTOP WEB: Community + City badges (UNCHANGED)
               <View style={styles.badgeContainer}>
                 <TouchableOpacity
-                  style={[styles.communityBadge, { 
+                  style={[styles.communityBadge, {
                     backgroundColor: theme.colors.primary[100],
                     borderColor: theme.colors.primary[300],
                   }]}
@@ -136,11 +141,11 @@ export default function TopNavigation({ onNavLinkPress, onFeedbackPress }: TopNa
                   </Text>
                   <Text variant="caption" color="primary" style={styles.cityArrow}>▼</Text>
                 </TouchableOpacity>
-                
+
                 <Text variant="body2" color="secondary" style={styles.inText}>in</Text>
-                
+
                 <TouchableOpacity
-                  style={[styles.cityBadge, { 
+                  style={[styles.cityBadge, {
                     backgroundColor: theme.colors.background.secondary,
                     borderColor: theme.colors.border.light,
                   }]}
@@ -176,239 +181,28 @@ export default function TopNavigation({ onNavLinkPress, onFeedbackPress }: TopNa
                     </Text>
                   </TouchableOpacity>
                 ))}
-                {/* Social links for logged-in users on desktop */}
-                {isLoggedIn && (
-                  <>
-                    <TouchableOpacity
-                      style={styles.navLink}
-                      onPress={() => router.push('/discover-creators')}
-                    >
-                      <Text variant="body2" color="secondary" style={styles.navLinkText}>
-                        Creators
-                      </Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={styles.navLink}
-                      onPress={() => router.push('/following-activity')}
-                    >
-                      <Text variant="body2" color="secondary" style={styles.navLinkText}>
-                        Following
-                      </Text>
-                    </TouchableOpacity>
-                  </>
-                )}
               </View>
             )}
             
+            {/* Profile button - consistent avatar style across all platforms */}
             <TouchableOpacity
-              style={[styles.profileButton, { 
-                backgroundColor: isCreator ? theme.colors.secondary[500] : theme.colors.background.secondary,
+              style={[styles.mobileProfileButton, {
+                backgroundColor: isLoggedIn ? avatarColor : theme.colors.background.secondary,
               }]}
               onPress={handleProfilePress}
             >
-              {isCreator && (
-                <Text variant="caption" style={{ color: '#fff', marginRight: 4, fontWeight: '700' }}>
-                  ★
+              {isLoggedIn ? (
+                <Text style={styles.avatarInitials}>
+                  {getUserInitials()}
                 </Text>
+              ) : (
+                <Text style={{ fontSize: 20, lineHeight: 20 }}>👤</Text>
               )}
-              <Text variant="body2" style={[styles.profileText, { color: isCreator ? '#fff' : theme.colors.text.primary }]}>
-                {isLoggedIn ? (isCreator ? 'Creator' : 'Account') : 'Sign In'}
-              </Text>
             </TouchableOpacity>
           </View>
         </View>
       </View>
-
-      {/* Mobile/Tablet Side Modal */}
-      {useCollapsedNav && (
-        <Modal
-          visible={showMobileMenu}
-          transparent={true}
-          animationType="none"
-          onRequestClose={closeMobileMenu}
-        >
-          <View style={styles.modalOverlay}>
-            {/* Side menu */}
-            <Animated.View 
-              style={[
-                styles.sideMenu,
-                {
-                  backgroundColor: theme.colors.background.primary,
-                  transform: [{ translateX: slideAnim }],
-                }
-              ]}
-            >
-              {/* Menu header */}
-              <View style={[styles.menuHeader, { borderBottomColor: theme.colors.border.light }]}>
-                <Logo isMobile={useCollapsedNav} isMenu={true} />
-
-                <TouchableOpacity
-                  style={[styles.closeButton, { backgroundColor: theme.colors.background.secondary }]}
-                  onPress={closeMobileMenu}
-                >
-                  <Text variant="body1" color="primary" style={styles.closeIcon}>
-                    ✕
-                  </Text>
-                </TouchableOpacity>
-              </View>
-
-              {/* Creator Banner - show when logged in as creator */}
-              {isLoggedIn && isCreator && (
-                <View style={[styles.creatorBanner, { backgroundColor: theme.colors.secondary[500] }]}>
-                  <Text variant="body2" style={{ color: '#fff', fontWeight: '700' }}>
-                    ★ Creator Account
-                  </Text>
-                </View>
-              )}
-
-              {/* Menu links */}
-              <View style={styles.menuLinks}>
-                {/* City Selector for Mobile */}
-                <TouchableOpacity
-                  style={[styles.sideNavLinkRow, {
-                    borderBottomColor: theme.colors.border.light,
-                  }]}
-                  onPress={handleCityPickerOpen}
-                >
-                  <View style={styles.cityMenuRow}>
-                    <Text variant="caption" style={styles.cityMenuEmoji}>📍</Text>
-                    <Text 
-                      variant="body1" 
-                      color="primary" 
-                      style={styles.cityMenuText}
-                      numberOfLines={1}
-                      ellipsizeMode="tail"
-                    >
-                      {selectedCity}
-                    </Text>
-                  </View>
-                  <Text variant="body2" color="secondary" style={styles.chevron}>›</Text>
-                </TouchableOpacity>
-
-                {/* Community Selector for Mobile */}
-                <TouchableOpacity
-                  style={[styles.sideNavLinkRow, {
-                    borderBottomColor: theme.colors.border.light,
-                  }]}
-                  onPress={() => setShowCommunityPicker(true)}
-                >
-                  <View style={styles.cityMenuRow}>
-                    <Text variant="caption" style={styles.cityMenuEmoji}>🎭</Text>
-                    <Text 
-                      variant="body1" 
-                      color="primary" 
-                      style={styles.cityMenuText}
-                      numberOfLines={1}
-                      ellipsizeMode="tail"
-                    >
-                      {selectedCommunities.length === 0 ? 'Everything' : selectedCommunities.map(formatCommunityName).join(', ')}
-                    </Text>
-                  </View>
-                  <Text variant="body2" color="secondary" style={styles.chevron}>›</Text>
-                </TouchableOpacity>
-                
-                {navLinks.map((link) => (
-                  <TouchableOpacity
-                    key={link}
-                    style={[styles.sideNavLink, {
-                      borderBottomColor: theme.colors.border.light,
-                    }]}
-                    onPress={() => handleNavLinkPress(link)}
-                  >
-                    <Text variant="body1" color="secondary" style={styles.sideNavLinkText}>
-                      {link}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-                
-                {/* Social Links - Only show when logged in */}
-                {isLoggedIn && (
-                  <>
-                    <View style={[styles.menuSectionHeader, { borderBottomColor: theme.colors.border.light }]}>
-                      <Text variant="caption" color="tertiary" style={{ fontWeight: '600', letterSpacing: 0.5 }}>
-                        DISCOVER
-                      </Text>
-                    </View>
-                    <TouchableOpacity
-                      style={[styles.sideNavLink, { borderBottomColor: theme.colors.border.light }]}
-                      onPress={() => {
-                        closeMobileMenu();
-                        router.push('/discover-creators');
-                      }}
-                    >
-                      <Text variant="body1" color="secondary" style={styles.sideNavLinkText}>
-                        🎭 Discover Creators
-                      </Text>
-                    </TouchableOpacity>
-                    
-                    <View style={[styles.menuSectionHeader, { borderBottomColor: theme.colors.border.light }]}>
-                      <Text variant="caption" color="tertiary" style={{ fontWeight: '600', letterSpacing: 0.5 }}>
-                        FOLLOWING
-                      </Text>
-                    </View>
-                    <TouchableOpacity
-                      style={[styles.sideNavLink, { borderBottomColor: theme.colors.border.light }]}
-                      onPress={() => {
-                        closeMobileMenu();
-                        router.push('/following-activity');
-                      }}
-                    >
-                      <Text variant="body1" color="secondary" style={styles.sideNavLinkText}>
-                        📰 Activity Feed
-                      </Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={[styles.sideNavLink, { borderBottomColor: theme.colors.border.light }]}
-                      onPress={() => {
-                        closeMobileMenu();
-                        router.push('/followers');
-                      }}
-                    >
-                      <Text variant="body1" color="secondary" style={styles.sideNavLinkText}>
-                        👥 People
-                      </Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={[styles.sideNavLink, { borderBottomColor: theme.colors.border.light }]}
-                      onPress={() => {
-                        closeMobileMenu();
-                        router.push('/followed-venues');
-                      }}
-                    >
-                      <Text variant="body1" color="secondary" style={styles.sideNavLinkText}>
-                        🏛️ Venues
-                      </Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={[styles.sideNavLink, { borderBottomColor: theme.colors.border.light }]}
-                      onPress={() => {
-                        closeMobileMenu();
-                        router.push('/my-invites');
-                      }}
-                    >
-                      <Text variant="body1" color="secondary" style={styles.sideNavLinkText}>
-                        ✉️ My Invitations
-                      </Text>
-                    </TouchableOpacity>
-                  </>
-                )}
-              </View>
-            </Animated.View>
-            
-            {/* Background overlay */}
-            <Pressable 
-              style={styles.overlayBackground} 
-              onPress={closeMobileMenu}
-            />
-          </View>
-        </Modal>
-      )}
-
-      <ProfileModal
-        visible={showProfileModal}
-        onClose={handleCloseProfile}
-        onFeedbackPress={onFeedbackPress}
-      />
+      </SafeAreaView>
 
       {/* City Picker Modal - Available to all users */}
       {showCityPicker && (
@@ -431,13 +225,66 @@ export default function TopNavigation({ onNavLinkPress, onFeedbackPress }: TopNa
           onClose={() => setShowCommunityPicker(false)}
         />
       )}
+
+      {/* Hamburger Menu Dropdown (mobile/tablet web only) */}
+      {showHamburgerMenu && (
+        <Pressable
+          style={styles.hamburgerOverlay}
+          onPress={() => setShowHamburgerMenu(false)}
+        >
+          <Pressable
+            style={[styles.hamburgerDropdown, {
+              backgroundColor: theme.colors.background.primary,
+              borderColor: theme.colors.border.light,
+              ...theme.shadows.medium,
+            }]}
+            onPress={(e) => e.stopPropagation()}
+          >
+            {/* City picker trigger */}
+            <TouchableOpacity
+              style={[styles.hamburgerItem, { borderBottomColor: theme.colors.border.light }]}
+              onPress={() => {
+                setShowHamburgerMenu(false);
+                handleCityPickerOpen();
+              }}
+            >
+              <Text style={{ fontSize: 18 }}>📍</Text>
+              <Text variant="body1" color="primary" style={styles.hamburgerItemText}>
+                {selectedCity}
+              </Text>
+              <Text style={{ fontSize: 16, color: theme.colors.text.tertiary }}>›</Text>
+            </TouchableOpacity>
+
+            {/* Nav links */}
+            {navLinks.map((link, index) => (
+              <TouchableOpacity
+                key={link}
+                style={[
+                  styles.hamburgerItem,
+                  index < navLinks.length - 1 && { borderBottomColor: theme.colors.border.light, borderBottomWidth: 1 }
+                ]}
+                onPress={() => {
+                  onNavLinkPress?.(link);
+                  setShowHamburgerMenu(false);
+                }}
+              >
+                <Text style={{ fontSize: 18 }}>{navLinkEmojis[link] || '•'}</Text>
+                <Text variant="body1" color="primary" style={styles.hamburgerItemText}>
+                  {link}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </Pressable>
+        </Pressable>
+      )}
     </>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    paddingVertical: 8,
+    paddingTop: 8,
+    paddingBottom: 8,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
     zIndex: 1000,
@@ -489,17 +336,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'flex-end',
   },
-  menuButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  menuIcon: {
-    fontSize: 18,
-    fontWeight: '600',
-  },
   navLinks: {
     flexDirection: 'row',
     marginRight: 16,
@@ -511,99 +347,35 @@ const styles = StyleSheet.create({
   navLinkText: {
     fontWeight: '500',
   },
-  profileButton: {
+  // Mobile City Picker Button
+  mobileCityButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: 8,
     paddingVertical: 8,
     borderRadius: 20,
+    gap: 6,
+    maxWidth: 220,
   },
-  profileText: {
+  mobileCityText: {
     fontWeight: '600',
+    fontSize: 13,
+    flexShrink: 1,
   },
-  // Side Modal Styles
-  modalOverlay: {
-    flex: 1,
-    flexDirection: 'row',
-    justifyContent: 'flex-start', // Align to left
-  },
-  overlayBackground: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
-  sideMenu: {
-    width: 250,
-    height: '100%',
-    position: 'absolute', // Position absolutely on the left
-    left: 0,
-    top: 0,
-    zIndex: 1000,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 2,
-      height: 0,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  menuHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-  },
-  creatorBanner: {
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    alignItems: 'center',
-  },
-  closeButton: {
-    width: 30,
-    height: 30,
-    borderRadius: 6,
+  // Mobile Profile Button
+  mobileProfileButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  closeIcon: {
-    fontSize: 16,
-    fontWeight: '600',
+  avatarInitials: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+    fontSize: 14,
   },
-  menuLinks: {
-    flex: 1,
-    paddingTop: 20,
-  },
-  sideNavLink: {
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-  },
-  sideNavLinkRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-  },
-  sideNavLinkText: {
-    fontWeight: '500',
-    fontSize: 16,
-  },
-  menuSectionHeader: {
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    paddingTop: 20,
-    borderBottomWidth: 1,
-  },
-  // City Badge Styles
+  // Desktop City Badge Styles
   communityBadge: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -619,62 +391,53 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 2,
   },
-  communityMainText: {
-    fontWeight: '700',
-    fontSize: 14,
+  communitiesText: {
+    fontWeight: '600',
+    fontSize: 13,
   },
   cityText: {
     fontWeight: '600',
-    fontSize: 13,
+    fontSize: 12,
   },
   cityArrow: {
     fontSize: 11,
     fontWeight: '600',
   },
-  // City Menu Styles (Mobile)
-  cityMenuRow: {
+  // Hamburger Menu Styles (mobile/tablet web)
+  hamburgerButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  hamburgerOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 2000,
+  },
+  hamburgerDropdown: {
+    position: 'absolute',
+    top: 80,
+    left: 16,
+    minWidth: 200,
+    borderRadius: 12,
+    borderWidth: 1,
+    overflow: 'hidden',
+  },
+  hamburgerItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    flex: 1,
-    minWidth: 0, // Allow flex shrinking
-    overflow: 'hidden', // Prevent content from expanding
-  },
-  cityMenuEmoji: {
-    fontSize: 16,
-    flexShrink: 0, // Don't shrink the emoji
-    width: 20, // Fixed width to prevent layout shifts
-  },
-  cityMenuText: {
-    fontWeight: '500',
-    fontSize: 16,
-    flex: 1,
-    minWidth: 0, // Allow text to shrink
-  },
-  chevron: {
-    flexShrink: 0, // Don't shrink the chevron
-    marginLeft: 8,
-    width: 20, // Fixed width for chevron
-    textAlign: 'right',
-  },
-  // Deprecated mobile menu styles (keeping for now in case of rollback)
-  mobileMenu: {
-    marginTop: 16,
-    borderTopWidth: 1,
-    borderRadius: 8,
-    overflow: 'hidden',
-    position: 'absolute',
-    top: '100%',
-    left: 16,
-    right: 16,
-    zIndex: 1001,
-  },
-  mobileNavLink: {
+    paddingVertical: 14,
     paddingHorizontal: 16,
-    paddingVertical: 16,
+    gap: 12,
     borderBottomWidth: 1,
   },
-  mobileNavLinkText: {
+  hamburgerItemText: {
+    flex: 1,
     fontWeight: '500',
   },
 });

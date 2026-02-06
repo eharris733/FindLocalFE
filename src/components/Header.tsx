@@ -1,35 +1,21 @@
-import { SafeAreaView } from 'react-native-safe-area-context';
 import TopNavigation from "./TopNavigation";
 import React from "react";
 import {useRouter} from "expo-router";
-import { useTheme } from "../context/ThemeContext";
 
-interface HeaderProps {
-    readonly onFeedbackPress?: () => void;
-}
-
-export default function Header({ onFeedbackPress }: HeaderProps = {}) {
+export default function Header() {
     const router = useRouter();
-    const { theme } = useTheme();
 
     const handleNavLinkPress = (link: string) => {
-        // Map 'Events' to home page, others to their respective routes
-        if (link.toLowerCase() === 'events') {
+        // Empty string = logo click, go to home
+        if (link === '' || link.toLowerCase() === 'home') {
+            router.navigate('/home');
+        } else if (link.toLowerCase() === 'discover') {
+            // Discover goes to root page
             router.navigate('/');
         } else {
             router.navigate(`/${link.toLowerCase()}`);
         }
     };
 
-    return (
-        <SafeAreaView 
-            edges={['top']} 
-            style={{ 
-                backgroundColor: theme.colors.background.primary,
-                flex: 0,
-            }}
-        >
-            <TopNavigation onNavLinkPress={handleNavLinkPress} onFeedbackPress={onFeedbackPress} />
-        </SafeAreaView>
-    );
+    return <TopNavigation onNavLinkPress={handleNavLinkPress} />;
 }

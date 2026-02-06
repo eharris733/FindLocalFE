@@ -11,6 +11,7 @@ import {
   ActivityIndicator,
   Platform,
 } from 'react-native';
+import { openLink, openMaps } from '../../utils/linkUtils';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import type { Venue } from '../../types/venues';
 import type { Event } from '../../types/events';
@@ -131,18 +132,12 @@ export default function VenuePage() {
   };
 
   const handleBack = () => {
-    if (Platform.OS === 'web' && globalThis.window !== undefined) {
-      if (globalThis.window.history.length > 1) {
-        router.back();
-      } else {
-        router.push('/');
-      }
+    // Use Expo Router's canGoBack() to check if there's a previous screen in the stack
+    if (router.canGoBack()) {
+      router.back();
     } else {
-      if (router.canGoBack()) {
-        router.back();
-      } else {
-        router.push('/');
-      }
+      // No previous screen in the app's navigation stack, go to home
+      router.replace('/');
     }
   };
 
@@ -176,15 +171,13 @@ export default function VenuePage() {
 
   const handleAddressPress = () => {
     if (venue?.address) {
-      const encodedAddress = encodeURIComponent(venue.address);
-      const mapsUrl = `https://maps.google.com/?q=${encodedAddress}`;
-      Linking.openURL(mapsUrl);
+      openMaps(venue.address);
     }
   };
 
   const handleWebsitePress = () => {
     if (venue?.url) {
-      Linking.openURL(venue.url);
+      openLink(venue.url);
     }
   };
 

@@ -37,4 +37,4 @@ Disallow: /auth/
 Disallow: /user/
 
 # Sitemaps
-Sitemap: https://findlocal.community/sitemap.xml
+Sitemap: https://findlocal.community/sitemap

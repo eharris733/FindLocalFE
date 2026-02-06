@@ -12,11 +12,12 @@ import { useDeviceInfo } from '../hooks/useDeviceInfo';
 import { getGenresFromEventTypes, getGenreDisplayLabel } from '../constants/eventCategories';
 import { analytics } from '../utils/analytics';
 import type { Community } from '../api/communities';
+import { openLink } from '../utils/linkUtils';
 
 interface EventCardProps {
   event: Event;
   onPress?: (event: Event) => void;
-  variant?: 'default' | 'compact' | 'grouped';
+  variant?: 'default' | 'compact' | 'grouped' | 'horizontal';
   venues?: Venue[]; // Optional venue list for faster lookup
   onVenuePress?: (venue: Venue) => void; // Optional callback for venue press
   isMobile?: boolean; // Optional mobile flag for grouped variant
@@ -136,7 +137,7 @@ const EventCard: React.FC<EventCardProps> = ({ event, onPress, variant = 'defaul
     if (onPress) {
       onPress(event);
     } else if (event.detail_page_url) {
-      Linking.openURL(event.detail_page_url);
+      openLink(event.detail_page_url);
     }
   };
 
@@ -146,6 +147,86 @@ const EventCard: React.FC<EventCardProps> = ({ event, onPress, variant = 'defaul
     : venue?.image
     ? { uri: venue.image }
     : require('../../assets/record.png');
+
+  // Horizontal variant - for horizontal scrolling lists on home page
+  if (variant === 'horizontal') {
+    return (
+      <TouchableOpacity onPress={handleCardPress}>
+        <View style={[styles.horizontalCard, {
+          backgroundColor: theme.colors.background.primary,
+          borderColor: theme.colors.border.light,
+          ...theme.shadows.small,
+        }]}>
+          {/* Image with overlays */}
+          <View style={styles.horizontalImageContainer}>
+            <Image
+              source={imageSource}
+              style={[styles.horizontalImage, { backgroundColor: theme.colors.gray[100] }]}
+              resizeMode="cover"
+              defaultSource={require('../../assets/record.png')}
+              fadeDuration={100}
+            />
+            {/* Favorite heart */}
+            <TouchableOpacity
+              onPress={handleToggleFavorite}
+              style={[styles.horizontalFavoriteButton, { backgroundColor: theme.colors.background.primary }]}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <Text style={[styles.horizontalFavoriteIcon, {
+                color: isEventFavorited ? theme.colors.error : theme.colors.gray[400]
+              }]}>
+                {isEventFavorited ? '❤️' : '🤍'}
+              </Text>
+            </TouchableOpacity>
+
+            {/* Price tag */}
+            {event.price && (
+              <View style={[styles.horizontalPriceTag, { backgroundColor: theme.colors.background.primary }]}>
+                <Text style={[styles.horizontalPriceText, { color: theme.colors.text.primary }]}>
+                  {event.price}
+                </Text>
+              </View>
+            )}
+
+            {/* Category tag */}
+            {displayGenre && (
+              <View style={[styles.horizontalCategoryTag, { backgroundColor: theme.colors.primary[600] }]}>
+                <Text style={[styles.horizontalCategoryText, { color: theme.colors.text.inverse }]}>
+                  {displayGenre}
+                </Text>
+              </View>
+            )}
+          </View>
+
+          {/* Content */}
+          <View style={styles.horizontalContent}>
+            <Text style={[styles.horizontalTitle, { color: theme.colors.text.primary }]} numberOfLines={2}>
+              {event.title || 'Untitled Event'}
+            </Text>
+
+            {venueInfo.name && (
+              <Text style={[styles.horizontalVenue, { color: theme.colors.text.secondary }]} numberOfLines={1}>
+                📍 {venueInfo.name}
+              </Text>
+            )}
+
+            <View style={styles.horizontalMeta}>
+              {event.event_date && (
+                <Text style={[styles.horizontalDate, { color: theme.colors.primary[600] }]}>
+                  {format(new Date(event.event_date), 'MMM dd')}
+                </Text>
+              )}
+              {event.start_time && (
+                <Text style={[styles.horizontalTime, { color: theme.colors.text.secondary }]}>
+                  {formatMilitaryTime(event.start_time)}
+                </Text>
+              )}
+            </View>
+          </View>
+        </View>
+      </TouchableOpacity>
+    );
+  }
 
   if (variant === 'compact') {
     return (
@@ -1115,6 +1196,97 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     paddingHorizontal: 12,
     minWidth: 80,
+  },
+
+  // Horizontal variant styles (for home page horizontal scrolling)
+  horizontalCard: {
+    width: 280,
+    borderRadius: 12,
+    borderWidth: 1,
+    overflow: 'hidden',
+  },
+  horizontalImageContainer: {
+    position: 'relative',
+    width: '100%',
+    height: 140,
+    backgroundColor: '#f0f0f0',
+  },
+  horizontalImage: {
+    width: '100%',
+    height: '100%',
+  },
+  horizontalFavoriteButton: {
+    position: 'absolute',
+    top: 8,
+    left: 8,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  horizontalFavoriteIcon: {
+    fontSize: 16,
+  },
+  horizontalPriceTag: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  horizontalPriceText: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  horizontalCategoryTag: {
+    position: 'absolute',
+    bottom: 8,
+    left: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 10,
+  },
+  horizontalCategoryText: {
+    fontSize: 9,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+  },
+  horizontalContent: {
+    padding: 10,
+  },
+  horizontalTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 4,
+    lineHeight: 18,
+  },
+  horizontalVenue: {
+    fontSize: 12,
+    marginBottom: 6,
+  },
+  horizontalMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  horizontalDate: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  horizontalTime: {
+    fontSize: 12,
   },
 });
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, Modal, TouchableOpacity, Pressable, ScrollView } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '../context/ThemeContext';
@@ -8,7 +8,10 @@ import { useCityLocation } from '../context/CityContext';
 import { useRouter } from 'expo-router';
 import AppleSignInButton from './user/AppleSignInButton';
 import GoogleSignInButton from './user/GoogleSignInButton';
-import { STORAGE_KEYS } from '../constants/storage-keys'; 
+import { STORAGE_KEYS } from '../constants/storage-keys';
+import { useQueryClient } from '@tanstack/react-query';
+import { getCommunitiesForCity } from '../api/communities';
+import type { Community } from '../api/communities'; 
 
 interface OnboardingModalProps {
   visible: boolean;
@@ -19,22 +22,29 @@ const AVAILABLE_CITIES = ['Boston', 'New York'];
 
 export default function OnboardingModal({ visible, onComplete }: Readonly<OnboardingModalProps>) {
   const { theme } = useTheme();
-  const { allCommunities, onCommunitiesChange, onCityChange: onCommunityCityChange } = useCommunity();
-  const { onCityChange: onCityLocationChange } = useCityLocation();
+  const queryClient = useQueryClient();
+  const { onCommunitiesChange } = useCommunity();
+  const { onCityChange } = useCityLocation();
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [selectedCity, setSelectedCity] = useState<string>('Boston');
   const [selectedCommunityIds, setSelectedCommunityIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [allCommunities, setAllCommunities] = useState<Community[]>([]);
 
-  const handleCitySelect = async (city: string) => {
+  // Fetch communities for the selected city
+  useEffect(() => {
+    const fetchCommunities = async () => {
+      const communities = await getCommunitiesForCity(selectedCity);
+      setAllCommunities(communities);
+    };
+    fetchCommunities();
+  }, [selectedCity]);
+
+  const handleCitySelect = (city: string) => {
     setSelectedCity(city);
-    // Save city to BOTH contexts to ensure it persists everywhere
-    await Promise.all([
-      onCityLocationChange(city), // Saves to CityContext (uses STORAGE_KEYS.PREFERRED_CITY)
-      onCommunityCityChange(city)  // Saves to CommunityContext (uses its own storage key)
-    ]);
+    // During onboarding, just update local state - don't trigger data fetches
   };
 
   const handleCommunityToggle = (communityName: string) => {
@@ -42,10 +52,8 @@ export default function OnboardingModal({ visible, onComplete }: Readonly<Onboar
       const newSelection = prev.includes(communityName)
         ? prev.filter(id => id !== communityName)
         : [...prev, communityName];
-      
-      // Save immediately to CommunityContext (which saves to AsyncStorage)
-      onCommunitiesChange(newSelection);
-      
+
+      // During onboarding, just update local state - don't trigger data fetches
       return newSelection;
     });
   };
@@ -71,17 +79,53 @@ export default function OnboardingModal({ visible, onComplete }: Readonly<Onboar
   };
 
   // Common function to save onboarding preferences
-  const saveOnboardingPreferences = async () => {
-    // City and communities are already saved immediately when selected/toggled
-    // Only need to save onboarding completion flag to prevent modal from showing again
-    await AsyncStorage.setItem(STORAGE_KEYS.ONBOARDING_COMPLETED, 'true');
+  const saveOnboardingPreferences = async (skipContextUpdate = false) => {
+    // Save preferences to AsyncStorage
+    await AsyncStorage.multiSet([
+      [STORAGE_KEYS.PREFERRED_CITY, selectedCity],
+      [STORAGE_KEYS.SELECTED_INTERESTS, JSON.stringify(selectedCommunityIds)],
+      [STORAGE_KEYS.ONBOARDING_COMPLETED, 'true'],
+    ]);
+
+    // For OAuth flows (Apple, Google), skip context updates as the app will reload
+    // and contexts will load preferences from AsyncStorage on mount
+    if (!skipContextUpdate) {
+      // Trigger data loading by updating contexts (for guest/email signup flows)
+      await onCityChange(selectedCity);
+      await onCommunitiesChange(selectedCommunityIds);
+    }
   };
 
   const handleAppleSignInSuccess = async () => {
-    // Save preferences BEFORE OAuth redirect to prevent modal from showing again
-    await saveOnboardingPreferences();
-    // Call onComplete to close the modal
-    onComplete(selectedCommunityIds);
+    try {
+      setLoading(true);
+
+      // Save preferences to AsyncStorage
+      await AsyncStorage.multiSet([
+        [STORAGE_KEYS.PREFERRED_CITY, selectedCity],
+        [STORAGE_KEYS.SELECTED_INTERESTS, JSON.stringify(selectedCommunityIds)],
+        [STORAGE_KEYS.ONBOARDING_COMPLETED, 'true'],
+      ]);
+
+      // Update city (triggers React Query to fetch data for new city)
+      await onCityChange(selectedCity);
+
+      // Prefetch data for the new city (ensures it's ready)
+      await queryClient.prefetchQuery({
+        queryKey: ['communities', selectedCity],
+        queryFn: () => getCommunitiesForCity(selectedCity),
+      });
+
+      // Update selected communities
+      await onCommunitiesChange(selectedCommunityIds);
+
+      setLoading(false);
+      onComplete(selectedCommunityIds);
+    } catch (error) {
+      console.error('Error in handleAppleSignInSuccess:', error);
+      setLoading(false);
+      onComplete(selectedCommunityIds);
+    }
   };
 
   const handleAppleSignInError = (error: string) => {
@@ -220,7 +264,7 @@ export default function OnboardingModal({ visible, onComplete }: Readonly<Onboar
                               ? theme.colors.primary[100]
                               : theme.colors.background.secondary,
                             borderColor: isSelected
-                              ? community.metadata.color
+                              ? community.metadata?.color
                               : theme.colors.border.light,
                             borderLeftWidth: isSelected ? 4 : 2,
                           }
@@ -228,7 +272,7 @@ export default function OnboardingModal({ visible, onComplete }: Readonly<Onboar
                         onPress={() => handleCommunityToggle(community.name)}
                       >
                         <Text variant="h4" style={{ fontSize: 24, marginBottom: 2 }}>
-                          {community.metadata.icon}
+                          {community.metadata?.icon}
                         </Text>
                         <Text
                           variant="body2"

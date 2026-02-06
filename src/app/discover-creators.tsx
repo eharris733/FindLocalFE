@@ -14,7 +14,6 @@ import { useRouter } from 'expo-router';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../hooks/useAuth';
 import { Text } from '../components/ui';
-import PageView from '../components/ui/PageView';
 import { Profile } from '../api/profiles';
 import { followUser, unfollowUser, getFollowing, getFollowerCount } from '../api/friends';
 import { supabase } from '../supabase';
@@ -170,6 +169,8 @@ export default function DiscoverCreatorsPage() {
         return;
       }
 
+      logger.info('Fetched creators:', { count: data?.length, data });
+
       // Fetch follower counts for each creator
       const creatorsWithStats: CreatorWithStats[] = await Promise.all(
         (data || []).map(async (creator) => {
@@ -257,8 +258,10 @@ export default function DiscoverCreatorsPage() {
       )
     : creators;
 
-  // Exclude current user from the list
-  const displayCreators = filteredCreators.filter((c) => c.id !== user?.id);
+  // Exclude current user and already-followed creators from the list
+  const displayCreators = filteredCreators.filter(
+    (c) => c.id !== user?.id && !followingMap[c.id]
+  );
 
   const renderEmptyState = () => (
     <View style={styles.emptyContainer}>
@@ -274,8 +277,9 @@ export default function DiscoverCreatorsPage() {
     </View>
   );
 
-  return (
-    <PageView title="Discover Creators">
+  const renderHeader = () => (
+    <View>
+      <Text variant="h3" style={{ marginBottom: 20 }}>Discover Creators</Text>
       {/* Search Bar */}
       <View style={[styles.searchContainer, { backgroundColor: theme.colors.background.secondary }]}>
         <Text style={{ fontSize: 16 }}>🔍</Text>
@@ -294,46 +298,64 @@ export default function DiscoverCreatorsPage() {
           </TouchableOpacity>
         )}
       </View>
+    </View>
+  );
 
-      {/* Creators Grid */}
-      {loading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={theme.colors.primary[500]} />
-          <Text variant="body2" color="secondary" style={{ marginTop: 12 }}>
-            Loading creators...
-          </Text>
-        </View>
-      ) : (
-        <FlatList
-          data={displayCreators}
-          keyExtractor={(item) => item.id}
-          numColumns={2}
-          columnWrapperStyle={styles.row}
-          renderItem={({ item }) => (
-            <CreatorItem
-              creator={item}
-              isFollowing={followingMap[item.id] || false}
-              onToggleFollow={handleToggleFollow}
-              onPress={handleCreatorPress}
-              theme={theme}
-            />
-          )}
-          ListEmptyComponent={renderEmptyState}
-          contentContainerStyle={displayCreators.length === 0 ? { flex: 1 } : { paddingBottom: 20 }}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={handleRefresh}
-              tintColor={theme.colors.primary[500]}
-            />
-          }
+  if (loading) {
+    return (
+      <View style={[styles.loadingContainer, { backgroundColor: theme.colors.background.primary }]}>
+        <ActivityIndicator size="large" color={theme.colors.primary[500]} />
+        <Text variant="body2" color="secondary" style={{ marginTop: 12 }}>
+          Loading creators...
+        </Text>
+      </View>
+    );
+  }
+
+  return (
+    <FlatList
+      style={[styles.container, { backgroundColor: theme.colors.background.primary }]}
+      contentContainerStyle={displayCreators.length === 0 ? styles.emptyContentContainer : styles.contentContainer}
+      data={displayCreators}
+      keyExtractor={(item) => item.id}
+      numColumns={2}
+      columnWrapperStyle={styles.row}
+      ListHeaderComponent={renderHeader}
+      renderItem={({ item }) => (
+        <CreatorItem
+          creator={item}
+          isFollowing={followingMap[item.id] || false}
+          onToggleFollow={handleToggleFollow}
+          onPress={handleCreatorPress}
+          theme={theme}
         />
       )}
-    </PageView>
+      ListEmptyComponent={renderEmptyState}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={handleRefresh}
+          tintColor={theme.colors.primary[500]}
+        />
+      }
+    />
   );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  contentContainer: {
+    padding: 20,
+    paddingTop: 60,
+    paddingBottom: 20,
+  },
+  emptyContentContainer: {
+    flex: 1,
+    padding: 20,
+    paddingTop: 60,
+  },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -351,12 +373,14 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingTop: 60,
   },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 32,
+    marginTop: -60,
   },
   row: {
     justifyContent: 'space-between',

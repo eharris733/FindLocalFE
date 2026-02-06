@@ -1,6 +1,7 @@
 import React from 'react';
-import { Platform, Linking } from 'react-native';
+import { Platform} from 'react-native';
 import * as AppleAuthentication from 'expo-apple-authentication';
+import * as WebBrowser from 'expo-web-browser';
 import { supabase, getAuthRedirectUrl } from '../../supabase';
 import { Button } from '../ui';
 import { logger } from '../../utils/logger';
@@ -89,17 +90,23 @@ export default function AppleSignInButton({
 
   async function signInWithAppleWeb() {
     try {
-      const redirectTo = Platform.OS === 'web' 
-        ? `${window.location.origin}/auth/callback`
+      const redirectTo = Platform.OS === 'web'
+        ? `${globalThis.window.location.origin}/auth/callback`
         : getAuthRedirectUrl('/auth/callback');
-        
+      logger.info('[AppleSignIn] Generated redirect URL:', redirectTo);
+      logger.info('[AppleSignIn] Platform:', Platform.OS);
+
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'apple',
-        options: { 
+        options: {
           redirectTo,
           scopes: 'name email'
         },
       });
+
+      if (data?.url) {
+        logger.info('[AppleSignIn] OAuth URL from Supabase:', data.url);
+      }
 
       if (error) {
         if (error.status === 422) {
@@ -113,13 +120,18 @@ export default function AppleSignInButton({
       }
 
       if (data?.url && Platform.OS !== 'web') {
-        const supported = await Linking.canOpenURL(data.url);
-        if (supported) {
-          await Linking.openURL(data.url);
-        } else {
-          logger.warn('Cannot open URL from Supabase OAuth', data.url);
-          onError?.('Unable to open sign-in page. Please try again.');
+        // Open in-app browser for mobile OAuth
+        // This will open the OAuth flow in an in-app browser
+        // When OAuth completes, Supabase redirects to findlocal://auth/callback
+        // which triggers a deep link back to the app and dismisses the browser
+        const result = await WebBrowser.openBrowserAsync(data.url);
+
+        // The browser was dismissed
+        if (result.type === 'cancel') {
+          logger.info('Apple sign-in canceled by user');
         }
+        // Note: We don't call onSuccess/onError here because the deep link
+        // will be handled by the /auth/callback route
       }
     } catch (err: any) {
       logger.error('Unexpected Apple sign-in error:', err);

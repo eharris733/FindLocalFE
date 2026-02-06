@@ -76,6 +76,7 @@ function AppContent() {
     availableLocations,
     venues,
     venuesLoading,
+    availableFilterOptions,
   } = useEvents({ selectedCity, favoriteEventIds });
 
   const handleEventPress = (event: Event) => {
@@ -158,6 +159,7 @@ function AppContent() {
         availableLocations={availableLocations}
         venues={venues}
         venuesLoading={venuesLoading}
+        availableFilterOptions={availableFilterOptions}
         onEventPress={handleEventPress}
       />
 

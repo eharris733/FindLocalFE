@@ -5,8 +5,8 @@ import { Text } from './Text';
 import { useDeviceInfo } from '../../hooks/useDeviceInfo';
 
 interface ViewToggleProps {
-  viewMode: 'gallery' | 'list' | 'map';
-  onViewModeChange: (mode: 'gallery' | 'list' | 'map') => void;
+  viewMode: 'list' | 'map';
+  onViewModeChange: (mode: 'list' | 'map') => void;
 }
 
 export const ViewToggle: React.FC<ViewToggleProps> = ({
@@ -32,57 +32,36 @@ export const ViewToggle: React.FC<ViewToggleProps> = ({
             styles.toggleButton,
             styles.compactButton,
             {
-              backgroundColor: viewMode === 'list' 
-                ? theme.colors.primary[500] 
+              backgroundColor: viewMode === 'list'
+                ? theme.colors.primary[500]
                 : 'transparent',
             }
           ]}
           onPress={() => onViewModeChange('list')}
         >
-          <Text 
-            variant="body2" 
+          <Text
+            variant="body2"
             color={viewMode === 'list' ? 'inverse' : 'secondary'}
             style={styles.iconText}
           >
             ☰
           </Text>
         </TouchableOpacity>
-        
+
         <TouchableOpacity
           style={[
             styles.toggleButton,
             styles.compactButton,
             {
-              backgroundColor: viewMode === 'gallery' 
-                ? theme.colors.primary[500] 
-                : 'transparent',
-            }
-          ]}
-          onPress={() => onViewModeChange('gallery')}
-        >
-          <Text 
-            variant="body2" 
-            color={viewMode === 'gallery' ? 'inverse' : 'secondary'}
-            style={styles.iconText}
-          >
-            ⊞
-          </Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity
-          style={[
-            styles.toggleButton,
-            styles.compactButton,
-            {
-              backgroundColor: viewMode === 'map' 
-                ? theme.colors.primary[500] 
+              backgroundColor: viewMode === 'map'
+                ? theme.colors.primary[500]
                 : 'transparent',
             }
           ]}
           onPress={() => onViewModeChange('map')}
         >
-          <Text 
-            variant="body2" 
+          <Text
+            variant="body2"
             color={viewMode === 'map' ? 'inverse' : 'secondary'}
             style={styles.iconText}
           >
@@ -106,55 +85,35 @@ export const ViewToggle: React.FC<ViewToggleProps> = ({
         style={[
           styles.toggleButton,
           {
-            backgroundColor: viewMode === 'list' 
-              ? theme.colors.primary[500] 
+            backgroundColor: viewMode === 'list'
+              ? theme.colors.primary[500]
               : 'transparent',
           }
         ]}
         onPress={() => onViewModeChange('list')}
       >
-        <Text 
-          variant="body2" 
+        <Text
+          variant="body2"
           color={viewMode === 'list' ? 'inverse' : 'secondary'}
           style={styles.toggleText}
         >
           List
         </Text>
       </TouchableOpacity>
-      
+
       <TouchableOpacity
         style={[
           styles.toggleButton,
           {
-            backgroundColor: viewMode === 'gallery' 
-              ? theme.colors.primary[500] 
-              : 'transparent',
-          }
-        ]}
-        onPress={() => onViewModeChange('gallery')}
-      >
-        <Text 
-          variant="body2" 
-          color={viewMode === 'gallery' ? 'inverse' : 'secondary'}
-          style={styles.toggleText}
-        >
-          Gallery
-        </Text>
-      </TouchableOpacity>
-      
-      <TouchableOpacity
-        style={[
-          styles.toggleButton,
-          {
-            backgroundColor: viewMode === 'map' 
-              ? theme.colors.primary[500] 
+            backgroundColor: viewMode === 'map'
+              ? theme.colors.primary[500]
               : 'transparent',
           }
         ]}
         onPress={() => onViewModeChange('map')}
       >
-        <Text 
-          variant="body2" 
+        <Text
+          variant="body2"
           color={viewMode === 'map' ? 'inverse' : 'secondary'}
           style={styles.toggleText}
         >

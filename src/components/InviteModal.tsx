@@ -16,6 +16,7 @@ import { useTheme } from '../context/ThemeContext';
 import { Text } from './ui';
 import { createEventInvitation, getInviteUrl } from '../api/invitations';
 import { logger } from '../utils/logger';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface InviteModalProps {
   visible: boolean;
@@ -28,7 +29,8 @@ type InviteStep = 'options' | 'loading' | 'share';
 
 export function InviteModal({ visible, onClose, eventId, eventTitle }: InviteModalProps) {
   const { theme } = useTheme();
-  
+  const queryClient = useQueryClient();
+
   // Options state
   const [allowAnonymous, setAllowAnonymous] = useState(true);
   const [allowPlusOne, setAllowPlusOne] = useState(false);
@@ -75,7 +77,12 @@ export function InviteModal({ visible, onClose, eventId, eventTitle }: InviteMod
         setStep('options');
         return;
       }
-      
+
+      // Invalidate queries so the Manage button appears and home page updates
+      queryClient.invalidateQueries({ queryKey: ['myEventInvitations', eventId] });
+      queryClient.invalidateQueries({ queryKey: ['myInvitationsWithStats'] });
+      queryClient.invalidateQueries({ queryKey: ['myInvitations'] });
+
       setInviteToken(data.token);
       setStep('share');
     } catch (err: any) {

@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
-  ScrollView,
+  FlatList,
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
@@ -211,58 +211,33 @@ export default function MyInvitesPage() {
     return { yes, maybe, no, total: rsvps.length };
   };
 
-  if (loading) {
-    return (
-      <View style={[styles.container, { backgroundColor: theme.colors.background.primary }]}>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={theme.colors.primary[500]} />
-          <Text variant="body1" style={{ color: theme.colors.text.secondary, marginTop: 16 }}>
-            Loading your invitations...
-          </Text>
-        </View>
-      </View>
-    );
-  }
+  const renderHeader = () => (
+    <View style={[styles.header, { borderBottomColor: theme.colors.border.light }]}>
+      <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+        <Text variant="body1" style={{ color: theme.colors.text.secondary }}>← Back</Text>
+      </TouchableOpacity>
+      <Text variant="h3" style={[styles.headerTitle, { color: theme.colors.text.primary }]}>
+        My Invitations
+      </Text>
+      <View style={{ width: 60 }} />
+    </View>
+  );
 
-  return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background.primary }]}>
-      {/* Header */}
-      <View style={[styles.header, { borderBottomColor: theme.colors.border.light }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Text variant="body1" style={{ color: theme.colors.text.secondary }}>← Back</Text>
-        </TouchableOpacity>
-        <Text variant="h3" style={[styles.headerTitle, { color: theme.colors.text.primary }]}>
-          My Invitations
-        </Text>
-        <View style={{ width: 60 }} />
-      </View>
+  const renderEmptyState = () => (
+    <View style={styles.emptyContainer}>
+      <Text style={{ fontSize: 48, marginBottom: 16 }}>📨</Text>
+      <Text variant="h4" style={{ color: theme.colors.text.primary, marginBottom: 8 }}>
+        No invitations yet
+      </Text>
+      <Text variant="body2" style={{ color: theme.colors.text.secondary, textAlign: 'center' }}>
+        Create an invite from any event page to share with friends
+      </Text>
+    </View>
+  );
 
-      <ScrollView
-        style={styles.scrollView}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={handleRefresh}
-            tintColor={theme.colors.primary[500]}
-          />
-        }
-      >
-        {invitations.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <Text style={{ fontSize: 48, marginBottom: 16 }}>📨</Text>
-            <Text variant="h4" style={{ color: theme.colors.text.primary, marginBottom: 8 }}>
-              No invitations yet
-            </Text>
-            <Text variant="body2" style={{ color: theme.colors.text.secondary, textAlign: 'center' }}>
-              Create an invite from any event page to share with friends
-            </Text>
-          </View>
-        ) : (
-          <View style={styles.invitationsList}>
-            {invitations.map((invitation) => (
-              <View
-                key={invitation.id}
-                style={[styles.invitationCard, {
+  const renderInvitation = ({ item: invitation }: { item: InvitationWithEvent }) => (
+    <View
+      style={[styles.invitationCard, {
                   backgroundColor: theme.colors.background.secondary,
                   borderColor: invitation.is_active 
                     ? theme.colors.primary[300] 
@@ -472,16 +447,51 @@ export default function MyInvitesPage() {
                   </View>
                 )}
               </View>
-            ))}
-          </View>
-        )}
-      </ScrollView>
-    </View>
+  );
+
+  if (loading) {
+    return (
+      <View style={[styles.container, { backgroundColor: theme.colors.background.primary }]}>
+        {renderHeader()}
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={theme.colors.primary[500]} />
+          <Text variant="body1" style={{ color: theme.colors.text.secondary, marginTop: 16 }}>
+            Loading your invitations...
+          </Text>
+        </View>
+      </View>
+    );
+  }
+
+  return (
+    <FlatList
+      style={[styles.container, { backgroundColor: theme.colors.background.primary }]}
+      contentContainerStyle={invitations.length === 0 ? styles.emptyContentContainer : styles.contentContainer}
+      data={invitations}
+      keyExtractor={(item) => item.id}
+      ListHeaderComponent={renderHeader}
+      ListEmptyComponent={renderEmptyState}
+      renderItem={renderInvitation}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={handleRefresh}
+          tintColor={theme.colors.primary[500]}
+        />
+      }
+    />
   );
 }
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+  },
+  contentContainer: {
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+  },
+  emptyContentContainer: {
     flex: 1,
   },
   header: {
@@ -490,6 +500,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 16,
+    paddingTop: 60,
     borderBottomWidth: 1,
   },
   backButton: {
@@ -498,9 +509,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     flex: 1,
     textAlign: 'center',
-  },
-  scrollView: {
-    flex: 1,
   },
   loadingContainer: {
     flex: 1,
@@ -514,9 +522,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 64,
     paddingHorizontal: 32,
-  },
-  invitationsList: {
-    padding: 16,
   },
   invitationCard: {
     borderRadius: 12,
