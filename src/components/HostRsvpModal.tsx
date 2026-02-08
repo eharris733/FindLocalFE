@@ -469,9 +469,6 @@ export function HostRsvpModal({ visible, onClose, eventId, eventTitle, onCreateN
           </Text>
           <View style={styles.settingsRow}>
             <Text variant="caption" style={{ color: theme.colors.text.tertiary }}>
-              {selectedInvitation.allow_anonymous_rsvp ? '✓' : '✗'} Anonymous RSVPs
-            </Text>
-            <Text variant="caption" style={{ color: theme.colors.text.tertiary, marginLeft: 12 }}>
               {selectedInvitation.allow_plus_one ? '✓' : '✗'} Plus ones
             </Text>
             <Text variant="caption" style={{ color: theme.colors.text.tertiary, marginLeft: 12 }}>
@@ -612,13 +609,13 @@ export function HostRsvpModal({ visible, onClose, eventId, eventTitle, onCreateN
                 <View style={styles.rsvpInfo}>
                   <View style={[styles.avatar, { backgroundColor: theme.colors.primary[100] }]}>
                     <Text style={{ fontSize: 16 }}>
-                      {rsvp.full_name?.[0] || rsvp.username?.[0] || rsvp.anonymous_name?.[0] || '?'}
+                      {rsvp.full_name?.[0] || rsvp.username?.[0] || '?'}
                     </Text>
                   </View>
 
                   <View style={{ flex: 1 }}>
                     <Text variant="body1" style={{ color: theme.colors.text.primary, fontWeight: '600' }}>
-                      {rsvp.full_name || rsvp.username || rsvp.anonymous_name || 'Anonymous'}
+                      {rsvp.full_name || rsvp.username || 'Unknown'}
                     </Text>
                     {rsvp.username && (
                       <Text variant="caption" style={{ color: theme.colors.text.tertiary }}>

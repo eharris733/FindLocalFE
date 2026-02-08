@@ -18,6 +18,7 @@ import {
   EventRsvp,
 } from '../api/invitations';
 import { useAuth } from '../hooks/useAuth';
+import { useRouter } from 'expo-router';
 import { logger } from '../utils/logger';
 
 interface RsvpModalProps {
@@ -43,6 +44,7 @@ export function RsvpModal({
 }: RsvpModalProps) {
   const { theme } = useTheme();
   const { isLoggedIn } = useAuth();
+  const router = useRouter();
 
   const [step, setStep] = useState<RsvpStep>('loading');
   const [invitation, setInvitation] = useState<InvitationDetails | null>(null);
@@ -50,7 +52,6 @@ export function RsvpModal({
 
   // Form state
   const [passcode, setPasscode] = useState('');
-  const [anonymousName, setAnonymousName] = useState('');
   const [plusOneCount, setPlusOneCount] = useState(0);
   const [selectedResponse, setSelectedResponse] = useState<'yes' | 'no' | 'maybe' | null>(null);
 
@@ -114,18 +115,11 @@ export function RsvpModal({
   };
   
   const handleResponseSelect = async (response: 'yes' | 'no' | 'maybe') => {
-    // If not logged in and anonymous RSVPs are not allowed, show error
-    if (!isLoggedIn && !invitation?.allow_anonymous_rsvp) {
-      setError('You must be signed in to RSVP');
+    if (!isLoggedIn) {
+      setError('You must be signed in to RSVP. Please create an account or sign in.');
       return;
     }
-    
-    // If not logged in and no anonymous name, prompt for name
-    if (!isLoggedIn && !anonymousName.trim()) {
-      setSelectedResponse(response);
-      return; // Form will show name input
-    }
-    
+
     setSelectedResponse(response);
     await submitResponse(response);
   };
@@ -154,7 +148,6 @@ export function RsvpModal({
           token: inviteToken,
           response,
           passcode: passcode || undefined,
-          anonymousName: !isLoggedIn ? anonymousName.trim() : undefined,
           plusOneCount: invitation?.allow_plus_one ? plusOneCount : 0,
         });
 
@@ -180,7 +173,6 @@ export function RsvpModal({
     setInvitation(null);
     setError(null);
     setPasscode('');
-    setAnonymousName('');
     setPlusOneCount(0);
     setSelectedResponse(null);
     onClose();
@@ -275,152 +267,130 @@ export function RsvpModal({
     </>
   );
   
-  const renderRespondStep = () => {
-    const showNameInput = !isLoggedIn && selectedResponse !== null;
-    
-    return (
-      <>
-        {invitation?.message && (
-          <View style={[styles.messageBox, { backgroundColor: theme.colors.primary[100] }]}>
-            <Text variant="body2" style={{ color: theme.colors.primary[700], fontStyle: 'italic' }}>
-              "{invitation.message}"
-            </Text>
-            {invitation.inviter_name && (
-              <Text variant="caption" style={{ color: theme.colors.primary[600], marginTop: 8 }}>
-                — {invitation.inviter_name}
-              </Text>
-            )}
-          </View>
-        )}
-        
-        <Text variant="h3" style={[styles.title, { color: theme.colors.text.primary }]}>
-          {eventTitle ? `RSVP to ${eventTitle}` : 'RSVP to Event'}
-        </Text>
-        <Text variant="body2" style={[styles.subtitle, { color: theme.colors.text.secondary }]}>
-          Let the host know if you're coming
-        </Text>
-        
-        {error && (
-          <View style={[styles.errorBox, { backgroundColor: theme.colors.error + '20' }]}>
-            <Text variant="body2" style={{ color: theme.colors.error }}>
-              {error}
-            </Text>
-          </View>
-        )}
-        
-        {/* Response Buttons */}
-        <View style={styles.responseContainer}>
-          {(['yes', 'maybe', 'no'] as const).map((response) => (
-            <TouchableOpacity
-              key={response}
-              style={[
-                styles.responseButton,
-                {
-                  backgroundColor: selectedResponse === response 
-                    ? responseColors[response].bg 
-                    : theme.colors.background.secondary,
-                  borderColor: selectedResponse === response 
-                    ? responseColors[response].bg 
-                    : theme.colors.border.light,
-                },
-              ]}
-              onPress={() => handleResponseSelect(response)}
-              disabled={isSubmitting}
-            >
-              <Text style={{ fontSize: 24, marginBottom: 4 }}>
-                {response === 'yes' ? '✓' : response === 'maybe' ? '?' : '✗'}
-              </Text>
-              <Text variant="body1" style={{
-                color: selectedResponse === response 
-                  ? responseColors[response].text 
-                  : theme.colors.text.primary,
-                fontWeight: '600',
-                textTransform: 'capitalize',
-              }}>
-                {response === 'yes' ? 'Going' : response === 'maybe' ? 'Maybe' : 'Not Going'}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-        
-        {/* Anonymous Name Input */}
-        {showNameInput && (
-          <View style={styles.nameInputContainer}>
-            <Text variant="body2" style={[styles.inputLabel, { color: theme.colors.text.secondary }]}>
-              Your Name
-            </Text>
-            <TextInput
-              style={[styles.textInput, {
-                backgroundColor: theme.colors.background.secondary,
-                color: theme.colors.text.primary,
-                borderColor: theme.colors.border.light,
-              }]}
-              value={anonymousName}
-              onChangeText={setAnonymousName}
-              placeholder="Enter your name..."
-              placeholderTextColor={theme.colors.text.tertiary}
-            />
-          </View>
-        )}
-        
-        {/* Plus One Input */}
-        {invitation?.allow_plus_one && selectedResponse === 'yes' && (
-          <View style={styles.plusOneContainer}>
-            <Text variant="body2" style={[styles.inputLabel, { color: theme.colors.text.secondary }]}>
-              Bringing guests?
-            </Text>
-            <View style={styles.plusOneControls}>
-              <TouchableOpacity
-                style={[styles.plusOneButton, { borderColor: theme.colors.border.light }]}
-                onPress={() => setPlusOneCount(Math.max(0, plusOneCount - 1))}
-              >
-                <Text variant="h4" style={{ color: theme.colors.text.primary }}>-</Text>
-              </TouchableOpacity>
-              <Text variant="h4" style={[styles.plusOneCount, { color: theme.colors.text.primary }]}>
-                {plusOneCount}
-              </Text>
-              <TouchableOpacity
-                style={[styles.plusOneButton, { borderColor: theme.colors.border.light }]}
-                onPress={() => setPlusOneCount(plusOneCount + 1)}
-              >
-                <Text variant="h4" style={{ color: theme.colors.text.primary }}>+</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
-        
-        {/* Submit Button (only shows if we need name input) */}
-        {showNameInput && (
-          <TouchableOpacity
-            style={[styles.submitButton, { 
-              backgroundColor: anonymousName.trim() 
-                ? theme.colors.primary[500] 
-                : theme.colors.gray[300],
-            }]}
-            onPress={() => selectedResponse && submitResponse(selectedResponse)}
-            disabled={!anonymousName.trim() || isSubmitting}
-          >
-            {isSubmitting ? (
-              <ActivityIndicator size="small" color="#fff" />
-            ) : (
-              <Text variant="body1" style={{ color: theme.colors.text.inverse, fontWeight: '600' }}>
-                Submit RSVP
-              </Text>
-            )}
-          </TouchableOpacity>
-        )}
-        
-        <TouchableOpacity
-          style={styles.cancelTextButton}
-          onPress={handleClose}
-        >
-          <Text variant="body2" style={{ color: theme.colors.text.secondary }}>
-            Cancel
+  const renderRespondStep = () => (
+    <>
+      {invitation?.message && (
+        <View style={[styles.messageBox, { backgroundColor: theme.colors.primary[100] }]}>
+          <Text variant="body2" style={{ color: theme.colors.primary[700], fontStyle: 'italic' }}>
+            "{invitation.message}"
           </Text>
-        </TouchableOpacity>
-      </>
-    );
-  };
+          {invitation.inviter_name && (
+            <Text variant="caption" style={{ color: theme.colors.primary[600], marginTop: 8 }}>
+              — {invitation.inviter_name}
+            </Text>
+          )}
+        </View>
+      )}
+
+      <Text variant="h3" style={[styles.title, { color: theme.colors.text.primary }]}>
+        {eventTitle ? `RSVP to ${eventTitle}` : 'RSVP to Event'}
+      </Text>
+      <Text variant="body2" style={[styles.subtitle, { color: theme.colors.text.secondary }]}>
+        Let the host know if you're coming
+      </Text>
+
+      {error && (
+        <View style={[styles.errorBox, { backgroundColor: theme.colors.error + '20' }]}>
+          <Text variant="body2" style={{ color: theme.colors.error }}>
+            {error}
+          </Text>
+        </View>
+      )}
+
+      {/* Sign-in prompt for unauthenticated users */}
+      {!isLoggedIn && (
+        <View style={[styles.authPrompt, { backgroundColor: theme.colors.background.secondary, borderColor: theme.colors.border.light }]}>
+          <Text variant="body2" style={{ color: theme.colors.text.primary, textAlign: 'center', marginBottom: 12 }}>
+            You need an account to RSVP
+          </Text>
+          <View style={styles.authButtonRow}>
+            <TouchableOpacity
+              style={[styles.authButton, { backgroundColor: theme.colors.primary[500] }]}
+              onPress={() => { handleClose(); router.push('/user/signup'); }}
+            >
+              <Text variant="body2" style={{ color: theme.colors.text.inverse, fontWeight: '600' }}>Sign Up</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.authButton, { borderColor: theme.colors.primary[500], borderWidth: 1 }]}
+              onPress={() => { handleClose(); router.push('/user/signin'); }}
+            >
+              <Text variant="body2" style={{ color: theme.colors.primary[500], fontWeight: '600' }}>Sign In</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+
+      {/* Response Buttons */}
+      <View style={styles.responseContainer}>
+        {(['yes', 'maybe', 'no'] as const).map((response) => (
+          <TouchableOpacity
+            key={response}
+            style={[
+              styles.responseButton,
+              {
+                backgroundColor: selectedResponse === response
+                  ? responseColors[response].bg
+                  : theme.colors.background.secondary,
+                borderColor: selectedResponse === response
+                  ? responseColors[response].bg
+                  : theme.colors.border.light,
+              },
+            ]}
+            onPress={() => handleResponseSelect(response)}
+            disabled={isSubmitting}
+          >
+            <Text style={{ fontSize: 24, marginBottom: 4 }}>
+              {response === 'yes' ? '✓' : response === 'maybe' ? '?' : '✗'}
+            </Text>
+            <Text variant="body1" style={{
+              color: selectedResponse === response
+                ? responseColors[response].text
+                : theme.colors.text.primary,
+              fontWeight: '600',
+              textTransform: 'capitalize',
+            }}>
+              {response === 'yes' ? 'Going' : response === 'maybe' ? 'Maybe' : 'Not Going'}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      {/* Plus One Input */}
+      {invitation?.allow_plus_one && selectedResponse === 'yes' && (
+        <View style={styles.plusOneContainer}>
+          <Text variant="body2" style={[styles.inputLabel, { color: theme.colors.text.secondary }]}>
+            Bringing guests?
+          </Text>
+          <View style={styles.plusOneControls}>
+            <TouchableOpacity
+              style={[styles.plusOneButton, { borderColor: theme.colors.border.light }]}
+              onPress={() => setPlusOneCount(Math.max(0, plusOneCount - 1))}
+            >
+              <Text variant="h4" style={{ color: theme.colors.text.primary }}>-</Text>
+            </TouchableOpacity>
+            <Text variant="h4" style={[styles.plusOneCount, { color: theme.colors.text.primary }]}>
+              {plusOneCount}
+            </Text>
+            <TouchableOpacity
+              style={[styles.plusOneButton, { borderColor: theme.colors.border.light }]}
+              onPress={() => setPlusOneCount(plusOneCount + 1)}
+            >
+              <Text variant="h4" style={{ color: theme.colors.text.primary }}>+</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+
+      <TouchableOpacity
+        style={styles.cancelTextButton}
+        onPress={handleClose}
+      >
+        <Text variant="body2" style={{ color: theme.colors.text.secondary }}>
+          Cancel
+        </Text>
+      </TouchableOpacity>
+    </>
+  );
   
   const renderSuccessStep = () => {
     const responseText = {
@@ -557,8 +527,21 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 2,
   },
-  nameInputContainer: {
-    marginBottom: 16,
+  authPrompt: {
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 24,
+  },
+  authButtonRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  authButton: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: 'center',
+    borderRadius: 8,
   },
   plusOneContainer: {
     marginBottom: 16,
@@ -580,12 +563,6 @@ const styles = StyleSheet.create({
   plusOneCount: {
     minWidth: 40,
     textAlign: 'center',
-  },
-  submitButton: {
-    paddingVertical: 14,
-    alignItems: 'center',
-    borderRadius: 8,
-    marginBottom: 12,
   },
   cancelTextButton: {
     alignItems: 'center',

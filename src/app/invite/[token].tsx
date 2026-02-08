@@ -1,5 +1,5 @@
 // src/app/invite/[token].tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   StyleSheet,
@@ -7,8 +7,10 @@ import {
   TouchableOpacity,
   TextInput,
   Image,
+  ScrollView,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '../../context/ThemeContext';
 import { Text } from '../../components/ui';
 import { useAuth } from '../../hooks/useAuth';
@@ -19,15 +21,21 @@ import {
 } from '../../api/invitations';
 import { getEventById } from '../../api/events';
 import { Event } from '../../types/events';
+import { supabase, getAuthRedirectUrl } from '../../supabase';
 import { logger } from '../../utils/logger';
+import { STORAGE_KEYS } from '../../constants/storage-keys';
+import GoogleSignInButton from '../../components/user/GoogleSignInButton';
+import AppleSignInButton from '../../components/user/AppleSignInButton';
 
-type PageStep = 'loading' | 'passcode' | 'respond' | 'success' | 'error';
+type PageStep = 'loading' | 'passcode' | 'respond' | 'auth' | 'success' | 'error';
+type AuthMode = 'signup' | 'signin';
 
 export default function InviteResponsePage() {
   const { token } = useLocalSearchParams<{ token: string }>();
   const router = useRouter();
   const { theme } = useTheme();
   const { isLoggedIn } = useAuth();
+  const prevIsLoggedIn = useRef(isLoggedIn);
 
   const [step, setStep] = useState<PageStep>('loading');
   const [invitation, setInvitation] = useState<InvitationDetails | null>(null);
@@ -36,16 +44,56 @@ export default function InviteResponsePage() {
 
   // Form state
   const [passcode, setPasscode] = useState('');
-  const [anonymousName, setAnonymousName] = useState('');
   const [plusOneCount, setPlusOneCount] = useState(0);
   const [selectedResponse, setSelectedResponse] = useState<'yes' | 'no' | 'maybe' | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Inline auth state
+  const [authMode, setAuthMode] = useState<AuthMode>('signup');
+  const [authEmail, setAuthEmail] = useState('');
+  const [authPassword, setAuthPassword] = useState('');
+  const [authLoading, setAuthLoading] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [emailSent, setEmailSent] = useState(false);
+
   useEffect(() => {
     if (token) {
       loadInvitation();
+      checkPendingRsvp();
     }
   }, [token]);
+
+  // Auto-submit RSVP when user becomes logged in (after inline auth or OAuth return)
+  useEffect(() => {
+    if (isLoggedIn && !prevIsLoggedIn.current && selectedResponse) {
+      // User just logged in and has a pending response - auto-submit
+      submitResponse(selectedResponse);
+    }
+    prevIsLoggedIn.current = isLoggedIn;
+  }, [isLoggedIn]);
+
+  const checkPendingRsvp = async () => {
+    try {
+      const pendingData = await AsyncStorage.getItem(STORAGE_KEYS.PENDING_RSVP);
+      if (pendingData) {
+        const pending = JSON.parse(pendingData);
+        if (pending.token === token && isLoggedIn) {
+          // User returned from OAuth with a pending RSVP - restore and submit
+          setSelectedResponse(pending.response);
+          setPlusOneCount(pending.plusOneCount || 0);
+          await AsyncStorage.removeItem(STORAGE_KEYS.PENDING_RSVP);
+          // Wait for invitation to load before submitting
+          // The submission will happen via the isLoggedIn useEffect or after invitation loads
+        } else if (pending.token === token) {
+          // Restore selected response but don't submit yet (not logged in)
+          setSelectedResponse(pending.response);
+          setPlusOneCount(pending.plusOneCount || 0);
+        }
+      }
+    } catch (err) {
+      logger.warn('Error checking pending RSVP:', err);
+    }
+  };
 
   const loadInvitation = async () => {
     setStep('loading');
@@ -82,6 +130,23 @@ export default function InviteResponsePage() {
       } else {
         setStep('respond');
       }
+
+      // Check if user returned from OAuth with pending RSVP
+      if (isLoggedIn) {
+        const pendingData = await AsyncStorage.getItem(STORAGE_KEYS.PENDING_RSVP);
+        if (pendingData) {
+          const pending = JSON.parse(pendingData);
+          if (pending.token === token) {
+            await AsyncStorage.removeItem(STORAGE_KEYS.PENDING_RSVP);
+            setSelectedResponse(pending.response);
+            setPlusOneCount(pending.plusOneCount || 0);
+            // Submit after a short delay to let state settle
+            setTimeout(() => {
+              submitResponse(pending.response);
+            }, 100);
+          }
+        }
+      }
     } catch (err: any) {
       logger.error('Error loading invitation:', err);
       setError(err.message || 'Failed to load invitation');
@@ -99,19 +164,15 @@ export default function InviteResponsePage() {
   };
 
   const handleResponseSelect = async (response: 'yes' | 'no' | 'maybe') => {
-    // If not logged in and anonymous RSVPs are not allowed, show error
-    if (!isLoggedIn && !invitation?.allow_anonymous_rsvp) {
-      setError('You must be signed in to RSVP');
+    setSelectedResponse(response);
+
+    if (!isLoggedIn) {
+      // User must create an account - show auth step
+      setStep('auth');
       return;
     }
 
-    // If not logged in and no anonymous name, prompt for name
-    if (!isLoggedIn && !anonymousName.trim()) {
-      setSelectedResponse(response);
-      return; // Form will show name input
-    }
-
-    setSelectedResponse(response);
+    // User is logged in - submit directly
     await submitResponse(response);
   };
 
@@ -124,7 +185,6 @@ export default function InviteResponsePage() {
         token: token || '',
         response,
         passcode: passcode || undefined,
-        anonymousName: !isLoggedIn ? anonymousName.trim() : undefined,
         plusOneCount: invitation?.allow_plus_one ? plusOneCount : 0,
       });
 
@@ -141,6 +201,87 @@ export default function InviteResponsePage() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const savePendingRsvp = async () => {
+    try {
+      await AsyncStorage.setItem(
+        STORAGE_KEYS.PENDING_RSVP,
+        JSON.stringify({
+          token,
+          response: selectedResponse,
+          plusOneCount,
+        })
+      );
+    } catch (err) {
+      logger.warn('Error saving pending RSVP:', err);
+    }
+  };
+
+  const handleEmailAuth = async () => {
+    if (!authEmail.trim() || !authPassword.trim()) {
+      setAuthError('Please enter your email and password');
+      return;
+    }
+
+    setAuthLoading(true);
+    setAuthError(null);
+
+    try {
+      if (authMode === 'signup') {
+        const redirectTo = getAuthRedirectUrl('/auth/callback');
+        const { data, error } = await supabase.auth.signUp({
+          email: authEmail.trim(),
+          password: authPassword,
+          options: {
+            emailRedirectTo: redirectTo,
+          },
+        });
+
+        if (error) {
+          if (error.status === 422) {
+            setAuthError(error.message || 'Please check your email and password.');
+          } else if (error.status === 429) {
+            setAuthError('Too many attempts. Please wait a moment and try again.');
+          } else {
+            setAuthError(error.message || 'Sign up failed. Please try again.');
+          }
+          return;
+        }
+
+        if (!data.session) {
+          // Email confirmation required - save pending RSVP for when they verify
+          await savePendingRsvp();
+          setEmailSent(true);
+          return;
+        }
+
+        // Session created immediately - auth state change will trigger auto-submit
+      } else {
+        // Sign in
+        const { error } = await supabase.auth.signInWithPassword({
+          email: authEmail.trim(),
+          password: authPassword,
+        });
+
+        if (error) {
+          setAuthError(error.message || 'Sign in failed. Please try again.');
+          return;
+        }
+
+        // Auth state change will trigger auto-submit via useEffect
+      }
+    } catch (err: any) {
+      logger.error('Auth error:', err);
+      setAuthError(err.message || 'An error occurred. Please try again.');
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleOAuthStart = async () => {
+    // Save pending RSVP before OAuth redirect takes user away
+    await savePendingRsvp();
   };
 
   const handleViewEvent = () => {
@@ -227,173 +368,300 @@ export default function InviteResponsePage() {
     </View>
   );
 
-  const renderRespond = () => {
-    const showNameInput = !isLoggedIn && selectedResponse !== null;
+  const renderRespond = () => (
+    <View style={styles.formContent}>
+      {/* Event Info */}
+      {event && (
+        <View style={[styles.eventCard, { backgroundColor: theme.colors.background.secondary }]}>
+          {event.image_url && (
+            <Image
+              source={{ uri: event.image_url }}
+              style={styles.eventImage}
+              resizeMode="cover"
+            />
+          )}
+          <View style={styles.eventInfo}>
+            <Text variant="h3" style={{ color: theme.colors.text.primary, marginBottom: 8 }}>
+              {event.title}
+            </Text>
+            {event.event_date && (
+              <Text variant="body2" style={{ color: theme.colors.text.secondary }}>
+                📅 {new Date(event.event_date).toLocaleDateString('en-US', {
+                  weekday: 'long',
+                  month: 'long',
+                  day: 'numeric',
+                })}
+              </Text>
+            )}
+            {event.start_time && (
+              <Text variant="body2" style={{ color: theme.colors.text.secondary }}>
+                🕐 {event.start_time}
+              </Text>
+            )}
+          </View>
+        </View>
+      )}
+
+      {/* Invitation Message */}
+      {invitation?.message && (
+        <View style={[styles.messageBox, { backgroundColor: theme.colors.primary[100] }]}>
+          <Text variant="body1" style={{ color: theme.colors.primary[700], fontStyle: 'italic' }}>
+            "{invitation.message}"
+          </Text>
+          {invitation.inviter_name && (
+            <Text variant="body2" style={{ color: theme.colors.primary[600], marginTop: 8 }}>
+              — {invitation.inviter_name}
+            </Text>
+          )}
+        </View>
+      )}
+
+      <Text variant="h3" style={[styles.responseTitle, { color: theme.colors.text.primary }]}>
+        Are you going?
+      </Text>
+
+      {error && (
+        <View style={[styles.errorBox, { backgroundColor: theme.colors.error + '20' }]}>
+          <Text variant="body2" style={{ color: theme.colors.error }}>
+            {error}
+          </Text>
+        </View>
+      )}
+
+      {/* Response Buttons */}
+      <View style={styles.responseContainer}>
+        {(['yes', 'maybe', 'no'] as const).map((response) => {
+          const icon = response === 'yes' ? '✓' : response === 'maybe' ? '?' : '✗';
+          const label = response === 'yes' ? 'Going' : response === 'maybe' ? 'Maybe' : 'Not Going';
+
+          return (
+            <TouchableOpacity
+              key={response}
+              style={[
+                styles.responseButton,
+                {
+                  backgroundColor: selectedResponse === response
+                    ? responseColors[response].bg
+                    : theme.colors.background.secondary,
+                  borderColor: selectedResponse === response
+                    ? responseColors[response].bg
+                    : theme.colors.border.light,
+                },
+              ]}
+              onPress={() => handleResponseSelect(response)}
+              disabled={isSubmitting}
+            >
+              <Text style={{ fontSize: 32, marginBottom: 8 }}>{icon}</Text>
+              <Text variant="body1" style={{
+                color: selectedResponse === response
+                  ? responseColors[response].text
+                  : theme.colors.text.primary,
+                fontWeight: '600',
+              }}>
+                {label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+
+      {/* Plus One Input */}
+      {invitation?.allow_plus_one && selectedResponse === 'yes' && (
+        <View style={styles.inputSection}>
+          <Text variant="body2" style={[styles.inputLabel, { color: theme.colors.text.secondary }]}>
+            Bringing guests?
+          </Text>
+          <View style={styles.plusOneControls}>
+            <TouchableOpacity
+              style={[styles.plusOneButton, { borderColor: theme.colors.border.light }]}
+              onPress={() => setPlusOneCount(Math.max(0, plusOneCount - 1))}
+            >
+              <Text variant="h3" style={{ color: theme.colors.text.primary }}>-</Text>
+            </TouchableOpacity>
+            <Text variant="h3" style={[styles.plusOneCount, { color: theme.colors.text.primary }]}>
+              {plusOneCount}
+            </Text>
+            <TouchableOpacity
+              style={[styles.plusOneButton, { borderColor: theme.colors.border.light }]}
+              onPress={() => setPlusOneCount(plusOneCount + 1)}
+            >
+              <Text variant="h3" style={{ color: theme.colors.text.primary }}>+</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+
+      {/* Submitting indicator */}
+      {isSubmitting && (
+        <View style={styles.submittingContainer}>
+          <ActivityIndicator size="small" color={theme.colors.primary[500]} />
+          <Text variant="body2" style={{ color: theme.colors.text.secondary, marginLeft: 8 }}>
+            Submitting your RSVP...
+          </Text>
+        </View>
+      )}
+    </View>
+  );
+
+  const renderAuth = () => {
+    if (emailSent) {
+      return (
+        <ScrollView contentContainerStyle={styles.formContent}>
+          <View style={styles.centeredContent}>
+            <Text style={{ fontSize: 64, marginBottom: 24 }}>📧</Text>
+            <Text variant="h3" style={[styles.title, { color: theme.colors.text.primary }]}>
+              Check Your Email
+            </Text>
+            <Text variant="body1" style={[styles.subtitle, { color: theme.colors.text.secondary }]}>
+              We sent a verification link to{' '}
+              <Text style={{ fontWeight: '600', color: theme.colors.text.primary }}>{authEmail}</Text>.
+              {'\n'}Verify your email to complete your RSVP.
+            </Text>
+            <View style={[styles.infoBox, { backgroundColor: theme.colors.background.secondary, borderColor: theme.colors.border.light }]}>
+              <Text variant="body2" style={{ color: theme.colors.text.secondary, textAlign: 'center' }}>
+                Don't see it? Check your spam folder. The link will expire in 24 hours.
+              </Text>
+            </View>
+          </View>
+        </ScrollView>
+      );
+    }
+
+    const responseLabel = selectedResponse === 'yes' ? 'Going' : selectedResponse === 'maybe' ? 'Maybe' : 'Not Going';
 
     return (
-      <View style={styles.formContent}>
-        {/* Event Info */}
-        {event && (
-          <View style={[styles.eventCard, { backgroundColor: theme.colors.background.secondary }]}>
-            {event.image_url && (
-              <Image
-                source={{ uri: event.image_url }}
-                style={styles.eventImage}
-                resizeMode="cover"
-              />
-            )}
-            <View style={styles.eventInfo}>
-              <Text variant="h3" style={{ color: theme.colors.text.primary, marginBottom: 8 }}>
-                {event.title}
-              </Text>
-              {event.event_date && (
-                <Text variant="body2" style={{ color: theme.colors.text.secondary }}>
-                  📅 {new Date(event.event_date).toLocaleDateString('en-US', {
-                    weekday: 'long',
-                    month: 'long',
-                    day: 'numeric',
-                  })}
-                </Text>
-              )}
-              {event.start_time && (
-                <Text variant="body2" style={{ color: theme.colors.text.secondary }}>
-                  🕐 {event.start_time}
-                </Text>
-              )}
-            </View>
-          </View>
-        )}
-
-        {/* Invitation Message */}
-        {invitation?.message && (
-          <View style={[styles.messageBox, { backgroundColor: theme.colors.primary[100] }]}>
-            <Text variant="body1" style={{ color: theme.colors.primary[700], fontStyle: 'italic' }}>
-              "{invitation.message}"
+      <ScrollView contentContainerStyle={styles.formContent}>
+        {/* Selected response summary */}
+        {selectedResponse && (
+          <View style={[styles.responseSummary, { backgroundColor: responseColors[selectedResponse].bg + '15', borderColor: responseColors[selectedResponse].bg }]}>
+            <Text variant="body1" style={{ color: responseColors[selectedResponse].bg, fontWeight: '600' }}>
+              Your response: {responseLabel}
             </Text>
-            {invitation.inviter_name && (
-              <Text variant="body2" style={{ color: theme.colors.primary[600], marginTop: 8 }}>
-                — {invitation.inviter_name}
-              </Text>
-            )}
+            <TouchableOpacity onPress={() => { setStep('respond'); setError(null); }}>
+              <Text variant="body2" style={{ color: theme.colors.primary[500] }}>Change</Text>
+            </TouchableOpacity>
           </View>
         )}
 
-        <Text variant="h3" style={[styles.responseTitle, { color: theme.colors.text.primary }]}>
-          Are you going?
+        <Text variant="h3" style={[styles.title, { color: theme.colors.text.primary, marginTop: 16 }]}>
+          {authMode === 'signup' ? 'Create an Account to RSVP' : 'Sign In to RSVP'}
+        </Text>
+        <Text variant="body2" style={[styles.subtitle, { color: theme.colors.text.secondary }]}>
+          {authMode === 'signup'
+            ? 'Create a free account to confirm your RSVP'
+            : 'Sign in to your existing account'}
         </Text>
 
-        {error && (
+        {authError && (
           <View style={[styles.errorBox, { backgroundColor: theme.colors.error + '20' }]}>
             <Text variant="body2" style={{ color: theme.colors.error }}>
-              {error}
+              {authError}
             </Text>
           </View>
         )}
 
-        {/* Response Buttons */}
-        <View style={styles.responseContainer}>
-          {(['yes', 'maybe', 'no'] as const).map((response) => {
-            const icon = response === 'yes' ? '✓' : response === 'maybe' ? '?' : '✗';
-            const label = response === 'yes' ? 'Going' : response === 'maybe' ? 'Maybe' : 'Not Going';
-            
-            return (
-              <TouchableOpacity
-                key={response}
-                style={[
-                  styles.responseButton,
-                  {
-                    backgroundColor: selectedResponse === response
-                      ? responseColors[response].bg
-                      : theme.colors.background.secondary,
-                    borderColor: selectedResponse === response
-                      ? responseColors[response].bg
-                      : theme.colors.border.light,
-                  },
-                ]}
-                onPress={() => handleResponseSelect(response)}
-                disabled={isSubmitting}
-              >
-                <Text style={{ fontSize: 32, marginBottom: 8 }}>{icon}</Text>
-                <Text variant="body1" style={{
-                  color: selectedResponse === response
-                    ? responseColors[response].text
-                    : theme.colors.text.primary,
-                  fontWeight: '600',
-                }}>
-                  {label}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
+        {/* Email input */}
+        <View style={styles.inputSection}>
+          <Text variant="body2" style={[styles.inputLabel, { color: theme.colors.text.secondary }]}>
+            Email
+          </Text>
+          <TextInput
+            style={[styles.textInput, {
+              backgroundColor: theme.colors.background.secondary,
+              color: theme.colors.text.primary,
+              borderColor: theme.colors.border.light,
+            }]}
+            value={authEmail}
+            onChangeText={setAuthEmail}
+            placeholder="email@address.com"
+            placeholderTextColor={theme.colors.text.tertiary}
+            autoCapitalize="none"
+            keyboardType="email-address"
+            autoComplete="email"
+          />
         </View>
 
-        {/* Anonymous Name Input */}
-        {showNameInput && (
-          <View style={styles.inputSection}>
-            <Text variant="body2" style={[styles.inputLabel, { color: theme.colors.text.secondary }]}>
-              Your Name
-            </Text>
-            <TextInput
-              style={[styles.textInput, {
-                backgroundColor: theme.colors.background.secondary,
-                color: theme.colors.text.primary,
-                borderColor: theme.colors.border.light,
-              }]}
-              value={anonymousName}
-              onChangeText={setAnonymousName}
-              placeholder="Enter your name..."
-              placeholderTextColor={theme.colors.text.tertiary}
-            />
-          </View>
-        )}
-
-        {/* Plus One Input */}
-        {invitation?.allow_plus_one && selectedResponse === 'yes' && (
-          <View style={styles.inputSection}>
-            <Text variant="body2" style={[styles.inputLabel, { color: theme.colors.text.secondary }]}>
-              Bringing guests?
-            </Text>
-            <View style={styles.plusOneControls}>
-              <TouchableOpacity
-                style={[styles.plusOneButton, { borderColor: theme.colors.border.light }]}
-                onPress={() => setPlusOneCount(Math.max(0, plusOneCount - 1))}
-              >
-                <Text variant="h3" style={{ color: theme.colors.text.primary }}>-</Text>
-              </TouchableOpacity>
-              <Text variant="h3" style={[styles.plusOneCount, { color: theme.colors.text.primary }]}>
-                {plusOneCount}
-              </Text>
-              <TouchableOpacity
-                style={[styles.plusOneButton, { borderColor: theme.colors.border.light }]}
-                onPress={() => setPlusOneCount(plusOneCount + 1)}
-              >
-                <Text variant="h3" style={{ color: theme.colors.text.primary }}>+</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
-
-        {/* Submit Button (only shows if we need name input) */}
-        {showNameInput && (
-          <TouchableOpacity
-            style={[styles.submitButton, {
-              backgroundColor: anonymousName.trim()
-                ? theme.colors.primary[500]
-                : theme.colors.gray[300],
+        {/* Password input */}
+        <View style={styles.inputSection}>
+          <Text variant="body2" style={[styles.inputLabel, { color: theme.colors.text.secondary }]}>
+            Password
+          </Text>
+          <TextInput
+            style={[styles.textInput, {
+              backgroundColor: theme.colors.background.secondary,
+              color: theme.colors.text.primary,
+              borderColor: theme.colors.border.light,
             }]}
-            onPress={() => selectedResponse && submitResponse(selectedResponse)}
-            disabled={!anonymousName.trim() || isSubmitting}
-          >
-            {isSubmitting ? (
-              <ActivityIndicator size="small" color="#fff" />
-            ) : (
-              <Text variant="body1" style={{ color: theme.colors.text.inverse, fontWeight: '600' }}>
-                Submit RSVP
-              </Text>
-            )}
+            value={authPassword}
+            onChangeText={setAuthPassword}
+            placeholder={authMode === 'signup' ? 'Create a password (min. 6 characters)' : 'Enter your password'}
+            placeholderTextColor={theme.colors.text.tertiary}
+            autoCapitalize="none"
+            secureTextEntry
+          />
+        </View>
+
+        {/* Submit button */}
+        <TouchableOpacity
+          style={[styles.submitButton, {
+            backgroundColor: (authEmail.trim() && authPassword.trim())
+              ? theme.colors.primary[500]
+              : theme.colors.gray[300],
+          }]}
+          onPress={handleEmailAuth}
+          disabled={!authEmail.trim() || !authPassword.trim() || authLoading}
+        >
+          {authLoading ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <Text variant="body1" style={{ color: theme.colors.text.inverse, fontWeight: '600' }}>
+              {authMode === 'signup' ? 'Create Account & RSVP' : 'Sign In & RSVP'}
+            </Text>
+          )}
+        </TouchableOpacity>
+
+        {/* Divider */}
+        <View style={styles.divider}>
+          <View style={[styles.dividerLine, { backgroundColor: theme.colors.border.light }]} />
+          <Text variant="body2" style={{ color: theme.colors.text.tertiary, marginHorizontal: 16 }}>or</Text>
+          <View style={[styles.dividerLine, { backgroundColor: theme.colors.border.light }]} />
+        </View>
+
+        {/* OAuth buttons */}
+        <View style={styles.oauthContainer}>
+          <GoogleSignInButton
+            onSuccess={() => {}}
+            onError={(err) => setAuthError(err)}
+            setLoading={(loading) => {
+              setAuthLoading(loading);
+              if (loading) handleOAuthStart();
+            }}
+          />
+          <AppleSignInButton
+            onSuccess={() => {}}
+            onError={(err) => setAuthError(err)}
+            setLoading={(loading) => {
+              setAuthLoading(loading);
+              if (loading) handleOAuthStart();
+            }}
+          />
+        </View>
+
+        {/* Toggle auth mode */}
+        <View style={styles.authToggle}>
+          <Text variant="body2" style={{ color: theme.colors.text.secondary }}>
+            {authMode === 'signup' ? 'Already have an account?' : "Don't have an account?"}
+          </Text>
+          <TouchableOpacity onPress={() => {
+            setAuthMode(authMode === 'signup' ? 'signin' : 'signup');
+            setAuthError(null);
+          }}>
+            <Text variant="body2" style={{ color: theme.colors.primary[500], fontWeight: '600', marginLeft: 8 }}>
+              {authMode === 'signup' ? 'Sign In' : 'Sign Up'}
+            </Text>
           </TouchableOpacity>
-        )}
-      </View>
+        </View>
+      </ScrollView>
     );
   };
 
@@ -447,6 +715,7 @@ export default function InviteResponsePage() {
       {step === 'error' && renderError()}
       {step === 'passcode' && renderPasscode()}
       {step === 'respond' && renderRespond()}
+      {step === 'auth' && renderAuth()}
       {step === 'success' && renderSuccess()}
     </View>
   );
@@ -463,7 +732,7 @@ const styles = StyleSheet.create({
     padding: 32,
   },
   formContent: {
-    flex: 1,
+    flexGrow: 1,
     padding: 24,
     maxWidth: 500,
     alignSelf: 'center',
@@ -519,7 +788,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
   },
   inputSection: {
-    marginBottom: 24,
+    marginBottom: 16,
   },
   inputLabel: {
     marginBottom: 8,
@@ -564,5 +833,45 @@ const styles = StyleSheet.create({
   },
   textButton: {
     padding: 12,
+  },
+  submittingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+  },
+  responseSummary: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 16,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+  },
+  oauthContainer: {
+    gap: 12,
+    marginBottom: 16,
+  },
+  authToggle: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 8,
+    marginBottom: 32,
+  },
+  infoBox: {
+    padding: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    marginTop: 16,
   },
 });

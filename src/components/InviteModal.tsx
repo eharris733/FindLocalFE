@@ -32,7 +32,6 @@ export function InviteModal({ visible, onClose, eventId, eventTitle }: InviteMod
   const queryClient = useQueryClient();
 
   // Options state
-  const [allowAnonymous, setAllowAnonymous] = useState(true);
   const [allowPlusOne, setAllowPlusOne] = useState(false);
   const [usePasscode, setUsePasscode] = useState(false);
   const [passcode, setPasscode] = useState('');
@@ -45,7 +44,6 @@ export function InviteModal({ visible, onClose, eventId, eventTitle }: InviteMod
   
   const resetState = () => {
     setStep('options');
-    setAllowAnonymous(true);
     setAllowPlusOne(false);
     setUsePasscode(false);
     setPasscode('');
@@ -66,7 +64,6 @@ export function InviteModal({ visible, onClose, eventId, eventTitle }: InviteMod
     try {
       const { data, error: createError } = await createEventInvitation({
         eventId,
-        allowAnonymous,
         allowPlusOne,
         passcode: usePasscode && passcode.trim() ? passcode.trim() : undefined,
         message: message.trim() || undefined,
@@ -157,24 +154,6 @@ export function InviteModal({ visible, onClose, eventId, eventTitle }: InviteMod
       
       {/* Options */}
       <View style={styles.optionsContainer}>
-        {/* Allow Anonymous RSVPs */}
-        <View style={[styles.optionRow, { borderBottomColor: theme.colors.border.light }]}>
-          <View style={styles.optionTextContainer}>
-            <Text variant="body1" style={{ color: theme.colors.text.primary, fontWeight: '600' }}>
-              Allow Anonymous RSVPs
-            </Text>
-            <Text variant="caption" style={{ color: theme.colors.text.secondary }}>
-              People can respond without signing in
-            </Text>
-          </View>
-          <Switch
-            value={allowAnonymous}
-            onValueChange={setAllowAnonymous}
-            trackColor={{ false: theme.colors.gray[300], true: theme.colors.primary[400] }}
-            thumbColor={allowAnonymous ? theme.colors.primary[600] : theme.colors.gray[100]}
-          />
-        </View>
-        
         {/* Allow Plus One */}
         <View style={[styles.optionRow, { borderBottomColor: theme.colors.border.light }]}>
           <View style={styles.optionTextContainer}>
@@ -317,8 +296,6 @@ export function InviteModal({ visible, onClose, eventId, eventTitle }: InviteMod
       {/* Settings Summary */}
       <View style={[styles.settingsSummary, { backgroundColor: theme.colors.background.secondary }]}>
         <Text variant="caption" style={{ color: theme.colors.text.secondary }}>
-          {allowAnonymous ? '✓ Anonymous RSVPs allowed' : '✗ Sign-in required'}
-          {' • '}
           {allowPlusOne ? '✓ Plus ones allowed' : '✗ No plus ones'}
           {usePasscode && passcode ? ` • 🔒 Passcode: ${passcode}` : ''}
         </Text>

@@ -176,7 +176,7 @@ export default function MyInvitesPage() {
   const handleRemoveRsvp = async (rsvp: RsvpWithProfile) => {
     Alert.alert(
       'Remove RSVP',
-      `Remove ${rsvp.full_name || rsvp.anonymous_name || 'this guest'} from the list?`,
+      `Remove ${rsvp.full_name || rsvp.username || 'this guest'} from the list?`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -286,13 +286,6 @@ export default function MyInvitesPage() {
                       </Text>
                     </View>
                   )}
-                  {invitation.allow_anonymous_rsvp && (
-                    <View style={[styles.settingBadge, { backgroundColor: theme.colors.gray[200] }]}>
-                      <Text variant="caption" style={{ color: theme.colors.text.secondary }}>
-                        👤 Anonymous OK
-                      </Text>
-                    </View>
-                  )}
                   {invitation.allow_plus_one && (
                     <View style={[styles.settingBadge, { backgroundColor: theme.colors.gray[200] }]}>
                       <Text variant="caption" style={{ color: theme.colors.text.secondary }}>
@@ -398,17 +391,12 @@ export default function MyInvitesPage() {
                             <View style={styles.rsvpInfo}>
                               <View style={[styles.rsvpAvatar, { backgroundColor: theme.colors.primary[200] }]}>
                                 <Text variant="body2" style={{ color: theme.colors.primary[700] }}>
-                                  {(rsvp.full_name || rsvp.anonymous_name || '?')[0].toUpperCase()}
+                                  {(rsvp.full_name || rsvp.username || '?')[0].toUpperCase()}
                                 </Text>
                               </View>
                               <View>
                                 <Text variant="body2" style={{ color: theme.colors.text.primary, fontWeight: '500' }}>
-                                  {rsvp.full_name || rsvp.anonymous_name || 'Anonymous'}
-                                  {rsvp.anonymous_name && (
-                                    <Text variant="caption" style={{ color: theme.colors.text.tertiary }}>
-                                      {' '}(anonymous)
-                                    </Text>
-                                  )}
+                                  {rsvp.full_name || rsvp.username || 'Unknown'}
                                 </Text>
                                 {rsvp.plus_one_count > 0 && (
                                   <Text variant="caption" style={{ color: theme.colors.text.secondary }}>
@@ -429,16 +417,14 @@ export default function MyInvitesPage() {
                                   {rsvp.response === 'yes' ? 'Going' : rsvp.response === 'maybe' ? 'Maybe' : 'No'}
                                 </Text>
                               </View>
-                              {rsvp.anonymous_name && (
-                                <TouchableOpacity
-                                  style={styles.removeButton}
-                                  onPress={() => handleRemoveRsvp(rsvp)}
-                                >
-                                  <Text variant="caption" style={{ color: theme.colors.error }}>
-                                    ✕
-                                  </Text>
-                                </TouchableOpacity>
-                              )}
+                              <TouchableOpacity
+                                style={styles.removeButton}
+                                onPress={() => handleRemoveRsvp(rsvp)}
+                              >
+                                <Text variant="caption" style={{ color: theme.colors.error }}>
+                                  ✕
+                                </Text>
+                              </TouchableOpacity>
                             </View>
                           </View>
                         ))}
