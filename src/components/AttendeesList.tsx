@@ -43,7 +43,7 @@ export function AttendeesList({
   if (compact) {
     const avatarData = attendees.slice(0, 4).map((a) => ({
       imageUrl: a.avatar_url,
-      name: a.full_name || a.anonymous_name,
+      name: a.full_name || a.username,
     }));
 
     return (
@@ -98,12 +98,12 @@ export function AttendeesList({
             >
               <Avatar
                 imageUrl={attendee.avatar_url}
-                name={attendee.full_name || attendee.anonymous_name}
+                name={attendee.full_name || attendee.username}
                 size="sm"
               />
               <View style={styles.attendeeInfo}>
                 <Text variant="body2" style={{ color: theme.colors.text.primary, fontWeight: '500' }}>
-                  {attendee.full_name || attendee.anonymous_name || 'Anonymous'}
+                  {attendee.full_name || attendee.username || 'Unknown'}
                 </Text>
                 {attendee.username && (
                   <Text variant="caption" style={{ color: theme.colors.text.tertiary }}>
@@ -138,12 +138,12 @@ export function AttendeesList({
             >
               <Avatar
                 imageUrl={attendee.avatar_url}
-                name={attendee.full_name || attendee.anonymous_name}
+                name={attendee.full_name || attendee.username}
                 size="sm"
               />
               <View style={styles.attendeeInfo}>
                 <Text variant="body2" style={{ color: theme.colors.text.primary, fontWeight: '500' }}>
-                  {attendee.full_name || attendee.anonymous_name || 'Anonymous'}
+                  {attendee.full_name || attendee.username || 'Unknown'}
                 </Text>
                 {attendee.username && (
                   <Text variant="caption" style={{ color: theme.colors.text.tertiary }}>

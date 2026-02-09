@@ -8,6 +8,7 @@ import { Text } from './ui';
 import { useTheme } from '../context/ThemeContext';
 import { logger } from '../utils/logger';
 import { STORAGE_KEYS } from '../constants/storage-keys';
+import type { Href } from 'expo-router';
 
 // Complete the auth session when the component mounts
 // This tells expo-web-browser that we're handling the redirect
@@ -191,9 +192,24 @@ export default function AuthCallback() {
           // Mark onboarding as completed for OAuth users
           // This prevents the onboarding modal from showing again
           await AsyncStorage.setItem(STORAGE_KEYS.ONBOARDING_COMPLETED, 'true');
-          
+
+          // Check for pending RSVP from invite flow
+          const pendingRsvpData = await AsyncStorage.getItem(STORAGE_KEYS.PENDING_RSVP);
+          if (pendingRsvpData) {
+            try {
+              const pendingRsvp = JSON.parse(pendingRsvpData);
+              if (pendingRsvp.token) {
+                logger.info('Pending RSVP found, redirecting to invite page...');
+                router.replace(`/invite/${pendingRsvp.token}` as Href);
+                return;
+              }
+            } catch (parseErr) {
+              logger.warn('Error parsing pending RSVP data:', parseErr);
+            }
+          }
+
           logger.info('Redirecting to home...');
-          
+
           // Success! Redirect to home
           router.replace('/');
         } else {

@@ -14,7 +14,6 @@ export interface EventInvitation {
   inviter_id: string;
   invite_token: string;
   passcode?: string | null;
-  allow_anonymous_rsvp: boolean;
   allow_plus_one: boolean;
   max_uses?: number | null;
   use_count: number;
@@ -33,7 +32,6 @@ export interface InvitationDetails {
   inviter_username?: string | null;
   inviter_name?: string | null;
   passcode_required: boolean;
-  allow_anonymous_rsvp: boolean;
   allow_plus_one: boolean;
   message?: string | null;
   is_valid: boolean;
@@ -45,7 +43,6 @@ export interface EventRsvp {
   invitation_id: string;
   event_id: string;
   user_id?: string | null;
-  anonymous_name?: string | null;
   response: 'yes' | 'no' | 'maybe';
   plus_one_count: number;
   created_at: string;
@@ -60,7 +57,6 @@ export interface RsvpWithProfile {
   username?: string | null;
   full_name?: string | null;
   avatar_url?: string | null;
-  anonymous_name?: string | null;
   response: 'yes' | 'no' | 'maybe';
   plus_one_count: number;
   created_at: string;
@@ -70,7 +66,6 @@ export interface InvitationWithStats {
   invitation_id: string;
   invite_token: string;
   passcode_enabled: boolean;
-  allow_anonymous_rsvp: boolean;
   allow_plus_one: boolean;
   max_uses?: number | null;
   use_count: number;
@@ -94,7 +89,6 @@ export interface EventSocialStats {
 export interface CreateInvitationParams {
   eventId: string;
   passcode?: string;
-  allowAnonymous?: boolean;
   allowPlusOne?: boolean;
   maxUses?: number;
   expiresAt?: Date;
@@ -105,7 +99,6 @@ export interface SubmitRsvpParams {
   token: string;
   response: 'yes' | 'no' | 'maybe';
   passcode?: string;
-  anonymousName?: string;
   plusOneCount?: number;
 }
 
@@ -123,7 +116,7 @@ export async function createEventInvitation(
     const { data, error } = await supabase.rpc('create_event_invitation', {
       p_event_id: params.eventId,
       p_passcode: params.passcode || null,
-      p_allow_anonymous: params.allowAnonymous ?? true,
+      p_allow_anonymous: false,
       p_allow_plus_one: params.allowPlusOne ?? false,
       p_max_uses: params.maxUses || null,
       p_expires_at: params.expiresAt?.toISOString() || null,
@@ -154,7 +147,6 @@ export async function createEventInvitation(
       targetType: 'event',
       source: 'event_page',
       metadata: {
-        allowAnonymous: params.allowAnonymous,
         allowPlusOne: params.allowPlusOne,
         hasMaxUses: !!params.maxUses,
         hasExpiry: !!params.expiresAt,
@@ -221,7 +213,7 @@ export async function submitRsvp(
       p_token: params.token,
       p_response: params.response,
       p_passcode: params.passcode || null,
-      p_anonymous_name: params.anonymousName || null,
+      p_anonymous_name: null,
       p_plus_one_count: params.plusOneCount || 0,
     });
 
@@ -247,7 +239,6 @@ export async function submitRsvp(
       source: 'invite_page',
       metadata: {
         response: params.response,
-        isAnonymous: !!params.anonymousName,
         hasPlusOne: (params.plusOneCount || 0) > 0,
       },
     });
@@ -334,7 +325,7 @@ export async function getEventAttendees(
     // Get all RSVPs for this event
     const { data: rsvps, error } = await supabase
       .from('event_rsvps')
-      .select('id, user_id, anonymous_name, response, plus_one_count, created_at')
+      .select('id, user_id, response, plus_one_count, created_at')
       .eq('event_id', eventId)
       .in('response', ['yes', 'maybe'])
       .order('created_at', { ascending: false })
@@ -345,7 +336,7 @@ export async function getEventAttendees(
       return { data: [], going: 0, maybe: 0, error };
     }
 
-    // Get unique user IDs (filter out null/anonymous)
+    // Get unique user IDs
     const userIds = [...new Set(rsvps?.filter(r => r.user_id).map(r => r.user_id) || [])];
 
     // Fetch profiles for those users
@@ -373,7 +364,6 @@ export async function getEventAttendees(
         username: profile?.username,
         full_name: profile?.full_name,
         avatar_url: profile?.avatar_url,
-        anonymous_name: rsvp.anonymous_name,
         response: rsvp.response,
         plus_one_count: rsvp.plus_one_count,
         created_at: rsvp.created_at,
@@ -649,7 +639,7 @@ export async function deleteInvitation(
 }
 
 /**
- * Remove an RSVP (host can remove anonymous RSVPs)
+ * Remove an RSVP (host can remove RSVPs from their invitations)
  */
 export async function removeRsvp(rsvpId: string): Promise<{ success: boolean; error: any }> {
   try {
