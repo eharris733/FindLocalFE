@@ -442,6 +442,10 @@ const insets = useSafeAreaInsets();
 
 ## Important Conventions
 
+### Icons & Emojis
+
+Use emojis instead of icon libraries (Ionicons, MaterialIcons, etc.) for all UI elements. This applies to navigation, form fields, buttons, and decorative elements. Emojis render consistently across iOS, Android, and web without requiring additional dependencies.
+
 ### TypeScript
 
 **Strict mode enabled:**

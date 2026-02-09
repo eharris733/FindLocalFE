@@ -1,5 +1,5 @@
 import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
+import { Stack, usePathname, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import React, {useEffect, useState, useCallback} from 'react';
 import {
@@ -107,12 +107,23 @@ export default function RootLayout() {
     );
 }
 
+// Routes that should show onboarding (browsing routes)
+const ONBOARDING_ROUTES = ['/', '/index', '/map', '/home', '/friends'];
+
 // Separate this into a new component so it can access the SessionProvider context later
 function RootNavigator() {
     const { isLoggedIn, session } = useAuth();
     const { isMobile, isTablet } = useDeviceInfo();
+    const pathname = usePathname();
+    const segments = useSegments();
     const [showOnboarding, setShowOnboarding] = useState(false);
     const [onboardingCompleted, setOnboardingCompleted] = useState<boolean | null>(null);
+
+    // Check if current route is a deep-link route that should SKIP onboarding
+    const isDeepLinkRoute = () => {
+        const firstSegment = segments[0];
+        return ['event', 'venue', 'invite', 'user', 'auth'].includes(firstSegment);
+    };
 
     // Check if user has completed onboarding
     useEffect(() => {
@@ -122,17 +133,29 @@ function RootNavigator() {
                 const isCompleted = completed === 'true';
                 setOnboardingCompleted(isCompleted);
 
-                // Show onboarding if not completed and not logged in
-                if (!isCompleted && !session) {
-                    setShowOnboarding(true);
-                }
+                // Check if city was already inferred from a deep link
+                const cityInferred = await AsyncStorage.getItem(STORAGE_KEYS.DEEP_LINK_CITY_INFERRED);
+
+                // Only show onboarding if:
+                // 1. Not completed
+                // 2. Not logged in
+                // 3. Not on a deep-link route
+                // 4. City not already inferred from deep link
+                // 5. On a browsing route
+                const shouldShow = !isCompleted &&
+                                  !session &&
+                                  !isDeepLinkRoute() &&
+                                  !cityInferred &&
+                                  ONBOARDING_ROUTES.includes(pathname);
+
+                setShowOnboarding(shouldShow);
             } catch (error) {
                 logger.error('Error checking onboarding status:', error);
                 setOnboardingCompleted(false);
             }
         };
         checkOnboarding();
-    }, [session]);
+    }, [session, pathname, segments]);
 
     const handleOnboardingComplete = useCallback(async (selectedInterests?: string[]) => {
         try {

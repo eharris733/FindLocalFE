@@ -17,7 +17,10 @@ import type { Event } from '../../types/events';
 import { getEventById, getEventsWithCommunities, getEventByIdWithFallback } from '../../api/events';
 import { getVenueById, getVenuesByCity } from '../../api/venues';
 import { useTheme } from '../../context/ThemeContext';
+import { useCityLocation } from '../../context/CityContext';
 import { Text } from '../../components/ui';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { STORAGE_KEYS } from '../../constants/storage-keys';
 import { getVenueSizeLabel } from '../../utils/venueUtils';
 import { EVENT_NO_DESCRIPTION_FALLBACK } from '../../utils/eventUtils';
 import { logger } from '../../utils/logger';
@@ -72,6 +75,7 @@ export default function EventPage() {
   const { id, invite } = useLocalSearchParams<{ id: string; invite?: string }>();
   const router = useRouter();
   const { theme } = useTheme();
+  const { selectedCity, onCityChange } = useCityLocation();
   const { isLoggedIn } = useAuth();
   const [event, setEvent] = useState<Event | null>(null);
   const [venue, setVenue] = useState<Venue | null>(null);
@@ -323,7 +327,22 @@ export default function EventPage() {
 
       setEvent(eventData);
       setIsExpired(expired);
-      
+
+      // Silently set city preference if not already set (deep-link entry)
+      if (eventData.city && !selectedCity) {
+        try {
+          const alreadyInferred = await AsyncStorage.getItem(STORAGE_KEYS.DEEP_LINK_CITY_INFERRED);
+          if (!alreadyInferred) {
+            await AsyncStorage.setItem(STORAGE_KEYS.PREFERRED_CITY, eventData.city);
+            await AsyncStorage.setItem(STORAGE_KEYS.DEEP_LINK_CITY_INFERRED, 'true');
+            await onCityChange(eventData.city);
+            logger.info('Inferred city from deep link:', eventData.city);
+          }
+        } catch (err) {
+          logger.warn('Error inferring city from deep link:', err);
+        }
+      }
+
       // Fetch related events
       fetchRelatedEvents(eventData);
       
