@@ -793,21 +793,40 @@ export async function getPendingInvitationsToUser(): Promise<{
       return { data: [], error: null };
     }
 
-    // Get invitations where user is the recipient (we'll need a recipient field or check RSVPs)
-    // For now, get all active invitations and filter by those without user RSVP
+    const { data, error } = await supabase.rpc('get_pending_direct_invites');
+
+    if (error) {
+      logger.error('Error getting pending direct invites:', error);
+      return { data: [], error };
+    }
+
+    if (!data || data.length === 0) {
+      return { data: [], error: null };
+    }
+
+    // Get events user already RSVPed to, so we can filter those out
     const { data: rsvps } = await supabase
       .from('event_rsvps')
-      .select('invitation_id')
-      .eq('user_id', user.user.id);
+      .select('event_id')
+      .eq('user_id', user.user.id)
+      .in('response', ['yes', 'maybe']);
 
-    const rsvpedInvitationIds = (rsvps || []).map((r: any) => r.invitation_id);
+    const rsvpedEventIds = new Set((rsvps || []).map((r: any) => r.event_id));
 
-    // Get invitations where this user was explicitly invited
-    // This assumes we have an invitation_recipients table or similar
-    // For now, we'll return empty as this needs backend support
-    // TODO: Add invitation_recipients table to track who was invited
+    const filtered = (data as any[])
+      .filter(inv => !rsvpedEventIds.has(inv.event_id))
+      .map(inv => ({
+        invitation_id: inv.invite_id,
+        event_id: inv.event_id,
+        inviter_id: inv.sender_id,
+        inviter_username: inv.sender_username,
+        inviter_name: inv.sender_name,
+        inviter_avatar: inv.sender_avatar,
+        message: inv.message,
+        created_at: inv.created_at,
+      }));
 
-    return { data: [], error: null };
+    return { data: filtered, error: null };
   } catch (err) {
     logger.error('Error in getPendingInvitationsToUser:', err);
     return { data: [], error: err };
@@ -1339,5 +1358,200 @@ export async function getMutualEventsWithFriend(
   } catch (err) {
     logger.error('Error in getMutualEventsWithFriend:', err);
     return { data: [], total: 0, error: err };
+  }
+}
+
+// ============================================
+// Direct Friend Invitations
+// ============================================
+
+export interface DirectEventInvite {
+  id: string;
+  event_id: string;
+  sender_id: string;
+  recipient_id: string;
+  message?: string | null;
+  status: 'pending' | 'viewed' | 'accepted' | 'declined';
+  allow_plus_one: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DirectInviteWithSender {
+  invite_id: string;
+  event_id: string;
+  sender_id: string;
+  sender_username?: string | null;
+  sender_name?: string | null;
+  sender_avatar?: string | null;
+  message?: string | null;
+  allow_plus_one: boolean;
+  status: string;
+  created_at: string;
+}
+
+export interface SendDirectInvitesParams {
+  eventId: string;
+  recipientIds: string[];
+  message?: string;
+  allowPlusOne?: boolean;
+}
+
+/**
+ * Send direct event invites to multiple friends (batch)
+ */
+export async function sendDirectEventInvites(
+  params: SendDirectInvitesParams
+): Promise<{ data: DirectEventInvite[]; error: any }> {
+  try {
+    const { data, error } = await supabase.rpc('send_direct_event_invites', {
+      p_event_id: params.eventId,
+      p_recipient_ids: params.recipientIds,
+      p_message: params.message || null,
+      p_allow_plus_one: params.allowPlusOne ?? false,
+    });
+
+    if (error) {
+      logger.error('Error sending direct invites:', error);
+      return { data: [], error };
+    }
+
+    analytics.trackSocialMetric({
+      actionType: 'direct_invite_sent',
+      targetId: params.eventId,
+      targetType: 'event',
+      source: 'invite_modal',
+      metadata: {
+        recipientCount: params.recipientIds.length,
+        hasMessage: !!params.message,
+        allowPlusOne: params.allowPlusOne,
+      },
+    });
+
+    return { data: (data || []) as DirectEventInvite[], error: null };
+  } catch (err) {
+    logger.error('Error in sendDirectEventInvites:', err);
+    return { data: [], error: err };
+  }
+}
+
+/**
+ * Get IDs of friends already invited by the current user for an event
+ */
+export async function getAlreadyInvitedFriendIds(
+  eventId: string
+): Promise<{ data: string[]; error: any }> {
+  try {
+    const { data, error } = await supabase.rpc('get_already_invited_friends', {
+      p_event_id: eventId,
+    });
+
+    if (error) {
+      logger.error('Error getting already invited friends:', error);
+      return { data: [], error };
+    }
+
+    return { data: (data || []) as string[], error: null };
+  } catch (err) {
+    logger.error('Error in getAlreadyInvitedFriendIds:', err);
+    return { data: [], error: err };
+  }
+}
+
+/**
+ * Respond to a direct event invite (accept or decline)
+ */
+export async function respondToDirectInvite(
+  inviteId: string,
+  response: 'accepted' | 'declined'
+): Promise<{ success: boolean; rsvpId?: string; error?: string }> {
+  try {
+    const { data, error } = await supabase.rpc('respond_to_direct_invite', {
+      p_invite_id: inviteId,
+      p_response: response,
+    });
+
+    if (error) {
+      logger.error('Error responding to direct invite:', error);
+      return { success: false, error: error.message };
+    }
+
+    const result = data as { success: boolean; error?: string; rsvp_id?: string };
+    if (!result.success) {
+      return { success: false, error: result.error };
+    }
+
+    analytics.trackSocialMetric({
+      actionType: response === 'accepted' ? 'direct_invite_accepted' : 'direct_invite_declined',
+      targetId: inviteId,
+      targetType: 'direct_invite',
+      source: 'my_invites',
+    });
+
+    return { success: true, rsvpId: result.rsvp_id };
+  } catch (err: any) {
+    logger.error('Error in respondToDirectInvite:', err);
+    return { success: false, error: err.message };
+  }
+}
+
+/**
+ * Get direct invites received by the current user (all statuses)
+ */
+export async function getReceivedDirectInvites(): Promise<{
+  data: DirectInviteWithSender[];
+  error: any;
+}> {
+  try {
+    const { data: user } = await supabase.auth.getUser();
+    if (!user.user) {
+      return { data: [], error: null };
+    }
+
+    const { data, error } = await supabase
+      .from('direct_event_invites')
+      .select('id, event_id, sender_id, message, allow_plus_one, status, created_at')
+      .eq('recipient_id', user.user.id)
+      .in('status', ['pending', 'viewed'])
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      logger.error('Error getting received direct invites:', error);
+      return { data: [], error };
+    }
+
+    if (!data || data.length === 0) {
+      return { data: [], error: null };
+    }
+
+    // Get sender profiles
+    const senderIds = [...new Set(data.map(d => d.sender_id))];
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('id, username, full_name, avatar_url')
+      .in('id', senderIds);
+
+    const profileMap = new Map((profiles || []).map(p => [p.id, p]));
+
+    const invites: DirectInviteWithSender[] = data.map((inv: any) => {
+      const profile = profileMap.get(inv.sender_id);
+      return {
+        invite_id: inv.id,
+        event_id: inv.event_id,
+        sender_id: inv.sender_id,
+        sender_username: profile?.username || null,
+        sender_name: profile?.full_name || null,
+        sender_avatar: profile?.avatar_url || null,
+        message: inv.message,
+        allow_plus_one: inv.allow_plus_one,
+        status: inv.status,
+        created_at: inv.created_at,
+      };
+    });
+
+    return { data: invites, error: null };
+  } catch (err) {
+    logger.error('Error in getReceivedDirectInvites:', err);
+    return { data: [], error: err };
   }
 }
