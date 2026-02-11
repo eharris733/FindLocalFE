@@ -1,5 +1,5 @@
-import React, { useMemo } from 'react';
-import { View, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
+import React from 'react';
+import { View, FlatList, StyleSheet, ActivityIndicator } from 'react-native';
 import type { Event } from '../../../types/events';
 import type { Venue } from '../../../types/venues';
 import type { Community } from '../../../api/communities';
@@ -10,6 +10,7 @@ import { useTheme } from '../../../context/ThemeContext';
 import { useQuery } from '@tanstack/react-query';
 import { getMyInvitations, EventInvitation } from '../../../api/invitations';
 import { useAuth } from '../../../hooks/useAuth';
+import { useMyCreatedEventsQuery } from '../../../hooks/queries/useMyCreatedEventsQuery';
 import { supabase } from '../../../supabase';
 
 interface YourEventsSectionProps {
@@ -24,6 +25,7 @@ interface InviteEventData {
   event: Event;
   invitations: EventInvitation[];
   stats: { going: number; maybe: number; no: number };
+  isCreatedOnly?: boolean;
 }
 
 export const YourEventsSection: React.FC<YourEventsSectionProps> = ({
@@ -36,8 +38,11 @@ export const YourEventsSection: React.FC<YourEventsSectionProps> = ({
   const { theme } = useTheme();
   const { isLoggedIn, session } = useAuth();
 
+  // Get user's created events
+  const { data: createdEvents, isLoading: isLoadingCreated } = useMyCreatedEventsQuery();
+
   // Get user's created invitations with RSVP stats
-  const { data: inviteEventsData, isLoading } = useQuery({
+  const { data: inviteEventsData, isLoading: isLoadingInvites } = useQuery({
     queryKey: ['myInvitationsWithStats', session?.user?.id],
     queryFn: async (): Promise<InviteEventData[]> => {
       const result = await getMyInvitations();
@@ -61,7 +66,9 @@ export const YourEventsSection: React.FC<YourEventsSectionProps> = ({
       // Calculate stats per event
       const inviteEventsData: InviteEventData[] = [];
       for (const [eventId, invitations] of eventInvitationsMap) {
-        const event = events.find(e => e.id === eventId);
+        // Look in both general events list AND created events
+        const event = events.find(e => e.id === eventId)
+          || createdEvents?.find(e => e.id === eventId);
         if (!event) continue;
 
         const eventInvitationIds = new Set(invitations.map(inv => inv.id));
@@ -88,8 +95,31 @@ export const YourEventsSection: React.FC<YourEventsSectionProps> = ({
     enabled: isLoggedIn && !!session?.user?.id,
   });
 
-  // Don't render if user has no invites
-  if (!isLoading && (!inviteEventsData || inviteEventsData.length === 0)) {
+  // Merge created events that don't have invitations yet
+  const mergedData: InviteEventData[] = (() => {
+    const inviteEventIds = new Set((inviteEventsData || []).map(d => d.event.id));
+    const createdOnly: InviteEventData[] = (createdEvents || [])
+      .filter(e => !inviteEventIds.has(e.id))
+      .map(event => ({
+        event,
+        invitations: [],
+        stats: { going: 0, maybe: 0, no: 0 },
+        isCreatedOnly: true,
+      }));
+
+    const all = [...(inviteEventsData || []), ...createdOnly];
+    all.sort((a, b) => {
+      const dateA = a.event.event_date || '';
+      const dateB = b.event.event_date || '';
+      return dateA.localeCompare(dateB);
+    });
+    return all;
+  })();
+
+  const isLoading = isLoadingInvites || isLoadingCreated;
+
+  // Don't render if user has no events
+  if (!isLoading && mergedData.length === 0) {
     return null;
   }
 
@@ -98,18 +128,28 @@ export const YourEventsSection: React.FC<YourEventsSectionProps> = ({
       {/* Stats badge showing RSVP counts */}
       <View style={[styles.statsBadge, { backgroundColor: theme.colors.background.secondary }]}>
         <View style={styles.statsRow}>
-          <Text variant="caption" style={{ color: theme.colors.success, fontWeight: '600' }}>
-            {item.stats.going} going
-          </Text>
-          {item.stats.maybe > 0 && (
-            <Text variant="caption" style={{ color: theme.colors.warning, fontWeight: '600', marginLeft: 8 }}>
-              {item.stats.maybe} maybe
+          {item.isCreatedOnly ? (
+            <Text variant="caption" style={{ color: theme.colors.text.tertiary, fontWeight: '600' }}>
+              No invites yet
             </Text>
+          ) : (
+            <>
+              <Text variant="caption" style={{ color: theme.colors.success, fontWeight: '600' }}>
+                {item.stats.going} going
+              </Text>
+              {item.stats.maybe > 0 && (
+                <Text variant="caption" style={{ color: theme.colors.warning, fontWeight: '600', marginLeft: 8 }}>
+                  {item.stats.maybe} maybe
+                </Text>
+              )}
+            </>
           )}
         </View>
-        <Text variant="caption" style={{ color: theme.colors.text.tertiary }}>
-          {item.invitations.length} invite{item.invitations.length !== 1 ? 's' : ''}
-        </Text>
+        {!item.isCreatedOnly && (
+          <Text variant="caption" style={{ color: theme.colors.text.tertiary }}>
+            {item.invitations.length} invite{item.invitations.length !== 1 ? 's' : ''}
+          </Text>
+        )}
       </View>
       <View style={styles.cardWrapper}>
         <EventCard
@@ -126,19 +166,19 @@ export const YourEventsSection: React.FC<YourEventsSectionProps> = ({
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background.primary }]}>
       <SectionHeader
-        title="Your Invites"
-        emoji="📨"
+        title="Your Events"
+        emoji="🎪"
         onSeeAll={onSeeAll}
-        count={inviteEventsData?.length || 0}
+        count={mergedData.length}
       />
 
       {isLoading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="small" color={theme.colors.primary[600]} />
         </View>
-      ) : inviteEventsData && inviteEventsData.length > 0 ? (
+      ) : mergedData.length > 0 ? (
         <FlatList
-          data={inviteEventsData}
+          data={mergedData}
           keyExtractor={(item) => item.event.id}
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -147,8 +187,8 @@ export const YourEventsSection: React.FC<YourEventsSectionProps> = ({
         />
       ) : (
         <EmptyState
-          icon="📨"
-          message="No invites created yet"
+          icon="🎪"
+          message="No events yet"
         />
       )}
     </View>

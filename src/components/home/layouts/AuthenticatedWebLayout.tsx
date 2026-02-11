@@ -21,6 +21,7 @@ import {
   SuggestedForYouSection,
   CommunityBrowseSection,
 } from '../sections';
+import FooterDisclaimer from '../../FooterDisclaimer';
 
 interface AuthenticatedWebLayoutProps {
   onEventPress: (event: Event) => void;
@@ -140,6 +141,8 @@ export const AuthenticatedWebLayout: React.FC<AuthenticatedWebLayoutProps> = ({
           communities={communities}
         />
       )}
+
+      <FooterDisclaimer />
 
       {/* Bottom spacing for tab bar */}
       <View style={styles.bottomSpacer} />

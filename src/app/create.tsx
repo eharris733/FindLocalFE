@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   StyleSheet,
@@ -8,15 +8,21 @@ import {
   Image,
   Platform,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useQueryClient } from '@tanstack/react-query';
 import { Text } from '../components/ui';
 import { useTheme } from '../context/ThemeContext';
 import { useCityLocation } from '../context/CityContext';
 import { useDeviceInfo } from '../hooks/useDeviceInfo';
+import { useAuth } from '../hooks/useAuth';
+import { createEvent, updateEvent, getEventById } from '../api/events';
+import { uploadEventImage } from '../api/storage';
+import { logger } from '../utils/logger';
 import VenueSelectionModal from '../components/ui/VenueSelectionModal';
 import type { VenueSelection } from '../components/ui/VenueSelectionModal';
 
@@ -25,9 +31,16 @@ export default function CreateRoute() {
   const { selectedCity } = useCityLocation();
   const { isDesktop } = useDeviceInfo();
   const insets = useSafeAreaInsets();
+  const { isLoggedIn, session } = useAuth();
+  const queryClient = useQueryClient();
+  const { editId } = useLocalSearchParams<{ editId?: string }>();
+  const isEditMode = !!editId;
 
   // Form state
   const [coverImage, setCoverImage] = useState<string | null>(null);
+  const [originalImageUrl, setOriginalImageUrl] = useState<string | null>(null);
+  const [originalEventName, setOriginalEventName] = useState('');
+  const [originalDescription, setOriginalDescription] = useState('');
   const [eventName, setEventName] = useState('');
   const [startDate, setStartDate] = useState(new Date());
   const [endDate, setEndDate] = useState(new Date(Date.now() + 4 * 60 * 60 * 1000));
@@ -39,6 +52,71 @@ export default function CreateRoute() {
   const [customLocation, setCustomLocation] = useState('');
   const [description, setDescription] = useState('');
   const [showVenueModal, setShowVenueModal] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [isLoadingEdit, setIsLoadingEdit] = useState(false);
+
+  // Load event data in edit mode
+  useEffect(() => {
+    if (!editId) return;
+    const loadEvent = async () => {
+      setIsLoadingEdit(true);
+      try {
+        const eventData = await getEventById(editId);
+        if (!eventData) {
+          Alert.alert('Error', 'Event not found.');
+          router.back();
+          return;
+        }
+        if (eventData.creator_id !== session?.user?.id) {
+          Alert.alert('Error', 'You do not have permission to edit this event.');
+          router.back();
+          return;
+        }
+        setEventName(eventData.title || '');
+        setOriginalEventName(eventData.title || '');
+        setDescription(eventData.description || '');
+        setOriginalDescription(eventData.description || '');
+        if (eventData.event_date) {
+          const date = new Date(eventData.event_date);
+          if (eventData.start_time) {
+            const [h, m] = eventData.start_time.split(':').map(Number);
+            date.setHours(h, m, 0, 0);
+          }
+          setStartDate(date);
+        }
+        if (eventData.event_date) {
+          const end = new Date(eventData.event_date);
+          if (eventData.end_time) {
+            const [h, m] = eventData.end_time.split(':').map(Number);
+            end.setHours(h, m, 0, 0);
+          } else {
+            end.setHours(startDate.getHours() + 4, startDate.getMinutes(), 0, 0);
+          }
+          setEndDate(end);
+        }
+        if (eventData.venue_id) {
+          setVenueId(eventData.venue_id);
+        }
+        if (eventData.custom_location) {
+          setCustomLocation(eventData.custom_location);
+        }
+        if (eventData.cover_image_url) {
+          setCoverImage(eventData.cover_image_url);
+          setOriginalImageUrl(eventData.cover_image_url);
+        } else if (eventData.image_url) {
+          setCoverImage(eventData.image_url);
+          setOriginalImageUrl(eventData.image_url);
+        }
+      } catch (err) {
+        logger.error('Error loading event for edit:', err);
+        Alert.alert('Error', 'Failed to load event data.');
+        router.back();
+      } finally {
+        setIsLoadingEdit(false);
+      }
+    };
+    loadEvent();
+  }, [editId]);
 
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -119,7 +197,7 @@ export default function CreateRoute() {
 
   const locationDisplayText = venueName || customLocation || null;
 
-  const handlePublish = () => {
+  const handlePublish = async () => {
     if (!eventName.trim()) {
       Alert.alert('Missing Information', 'Please enter an event name.');
       return;
@@ -130,24 +208,142 @@ export default function CreateRoute() {
       return;
     }
 
-    // TODO: Implement event creation API call
-    Alert.alert('Success', 'Event created successfully!', [
-      { text: 'OK', onPress: () => router.back() }
-    ]);
+    if (!isLoggedIn || !session?.user?.id) {
+      Alert.alert('Sign In Required', 'Please sign in to create an event.');
+      return;
+    }
+
+    setIsPublishing(true);
+
+    try {
+      const eventDate = startDate.toISOString().split('T')[0];
+      const startTimeStr = `${startDate.getHours().toString().padStart(2, '0')}:${startDate.getMinutes().toString().padStart(2, '0')}`;
+      const endTimeStr = `${endDate.getHours().toString().padStart(2, '0')}:${endDate.getMinutes().toString().padStart(2, '0')}`;
+
+      if (isEditMode && editId) {
+        // ── Edit flow ──
+        const imageChanged = coverImage !== originalImageUrl;
+        let newImageUrl = originalImageUrl;
+
+        if (imageChanged && coverImage && !coverImage.startsWith('http')) {
+          const { publicUrl, error: uploadErr } = await uploadEventImage(
+            coverImage,
+            session.user.id,
+            editId
+          );
+          if (uploadErr) {
+            Alert.alert('Image Upload Failed', uploadErr);
+            setIsPublishing(false);
+            return;
+          }
+          newImageUrl = publicUrl;
+        }
+
+        const { error: updateErr } = await updateEvent({
+          id: editId,
+          title: eventName,
+          description: description || null,
+          event_date: eventDate,
+          start_time: startTimeStr,
+          end_time: endTimeStr,
+          venue_id: venueId,
+          custom_location: customLocation || null,
+          city: selectedCity || 'Boston',
+          ...(imageChanged ? { cover_image_url: newImageUrl } : {}),
+        });
+
+        if (updateErr) {
+          Alert.alert('Error', updateErr);
+          setIsPublishing(false);
+          return;
+        }
+
+        queryClient.invalidateQueries({ queryKey: ['myCreatedEvents'] });
+        queryClient.invalidateQueries({ queryKey: ['myInvitationsWithStats'] });
+        queryClient.invalidateQueries({ queryKey: ['events'] });
+        router.replace(`/event/${editId}`);
+      } else {
+        // ── Create flow ──
+        const { data, error: createErr } = await createEvent({
+          title: eventName,
+          description: description || null,
+          event_date: eventDate,
+          start_time: startTimeStr,
+          end_time: endTimeStr,
+          venue_id: venueId,
+          custom_location: customLocation || null,
+          city: selectedCity || 'Boston',
+          is_private: true,
+        });
+
+        if (createErr || !data) {
+          Alert.alert('Error', createErr || 'Failed to create event.');
+          setIsPublishing(false);
+          return;
+        }
+
+        const eventId = data.id;
+
+        // Upload cover image if present
+        if (coverImage) {
+          const { publicUrl, error: uploadErr } = await uploadEventImage(
+            coverImage,
+            session.user.id,
+            eventId
+          );
+          if (!uploadErr && publicUrl) {
+            await updateEvent({ id: eventId, cover_image_url: publicUrl });
+          } else {
+            logger.warn('Cover image upload failed, continuing without image:', uploadErr);
+          }
+        }
+
+        queryClient.invalidateQueries({ queryKey: ['myCreatedEvents'] });
+        queryClient.invalidateQueries({ queryKey: ['myInvitationsWithStats'] });
+        queryClient.invalidateQueries({ queryKey: ['events'] });
+        router.replace(`/event/${eventId}?justCreated=true`);
+      }
+    } catch (err: any) {
+      logger.error('Error publishing event:', err);
+      Alert.alert('Error', 'Something went wrong. Please try again.');
+    } finally {
+      setIsPublishing(false);
+    }
   };
 
   const handleCancel = () => {
-    if (eventName || description || coverImage) {
-      Alert.alert(
-        'Discard Changes?',
-        'Are you sure you want to discard this event?',
-        [
-          { text: 'Keep Editing', style: 'cancel' },
-          { text: 'Discard', style: 'destructive', onPress: () => router.back() }
-        ]
-      );
+    if (isEditMode) {
+      // In edit mode, only show discard modal if something actually changed
+      const hasChanges =
+        eventName !== originalEventName ||
+        description !== originalDescription ||
+        coverImage !== originalImageUrl;
+      if (hasChanges) {
+        Alert.alert(
+          'Discard Changes?',
+          'You have unsaved changes. Are you sure you want to go back?',
+          [
+            { text: 'Keep Editing', style: 'cancel' },
+            { text: 'Discard', style: 'destructive', onPress: () => router.back() }
+          ]
+        );
+      } else {
+        router.back();
+      }
     } else {
-      router.back();
+      // In create mode, show modal if any field has content
+      if (eventName || description || coverImage) {
+        Alert.alert(
+          'Discard Changes?',
+          'Are you sure you want to discard this event?',
+          [
+            { text: 'Keep Editing', style: 'cancel' },
+            { text: 'Discard', style: 'destructive', onPress: () => router.back() }
+          ]
+        );
+      } else {
+        router.back();
+      }
     }
   };
 
@@ -165,16 +361,23 @@ export default function CreateRoute() {
         </TouchableOpacity>
 
         <Text variant="h3" style={{ color: theme.colors.text.primary }}>
-          Create Event
+          {isEditMode ? 'Edit Event' : 'Create Event'}
         </Text>
 
         <TouchableOpacity
           onPress={handlePublish}
-          style={[styles.publishButton, { backgroundColor: theme.colors.secondary[500] }]}
+          disabled={isPublishing}
+          style={[styles.publishButton, {
+            backgroundColor: isPublishing ? theme.colors.gray[400] : theme.colors.secondary[500],
+          }]}
         >
-          <Text variant="body2" style={{ color: theme.colors.text.inverse, fontWeight: '600' }}>
-            Publish
-          </Text>
+          {isPublishing ? (
+            <ActivityIndicator size="small" color={theme.colors.text.inverse} />
+          ) : (
+            <Text variant="body2" style={{ color: theme.colors.text.inverse, fontWeight: '600' }}>
+              {isEditMode ? 'Save' : 'Publish'}
+            </Text>
+          )}
         </TouchableOpacity>
       </View>
 

@@ -620,3 +620,162 @@ export async function getEventsFromNetwork(userId: string): Promise<NetworkEvent
     return [];
   }
 }
+
+// ─── User-Created Event CRUD ─────────────────────────────────────────────────
+
+export interface CreateEventParams {
+  title: string;
+  city: string;
+  description?: string | null;
+  event_date: string;       // ISO date string
+  start_time: string;       // "HH:MM"
+  end_time?: string | null;  // "HH:MM"
+  venue_id?: string | null;
+  custom_location?: string | null;
+  cover_image_url?: string | null;
+  is_private?: boolean;
+}
+
+export interface UpdateEventParams extends Partial<CreateEventParams> {
+  id: string;
+}
+
+/**
+ * Create a new user event. Sets creator_id to the current user automatically.
+ * Also sets image_url = cover_image_url for EventCard compatibility.
+ */
+export async function createEvent(
+  params: CreateEventParams
+): Promise<{ data: { id: string } | null; error: string | null }> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { data: null, error: 'Not authenticated' };
+
+    const { data, error } = await supabase
+      .from('events_gold')
+      .insert({
+        title: params.title,
+        city: params.city,
+        description: params.description || null,
+        event_date: params.event_date,
+        start_time: params.start_time,
+        end_time: params.end_time || null,
+        venue_id: params.venue_id || null,
+        custom_location: params.custom_location || null,
+        cover_image_url: params.cover_image_url || null,
+        image_url: params.cover_image_url || null,
+        is_private: params.is_private ?? true,
+        creator_id: user.id,
+      })
+      .select('id')
+      .single();
+
+    if (error) {
+      logger.error('Error creating event:', error);
+      return { data: null, error: error.message };
+    }
+
+    logger.info('Created event:', data.id);
+    return { data: { id: data.id }, error: null };
+  } catch (err: any) {
+    logger.error('Error in createEvent:', err);
+    return { data: null, error: err.message };
+  }
+}
+
+/**
+ * Update an existing user-created event. Only updates provided fields.
+ * Keeps image_url in sync with cover_image_url.
+ */
+export async function updateEvent(
+  params: UpdateEventParams
+): Promise<{ data: Event | null; error: string | null }> {
+  try {
+    const { id, ...updates } = params;
+    const updateData: Record<string, any> = {};
+
+    if (updates.title !== undefined) updateData.title = updates.title;
+    if (updates.city !== undefined) updateData.city = updates.city;
+    if (updates.description !== undefined) updateData.description = updates.description;
+    if (updates.event_date !== undefined) updateData.event_date = updates.event_date;
+    if (updates.start_time !== undefined) updateData.start_time = updates.start_time;
+    if (updates.end_time !== undefined) updateData.end_time = updates.end_time;
+    if (updates.venue_id !== undefined) updateData.venue_id = updates.venue_id;
+    if (updates.custom_location !== undefined) updateData.custom_location = updates.custom_location;
+    if (updates.is_private !== undefined) updateData.is_private = updates.is_private;
+    if (updates.cover_image_url !== undefined) {
+      updateData.cover_image_url = updates.cover_image_url;
+      updateData.image_url = updates.cover_image_url;
+    }
+
+    const { data, error } = await supabase
+      .from('events_gold')
+      .update(updateData)
+      .eq('id', id)
+      .select('*')
+      .single();
+
+    if (error) {
+      logger.error('Error updating event:', error);
+      return { data: null, error: error.message };
+    }
+
+    logger.info('Updated event:', id);
+    return { data: data as Event, error: null };
+  } catch (err: any) {
+    logger.error('Error in updateEvent:', err);
+    return { data: null, error: err.message };
+  }
+}
+
+/**
+ * Soft-delete a user-created event.
+ */
+export async function deleteEvent(
+  eventId: string
+): Promise<{ success: boolean; error: string | null }> {
+  try {
+    const { error } = await supabase
+      .from('events_gold')
+      .update({ is_deleted: true })
+      .eq('id', eventId);
+
+    if (error) {
+      logger.error('Error deleting event:', error);
+      return { success: false, error: error.message };
+    }
+
+    logger.info('Deleted event:', eventId);
+    return { success: true, error: null };
+  } catch (err: any) {
+    logger.error('Error in deleteEvent:', err);
+    return { success: false, error: err.message };
+  }
+}
+
+/**
+ * Get all events created by the current user.
+ */
+export async function getMyCreatedEvents(): Promise<{ data: Event[]; error: string | null }> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { data: [], error: 'Not authenticated' };
+
+    const { data, error } = await supabase
+      .from('events_gold')
+      .select('*')
+      .eq('creator_id', user.id)
+      .or('is_deleted.is.null,is_deleted.eq.false')
+      .order('event_date', { ascending: true });
+
+    if (error) {
+      logger.error('Error fetching created events:', error);
+      return { data: [], error: error.message };
+    }
+
+    return { data: (data || []) as Event[], error: null };
+  } catch (err: any) {
+    logger.error('Error in getMyCreatedEvents:', err);
+    return { data: [], error: err.message };
+  }
+}

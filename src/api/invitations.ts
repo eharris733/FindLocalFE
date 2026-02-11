@@ -102,6 +102,36 @@ export interface SubmitRsvpParams {
   plusOneCount?: number;
 }
 
+// Direct invite types
+export interface DirectInvite {
+  id: string;
+  event_id: string;
+  inviter_id: string;
+  invitee_id: string;
+  message?: string | null;
+  status: 'pending' | 'accepted' | 'declined';
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PendingDirectInvite {
+  invite_id: string;
+  event_id: string;
+  inviter_id: string;
+  inviter_username?: string | null;
+  inviter_name?: string | null;
+  inviter_avatar?: string | null;
+  message?: string | null;
+  status: string;
+  created_at: string;
+}
+
+export interface DirectInviteWithProfile extends DirectInvite {
+  invitee_username?: string | null;
+  invitee_name?: string | null;
+  invitee_avatar?: string | null;
+}
+
 // ============================================
 // Create Invitations
 // ============================================
@@ -772,7 +802,7 @@ export async function getUserUpcomingRsvps(): Promise<{
 
 /**
  * Get pending event invitations TO the user (unanswered)
- * Returns invitations where user hasn't RSVPed yet
+ * Returns direct invites where user hasn't responded yet
  */
 export async function getPendingInvitationsToUser(): Promise<{
   data: Array<{
@@ -785,6 +815,43 @@ export async function getPendingInvitationsToUser(): Promise<{
     message?: string | null;
     created_at: string;
   }>;
+  error: any;
+}> {
+  try {
+    const { data: directInvites, error } = await getPendingDirectInvites();
+
+    if (error) {
+      return { data: [], error };
+    }
+
+    // Map direct invites to the expected return shape
+    const mapped = directInvites.map(inv => ({
+      invitation_id: inv.invite_id,
+      event_id: inv.event_id,
+      inviter_id: inv.inviter_id,
+      inviter_username: inv.inviter_username,
+      inviter_name: inv.inviter_name,
+      inviter_avatar: inv.inviter_avatar,
+      message: inv.message,
+      created_at: inv.created_at,
+    }));
+
+    return { data: mapped, error: null };
+  } catch (err) {
+    logger.error('Error in getPendingInvitationsToUser:', err);
+    return { data: [], error: err };
+  }
+}
+
+// ============================================
+// Direct Invite Functions
+// ============================================
+
+/**
+ * Get pending direct invites TO the current user via RPC
+ */
+export async function getPendingDirectInvites(): Promise<{
+  data: PendingDirectInvite[];
   error: any;
 }> {
   try {
@@ -828,8 +895,149 @@ export async function getPendingInvitationsToUser(): Promise<{
 
     return { data: filtered, error: null };
   } catch (err) {
-    logger.error('Error in getPendingInvitationsToUser:', err);
+    logger.error('Error in getPendingDirectInvites:', err);
     return { data: [], error: err };
+  }
+}
+
+/**
+ * Get all direct invites sent for an event (for Manage tab + friend picker "already invited" state)
+ */
+export async function getDirectInvitesForEvent(
+  eventId: string
+): Promise<{ data: DirectInviteWithProfile[]; error: any }> {
+  try {
+    const { data: user } = await supabase.auth.getUser();
+    if (!user.user) {
+      return { data: [], error: null };
+    }
+
+    const { data: invites, error } = await supabase
+      .from('direct_invites')
+      .select('*')
+      .eq('event_id', eventId)
+      .eq('inviter_id', user.user.id)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      logger.error('Error getting direct invites for event:', error);
+      return { data: [], error };
+    }
+
+    if (!invites || invites.length === 0) {
+      return { data: [], error: null };
+    }
+
+    // Fetch invitee profiles
+    const inviteeIds = invites.map(inv => inv.invitee_id);
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('id, username, full_name, avatar_url')
+      .in('id', inviteeIds);
+
+    const profileMap = new Map((profiles || []).map(p => [p.id, p]));
+
+    const result: DirectInviteWithProfile[] = invites.map(inv => {
+      const profile = profileMap.get(inv.invitee_id);
+      return {
+        ...inv,
+        invitee_username: profile?.username || null,
+        invitee_name: profile?.full_name || null,
+        invitee_avatar: profile?.avatar_url || null,
+      };
+    });
+
+    return { data: result, error: null };
+  } catch (err) {
+    logger.error('Error in getDirectInvitesForEvent:', err);
+    return { data: [], error: err };
+  }
+}
+
+/**
+ * Cancel (delete) a direct invite the user sent
+ */
+export async function cancelDirectInvite(
+  inviteId: string
+): Promise<{ success: boolean; error: any }> {
+  try {
+    const { error } = await supabase
+      .from('direct_invites')
+      .delete()
+      .eq('id', inviteId);
+
+    if (error) {
+      logger.error('Error canceling direct invite:', error);
+      return { success: false, error };
+    }
+
+    return { success: true, error: null };
+  } catch (err) {
+    logger.error('Error in cancelDirectInvite:', err);
+    return { success: false, error: err };
+  }
+}
+
+/**
+ * Get a pending direct invite for a specific event and user
+ * Used to show the "X invited you" banner on event pages
+ */
+export async function getDirectInviteForEvent(
+  eventId: string
+): Promise<{ data: PendingDirectInvite | null; error: any }> {
+  try {
+    const { data: user } = await supabase.auth.getUser();
+    if (!user.user) {
+      return { data: null, error: null };
+    }
+
+    const { data, error } = await supabase
+      .from('direct_invites')
+      .select(`
+        id,
+        event_id,
+        inviter_id,
+        message,
+        status,
+        created_at
+      `)
+      .eq('event_id', eventId)
+      .eq('invitee_id', user.user.id)
+      .eq('status', 'pending')
+      .maybeSingle();
+
+    if (error) {
+      logger.error('Error getting direct invite for event:', error);
+      return { data: null, error };
+    }
+
+    if (!data) {
+      return { data: null, error: null };
+    }
+
+    // Fetch inviter profile
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('username, full_name, avatar_url')
+      .eq('id', data.inviter_id)
+      .single();
+
+    const result: PendingDirectInvite = {
+      invite_id: data.id,
+      event_id: data.event_id,
+      inviter_id: data.inviter_id,
+      inviter_username: profile?.username || null,
+      inviter_name: profile?.full_name || null,
+      inviter_avatar: profile?.avatar_url || null,
+      message: data.message,
+      status: data.status,
+      created_at: data.created_at,
+    };
+
+    return { data: result, error: null };
+  } catch (err) {
+    logger.error('Error in getDirectInviteForEvent:', err);
+    return { data: null, error: err };
   }
 }
 
