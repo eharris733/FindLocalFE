@@ -53,6 +53,11 @@ interface SocialMetric {
     | 'invitation_created'
     | 'invitation_viewed'
     | 'rsvp_submitted'
+    | 'rsvp_updated'
+    // Direct invites
+    | 'direct_invite_sent'
+    | 'direct_invite_accepted'
+    | 'direct_invite_declined'
     // Venue follows
     | 'venue_followed'
     | 'venue_unfollowed'
@@ -62,7 +67,7 @@ interface SocialMetric {
     // Page views
     | 'social_page_view';
   targetId?: string; // ID of user, venue, event, or invitation being acted upon
-  targetType?: 'user' | 'venue' | 'event' | 'invitation';
+  targetType?: 'user' | 'venue' | 'event' | 'invitation' | 'rsvp' | 'direct_invite';
   source?: string; // Where the action was triggered from (e.g., 'event_page', 'profile', 'discover')
   metadata?: Record<string, any>;
 }

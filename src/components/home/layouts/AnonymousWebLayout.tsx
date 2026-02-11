@@ -18,6 +18,7 @@ import {
   SignupCtaBanner,
   GetAppBanner,
 } from '../sections';
+import FooterDisclaimer from '../../FooterDisclaimer';
 
 interface AnonymousWebLayoutProps {
   onEventPress: (event: Event) => void;
@@ -103,6 +104,8 @@ export const AnonymousWebLayout: React.FC<AnonymousWebLayoutProps> = ({
       />
 
       <SignupCtaBanner />
+
+      <FooterDisclaimer />
 
       {/* Bottom spacing for tab bar */}
       <View style={styles.bottomSpacer} />

@@ -18,7 +18,10 @@ import type { Event } from '../../types/events';
 import { getVenueById } from '../../api/venues';
 import { getUpcomingEventsForVenue } from '../../api/events';
 import { useTheme } from '../../context/ThemeContext';
+import { useCityLocation } from '../../context/CityContext';
 import { Text } from '../../components/ui';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { STORAGE_KEYS } from '../../constants/storage-keys';
 import { getVenueSizeLabel } from '../../utils/venueUtils';
 import { logger } from '../../utils/logger';
 import { useAuth } from '../../hooks/useAuth';
@@ -58,6 +61,7 @@ export default function VenuePage() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { theme } = useTheme();
+  const { selectedCity, onCityChange } = useCityLocation();
   const { isLoggedIn } = useAuth();
   
   const [venue, setVenue] = useState<Venue | null>(null);
@@ -106,7 +110,22 @@ export default function VenuePage() {
       }
       
       setVenue(venueData);
-      
+
+      // Silently set city preference if not already set (deep-link entry)
+      if (venueData.city && !selectedCity) {
+        try {
+          const alreadyInferred = await AsyncStorage.getItem(STORAGE_KEYS.DEEP_LINK_CITY_INFERRED);
+          if (!alreadyInferred) {
+            await AsyncStorage.setItem(STORAGE_KEYS.PREFERRED_CITY, venueData.city);
+            await AsyncStorage.setItem(STORAGE_KEYS.DEEP_LINK_CITY_INFERRED, 'true');
+            await onCityChange(venueData.city);
+            logger.info('Inferred city from deep link:', venueData.city);
+          }
+        } catch (err) {
+          logger.warn('Error inferring city from deep link:', err);
+        }
+      }
+
       // Track page view
       analytics.trackPageView(`/venue/${id}`, {
         venue_id: id,

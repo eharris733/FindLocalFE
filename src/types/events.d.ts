@@ -27,6 +27,11 @@ export interface Event {
   created_at: string | null; // timestamp with time zone
   last_seen_at: string | null; // timestamp with time zone
   is_deleted: boolean | null; // soft delete flag
+  creator_id: string | null; // user who created the event (null for scraped events)
+  end_time: string | null; // "HH:MM" format, same as start_time
+  custom_location: string | null; // free-form address when no venue_id
+  is_private: boolean | null; // defaults true for user-created events
+  cover_image_url: string | null; // Supabase Storage URL for cover photo
 }
 
 export interface FilterState {

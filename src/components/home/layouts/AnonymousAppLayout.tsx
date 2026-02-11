@@ -15,6 +15,7 @@ import {
   CommunityBrowseSection,
   SignupValueCard,
 } from '../sections';
+import FooterDisclaimer from '../../FooterDisclaimer';
 
 interface AnonymousAppLayoutProps {
   onEventPress: (event: Event) => void;
@@ -73,6 +74,8 @@ export const AnonymousAppLayout: React.FC<AnonymousAppLayoutProps> = ({
       />
 
       {showSignup && <SignupValueCard onSkip={handleSkipSignup} />}
+
+      <FooterDisclaimer />
 
       {/* Bottom spacing for tab bar */}
       <View style={styles.bottomSpacer} />

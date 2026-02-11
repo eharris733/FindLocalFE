@@ -14,7 +14,6 @@ export interface EventInvitation {
   inviter_id: string;
   invite_token: string;
   passcode?: string | null;
-  allow_anonymous_rsvp: boolean;
   allow_plus_one: boolean;
   max_uses?: number | null;
   use_count: number;
@@ -33,7 +32,6 @@ export interface InvitationDetails {
   inviter_username?: string | null;
   inviter_name?: string | null;
   passcode_required: boolean;
-  allow_anonymous_rsvp: boolean;
   allow_plus_one: boolean;
   message?: string | null;
   is_valid: boolean;
@@ -45,7 +43,6 @@ export interface EventRsvp {
   invitation_id: string;
   event_id: string;
   user_id?: string | null;
-  anonymous_name?: string | null;
   response: 'yes' | 'no' | 'maybe';
   plus_one_count: number;
   created_at: string;
@@ -60,7 +57,6 @@ export interface RsvpWithProfile {
   username?: string | null;
   full_name?: string | null;
   avatar_url?: string | null;
-  anonymous_name?: string | null;
   response: 'yes' | 'no' | 'maybe';
   plus_one_count: number;
   created_at: string;
@@ -70,7 +66,6 @@ export interface InvitationWithStats {
   invitation_id: string;
   invite_token: string;
   passcode_enabled: boolean;
-  allow_anonymous_rsvp: boolean;
   allow_plus_one: boolean;
   max_uses?: number | null;
   use_count: number;
@@ -94,7 +89,6 @@ export interface EventSocialStats {
 export interface CreateInvitationParams {
   eventId: string;
   passcode?: string;
-  allowAnonymous?: boolean;
   allowPlusOne?: boolean;
   maxUses?: number;
   expiresAt?: Date;
@@ -105,8 +99,37 @@ export interface SubmitRsvpParams {
   token: string;
   response: 'yes' | 'no' | 'maybe';
   passcode?: string;
-  anonymousName?: string;
   plusOneCount?: number;
+}
+
+// Direct invite types
+export interface DirectInvite {
+  id: string;
+  event_id: string;
+  inviter_id: string;
+  invitee_id: string;
+  message?: string | null;
+  status: 'pending' | 'accepted' | 'declined';
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PendingDirectInvite {
+  invite_id: string;
+  event_id: string;
+  inviter_id: string;
+  inviter_username?: string | null;
+  inviter_name?: string | null;
+  inviter_avatar?: string | null;
+  message?: string | null;
+  status: string;
+  created_at: string;
+}
+
+export interface DirectInviteWithProfile extends DirectInvite {
+  invitee_username?: string | null;
+  invitee_name?: string | null;
+  invitee_avatar?: string | null;
 }
 
 // ============================================
@@ -123,7 +146,7 @@ export async function createEventInvitation(
     const { data, error } = await supabase.rpc('create_event_invitation', {
       p_event_id: params.eventId,
       p_passcode: params.passcode || null,
-      p_allow_anonymous: params.allowAnonymous ?? true,
+      p_allow_anonymous: false,
       p_allow_plus_one: params.allowPlusOne ?? false,
       p_max_uses: params.maxUses || null,
       p_expires_at: params.expiresAt?.toISOString() || null,
@@ -154,7 +177,6 @@ export async function createEventInvitation(
       targetType: 'event',
       source: 'event_page',
       metadata: {
-        allowAnonymous: params.allowAnonymous,
         allowPlusOne: params.allowPlusOne,
         hasMaxUses: !!params.maxUses,
         hasExpiry: !!params.expiresAt,
@@ -221,7 +243,7 @@ export async function submitRsvp(
       p_token: params.token,
       p_response: params.response,
       p_passcode: params.passcode || null,
-      p_anonymous_name: params.anonymousName || null,
+      p_anonymous_name: null,
       p_plus_one_count: params.plusOneCount || 0,
     });
 
@@ -247,7 +269,6 @@ export async function submitRsvp(
       source: 'invite_page',
       metadata: {
         response: params.response,
-        isAnonymous: !!params.anonymousName,
         hasPlusOne: (params.plusOneCount || 0) > 0,
       },
     });
@@ -334,7 +355,7 @@ export async function getEventAttendees(
     // Get all RSVPs for this event
     const { data: rsvps, error } = await supabase
       .from('event_rsvps')
-      .select('id, user_id, anonymous_name, response, plus_one_count, created_at')
+      .select('id, user_id, response, plus_one_count, created_at')
       .eq('event_id', eventId)
       .in('response', ['yes', 'maybe'])
       .order('created_at', { ascending: false })
@@ -345,7 +366,7 @@ export async function getEventAttendees(
       return { data: [], going: 0, maybe: 0, error };
     }
 
-    // Get unique user IDs (filter out null/anonymous)
+    // Get unique user IDs
     const userIds = [...new Set(rsvps?.filter(r => r.user_id).map(r => r.user_id) || [])];
 
     // Fetch profiles for those users
@@ -373,7 +394,6 @@ export async function getEventAttendees(
         username: profile?.username,
         full_name: profile?.full_name,
         avatar_url: profile?.avatar_url,
-        anonymous_name: rsvp.anonymous_name,
         response: rsvp.response,
         plus_one_count: rsvp.plus_one_count,
         created_at: rsvp.created_at,
@@ -649,7 +669,7 @@ export async function deleteInvitation(
 }
 
 /**
- * Remove an RSVP (host can remove anonymous RSVPs)
+ * Remove an RSVP (host can remove RSVPs from their invitations)
  */
 export async function removeRsvp(rsvpId: string): Promise<{ success: boolean; error: any }> {
   try {
@@ -782,7 +802,7 @@ export async function getUserUpcomingRsvps(): Promise<{
 
 /**
  * Get pending event invitations TO the user (unanswered)
- * Returns invitations where user hasn't RSVPed yet
+ * Returns direct invites where user hasn't responded yet
  */
 export async function getPendingInvitationsToUser(): Promise<{
   data: Array<{
@@ -798,29 +818,226 @@ export async function getPendingInvitationsToUser(): Promise<{
   error: any;
 }> {
   try {
+    const { data: directInvites, error } = await getPendingDirectInvites();
+
+    if (error) {
+      return { data: [], error };
+    }
+
+    // Map direct invites to the expected return shape
+    const mapped = directInvites.map(inv => ({
+      invitation_id: inv.invite_id,
+      event_id: inv.event_id,
+      inviter_id: inv.inviter_id,
+      inviter_username: inv.inviter_username,
+      inviter_name: inv.inviter_name,
+      inviter_avatar: inv.inviter_avatar,
+      message: inv.message,
+      created_at: inv.created_at,
+    }));
+
+    return { data: mapped, error: null };
+  } catch (err) {
+    logger.error('Error in getPendingInvitationsToUser:', err);
+    return { data: [], error: err };
+  }
+}
+
+// ============================================
+// Direct Invite Functions
+// ============================================
+
+/**
+ * Get pending direct invites TO the current user via RPC
+ */
+export async function getPendingDirectInvites(): Promise<{
+  data: PendingDirectInvite[];
+  error: any;
+}> {
+  try {
     const { data: user } = await supabase.auth.getUser();
     if (!user.user) {
       return { data: [], error: null };
     }
 
-    // Get invitations where user is the recipient (we'll need a recipient field or check RSVPs)
-    // For now, get all active invitations and filter by those without user RSVP
+    const { data, error } = await supabase.rpc('get_pending_direct_invites');
+
+    if (error) {
+      logger.error('Error getting pending direct invites:', error);
+      return { data: [], error };
+    }
+
+    if (!data || data.length === 0) {
+      return { data: [], error: null };
+    }
+
+    // Get events user already RSVPed to, so we can filter those out
     const { data: rsvps } = await supabase
       .from('event_rsvps')
-      .select('invitation_id')
-      .eq('user_id', user.user.id);
+      .select('event_id')
+      .eq('user_id', user.user.id)
+      .in('response', ['yes', 'maybe']);
 
-    const rsvpedInvitationIds = (rsvps || []).map((r: any) => r.invitation_id);
+    const rsvpedEventIds = new Set((rsvps || []).map((r: any) => r.event_id));
 
-    // Get invitations where this user was explicitly invited
-    // This assumes we have an invitation_recipients table or similar
-    // For now, we'll return empty as this needs backend support
-    // TODO: Add invitation_recipients table to track who was invited
+    const filtered = (data as any[])
+      .filter(inv => !rsvpedEventIds.has(inv.event_id))
+      .map(inv => ({
+        invitation_id: inv.invite_id,
+        event_id: inv.event_id,
+        inviter_id: inv.sender_id,
+        inviter_username: inv.sender_username,
+        inviter_name: inv.sender_name,
+        inviter_avatar: inv.sender_avatar,
+        message: inv.message,
+        created_at: inv.created_at,
+      }));
 
-    return { data: [], error: null };
+    return { data: filtered, error: null };
   } catch (err) {
-    logger.error('Error in getPendingInvitationsToUser:', err);
+    logger.error('Error in getPendingDirectInvites:', err);
     return { data: [], error: err };
+  }
+}
+
+/**
+ * Get all direct invites sent for an event (for Manage tab + friend picker "already invited" state)
+ */
+export async function getDirectInvitesForEvent(
+  eventId: string
+): Promise<{ data: DirectInviteWithProfile[]; error: any }> {
+  try {
+    const { data: user } = await supabase.auth.getUser();
+    if (!user.user) {
+      return { data: [], error: null };
+    }
+
+    const { data: invites, error } = await supabase
+      .from('direct_invites')
+      .select('*')
+      .eq('event_id', eventId)
+      .eq('inviter_id', user.user.id)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      logger.error('Error getting direct invites for event:', error);
+      return { data: [], error };
+    }
+
+    if (!invites || invites.length === 0) {
+      return { data: [], error: null };
+    }
+
+    // Fetch invitee profiles
+    const inviteeIds = invites.map(inv => inv.invitee_id);
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('id, username, full_name, avatar_url')
+      .in('id', inviteeIds);
+
+    const profileMap = new Map((profiles || []).map(p => [p.id, p]));
+
+    const result: DirectInviteWithProfile[] = invites.map(inv => {
+      const profile = profileMap.get(inv.invitee_id);
+      return {
+        ...inv,
+        invitee_username: profile?.username || null,
+        invitee_name: profile?.full_name || null,
+        invitee_avatar: profile?.avatar_url || null,
+      };
+    });
+
+    return { data: result, error: null };
+  } catch (err) {
+    logger.error('Error in getDirectInvitesForEvent:', err);
+    return { data: [], error: err };
+  }
+}
+
+/**
+ * Cancel (delete) a direct invite the user sent
+ */
+export async function cancelDirectInvite(
+  inviteId: string
+): Promise<{ success: boolean; error: any }> {
+  try {
+    const { error } = await supabase
+      .from('direct_invites')
+      .delete()
+      .eq('id', inviteId);
+
+    if (error) {
+      logger.error('Error canceling direct invite:', error);
+      return { success: false, error };
+    }
+
+    return { success: true, error: null };
+  } catch (err) {
+    logger.error('Error in cancelDirectInvite:', err);
+    return { success: false, error: err };
+  }
+}
+
+/**
+ * Get a pending direct invite for a specific event and user
+ * Used to show the "X invited you" banner on event pages
+ */
+export async function getDirectInviteForEvent(
+  eventId: string
+): Promise<{ data: PendingDirectInvite | null; error: any }> {
+  try {
+    const { data: user } = await supabase.auth.getUser();
+    if (!user.user) {
+      return { data: null, error: null };
+    }
+
+    const { data, error } = await supabase
+      .from('direct_invites')
+      .select(`
+        id,
+        event_id,
+        inviter_id,
+        message,
+        status,
+        created_at
+      `)
+      .eq('event_id', eventId)
+      .eq('invitee_id', user.user.id)
+      .eq('status', 'pending')
+      .maybeSingle();
+
+    if (error) {
+      logger.error('Error getting direct invite for event:', error);
+      return { data: null, error };
+    }
+
+    if (!data) {
+      return { data: null, error: null };
+    }
+
+    // Fetch inviter profile
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('username, full_name, avatar_url')
+      .eq('id', data.inviter_id)
+      .single();
+
+    const result: PendingDirectInvite = {
+      invite_id: data.id,
+      event_id: data.event_id,
+      inviter_id: data.inviter_id,
+      inviter_username: profile?.username || null,
+      inviter_name: profile?.full_name || null,
+      inviter_avatar: profile?.avatar_url || null,
+      message: data.message,
+      status: data.status,
+      created_at: data.created_at,
+    };
+
+    return { data: result, error: null };
+  } catch (err) {
+    logger.error('Error in getDirectInviteForEvent:', err);
+    return { data: null, error: err };
   }
 }
 
@@ -1349,5 +1566,200 @@ export async function getMutualEventsWithFriend(
   } catch (err) {
     logger.error('Error in getMutualEventsWithFriend:', err);
     return { data: [], total: 0, error: err };
+  }
+}
+
+// ============================================
+// Direct Friend Invitations
+// ============================================
+
+export interface DirectEventInvite {
+  id: string;
+  event_id: string;
+  sender_id: string;
+  recipient_id: string;
+  message?: string | null;
+  status: 'pending' | 'viewed' | 'accepted' | 'declined';
+  allow_plus_one: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DirectInviteWithSender {
+  invite_id: string;
+  event_id: string;
+  sender_id: string;
+  sender_username?: string | null;
+  sender_name?: string | null;
+  sender_avatar?: string | null;
+  message?: string | null;
+  allow_plus_one: boolean;
+  status: string;
+  created_at: string;
+}
+
+export interface SendDirectInvitesParams {
+  eventId: string;
+  recipientIds: string[];
+  message?: string;
+  allowPlusOne?: boolean;
+}
+
+/**
+ * Send direct event invites to multiple friends (batch)
+ */
+export async function sendDirectEventInvites(
+  params: SendDirectInvitesParams
+): Promise<{ data: DirectEventInvite[]; error: any }> {
+  try {
+    const { data, error } = await supabase.rpc('send_direct_event_invites', {
+      p_event_id: params.eventId,
+      p_recipient_ids: params.recipientIds,
+      p_message: params.message || null,
+      p_allow_plus_one: params.allowPlusOne ?? false,
+    });
+
+    if (error) {
+      logger.error('Error sending direct invites:', error);
+      return { data: [], error };
+    }
+
+    analytics.trackSocialMetric({
+      actionType: 'direct_invite_sent',
+      targetId: params.eventId,
+      targetType: 'event',
+      source: 'invite_modal',
+      metadata: {
+        recipientCount: params.recipientIds.length,
+        hasMessage: !!params.message,
+        allowPlusOne: params.allowPlusOne,
+      },
+    });
+
+    return { data: (data || []) as DirectEventInvite[], error: null };
+  } catch (err) {
+    logger.error('Error in sendDirectEventInvites:', err);
+    return { data: [], error: err };
+  }
+}
+
+/**
+ * Get IDs of friends already invited by the current user for an event
+ */
+export async function getAlreadyInvitedFriendIds(
+  eventId: string
+): Promise<{ data: string[]; error: any }> {
+  try {
+    const { data, error } = await supabase.rpc('get_already_invited_friends', {
+      p_event_id: eventId,
+    });
+
+    if (error) {
+      logger.error('Error getting already invited friends:', error);
+      return { data: [], error };
+    }
+
+    return { data: (data || []) as string[], error: null };
+  } catch (err) {
+    logger.error('Error in getAlreadyInvitedFriendIds:', err);
+    return { data: [], error: err };
+  }
+}
+
+/**
+ * Respond to a direct event invite (accept or decline)
+ */
+export async function respondToDirectInvite(
+  inviteId: string,
+  response: 'accepted' | 'declined'
+): Promise<{ success: boolean; rsvpId?: string; error?: string }> {
+  try {
+    const { data, error } = await supabase.rpc('respond_to_direct_invite', {
+      p_invite_id: inviteId,
+      p_response: response,
+    });
+
+    if (error) {
+      logger.error('Error responding to direct invite:', error);
+      return { success: false, error: error.message };
+    }
+
+    const result = data as { success: boolean; error?: string; rsvp_id?: string };
+    if (!result.success) {
+      return { success: false, error: result.error };
+    }
+
+    analytics.trackSocialMetric({
+      actionType: response === 'accepted' ? 'direct_invite_accepted' : 'direct_invite_declined',
+      targetId: inviteId,
+      targetType: 'direct_invite',
+      source: 'my_invites',
+    });
+
+    return { success: true, rsvpId: result.rsvp_id };
+  } catch (err: any) {
+    logger.error('Error in respondToDirectInvite:', err);
+    return { success: false, error: err.message };
+  }
+}
+
+/**
+ * Get direct invites received by the current user (all statuses)
+ */
+export async function getReceivedDirectInvites(): Promise<{
+  data: DirectInviteWithSender[];
+  error: any;
+}> {
+  try {
+    const { data: user } = await supabase.auth.getUser();
+    if (!user.user) {
+      return { data: [], error: null };
+    }
+
+    const { data, error } = await supabase
+      .from('direct_event_invites')
+      .select('id, event_id, sender_id, message, allow_plus_one, status, created_at')
+      .eq('recipient_id', user.user.id)
+      .in('status', ['pending', 'viewed'])
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      logger.error('Error getting received direct invites:', error);
+      return { data: [], error };
+    }
+
+    if (!data || data.length === 0) {
+      return { data: [], error: null };
+    }
+
+    // Get sender profiles
+    const senderIds = [...new Set(data.map(d => d.sender_id))];
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('id, username, full_name, avatar_url')
+      .in('id', senderIds);
+
+    const profileMap = new Map((profiles || []).map(p => [p.id, p]));
+
+    const invites: DirectInviteWithSender[] = data.map((inv: any) => {
+      const profile = profileMap.get(inv.sender_id);
+      return {
+        invite_id: inv.id,
+        event_id: inv.event_id,
+        sender_id: inv.sender_id,
+        sender_username: profile?.username || null,
+        sender_name: profile?.full_name || null,
+        sender_avatar: profile?.avatar_url || null,
+        message: inv.message,
+        allow_plus_one: inv.allow_plus_one,
+        status: inv.status,
+        created_at: inv.created_at,
+      };
+    });
+
+    return { data: invites, error: null };
+  } catch (err) {
+    logger.error('Error in getReceivedDirectInvites:', err);
+    return { data: [], error: err };
   }
 }

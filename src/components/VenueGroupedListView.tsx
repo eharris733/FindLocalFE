@@ -7,6 +7,7 @@ import { Text } from './ui';
 import type { Event } from '../types/events';
 import type { Venue } from '../types/venues';
 import { useDeviceInfo } from '../hooks/useDeviceInfo';
+import FooterDisclaimer from './FooterDisclaimer';
 
 const INITIAL_EVENTS_PER_VENUE = 5;
 
@@ -243,6 +244,7 @@ export default function VenueGroupedListView({
           </View>
         );
       })}
+      <FooterDisclaimer />
     </ScrollView>
   );
 }

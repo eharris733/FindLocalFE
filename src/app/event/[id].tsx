@@ -10,14 +10,18 @@ import {
   ActivityIndicator,
   Share,
   Platform,
+  Alert,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import type { Venue } from '../../types/venues';
 import type { Event } from '../../types/events';
-import { getEventById, getEventsWithCommunities, getEventByIdWithFallback } from '../../api/events';
+import { getEventById, getEventsWithCommunities, getEventByIdWithFallback, deleteEvent } from '../../api/events';
 import { getVenueById, getVenuesByCity } from '../../api/venues';
 import { useTheme } from '../../context/ThemeContext';
+import { useCityLocation } from '../../context/CityContext';
 import { Text } from '../../components/ui';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { STORAGE_KEYS } from '../../constants/storage-keys';
 import { getVenueSizeLabel } from '../../utils/venueUtils';
 import { EVENT_NO_DESCRIPTION_FALLBACK } from '../../utils/eventUtils';
 import { logger } from '../../utils/logger';
@@ -31,7 +35,6 @@ import { InviteModal } from '../../components/InviteModal';
 import { RsvpModal } from '../../components/RsvpModal';
 import { RsvpStatusBanner } from '../../components/RsvpStatusBanner';
 import { AttendeesList } from '../../components/AttendeesList';
-import { HostRsvpModal } from '../../components/HostRsvpModal';
 import { useEventInvitationsQuery } from '../../hooks/queries/useEventInvitationsQuery';
 import {
   getEventSocialStats,
@@ -39,8 +42,11 @@ import {
   getUserEventRsvpStatus,
   getEventAttendees,
   getInvitationByToken,
+  getDirectInviteForEvent,
+  respondToDirectInvite,
   EventRsvp,
   RsvpWithProfile,
+  PendingDirectInvite,
 } from '../../api/invitations';
 import { followVenue, unfollowVenue, checkFollowingVenue, getVenueFollowerCount } from '../../api/friends';
 import { openLink, openMaps } from '../../utils/linkUtils';
@@ -69,10 +75,12 @@ function formatMilitaryTime(time: string): string {
 }
 
 export default function EventPage() {
-  const { id, invite } = useLocalSearchParams<{ id: string; invite?: string }>();
+  const { id, invite, justCreated } = useLocalSearchParams<{ id: string; invite?: string; justCreated?: string }>();
   const router = useRouter();
   const { theme } = useTheme();
-  const { isLoggedIn } = useAuth();
+  const { selectedCity, onCityChange } = useCityLocation();
+  const { isLoggedIn, session } = useAuth();
+  const isJustCreated = justCreated === 'true';
   const [event, setEvent] = useState<Event | null>(null);
   const [venue, setVenue] = useState<Venue | null>(null);
   const [loading, setLoading] = useState(true);
@@ -86,8 +94,11 @@ export default function EventPage() {
   // Social/Invitation state
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [showRsvpModal, setShowRsvpModal] = useState(false);
-  const [showHostModal, setShowHostModal] = useState(false);
   const [socialStats, setSocialStats] = useState<EventSocialStats | null>(null);
+
+  // Direct invite banner state
+  const [pendingDirectInvite, setPendingDirectInvite] = useState<PendingDirectInvite | null>(null);
+  const [directInviteLoading, setDirectInviteLoading] = useState(false);
 
   // Host management - check if user has created invitations for this event
   const { data: hostData } = useEventInvitationsQuery(id);
@@ -114,6 +125,7 @@ export default function EventPage() {
   useEffect(() => {
     if (id && isLoggedIn) {
       fetchUserRsvpStatus();
+      fetchPendingDirectInvite();
     }
   }, [id, isLoggedIn]);
 
@@ -129,6 +141,16 @@ export default function EventPage() {
       setShowRsvpModal(true);
     }
   }, [invite, event]);
+
+  // Auto-open InviteModal after creating a new event
+  useEffect(() => {
+    if (isJustCreated && event) {
+      const timer = setTimeout(() => {
+        setShowInviteModal(true);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [isJustCreated, event]);
 
   // Check venue follow status when venue loads
   useEffect(() => {
@@ -206,6 +228,36 @@ export default function EventPage() {
     }
   };
 
+  const fetchPendingDirectInvite = async () => {
+    if (!id || !isLoggedIn) return;
+    try {
+      const { data } = await getDirectInviteForEvent(id);
+      setPendingDirectInvite(data);
+    } catch (err) {
+      logger.warn('Could not fetch pending direct invite:', err);
+    }
+  };
+
+  const handleAcceptDirectInvite = async () => {
+    if (!pendingDirectInvite) return;
+    setDirectInviteLoading(true);
+    try {
+      const { success, error } = await respondToDirectInvite(pendingDirectInvite.invite_id, 'accepted');
+      if (success) {
+        setPendingDirectInvite(null);
+        fetchSocialStats();
+        fetchUserRsvpStatus();
+        fetchAttendees();
+      } else {
+        Alert.alert('Error', error || 'Failed to accept invite');
+      }
+    } catch (err) {
+      logger.error('Error accepting direct invite:', err);
+    } finally {
+      setDirectInviteLoading(false);
+    }
+  };
+
   const fetchInviterInfo = async () => {
     if (!invite) return;
     try {
@@ -235,7 +287,6 @@ export default function EventPage() {
 
   const handleInvitePress = () => {
     if (!isLoggedIn) {
-      // Could show login prompt here
       logger.info('User must be logged in to create invite');
       return;
     }
@@ -323,9 +374,26 @@ export default function EventPage() {
 
       setEvent(eventData);
       setIsExpired(expired);
-      
-      // Fetch related events
-      fetchRelatedEvents(eventData);
+
+      // Silently set city preference if not already set (deep-link entry)
+      if (eventData.city && !selectedCity) {
+        try {
+          const alreadyInferred = await AsyncStorage.getItem(STORAGE_KEYS.DEEP_LINK_CITY_INFERRED);
+          if (!alreadyInferred) {
+            await AsyncStorage.setItem(STORAGE_KEYS.PREFERRED_CITY, eventData.city);
+            await AsyncStorage.setItem(STORAGE_KEYS.DEEP_LINK_CITY_INFERRED, 'true');
+            await onCityChange(eventData.city);
+            logger.info('Inferred city from deep link:', eventData.city);
+          }
+        } catch (err) {
+          logger.warn('Error inferring city from deep link:', err);
+        }
+      }
+
+      // Fetch related events (skip for private events)
+      if (!eventData.is_private) {
+        fetchRelatedEvents(eventData);
+      }
       
       // Fetch venue if available
       if (eventData.venue_id) {
@@ -529,6 +597,8 @@ export default function EventPage() {
   const displayGenre = getDisplayGenre();
   const venueSizeLabel = venue?.venue_size ? getVenueSizeLabel(venue.venue_size) : null;
   const buttonInfo = getButtonInfo();
+  const isCreatorView = hostData?.isCreator === true;
+  const hasExternalUrl = !!(event?.ticket_page_url || event?.detail_page_url || event?.root_url || venue?.url);
 
   if (loading) {
     return (
@@ -627,25 +697,26 @@ export default function EventPage() {
                 </Text>
               </TouchableOpacity>
               {isLoggedIn && (
-                hostData?.isEventHost ? (
-                  <TouchableOpacity
-                    style={[styles.shareButton, { backgroundColor: theme.colors.secondary[100] }]}
-                    onPress={() => setShowHostModal(true)}
-                  >
-                    <Text variant="body1" style={{ color: theme.colors.secondary[600], fontWeight: '600' }}>
-                      Manage
-                    </Text>
-                  </TouchableOpacity>
-                ) : (
+                <>
+                  {isCreatorView && (
+                    <TouchableOpacity
+                      style={[styles.shareButton, { backgroundColor: theme.colors.primary[100], marginRight: 8 }]}
+                      onPress={() => router.push(`/create?editId=${id}`)}
+                    >
+                      <Text variant="body1" style={{ color: theme.colors.primary[600], fontWeight: '600' }}>
+                        Edit
+                      </Text>
+                    </TouchableOpacity>
+                  )}
                   <TouchableOpacity
                     style={[styles.shareButton, { backgroundColor: theme.colors.primary[100] }]}
-                    onPress={handleInvitePress}
+                    onPress={() => handleInvitePress()}
                   >
                     <Text variant="body1" style={{ color: theme.colors.primary[600], fontWeight: '600' }}>
                       Invite
                     </Text>
                   </TouchableOpacity>
-                )
+                </>
               )}
             </>
           )}
@@ -667,6 +738,24 @@ export default function EventPage() {
                 </Text>
                 <Text variant="caption" color="secondary">
                   You're viewing an archived event. Sharing and interactions are disabled.
+                </Text>
+              </View>
+            </View>
+          )}
+
+          {/* Just Created / Event Published Banner */}
+          {isJustCreated && (
+            <View style={[styles.expiredBanner, {
+              backgroundColor: theme.colors.success + '15',
+              borderColor: theme.colors.success,
+            }]}>
+              <Text variant="body1" style={{ fontSize: 20, marginRight: 8 }}>🎉</Text>
+              <View style={{ flex: 1 }}>
+                <Text variant="h4" style={{ color: theme.colors.text.primary, marginBottom: 4 }}>
+                  Event Published!
+                </Text>
+                <Text variant="caption" color="secondary">
+                  Share your event by creating an invite link
                 </Text>
               </View>
             </View>
@@ -803,6 +892,45 @@ export default function EventPage() {
               />
             )}
 
+            {/* Direct invite banner - show when a friend invited you directly */}
+            {!isExpired && pendingDirectInvite && !userRsvp && (
+              <View style={[{
+                backgroundColor: theme.colors.primary[100],
+                padding: theme.spacing.md,
+                borderRadius: theme.borderRadius.md,
+                marginBottom: theme.spacing.md,
+              }]}>
+                <Text variant="body2" style={{ color: theme.colors.primary[700] }}>
+                  📨 {pendingDirectInvite.inviter_name || `@${pendingDirectInvite.inviter_username}`} invited you!
+                </Text>
+                {pendingDirectInvite.message && (
+                  <Text variant="caption" style={{ color: theme.colors.text.secondary, marginTop: 4, fontStyle: 'italic' }}>
+                    "{pendingDirectInvite.message}"
+                  </Text>
+                )}
+                <TouchableOpacity
+                  style={[{
+                    backgroundColor: theme.colors.primary[500],
+                    marginTop: theme.spacing.sm,
+                    paddingVertical: theme.spacing.sm,
+                    paddingHorizontal: theme.spacing.md,
+                    borderRadius: theme.borderRadius.md,
+                    alignItems: 'center',
+                  }]}
+                  onPress={handleAcceptDirectInvite}
+                  disabled={directInviteLoading}
+                >
+                  {directInviteLoading ? (
+                    <ActivityIndicator size="small" color="#fff" />
+                  ) : (
+                    <Text variant="body2" style={{ color: '#fff', fontWeight: '600' }}>
+                      RSVP Going
+                    </Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            )}
+
             {/* Inviter info banner - show when visiting via invite link but not yet RSVPed (not for expired events) */}
             {!isExpired && invite && inviterInfo && !userRsvp && (
               <View style={[{
@@ -869,12 +997,13 @@ export default function EventPage() {
                     fontWeight: '600',
                   }}>
                     {formatMilitaryTime(event.start_time)}
+                    {event.end_time ? ` - ${formatMilitaryTime(event.end_time)}` : ''}
                   </Text>
                 </View>
               )}
 
               {venue?.address && (
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={[styles.metaRow, { marginBottom: theme.spacing.sm }]}
                   onPress={handleAddressPress}
                 >
@@ -896,8 +1025,45 @@ export default function EventPage() {
                 </TouchableOpacity>
               )}
 
+              {/* Custom location for user-created events without a venue */}
+              {!venue && event.custom_location && (
+                <View style={[styles.metaRow, { marginBottom: theme.spacing.sm }]}>
+                  <Text style={[styles.metaIcon, { color: theme.colors.text.secondary }]}>📍</Text>
+                  <Text variant="body1" style={{
+                    color: theme.colors.text.primary,
+                    fontWeight: '600',
+                  }}>
+                    {event.custom_location}
+                  </Text>
+                </View>
+              )}
+
               {/* Primary Action Button (hidden for expired events) */}
-              {!isExpired && (
+              {!isExpired && isCreatorView && (
+                <View style={{ marginTop: theme.spacing.sm, marginBottom: theme.spacing.md }}>
+                  <TouchableOpacity
+                    style={[styles.primaryActionButton, {
+                      backgroundColor: theme.colors.primary[500],
+                      paddingVertical: theme.spacing.md,
+                      paddingHorizontal: theme.spacing.lg,
+                      borderRadius: theme.borderRadius.lg,
+                      alignItems: 'center',
+                      ...theme.shadows.medium,
+                    }]}
+                    onPress={() => handleInvitePress()}
+                  >
+                    <Text variant="body1" style={{
+                      color: theme.colors.text.inverse,
+                      fontWeight: '700',
+                      textAlign: 'center',
+                      fontSize: 16,
+                    }}>
+                      Invite & Manage
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+              {!isExpired && !isCreatorView && hasExternalUrl && (
                 <TouchableOpacity
                   style={[styles.primaryActionButton, {
                     backgroundColor: theme.colors.secondary[500],
@@ -1243,8 +1409,44 @@ export default function EventPage() {
               </View>
             )}
 
+            {/* Delete Event (only for creator) */}
+            {!isExpired && hostData?.isCreator && event.creator_id === session?.user?.id && (
+              <TouchableOpacity
+                style={{
+                  alignItems: 'center',
+                  paddingVertical: theme.spacing.md,
+                  marginBottom: theme.spacing.lg,
+                }}
+                onPress={() => {
+                  Alert.alert(
+                    'Delete Event',
+                    'Are you sure you want to delete this event? This cannot be undone.',
+                    [
+                      { text: 'Cancel', style: 'cancel' },
+                      {
+                        text: 'Delete',
+                        style: 'destructive',
+                        onPress: async () => {
+                          const { success, error: delErr } = await deleteEvent(event.id);
+                          if (success) {
+                            router.replace('/');
+                          } else {
+                            Alert.alert('Error', delErr || 'Failed to delete event.');
+                          }
+                        },
+                      },
+                    ]
+                  );
+                }}
+              >
+                <Text variant="body1" style={{ color: theme.colors.error, fontWeight: '600' }}>
+                  Delete Event
+                </Text>
+              </TouchableOpacity>
+            )}
+
             {/* Related Events Section */}
-            {relatedEvents.length > 0 && (
+            {relatedEvents.length > 0 && !event.is_private && (
               <View style={[styles.relatedEventsSection, {
                 backgroundColor: theme.colors.background.secondary,
                 padding: theme.spacing.lg,
@@ -1362,17 +1564,6 @@ export default function EventPage() {
           eventTitle={event.title || 'Event'}
           onRsvpSuccess={handleRsvpSuccess}
           existingRsvp={userRsvp}
-        />
-      )}
-
-      {/* Host Management Modal (for managing invitations the user created) */}
-      {event && !isExpired && (
-        <HostRsvpModal
-          visible={showHostModal}
-          onClose={() => setShowHostModal(false)}
-          eventId={event.id}
-          eventTitle={event.title || 'Event'}
-          onCreateNewInvite={() => setShowInviteModal(true)}
         />
       )}
     </View>
