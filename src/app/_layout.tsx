@@ -68,25 +68,6 @@ export default function RootLayout() {
         };
     }, []);
 
-    // Inject Google Analytics (gtag.js) on web
-    useEffect(() => {
-        if (Platform.OS !== 'web') return;
-
-        const script = document.createElement('script');
-        script.src = 'https://www.googletagmanager.com/gtag/js?id=G-SK3E86M5F8';
-        script.async = true;
-        document.head.appendChild(script);
-
-        const inlineScript = document.createElement('script');
-        inlineScript.textContent = `
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', 'G-SK3E86M5F8');
-        `;
-        document.head.appendChild(inlineScript);
-    }, []);
-
     useEffect(() => {
         const timeout = setTimeout(() => {
             if (!fontsLoaded && !fontError) {

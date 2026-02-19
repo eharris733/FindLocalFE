@@ -43,6 +43,15 @@ export default function Root({ children }: { children: React.ReactNode }) {
         <meta name="twitter:image" content="https://findlocal.community/og-image.jpg" />
         <meta name="twitter:image:alt" content="Find Local - Event Discovery Platform" />
 
+        {/* Google Analytics (gtag.js) */}
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-SK3E86M5F8" />
+        <script dangerouslySetInnerHTML={{ __html: `
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', 'G-SK3E86M5F8');
+        `}} />
+
         {/* Affiliate verification */}
         <meta name="impact-site-verification" {...{ value: "69cc4690-1595-47a6-9724-1c86ad3258b6" } as any} />
 
