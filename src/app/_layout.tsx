@@ -91,7 +91,7 @@ export default function RootLayout() {
     return (
         <QueryClientProvider client={queryClient}>
             <Head>
-                <meta name="impact-site-verification" content="69cc4690-1595-47a6-9724-1c86ad3258b6" />
+                <meta name="impact-site-verification" {...{ value: "69cc4690-1595-47a6-9724-1c86ad3258b6" } as any} />
             </Head>
             <ThemeProvider>
                 <AuthProvider>
