@@ -14,7 +14,7 @@ interface EventPageSchemaProps {
 export function EventPageSchema({ event, venue }: EventPageSchemaProps) {
   // Build the event URL
   const isWeb = typeof globalThis.window !== 'undefined';
-  const baseUrl = isWeb ? globalThis.window.location.origin : 'https://findlocal.app';
+  const baseUrl = isWeb ? globalThis.window.location.origin : 'https://findlocal.community';
   const eventUrl = `${baseUrl}/event/${event.id}`;
 
   // Format the event date and time
