@@ -17,9 +17,6 @@ export default function Root({ children }: { children: React.ReactNode }) {
         <meta name="robots" content="index, follow" />
         <meta name="author" content="Find Local" />
 
-        {/* Canonical URL */}
-        <link rel="canonical" href="https://findlocal.community" />
-
         {/* Theme color for mobile browsers */}
         <meta name="theme-color" content="#006B5E" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -30,7 +27,7 @@ export default function Root({ children }: { children: React.ReactNode }) {
         <meta property="og:type" content="website" />
         <meta property="og:site_name" content="Find Local" />
         <meta property="og:locale" content="en_US" />
-        <meta property="og:url" content="https://findlocal.community" />
+        {/* og:url set dynamically per-page by schema components */}
         <meta property="og:title" content="Find Local - Discover Events in Boston & New York" />
         <meta property="og:description" content="Discover the best local events near you. Browse concerts, comedy shows, live music, theater, and cultural experiences updated daily." />
         <meta property="og:image" content="https://findlocal.community/og-image.jpg" />
