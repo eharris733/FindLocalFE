@@ -9,39 +9,76 @@ export default function Root({ children }: { children: React.ReactNode }) {
         <meta charSet="utf-8" />
         <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-        
+
         {/* Primary SEO */}
         <title>Find Local - Discover Events in Boston & New York | Concerts, Comedy & More</title>
-        <meta name="description" content="Discover local events in your city. Find concerts, comedy shows, theater, dance performances, and more. Browse thousands of events in Boston and New York, updated daily." />
-        <meta name="keywords" content="local events, concerts, comedy shows, theater, live music, Boston events, New York events" />
-        
+        <meta name="description" content="Discover the best local events near you. Browse concerts, comedy shows, live music, theater, dance performances, and cultural experiences in Boston and New York City. Free and paid events updated daily." />
+        <meta name="keywords" content="local events, events near me, concerts, comedy shows, theater, live music, Boston events, New York events, NYC events, things to do, nightlife, cultural events, event discovery" />
+        <meta name="robots" content="index, follow" />
+        <meta name="author" content="Find Local" />
+
         {/* Canonical URL */}
         <link rel="canonical" href="https://findlocal.community" />
-        
+
+        {/* Theme color for mobile browsers */}
+        <meta name="theme-color" content="#006B5E" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-title" content="Find Local" />
+
         {/* Open Graph / Facebook */}
         <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="Find Local" />
+        <meta property="og:locale" content="en_US" />
         <meta property="og:url" content="https://findlocal.community" />
         <meta property="og:title" content="Find Local - Discover Events in Boston & New York" />
-        <meta property="og:description" content="Discover local events in your city. Find concerts, comedy shows, theater, dance performances, and more." />
+        <meta property="og:description" content="Discover the best local events near you. Browse concerts, comedy shows, live music, theater, and cultural experiences updated daily." />
         <meta property="og:image" content="https://findlocal.community/og-image.jpg" />
-        
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta property="og:image:alt" content="Find Local - Event Discovery Platform" />
+
         {/* Twitter */}
-        <meta property="twitter:card" content="summary_large_image" />
-        <meta property="twitter:url" content="https://findlocal.community" />
-        <meta property="twitter:title" content="Find Local - Discover Events in Boston & New York" />
-        <meta property="twitter:description" content="Discover local events in your city. Find concerts, comedy shows, theater, dance performances, and more." />
-        <meta property="twitter:image" content="https://findlocal.community/og-image.jpg" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:url" content="https://findlocal.community" />
+        <meta name="twitter:title" content="Find Local - Discover Events in Boston & New York" />
+        <meta name="twitter:description" content="Discover the best local events near you. Browse concerts, comedy shows, live music, theater, and cultural experiences updated daily." />
+        <meta name="twitter:image" content="https://findlocal.community/og-image.jpg" />
+        <meta name="twitter:image:alt" content="Find Local - Event Discovery Platform" />
+
+        {/* Affiliate verification */}
+        <meta name="impact-site-verification" content="69cc4690-1595-47a6-9724-1c86ad3258b6" />
+
+        {/* Structured data */}
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "WebApplication",
+          "name": "Find Local",
+          "url": "https://findlocal.community",
+          "description": "Discover the best local events near you. Browse concerts, comedy shows, live music, theater, and cultural experiences in Boston and New York City.",
+          "applicationCategory": "EntertainmentApplication",
+          "operatingSystem": "Web, iOS, Android",
+          "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+          },
+          "areaServed": [
+            { "@type": "City", "name": "Boston", "addressRegion": "MA" },
+            { "@type": "City", "name": "New York", "addressRegion": "NY" }
+          ]
+        })}} />
 
         <ScrollViewStyleReset />
-        
+
         {/* Preload critical content for SEO */}
         <style dangerouslySetInnerHTML={{ __html: `
           .seo-content { position: absolute; left: -9999px; }
-          noscript .seo-fallback { 
-            display: block; 
-            max-width: 1200px; 
-            margin: 40px auto; 
-            padding: 20px; 
+          noscript .seo-fallback {
+            display: block;
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 20px;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
           }
         `}} />
@@ -53,7 +90,7 @@ export default function Root({ children }: { children: React.ReactNode }) {
           <p>Discover the best local events in your city. Browse thousands of concerts, comedy shows, theater performances, dance events, and cultural experiences in Boston and New York, updated daily.</p>
           <p>Filter by music, comedy, theater, culture, and more. Find events at jazz clubs, comedy venues, concert halls, and community spaces.</p>
         </div>
-        
+
         <noscript>
           <div className="seo-fallback">
             <h1>Find Local Events</h1>
@@ -61,7 +98,7 @@ export default function Root({ children }: { children: React.ReactNode }) {
             <p>Please enable JavaScript to use the full Find Local experience.</p>
           </div>
         </noscript>
-        
+
         {children}
       </body>
     </html>
