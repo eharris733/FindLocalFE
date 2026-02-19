@@ -59,13 +59,32 @@ export default function RootLayout() {
         analytics.initialize().catch(err => {
             logger.error('Failed to initialize analytics:', err);
         });
-        
+
         // Cleanup on unmount
         return () => {
             analytics.cleanup().catch(err => {
                 logger.error('Failed to cleanup analytics:', err);
             });
         };
+    }, []);
+
+    // Inject Google Analytics (gtag.js) on web
+    useEffect(() => {
+        if (Platform.OS !== 'web') return;
+
+        const script = document.createElement('script');
+        script.src = 'https://www.googletagmanager.com/gtag/js?id=G-SK3E86M5F8';
+        script.async = true;
+        document.head.appendChild(script);
+
+        const inlineScript = document.createElement('script');
+        inlineScript.textContent = `
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-SK3E86M5F8');
+        `;
+        document.head.appendChild(inlineScript);
     }, []);
 
     useEffect(() => {
@@ -121,6 +140,16 @@ function RootNavigator() {
     const pathname = usePathname();
     const segments = useSegments();
     const [showOnboarding, setShowOnboarding] = useState(false);
+
+    // Track client-side route changes in Google Analytics
+    useEffect(() => {
+        if (Platform.OS !== 'web') return;
+        if (typeof window.gtag !== 'function') return;
+
+        window.gtag('event', 'page_view', {
+            page_path: pathname,
+        });
+    }, [pathname]);
     const [onboardingCompleted, setOnboardingCompleted] = useState<boolean | null>(null);
 
     // Check if current route is a deep-link route that should SKIP onboarding
