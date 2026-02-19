@@ -88,7 +88,7 @@ const headSnippet = `
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
-  gtag('config', 'G-SK3E86M5F8');
+  gtag('config', 'G-SK3E86M5F8', { send_page_view: false });
 </script>
 `;
 
