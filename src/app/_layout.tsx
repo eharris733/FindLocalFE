@@ -1,5 +1,6 @@
 import { useFonts } from 'expo-font';
 import { Stack, usePathname, useSegments } from 'expo-router';
+import Head from 'expo-router/head';
 import * as SplashScreen from 'expo-splash-screen';
 import React, {useEffect, useState, useCallback} from 'react';
 import {
@@ -89,6 +90,9 @@ export default function RootLayout() {
 
     return (
         <QueryClientProvider client={queryClient}>
+            <Head>
+                <meta name="impact-site-verification" content="69cc4690-1595-47a6-9724-1c86ad3258b6" />
+            </Head>
             <ThemeProvider>
                 <AuthProvider>
                     <CityProvider>
