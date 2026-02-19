@@ -83,7 +83,7 @@ export default function RootLayout() {
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
             gtag('js', new Date());
-            gtag('config', 'G-SK3E86M5F8');
+            gtag('config', 'G-SK3E86M5F8', { send_page_view: false });
         `;
         document.head.appendChild(inlineScript);
     }, []);
@@ -149,6 +149,8 @@ function RootNavigator() {
 
         window.gtag('event', 'page_view', {
             page_path: pathname,
+            page_location: window.location.href,
+            page_title: document.title,
         });
     }, [pathname]);
     const [onboardingCompleted, setOnboardingCompleted] = useState<boolean | null>(null);
