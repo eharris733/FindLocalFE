@@ -18,7 +18,7 @@ export default function TermsRoute() {
       <Text variant="h2" style={{ marginBottom: theme.spacing.lg }}>Terms of Service</Text>
       
       <Text variant="body2" color="secondary" style={{ marginBottom: theme.spacing.xl, fontStyle: 'italic' }}>
-        Last Updated: November 18, 2025
+        Last Updated: February 21, 2026
       </Text>
 
       <Text variant="body1" style={{ marginBottom: theme.spacing.md, lineHeight: 22 }}>
@@ -108,28 +108,41 @@ export default function TermsRoute() {
       </Text>
 
       <Text variant="h3" style={{ marginTop: theme.spacing.xl, marginBottom: theme.spacing.md }}>
-        8. Disclaimer of Warranties and Limitation of Liability
+        8. Third-Party Analytics and Tracking
+      </Text>
+      <Text variant="body1" style={{ marginBottom: theme.spacing.sm, lineHeight: 22 }}>
+        The web version of the Service uses third-party analytics tools, including Google Analytics and Microsoft Clarity, to help us understand usage patterns and improve the Service. These tools may collect data about your interactions with the Service, including through the use of cookies.
+      </Text>
+      <Text variant="body1" style={{ marginBottom: theme.spacing.sm, lineHeight: 22 }}>
+        By using the web version of the Service, you acknowledge that these third-party tools operate under their own terms and privacy policies. FindLocal does not sell your personal data and uses these tools solely for internal analytics purposes. However, FindLocal does not control how Google or Microsoft process the data they collect through their respective services.
+      </Text>
+      <Text variant="body1" style={{ marginBottom: theme.spacing.md, lineHeight: 22 }}>
+        For more information, please refer to our Privacy Policy and the privacy policies of Google (privacy.google.com) and Microsoft (privacy.microsoft.com).
+      </Text>
+
+      <Text variant="h3" style={{ marginTop: theme.spacing.xl, marginBottom: theme.spacing.md }}>
+        9. Disclaimer of Warranties and Limitation of Liability
       </Text>
       <Text variant="body1" style={{ marginBottom: theme.spacing.md, lineHeight: 22 }}>
         The Service is provided on an "AS IS" and "AS AVAILABLE" basis. FindLocal LLC is not liable for any financial loss or other damages resulting from your use of this site or from inaccurate event information.
       </Text>
 
       <Text variant="h3" style={{ marginTop: theme.spacing.xl, marginBottom: theme.spacing.md }}>
-        9. Governing Law and Dispute Resolution
+        10. Governing Law and Dispute Resolution
       </Text>
       <Text variant="body1" style={{ marginBottom: theme.spacing.md, lineHeight: 22 }}>
         These Terms shall be governed by the laws of the Commonwealth of Massachusetts and the United States, without regard to its conflict of law provisions. You agree that different data protection laws may apply depending on your location.
       </Text>
 
       <Text variant="h3" style={{ marginTop: theme.spacing.xl, marginBottom: theme.spacing.md }}>
-        10. Changes to Terms
+        11. Changes to Terms
       </Text>
       <Text variant="body1" style={{ marginBottom: theme.spacing.md, lineHeight: 22 }}>
         We reserve the right to modify or replace these Terms at any time. We will provide notice of any changes by posting the new Terms on this page and updating the "Last Updated" date. For material changes, we will also provide notice to you via the email address associated with your account.
       </Text>
 
       <Text variant="h3" style={{ marginTop: theme.spacing.xl, marginBottom: theme.spacing.md }}>
-        11. Contact Us
+        12. Contact Us
       </Text>
       <Text variant="body1" style={{ marginBottom: theme.spacing.xl, lineHeight: 22 }}>
         If you have any questions about these Terms, please contact us at:{' '}

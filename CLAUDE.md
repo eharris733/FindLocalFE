@@ -1,6 +1,6 @@
 # FindLocal Frontend - Developer Documentation
 
-**Last Updated:** February 1, 2026
+**Last Updated:** February 21, 2026
 **React Native Version:** 0.81.5
 **Expo SDK:** 54.0.0
 **Target Platforms:** iOS, Android, Web
@@ -145,7 +145,6 @@ src/
 │
 ├── utils/                         # Utility functions
 │   ├── logger.ts                 # Dev-only logging
-│   ├── analytics.ts              # Event tracking
 │   ├── dateUtils.ts
 │   └── [other utils]
 │
@@ -437,6 +436,44 @@ const insets = useSafeAreaInsets();
 
 **Files changed:**
 - `src/components/EventMap.tsx` - Zoom limits, edge padding, safe area insets, auto-fit reset
+
+### Analytics Migration: GA4 + Microsoft Clarity (February 2026)
+
+**Change:** Replaced custom Supabase analytics service with GA4 + Microsoft Clarity
+
+**Before:** 745-line custom `AnalyticsService` class (`src/utils/analytics.ts`) tracking events, venues, social actions, filters, and sessions to 6 Supabase tables (session_metrics, user_analytics, event_metrics, venue_metrics, social_metrics, filter_usage).
+
+**After:** GA4 (already configured, measurement ID `G-SK3E86M5F8`) handles page-level analytics. Microsoft Clarity (project ID `vkzkf8j9n8`) provides session replays and heatmaps for UX insights. Both are web-only.
+
+**Implementation:**
+- **Production builds:** Both GA4 and Clarity scripts injected via `scripts/inject-head.js` post-build
+- **Dev server:** Both injected via `useEffect` in `src/app/_layout.tsx` (checks for existing scripts before injecting)
+- **Mobile:** No analytics SDK (GA4 and Clarity are web-only)
+
+**What was removed:**
+- `src/utils/analytics.ts` - Deleted (745-line custom analytics service)
+- All `analytics.*` calls from 12 consuming files (pages, components, API files)
+- 4 analytics documentation files from `docs/`
+- 7 analytics database migration/query files from `database/`
+
+**What was preserved:**
+- Supabase analytics tables (historical data intact, can be dropped later via migration)
+- GA4 page view tracking in `_layout.tsx`
+
+**Files changed:**
+- `scripts/inject-head.js` - Added Clarity snippet
+- `src/app/_layout.tsx` - Added Clarity dev injection, removed analytics init/cleanup
+- `src/app/index.tsx` - Removed analytics page view and city change tracking
+- `src/app/map.tsx` - Removed analytics page view tracking
+- `src/app/event/[id].tsx` - Removed 6 analytics calls
+- `src/app/venue/[id].tsx` - Removed 2 analytics calls
+- `src/components/EventCard.tsx` - Removed 2 analytics calls
+- `src/components/EventModal.tsx` - Removed 4 analytics calls
+- `src/components/VenueModal.tsx` - Removed 3 analytics calls, cleaned up unused imports
+- `src/components/FilterBar.tsx` - Removed 4 analytics calls, simplified callback deps
+- `src/api/friends.ts` - Removed 9 analytics calls
+- `src/api/invitations.ts` - Removed 6 analytics calls
+- `src/api/profiles.ts` - Removed 1 analytics call
 
 ---
 
@@ -829,4 +866,4 @@ This file should be updated whenever:
 - Critical bugs are fixed
 - New dependencies are added
 
-Last reviewed: February 1, 2026
+Last reviewed: February 21, 2026

@@ -21,7 +21,6 @@ import {SplashScreenController} from "../components/SplashScreenController";
 import { logger } from "../utils/logger";
 import BottomTabBar from "../components/BottomTabBar";
 import { View, Platform } from 'react-native';
-import { analytics } from '../utils/analytics';
 import { useDeviceInfo } from '../hooks/useDeviceInfo';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import OnboardingModal from '../components/OnboardingModal';
@@ -54,20 +53,6 @@ export default function RootLayout() {
         WorkSans_700Bold,
     });
 
-    useEffect(() => {
-        // Initialize analytics
-        analytics.initialize().catch(err => {
-            logger.error('Failed to initialize analytics:', err);
-        });
-
-        // Cleanup on unmount
-        return () => {
-            analytics.cleanup().catch(err => {
-                logger.error('Failed to cleanup analytics:', err);
-            });
-        };
-    }, []);
-
     // Inject Google Analytics on web (for dev server; production uses inject-head.js)
     useEffect(() => {
         if (Platform.OS !== 'web') return;
@@ -86,6 +71,22 @@ export default function RootLayout() {
             gtag('config', 'G-SK3E86M5F8', { send_page_view: false });
         `;
         document.head.appendChild(inlineScript);
+    }, []);
+
+    // Inject Microsoft Clarity on web (for dev server; production uses inject-head.js)
+    useEffect(() => {
+        if (Platform.OS !== 'web') return;
+        if (document.querySelector('script[src*="clarity.ms"]')) return;
+
+        const script = document.createElement('script');
+        script.textContent = `
+            (function(c,l,a,r,i,t,y){
+                c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+                t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+                y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+            })(window, document, "clarity", "script", "vkzkf8j9n8");
+        `;
+        document.head.appendChild(script);
     }, []);
 
     useEffect(() => {

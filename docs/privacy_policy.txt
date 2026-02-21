@@ -1,6 +1,6 @@
 Privacy Policy for findlocal.community
 
-Last Updated: November 18, 2025
+Last Updated: February 21, 2026
 
 Welcome to FindLocal ("FindLocal," "we," "us," or "our"). We are committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website findlocal.community and use our services (collectively, the "Service"). Please read this privacy policy carefully.
 
@@ -13,7 +13,7 @@ We may collect information about you in a variety of ways.
     - Communications: If you contact us directly, we may receive additional information about you.
 
 - Data Collected Automatically:
-    - Log and Usage Data: We automatically collect technical information for analytics and security purposes when you access the Service. This data may include your IP address, browser type, operating system, referral URLs, and pages visited. This information is anonymized and used in aggregate.
+    - Log and Usage Data: We automatically collect technical information for analytics and security purposes when you access the Service. This data may include your IP address, browser type, operating system, referral URLs, pages visited, and interactions with the Service. We use third-party analytics tools to collect and process this data, as described in "Analytics and Tracking Technologies" below.
 
 - Information from Third Parties:
     - We may receive information about you from third-party services, such as Google or Apple, if you use them to sign in to our Service (OAuth).
@@ -36,26 +36,38 @@ The Service may contain affiliate links to third-party websites, venues, or serv
 
 Scraping, crawling, or using automated means to collect data from the Service is strictly prohibited without our express written permission. This includes but is not limited to using bots, scrapers, or any automated tools to extract content, event information, or user data. Violations may result in account termination and legal action.
 
-5. How We Share Your Information
+5. Analytics and Tracking Technologies
+
+We use third-party analytics services on the web version of the Service to help us understand how users interact with our site. These tools may use cookies and similar technologies to collect information about your use of the Service. The analytics providers we use are:
+
+- Google Analytics (GA4): Provided by Google LLC. Collects data such as pages visited, session duration, device information, and general geographic location. Google may use this data in accordance with its own privacy policy. For more information, visit Google's privacy policy at privacy.google.com.
+
+- Microsoft Clarity: Provided by Microsoft Corporation. Collects data about how users interact with the Service through session recordings and heatmaps. This may include mouse movements, clicks, scrolls, and page navigation. Clarity does not collect passwords, payment details, or other sensitive input fields. Microsoft may use this data in accordance with its own privacy policy. For more information, visit Microsoft's privacy statement at privacy.microsoft.com.
+
+Important: FindLocal does not sell your personal data and does not use these tools for advertising or cross-site tracking purposes. However, these are third-party services operated by Google and Microsoft respectively, and FindLocal does not control how these companies process the data they collect. We encourage you to review their privacy policies directly.
+
+These analytics tools are used only on the web version of the Service. The mobile app (iOS and Android) does not include these tracking technologies.
+
+6. How We Share Your Information
 
 We do not sell your personal data. We may share information in the following situations:
 
-- With Service Providers: We share information with third-party vendors and service providers that perform services for us, such as database management (Supabase) and authentication (Google, Apple). These providers only have access to your information to perform these tasks on our behalf and are obligated not to disclose or use it for any other purpose.
+- With Service Providers: We share information with third-party vendors and service providers that perform services for us, such as database management (Supabase), authentication (Google, Apple), and analytics (Google Analytics, Microsoft Clarity). These providers only have access to your information to perform these tasks on our behalf and are obligated not to disclose or use it for any other purpose.
 - User-to-User Sharing: Your public profile, which may include your name and profile photo, is visible to other users. Sensitive information such as your password, email address, and phone number will never be shared with other users. If you are accepted as a friend by another user, they may see additional information, but not your sensitive contact or account details. Only friends who are invited to and attending the same event will be able to see user-specific details related to that event.
 - With Anonymized Data: We may use and share aggregated, anonymized data (e.g., "150 people are interested in this event") that does not identify you for analytical purposes.
 - For Legal Reasons: We may disclose your information if we are required to do so by law or in response to valid requests by public authorities (e.g., a court or a government agency).
 
-6. Your Rights and Data Control
+7. Your Rights and Data Control
 
 You have control over your personal information:
 - Access and Edit: You can view, edit, or delete your personal information at any time through your account settings on the website.
 - Account Deletion: You can delete your account at any time. Upon your request, we will take steps to delete all data directly associated with your account from our active databases as soon as possible. Please note that some information may be retained in our backups for a limited period or if it is linked to other users or data (e.g., an event you created may remain on the platform in an anonymized state). Your personal profile and connections to friends will be removed.
 
-7. Children's Privacy
+8. Children's Privacy
 
 Our Service is not intended for use by children under the age of 13. We do not knowingly collect personal information from children under 13. Furthermore, users must be of the legal age required by their jurisdiction (e.g., 21+ in the United States) to attend events involving alcohol or other age-restricted substances.
 
-8. Your Privacy Rights for California and European Users
+9. Your Privacy Rights for California and European Users
 
 If you are a resident of California or a data subject in the European Economic Area (EEA), you have additional rights regarding your personal data under the California Consumer Privacy Act (CCPA) and the General Data Protection Regulation (GDPR), respectively.
 
@@ -64,10 +76,10 @@ If you are a resident of California or a data subject in the European Economic A
 
 To exercise any of these rights, please contact us at the email address provided in the "Contact Us" section below. We will comply with all applicable laws and verifiable requests.
 
-9. Changes to This Privacy Policy
+10. Changes to This Privacy Policy
 
 We may update this Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page and updating the "Last Updated" date. For material changes, we will also provide notice to you via the email address associated with your account.
 
-10. Contact Us
+11. Contact Us
 
 If you have any questions about this Privacy Policy, please contact us at: findlocalinternal@gmail.com

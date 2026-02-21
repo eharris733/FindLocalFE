@@ -90,6 +90,15 @@ const headSnippet = `
   gtag('js', new Date());
   gtag('config', 'G-SK3E86M5F8', { send_page_view: false });
 </script>
+
+<!-- Microsoft Clarity -->
+<script type="text/javascript">
+  (function(c,l,a,r,i,t,y){
+    c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+    t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+    y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+  })(window, document, "clarity", "script", "vkzkf8j9n8");
+</script>
 `;
 
 // --- BODY injections (after <body>) ---
@@ -120,4 +129,4 @@ html = html.replace('</head>', headSnippet + '</head>');
 html = html.replace('<body>', '<body>' + bodySnippet);
 
 fs.writeFileSync(distHtml, html, 'utf8');
-console.log('Injected SEO meta tags, structured data, and Google Analytics into dist/index.html');
+console.log('Injected SEO meta tags, structured data, Google Analytics, and Microsoft Clarity into dist/index.html');

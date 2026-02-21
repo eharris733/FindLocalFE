@@ -18,7 +18,7 @@ export default function PrivacyRoute() {
       <Text variant="h2" style={{ marginBottom: theme.spacing.lg }}>Privacy Policy</Text>
       
       <Text variant="body2" color="secondary" style={{ marginBottom: theme.spacing.xl, fontStyle: 'italic' }}>
-        Last Updated: November 18, 2025
+        Last Updated: February 21, 2026
       </Text>
 
       <Text variant="body1" style={{ marginBottom: theme.spacing.md, lineHeight: 22 }}>
@@ -44,7 +44,7 @@ export default function PrivacyRoute() {
         <Text variant="body1" style={{ fontWeight: '600' }}>Data Collected Automatically:</Text>
       </Text>
       <Text variant="body1" style={{ marginBottom: theme.spacing.md, marginLeft: theme.spacing.md, lineHeight: 22 }}>
-        • <Text variant="body1" style={{ fontWeight: '600' }}>Log and Usage Data:</Text> We automatically collect technical information for analytics and security purposes when you access the Service. This data may include your IP address, browser type, operating system, referral URLs, and pages visited. This information is anonymized and used in aggregate.
+        • <Text variant="body1" style={{ fontWeight: '600' }}>Log and Usage Data:</Text> We automatically collect technical information for analytics and security purposes when you access the Service. This data may include your IP address, browser type, operating system, referral URLs, pages visited, and interactions with the Service. We use third-party analytics tools to collect and process this data, as described in "Analytics and Tracking Technologies" below.
       </Text>
       <Text variant="body1" style={{ marginBottom: theme.spacing.md, lineHeight: 22 }}>
         <Text variant="body1" style={{ fontWeight: '600' }}>Information from Third Parties:</Text> We may receive information about you from third-party services, such as Google or Apple, if you use them to sign in to our Service (OAuth).
@@ -90,13 +90,32 @@ export default function PrivacyRoute() {
       </Text>
 
       <Text variant="h3" style={{ marginTop: theme.spacing.xl, marginBottom: theme.spacing.md }}>
-        5. How We Share Your Information
+        5. Analytics and Tracking Technologies
+      </Text>
+      <Text variant="body1" style={{ marginBottom: theme.spacing.sm, lineHeight: 22 }}>
+        We use third-party analytics services on the web version of the Service to help us understand how users interact with our site. These tools may use cookies and similar technologies to collect information about your use of the Service. The analytics providers we use are:
+      </Text>
+      <Text variant="body1" style={{ marginBottom: theme.spacing.sm, marginLeft: theme.spacing.md, lineHeight: 22 }}>
+        • <Text variant="body1" style={{ fontWeight: '600' }}>Google Analytics (GA4):</Text> Provided by Google LLC. Collects data such as pages visited, session duration, device information, and general geographic location. Google may use this data in accordance with its own privacy policy. For more information, visit Google's privacy policy at privacy.google.com.
+      </Text>
+      <Text variant="body1" style={{ marginBottom: theme.spacing.sm, marginLeft: theme.spacing.md, lineHeight: 22 }}>
+        • <Text variant="body1" style={{ fontWeight: '600' }}>Microsoft Clarity:</Text> Provided by Microsoft Corporation. Collects data about how users interact with the Service through session recordings and heatmaps. This may include mouse movements, clicks, scrolls, and page navigation. Clarity does not collect passwords, payment details, or other sensitive input fields. Microsoft may use this data in accordance with its own privacy policy. For more information, visit Microsoft's privacy statement at privacy.microsoft.com.
+      </Text>
+      <Text variant="body1" style={{ marginBottom: theme.spacing.sm, lineHeight: 22 }}>
+        <Text variant="body1" style={{ fontWeight: '600' }}>Important:</Text> FindLocal does not sell your personal data and does not use these tools for advertising or cross-site tracking purposes. However, these are third-party services operated by Google and Microsoft respectively, and FindLocal does not control how these companies process the data they collect. We encourage you to review their privacy policies directly.
+      </Text>
+      <Text variant="body1" style={{ marginBottom: theme.spacing.md, lineHeight: 22 }}>
+        These analytics tools are used only on the web version of the Service. The mobile app (iOS and Android) does not include these tracking technologies.
+      </Text>
+
+      <Text variant="h3" style={{ marginTop: theme.spacing.xl, marginBottom: theme.spacing.md }}>
+        6. How We Share Your Information
       </Text>
       <Text variant="body1" style={{ marginBottom: theme.spacing.sm, lineHeight: 22 }}>
         We do not sell your personal data. We may share information in the following situations:
       </Text>
       <Text variant="body1" style={{ marginBottom: theme.spacing.sm, marginLeft: theme.spacing.md, lineHeight: 22 }}>
-        • <Text variant="body1" style={{ fontWeight: '600' }}>With Service Providers:</Text> We share information with third-party vendors and service providers that perform services for us, such as database management (Supabase) and authentication (Google, Apple). These providers only have access to your information to perform these tasks on our behalf and are obligated not to disclose or use it for any other purpose.
+        • <Text variant="body1" style={{ fontWeight: '600' }}>With Service Providers:</Text> We share information with third-party vendors and service providers that perform services for us, such as database management (Supabase), authentication (Google, Apple), and analytics (Google Analytics, Microsoft Clarity). These providers only have access to your information to perform these tasks on our behalf and are obligated not to disclose or use it for any other purpose.
       </Text>
       <Text variant="body1" style={{ marginBottom: theme.spacing.sm, marginLeft: theme.spacing.md, lineHeight: 22 }}>
         • <Text variant="body1" style={{ fontWeight: '600' }}>User-to-User Sharing:</Text> Your public profile, which may include your name and profile photo, is visible to other users. Sensitive information such as your password, email address, and phone number will never be shared with other users. If you are accepted as a friend by another user, they may see additional information, but not your sensitive contact or account details.
@@ -109,7 +128,7 @@ export default function PrivacyRoute() {
       </Text>
 
       <Text variant="h3" style={{ marginTop: theme.spacing.xl, marginBottom: theme.spacing.md }}>
-        6. Your Rights and Data Control
+        7. Your Rights and Data Control
       </Text>
       <Text variant="body1" style={{ marginBottom: theme.spacing.sm, lineHeight: 22 }}>
         You have control over your personal information:
@@ -122,14 +141,14 @@ export default function PrivacyRoute() {
       </Text>
 
       <Text variant="h3" style={{ marginTop: theme.spacing.xl, marginBottom: theme.spacing.md }}>
-        7. Children's Privacy
+        8. Children's Privacy
       </Text>
       <Text variant="body1" style={{ marginBottom: theme.spacing.md, lineHeight: 22 }}>
         Our Service is not intended for use by children under the age of 13. We do not knowingly collect personal information from children under 13. Furthermore, users must be of the legal age required by their jurisdiction (e.g., 21+ in the United States) to attend events involving alcohol or other age-restricted substances.
       </Text>
 
       <Text variant="h3" style={{ marginTop: theme.spacing.xl, marginBottom: theme.spacing.md }}>
-        8. Your Privacy Rights for California and European Users
+        9. Your Privacy Rights for California and European Users
       </Text>
       <Text variant="body1" style={{ marginBottom: theme.spacing.sm, lineHeight: 22 }}>
         If you are a resident of California or a data subject in the European Economic Area (EEA), you have additional rights regarding your personal data under the California Consumer Privacy Act (CCPA) and the General Data Protection Regulation (GDPR), respectively.
@@ -145,14 +164,14 @@ export default function PrivacyRoute() {
       </Text>
 
       <Text variant="h3" style={{ marginTop: theme.spacing.xl, marginBottom: theme.spacing.md }}>
-        9. Changes to This Privacy Policy
+        10. Changes to This Privacy Policy
       </Text>
       <Text variant="body1" style={{ marginBottom: theme.spacing.md, lineHeight: 22 }}>
         We may update this Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page and updating the "Last Updated" date. For material changes, we will also provide notice to you via the email address associated with your account.
       </Text>
 
       <Text variant="h3" style={{ marginTop: theme.spacing.xl, marginBottom: theme.spacing.md }}>
-        10. Contact Us
+        11. Contact Us
       </Text>
       <Text variant="body1" style={{ marginBottom: theme.spacing.xl, lineHeight: 22 }}>
         If you have any questions about this Privacy Policy, please contact us at:{' '}

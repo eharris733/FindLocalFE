@@ -3,8 +3,6 @@ import React from "react";
 import { useTheme } from "../context/ThemeContext";
 import { useCityLocation } from "../context/CityContext";
 import type { Event } from "../types/events";
-import { analytics } from '../utils/analytics';
-import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
 import MapViewComponent from "../components/MapViewComponent";
 import { useEventsQuery } from "../hooks/queries/useEventsQuery";
@@ -16,15 +14,6 @@ export default function MapRoute() {
 
     // Fetch events for the map
     const { data: events = [], isLoading } = useEventsQuery(selectedCity);
-
-    // Track page views when screen comes into focus
-    useFocusEffect(
-        React.useCallback(() => {
-            analytics.trackPageView('/map', {
-                city: selectedCity,
-            });
-        }, [selectedCity])
-    );
 
     const handleEventPress = (event: Event) => {
         router.push(`/event/${event.id}`);

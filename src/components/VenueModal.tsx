@@ -14,9 +14,7 @@ import { Text } from './ui';
 import type { Venue } from '../types/venues';
 import type { Community } from '../api/communities';
 import { getCompactVenueSizeLabel } from '../utils/venueUtils';
-import { analytics } from '../utils/analytics';
 import { openLink } from '../utils/linkUtils';
-import { useModalTimeTracking } from '../hooks/useTimeTracking';
 
 interface VenueModalProps {
   visible: boolean;
@@ -31,8 +29,7 @@ interface VenueModalProps {
 
 export default function VenueModal({ visible, venue, onClose, communities = [], venueCommunities = [] }: VenueModalProps) {
   const { theme } = useTheme();
-  const { getDuration } = useModalTimeTracking();
-  
+
   // Enrich venue communities with full community data
   const enrichedCommunities = React.useMemo(() => {
     if (!venueCommunities.length || !communities.length) return [];
@@ -53,44 +50,10 @@ export default function VenueModal({ visible, venue, onClose, communities = [], 
       .filter(Boolean);
   }, [venueCommunities, communities]);
 
-  React.useEffect(() => {
-    if (visible && venue) {
-      // Track venue modal open
-      analytics.trackVenueMetric({
-        venueId: venue.id,
-        metricType: 'modal_open',
-        city: venue.city,
-        source: 'event_modal',
-        metadata: {
-          venueType: venue.type,
-          hasImage: !!venue.image,
-        },
-      });
-    } else if (!visible && venue) {
-      // Track modal close with duration
-      const duration = getDuration();
-      analytics.trackVenueMetric({
-        venueId: venue.id,
-        metricType: 'modal_close',
-        city: venue.city,
-        durationMs: duration,
-        source: 'event_modal',
-      });
-    }
-  }, [visible, venue]);
-
   if (!venue) return null;
 
   const handleVisitWebsite = () => {
     if (venue.url) {
-      // Track website click
-      analytics.trackVenueMetric({
-        venueId: venue.id,
-        metricType: 'website_click',
-        city: venue.city,
-        source: 'event_modal',
-      });
-      
       openLink(venue.url);
     }
   };

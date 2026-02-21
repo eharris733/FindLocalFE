@@ -26,8 +26,6 @@ import { getVenueSizeLabel } from '../../utils/venueUtils';
 import { EVENT_NO_DESCRIPTION_FALLBACK } from '../../utils/eventUtils';
 import { logger } from '../../utils/logger';
 import { getGenresFromEventTypes, getGenreDisplayLabel } from '../../constants/eventCategories';
-import { analytics } from '../../utils/analytics';
-import { useModalTimeTracking } from '../../hooks/useTimeTracking';
 import { addToGoogleCalendar, addToAppleCalendar } from '../../utils/calendarUtils';
 import { useAuth } from '../../hooks/useAuth';
 import { EventPageSchema } from '../../components/EventPageSchema';
@@ -89,8 +87,6 @@ export default function EventPage() {
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [showFullVenueDescription, setShowFullVenueDescription] = useState(false);
   const [relatedEvents, setRelatedEvents] = useState<Event[]>([]);
-  const { getDuration } = useModalTimeTracking();
-  
   // Social/Invitation state
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [showRsvpModal, setShowRsvpModal] = useState(false);
@@ -167,35 +163,6 @@ export default function EventPage() {
     checkVenueFollowStatus();
   }, [venue?.id, isLoggedIn]);
 
-  useEffect(() => {
-    if (event) {
-      // Track page view
-      analytics.trackEventMetric({
-        eventId: event.id,
-        metricType: 'modal_open',
-        city: event.city,
-        metadata: {
-          hasVenue: !!event.venue_id,
-        },
-      });
-    }
-
-    return () => {
-      if (event) {
-        // Track duration on unmount
-        const duration = getDuration();
-        analytics.trackEventMetric({
-          eventId: event.id,
-          metricType: 'modal_close',
-          city: event.city,
-          durationMs: duration,
-          metadata: {
-            viewedVenue: !!venue,
-          },
-        });
-      }
-    };
-  }, [event]);
 
   const fetchSocialStats = async () => {
     if (!id) return;
@@ -447,16 +414,6 @@ export default function EventPage() {
     const message = `Check out ${event.title}${eventDateStr}`;
     
     try {
-      // Track share attempt
-      analytics.trackEventMetric({
-        eventId: event.id,
-        metricType: 'share',
-        city: event.city,
-        metadata: {
-          platform: Platform.OS,
-        },
-      });
-
       if (Platform.OS === 'web') {
         // For web, try to use the Web Share API if available
         if (navigator.share) {
@@ -543,33 +500,11 @@ export default function EventPage() {
 
   const handleAddToGoogleCalendar = () => {
     if (!event) return;
-    
-    analytics.trackEventMetric({
-      eventId: event.id,
-      metricType: 'calendar_export',
-      city: event.city,
-      metadata: {
-        calendarType: 'google',
-        hasVenue: !!venue,
-      },
-    });
-    
     addToGoogleCalendar(event, venue);
   };
 
   const handleAddToAppleCalendar = () => {
     if (!event) return;
-    
-    analytics.trackEventMetric({
-      eventId: event.id,
-      metricType: 'calendar_export',
-      city: event.city,
-      metadata: {
-        calendarType: 'apple',
-        hasVenue: !!venue,
-      },
-    });
-    
     addToAppleCalendar(event, venue);
   };
 
@@ -1475,18 +1410,6 @@ export default function EventPage() {
                       borderColor: theme.colors.border.light,
                     }]}
                     onPress={() => {
-                      // Track related event click
-                      analytics.trackEventMetric({
-                        eventId: relatedEvent.id,
-                        metricType: 'click',
-                        city: relatedEvent.city,
-                        metadata: {
-                          source: 'related_events',
-                          sourceEventId: event?.id,
-                        },
-                      });
-                      
-                      // Navigate to related event
                       router.push(`/event/${relatedEvent.id}`);
                     }}
                   >
