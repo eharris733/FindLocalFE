@@ -20,6 +20,9 @@ dist-ssr/
 *.swp
 *.swo
 
+# MCP config
+.mcp.json
+
 # Environment variables
 .env
 .env.local
