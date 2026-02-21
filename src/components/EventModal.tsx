@@ -21,8 +21,6 @@ import { EVENT_NO_DESCRIPTION_FALLBACK } from '../utils/eventUtils';
 import { logger } from '../utils/logger';
 import { openLink, openMaps } from '../utils/linkUtils';
 import { getGenresFromEventTypes, getGenreDisplayLabel } from '../constants/eventCategories';
-import { analytics } from '../utils/analytics';
-import { useModalTimeTracking } from '../hooks/useTimeTracking';
 import { addToGoogleCalendar, addToAppleCalendar } from '../utils/calendarUtils';
 import { useAuth } from '../hooks/useAuth';
 import type { Community } from '../api/communities';
@@ -87,33 +85,9 @@ const EventModal: React.FC<EventModalProps> = ({ visible, event, onClose, commun
   const [error, setError] = useState<string | null>(null);
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [showFullVenueDescription, setShowFullVenueDescription] = useState(false);
-  const { getDuration } = useModalTimeTracking();
-
   useEffect(() => {
     if (visible && event) {
-      // Track modal open
-      analytics.trackEventMetric({
-        eventId: event.id,
-        metricType: 'modal_open',
-        city: event.city,
-        metadata: {
-          hasVenue: !!event.venue_id,
-        },
-      });
-      
       fetchVenueData();
-    } else if (!visible && event) {
-      // Track modal close with duration
-      const duration = getDuration();
-      analytics.trackEventMetric({
-        eventId: event.id,
-        metricType: 'modal_close',
-        city: event.city,
-        durationMs: duration,
-        metadata: {
-          viewedVenue: !!venue,
-        },
-      });
     }
   }, [visible, event]);
 
@@ -168,35 +142,11 @@ const EventModal: React.FC<EventModalProps> = ({ visible, event, onClose, commun
 
   const handleAddToGoogleCalendar = () => {
     if (!event) return;
-    
-    // Track calendar export
-    analytics.trackEventMetric({
-      eventId: event.id,
-      metricType: 'calendar_export',
-      city: event.city,
-      metadata: {
-        calendarType: 'google',
-        hasVenue: !!venue,
-      },
-    });
-    
     addToGoogleCalendar(event, venue);
   };
 
   const handleAddToAppleCalendar = () => {
     if (!event) return;
-    
-    // Track calendar export
-    analytics.trackEventMetric({
-      eventId: event.id,
-      metricType: 'calendar_export',
-      city: event.city,
-      metadata: {
-        calendarType: 'apple',
-        hasVenue: !!venue,
-      },
-    });
-    
     addToAppleCalendar(event, venue);
   };
 

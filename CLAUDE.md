@@ -1,6 +1,6 @@
 # FindLocal Frontend - Developer Documentation
 
-**Last Updated:** February 1, 2026
+**Last Updated:** February 21, 2026
 **React Native Version:** 0.81.5
 **Expo SDK:** 54.0.0
 **Target Platforms:** iOS, Android, Web
@@ -145,7 +145,6 @@ src/
 │
 ├── utils/                         # Utility functions
 │   ├── logger.ts                 # Dev-only logging
-│   ├── analytics.ts              # Event tracking
 │   ├── dateUtils.ts
 │   └── [other utils]
 │

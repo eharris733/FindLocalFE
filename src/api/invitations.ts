@@ -1,7 +1,6 @@
 // src/api/invitations.ts
 import { supabase } from '../supabase';
 import { logger } from '../utils/logger';
-import { analytics } from '../utils/analytics';
 import { Profile } from './profiles';
 
 // ============================================
@@ -170,19 +169,6 @@ export async function createEventInvitation(
       return { data: null, error: fetchError };
     }
 
-    // Track analytics
-    analytics.trackSocialMetric({
-      actionType: 'invitation_created',
-      targetId: params.eventId,
-      targetType: 'event',
-      source: 'event_page',
-      metadata: {
-        allowPlusOne: params.allowPlusOne,
-        hasMaxUses: !!params.maxUses,
-        hasExpiry: !!params.expiresAt,
-      },
-    });
-
     return {
       data: { id: invitation.id, token: invitation.invite_token },
       error: null,
@@ -212,14 +198,6 @@ export async function getInvitationByToken(
     if (!data || data.length === 0) {
       return { data: null, error: { message: 'Invitation not found' } };
     }
-
-    // Track analytics - invitation viewed
-    analytics.trackSocialMetric({
-      actionType: 'invitation_viewed',
-      targetId: token,
-      targetType: 'invitation',
-      source: 'invite_page',
-    });
 
     return { data: data[0] as InvitationDetails, error: null };
   } catch (err) {
@@ -260,18 +238,6 @@ export async function submitRsvp(
     if (!result.success) {
       return { success: false, error: result.error_message };
     }
-
-    // Track analytics
-    analytics.trackSocialMetric({
-      actionType: 'rsvp_submitted',
-      targetId: params.token,
-      targetType: 'invitation',
-      source: 'invite_page',
-      metadata: {
-        response: params.response,
-        hasPlusOne: (params.plusOneCount || 0) > 0,
-      },
-    });
 
     return { success: true, rsvpId: result.rsvp_id };
   } catch (err: any) {
@@ -443,14 +409,6 @@ export async function updateRsvp(
       logger.error('Error updating RSVP:', error);
       return { success: false, error: error.message };
     }
-
-    analytics.trackSocialMetric({
-      actionType: 'rsvp_updated',
-      targetId: rsvpId,
-      targetType: 'rsvp',
-      source: 'event_page',
-      metadata: { response },
-    });
 
     return { success: true };
   } catch (err: any) {
@@ -1624,18 +1582,6 @@ export async function sendDirectEventInvites(
       return { data: [], error };
     }
 
-    analytics.trackSocialMetric({
-      actionType: 'direct_invite_sent',
-      targetId: params.eventId,
-      targetType: 'event',
-      source: 'invite_modal',
-      metadata: {
-        recipientCount: params.recipientIds.length,
-        hasMessage: !!params.message,
-        allowPlusOne: params.allowPlusOne,
-      },
-    });
-
     return { data: (data || []) as DirectEventInvite[], error: null };
   } catch (err) {
     logger.error('Error in sendDirectEventInvites:', err);
@@ -1688,13 +1634,6 @@ export async function respondToDirectInvite(
     if (!result.success) {
       return { success: false, error: result.error };
     }
-
-    analytics.trackSocialMetric({
-      actionType: response === 'accepted' ? 'direct_invite_accepted' : 'direct_invite_declined',
-      targetId: inviteId,
-      targetType: 'direct_invite',
-      source: 'my_invites',
-    });
 
     return { success: true, rsvpId: result.rsvp_id };
   } catch (err: any) {

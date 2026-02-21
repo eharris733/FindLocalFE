@@ -4,8 +4,6 @@ import React from "react";
 import { useTheme } from "../context/ThemeContext";
 import { useCityLocation } from "../context/CityContext";
 import type { Event } from "../types/events";
-import { analytics } from '../utils/analytics';
-import { useFocusEffect } from '@react-navigation/native';
 import { StructuredData } from '../components/StructuredData';
 import { useRouter } from 'expo-router';
 
@@ -23,20 +21,6 @@ export default function IndexRoute() {
         });
         return () => cancelAnimationFrame(frame);
     }, []);
-
-    // Track page views when screen comes into focus
-    useFocusEffect(
-        React.useCallback(() => {
-            analytics.trackPageView('/', {
-                city: selectedCity,
-            });
-        }, [selectedCity])
-    );
-
-    // Track city changes
-    React.useEffect(() => {
-        analytics.trackCityChange(selectedCity);
-    }, [selectedCity]);
 
     const handleEventPress = (event: Event) => {
         router.push(`/event/${event.id}`);

@@ -9,5 +9,9 @@
       "Bash(git -C /Users/elliotharris/FindLocal/FindLocalFE show *)",
       "WebFetch(domain:support.google.com)"
     ]
-  }
+  },
+  "enabledMcpjsonServers": [
+    "playwright",
+    "supabase"
+  ]
 }
