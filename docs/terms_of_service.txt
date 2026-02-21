@@ -1,6 +1,6 @@
 Terms of Service for findlocal.community
 
-Last Updated: November 18, 2025
+Last Updated: February 21, 2026
 
 Welcome to FindLocal. These Terms of Service ("Terms") govern your access to and use of the findlocal.community website and services (the "Service"), operated by FindLocal LLC (pending registration).
 
@@ -44,7 +44,15 @@ If paid accounts or features are offered, we will refund payment up to the last 
 
 Some links on the Service may be affiliate links, and FindLocal may receive a commission if you make a purchase through these links. This applies regardless of whether the purchase is made immediately after clicking the link or at a later time, and regardless of whether the linked site is directly affiliated with FindLocal. The use of affiliate links does not affect the price you pay, and we only recommend products, services, or venues that we believe may be of interest to our users.
 
-8. Disclaimer of Warranties and Limitation of Liability
+8. Third-Party Analytics and Tracking
+
+The web version of the Service uses third-party analytics tools, including Google Analytics and Microsoft Clarity, to help us understand usage patterns and improve the Service. These tools may collect data about your interactions with the Service, including through the use of cookies.
+
+By using the web version of the Service, you acknowledge that these third-party tools operate under their own terms and privacy policies. FindLocal does not sell your personal data and uses these tools solely for internal analytics purposes. However, FindLocal does not control how Google or Microsoft process the data they collect through their respective services.
+
+For more information, please refer to our Privacy Policy and the privacy policies of Google (privacy.google.com) and Microsoft (privacy.microsoft.com).
+
+9. Disclaimer of Warranties and Limitation of Liability
 
 The Service is provided on an "AS IS" and "AS AVAILABLE" basis. FindLocal LLC is not liable for any financial loss or other damages resulting from your use of this site or from inaccurate event information.
 
