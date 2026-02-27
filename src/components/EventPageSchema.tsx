@@ -8,6 +8,24 @@ interface EventPageSchemaProps {
 }
 
 /**
+ * Parse a numeric price from event data.
+ * Uses price_amount as primary source, falls back to extracting from price string.
+ * For ranges like "$20-$30", returns the minimum value.
+ */
+function parsePriceValue(event: Event): number | undefined {
+  if (event.price_amount != null) {
+    return event.price_amount;
+  }
+  if (event.price) {
+    const match = event.price.match(/[\d]+(?:\.[\d]+)?/);
+    if (match) {
+      return parseFloat(match[0]);
+    }
+  }
+  return undefined;
+}
+
+/**
  * EventPageSchema component for individual event pages
  * Adds Event structured data (schema.org) for better SEO and rich search results
  */
@@ -20,7 +38,7 @@ export function EventPageSchema({ event, venue }: EventPageSchemaProps) {
   // Format the event date and time
   const hasDate = Boolean(event.event_date);
   const hasTime = Boolean(event.start_time);
-  
+
   let startDateTime: string | undefined;
   if (hasDate && hasTime) {
     startDateTime = `${event.event_date}T${event.start_time}`;
@@ -28,30 +46,103 @@ export function EventPageSchema({ event, venue }: EventPageSchemaProps) {
     startDateTime = `${event.event_date}T00:00:00`;
   }
 
-  // Build offers object if ticket URL exists
-  const offers = event.ticket_page_url ? {
-    '@type': 'Offer',
-    url: event.ticket_page_url,
-    ...(event.price && { 
-      price: event.price.replaceAll(/[^0-9.]/g, ''),
-      priceCurrency: 'USD',
-    }),
-    availability: event.status?.toLowerCase().includes('sold') 
-      ? 'https://schema.org/SoldOut'
-      : 'https://schema.org/InStock',
-  } : undefined;
+  // Build endDate
+  let endDate: string | undefined;
+  if (hasDate && event.end_time) {
+    endDate = `${event.event_date}T${event.end_time}`;
+  } else if (hasDate) {
+    endDate = event.event_date!;
+  }
 
-  // Build location object if venue exists
-  const location = venue ? {
-    '@type': 'Place',
-    name: venue.name,
-    ...(venue.address && {
+  // Image fallback chain: image_url → cover_image_url → venue.image
+  const imageUrl = event.image_url || event.cover_image_url || venue?.image || undefined;
+
+  // Determine if event is free
+  const isFree = event.price?.toLowerCase().includes('free') || event.price_amount === 0;
+
+  // Parse price value
+  const priceValue = parsePriceValue(event);
+
+  // Build offers - emit whenever we have price info or a URL
+  const offerUrl = event.ticket_page_url || event.detail_page_url || eventUrl;
+  const availability = event.status?.toLowerCase().includes('sold')
+    ? 'https://schema.org/SoldOut'
+    : 'https://schema.org/InStock';
+
+  let offers: Record<string, unknown> | undefined;
+  if (isFree) {
+    offers = {
+      '@type': 'Offer',
+      url: offerUrl,
+      price: 0,
+      priceCurrency: 'USD',
+      availability,
+      ...(event.created_at && { validFrom: event.created_at }),
+    };
+  } else if (priceValue !== undefined) {
+    offers = {
+      '@type': 'Offer',
+      url: offerUrl,
+      price: priceValue,
+      priceCurrency: 'USD',
+      availability,
+      ...(event.created_at && { validFrom: event.created_at }),
+    };
+  } else if (event.ticket_page_url || event.detail_page_url) {
+    offers = {
+      '@type': 'Offer',
+      url: offerUrl,
+      availability,
+      ...(event.created_at && { validFrom: event.created_at }),
+    };
+  }
+
+  // Derive address region from city
+  const addressRegion = event.city === 'Boston' ? 'MA' : 'NY';
+
+  // Build location object
+  let location: Record<string, unknown> | undefined;
+  if (venue) {
+    const address: Record<string, string> = {
+      '@type': 'PostalAddress',
+      addressLocality: event.city,
+      addressRegion,
+      addressCountry: 'US',
+    };
+    if (venue.address) {
+      address.streetAddress = venue.address;
+    }
+
+    location = {
+      '@type': 'Place',
+      name: venue.name,
+      address,
+      ...(venue.latitude != null && venue.longitude != null && {
+        geo: {
+          '@type': 'GeoCoordinates',
+          latitude: venue.latitude,
+          longitude: venue.longitude,
+        },
+      }),
+    };
+  } else if (event.custom_location) {
+    location = {
+      '@type': 'Place',
+      name: event.custom_location,
       address: {
         '@type': 'PostalAddress',
-        streetAddress: venue.address,
         addressLocality: event.city,
-      }
-    }),
+        addressRegion,
+        addressCountry: 'US',
+      },
+    };
+  }
+
+  // Build organizer from venue
+  const organizer = venue ? {
+    '@type': 'Organization',
+    name: venue.name,
+    ...(venue.url && { url: venue.url }),
   } : undefined;
 
   // Determine event status
@@ -68,10 +159,14 @@ export function EventPageSchema({ event, venue }: EventPageSchemaProps) {
     name: event.title,
     ...(event.description && { description: event.description }),
     ...(startDateTime && { startDate: startDateTime }),
-    ...(event.image_url && { image: event.image_url }),
+    ...(endDate && { endDate }),
+    ...(imageUrl && { image: imageUrl }),
     url: eventUrl,
     ...(offers && { offers }),
     ...(location && { location }),
+    ...(organizer && { organizer }),
+    ...(isFree && { isAccessibleForFree: true }),
+    eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
     ...(event.event_type && event.event_type.length > 0 && {
       genre: event.event_type,
     }),
@@ -126,22 +221,22 @@ export function EventPageSchema({ event, venue }: EventPageSchemaProps) {
 
     // Basic meta tags
     updateMetaTag('description', pageDescription);
-    
+
     // Open Graph
-    updateMetaTag('og:title', event.title, true);
+    updateMetaTag('og:title', event.title ?? '', true);
     updateMetaTag('og:description', pageDescription, true);
     updateMetaTag('og:type', 'website', true);
     updateMetaTag('og:url', eventUrl, true);
-    if (event.image_url) {
-      updateMetaTag('og:image', event.image_url, true);
+    if (imageUrl) {
+      updateMetaTag('og:image', imageUrl, true);
     }
-    
+
     // Twitter Card
     updateMetaTag('twitter:card', 'summary_large_image', true);
-    updateMetaTag('twitter:title', event.title, true);
+    updateMetaTag('twitter:title', event.title ?? '', true);
     updateMetaTag('twitter:description', pageDescription, true);
-    if (event.image_url) {
-      updateMetaTag('twitter:image', event.image_url, true);
+    if (imageUrl) {
+      updateMetaTag('twitter:image', imageUrl, true);
     }
 
     // Update canonical URL
