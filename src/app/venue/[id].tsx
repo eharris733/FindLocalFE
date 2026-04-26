@@ -1,525 +1,273 @@
-// src/app/venue/[id].tsx
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Image,
   TouchableOpacity,
-  Linking,
   StyleSheet,
   ScrollView,
-  Dimensions,
   ActivityIndicator,
-  Platform,
+  Linking,
 } from 'react-native';
-import { openLink, openMaps } from '../../utils/linkUtils';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import type { Venue } from '../../types/venues';
 import type { Event } from '../../types/events';
 import { getVenueById } from '../../api/venues';
 import { getUpcomingEventsForVenue } from '../../api/events';
 import { useTheme } from '../../context/ThemeContext';
-import { useCityLocation } from '../../context/CityContext';
-import { Text } from '../../components/ui';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { STORAGE_KEYS } from '../../constants/storage-keys';
-import { getVenueSizeLabel } from '../../utils/venueUtils';
+import { Icon, Text } from '../../components/ui';
+import { openMaps } from '../../utils/linkUtils';
 import { logger } from '../../utils/logger';
-import { useAuth } from '../../hooks/useAuth';
-import { followVenue, unfollowVenue, checkFollowingVenue, getVenueFollowerCount } from '../../api/friends';
-import PageView from '../../components/ui/PageView';
-
-const { width } = Dimensions.get('window');
-
-// Helper function to format time
-function formatMilitaryTime(time: string): string {
-  if (!time || typeof time !== 'string' || !time.includes(':')) {
-    return time;
-  }
-
-  const [hoursStr, minutesStr] = time.split(':');
-  const hours = Number.parseInt(hoursStr, 10);
-  const minutes = Number.parseInt(minutesStr, 10);
-
-  if (Number.isNaN(hours) || Number.isNaN(minutes)) {
-    return time;
-  }
-
-  const isPM = hours >= 12;
-  let formattedHours: number;
-  if (isPM) {
-    formattedHours = hours === 12 ? 12 : hours - 12;
-  } else {
-    formattedHours = hours === 0 ? 12 : hours;
-  }
-  const formattedMinutes = minutes.toString().padStart(2, '0');
-
-  return `${formattedHours}:${formattedMinutes} ${isPM ? 'PM' : 'AM'}`;
-}
+import { format, parseISO } from 'date-fns';
 
 export default function VenuePage() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { theme } = useTheme();
-  const { selectedCity, onCityChange } = useCityLocation();
-  const { isLoggedIn } = useAuth();
-  
+
   const [venue, setVenue] = useState<Venue | null>(null);
-  const [upcomingEvents, setUpcomingEvents] = useState<Event[]>([]);
+  const [upcoming, setUpcoming] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
-  // Follow state
-  const [isFollowing, setIsFollowing] = useState(false);
-  const [followerCount, setFollowerCount] = useState(0);
-  const [followLoading, setFollowLoading] = useState(false);
 
   useEffect(() => {
-    if (id) {
-      fetchVenueData();
-    }
-  }, [id]);
-
-  useEffect(() => {
-    const checkFollowStatus = async () => {
-      if (venue?.id && isLoggedIn) {
-        const [followResult, countResult] = await Promise.all([
-          checkFollowingVenue(venue.id),
-          getVenueFollowerCount(venue.id),
-        ]);
-        setIsFollowing(followResult.isFollowing);
-        setFollowerCount(countResult.count);
+    let cancelled = false;
+    const load = async () => {
+      if (!id) return;
+      setLoading(true);
+      setError(null);
+      try {
+        const v = await getVenueById(id);
+        if (cancelled) return;
+        if (!v) {
+          setError('Venue not found');
+          return;
+        }
+        setVenue(v);
+        const events = await getUpcomingEventsForVenue(id, 12);
+        if (!cancelled) setUpcoming(events);
+      } catch (err) {
+        if (!cancelled) {
+          logger.error('Error fetching venue:', err);
+          setError('Failed to load venue');
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
       }
     };
-    checkFollowStatus();
-  }, [venue?.id, isLoggedIn]);
-
-  const fetchVenueData = async () => {
-    if (!id) return;
-    
-    setLoading(true);
-    setError(null);
-    
-    try {
-      const venueData = await getVenueById(id);
-      
-      if (!venueData) {
-        setError('Venue not found');
-        setLoading(false);
-        return;
-      }
-      
-      setVenue(venueData);
-
-      // Silently set city preference if not already set (deep-link entry)
-      if (venueData.city && !selectedCity) {
-        try {
-          const alreadyInferred = await AsyncStorage.getItem(STORAGE_KEYS.DEEP_LINK_CITY_INFERRED);
-          if (!alreadyInferred) {
-            await AsyncStorage.setItem(STORAGE_KEYS.PREFERRED_CITY, venueData.city);
-            await AsyncStorage.setItem(STORAGE_KEYS.DEEP_LINK_CITY_INFERRED, 'true');
-            await onCityChange(venueData.city);
-            logger.info('Inferred city from deep link:', venueData.city);
-          }
-        } catch (err) {
-          logger.warn('Error inferring city from deep link:', err);
-        }
-      }
-
-      // Fetch upcoming events for this venue
-      const events = await getUpcomingEventsForVenue(id, 3);
-      setUpcomingEvents(events);
-      
-    } catch (err) {
-      logger.error('Error fetching venue data:', err);
-      setError('Failed to load venue information');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleBack = () => {
-    // Use Expo Router's canGoBack() to check if there's a previous screen in the stack
-    if (router.canGoBack()) {
-      router.back();
-    } else {
-      // No previous screen in the app's navigation stack, go to home
-      router.replace('/');
-    }
-  };
-
-  const handleToggleFollow = async () => {
-    if (!venue?.id || !isLoggedIn) {
-      router.push('/user/signin');
-      return;
-    }
-
-    setFollowLoading(true);
-    try {
-      if (isFollowing) {
-        const { success } = await unfollowVenue(venue.id);
-        if (success) {
-          setIsFollowing(false);
-          setFollowerCount(prev => Math.max(0, prev - 1));
-        }
-      } else {
-        const { success } = await followVenue(venue.id);
-        if (success) {
-          setIsFollowing(true);
-          setFollowerCount(prev => prev + 1);
-        }
-      }
-    } catch (err) {
-      logger.error('Error toggling venue follow:', err);
-    } finally {
-      setFollowLoading(false);
-    }
-  };
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
 
   const handleAddressPress = () => {
-    if (venue?.address) {
-      openMaps(venue.address);
-    }
+    if (venue?.address) openMaps(venue.address);
   };
 
   const handleWebsitePress = () => {
-    if (venue?.url) {
-      openLink(venue.url);
-    }
+    if (venue?.url) Linking.openURL(venue.url);
   };
-
-  const handleEventPress = (eventId: string) => {
-    router.push(`/event/${eventId}`);
-  };
-
-  const venueSizeLabel = venue?.venue_size ? getVenueSizeLabel(venue.venue_size) : null;
 
   if (loading) {
     return (
-      <PageView>
-        <View style={[styles.loadingContainer, { backgroundColor: theme.colors.background.primary }]}>
-          <ActivityIndicator size="large" color={theme.colors.primary[500]} />
-          <Text variant="body1" color="secondary" style={{ marginTop: 16 }}>
-            Loading venue...
-          </Text>
-        </View>
-      </PageView>
+      <View style={[styles.center, { backgroundColor: theme.colors.background.primary }]}>
+        <ActivityIndicator size="large" color={theme.colors.primary[500]} />
+      </View>
     );
   }
 
   if (error || !venue) {
     return (
-      <PageView>
-        <View style={[styles.errorContainer, { backgroundColor: theme.colors.background.primary }]}>
-          <Text variant="h2" style={{ color: theme.colors.error, marginBottom: 8 }}>
-            {error || 'Venue not found'}
+      <View style={[styles.center, { backgroundColor: theme.colors.background.primary, padding: 32 }]}>
+        <Text variant="h3" align="center" style={{ color: theme.colors.text.primary, marginBottom: 12 }}>
+          Venue not found
+        </Text>
+        <TouchableOpacity
+          onPress={() => router.replace('/')}
+          style={[styles.primaryButton, { backgroundColor: theme.colors.primary[500] }]}
+        >
+          <Text variant="label" style={{ color: theme.colors.text.inverse, fontWeight: '700' }}>
+            Browse events
           </Text>
-          <TouchableOpacity
-            style={[styles.backButton, { backgroundColor: theme.colors.primary[500] }]}
-            onPress={handleBack}
-          >
-            <Text variant="body1" style={{ color: '#fff', fontWeight: '600' }}>
-              Go Back
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </PageView>
+        </TouchableOpacity>
+      </View>
     );
   }
 
   return (
-    <PageView>
-      <View style={[styles.container, { backgroundColor: theme.colors.background.primary }]}>
-        {/* Header */}
-        <View style={[styles.header, { 
-          backgroundColor: theme.colors.background.primary,
-          borderBottomColor: theme.colors.border.light,
-        }]}>
-          <TouchableOpacity onPress={handleBack} style={styles.headerBackButton}>
-            <Text variant="body1" style={{ color: theme.colors.primary[500], fontWeight: '600' }}>
-              ← Back
+    <ScrollView
+      style={{ backgroundColor: theme.colors.background.primary }}
+      contentContainerStyle={styles.scroll}
+    >
+      {venue.image && <Image source={{ uri: venue.image }} style={styles.hero} resizeMode="cover" />}
+
+      <View style={styles.body}>
+        <Text
+          variant="h1"
+          style={{
+            color: theme.colors.text.primary,
+            fontFamily: theme.typography.fontFamily.headingBold,
+            marginBottom: 8,
+          }}
+        >
+          {venue.name}
+        </Text>
+
+        {(venue.region || venue.city || venue.type) && (
+          <Text variant="body2" color="secondary" style={{ marginBottom: 16 }}>
+            {[venue.type, venue.region, venue.city].filter(Boolean).join(' · ')}
+          </Text>
+        )}
+
+        {venue.address && (
+          <TouchableOpacity onPress={handleAddressPress} style={styles.metaRow}>
+            <Icon name="location" size={18} color={theme.colors.primary[500]} />
+            <Text variant="body1" style={{ color: theme.colors.text.primary, marginLeft: 8, flex: 1 }}>
+              {venue.address}
             </Text>
           </TouchableOpacity>
-          <Text variant="h4" style={{ color: theme.colors.text.primary, flex: 1, textAlign: 'center' }} numberOfLines={1}>
-            {venue.name}
-          </Text>
-          <View style={styles.headerBackButton} />
-        </View>
+        )}
 
-        <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-          {/* Venue Image */}
-          {venue.image && (
-            <Image
-              source={{ uri: venue.image }}
-              style={[styles.venueImage, { backgroundColor: theme.colors.gray[100] }]}
-              resizeMode="cover"
-            />
-          )}
+        {venue.url && (
+          <TouchableOpacity
+            onPress={handleWebsitePress}
+            style={[styles.linkRow, { borderColor: theme.colors.border.light }]}
+          >
+            <Text variant="label" style={{ color: theme.colors.primary[500], fontWeight: '600' }}>
+              Visit website
+            </Text>
+          </TouchableOpacity>
+        )}
 
-          <View style={styles.content}>
-            {/* Venue Info Card */}
-            <View style={[styles.infoCard, { backgroundColor: theme.colors.background.secondary }]}>
-              <Text variant="h2" style={{ color: theme.colors.text.primary, marginBottom: 8 }}>
-                {venue.name}
-              </Text>
-
-              {/* Type and Size badges */}
-              <View style={styles.badgeRow}>
-                {venue.type && (
-                  <View style={[styles.badge, { backgroundColor: theme.colors.primary[100] }]}>
-                    <Text variant="caption" style={{ color: theme.colors.primary[700], fontWeight: '600' }}>
-                      {venue.type}
-                    </Text>
-                  </View>
-                )}
-                {venueSizeLabel && (
-                  <View style={[styles.badge, { backgroundColor: theme.colors.gray[100] }]}>
-                    <Text variant="caption" style={{ color: theme.colors.text.secondary }}>
-                      👥 {venueSizeLabel}
-                    </Text>
-                  </View>
-                )}
-              </View>
-
-              {/* Follower count and Follow button */}
-              <View style={styles.followRow}>
-                <Text variant="body2" color="secondary">
-                  {followerCount} follower{followerCount === 1 ? '' : 's'}
-                </Text>
-                <TouchableOpacity
-                  style={[styles.followButton, {
-                    backgroundColor: isFollowing ? 'transparent' : theme.colors.primary[500],
-                    borderWidth: isFollowing ? 2 : 0,
-                    borderColor: theme.colors.primary[500],
-                  }]}
-                  onPress={handleToggleFollow}
-                  disabled={followLoading}
-                >
-                  {followLoading ? (
-                    <ActivityIndicator size="small" color={isFollowing ? theme.colors.primary[500] : '#fff'} />
-                  ) : (
-                    <Text variant="body2" style={{
-                      color: isFollowing ? theme.colors.primary[500] : '#fff',
-                      fontWeight: '600',
-                    }}>
-                      {isFollowing ? '✓ Following' : '+ Follow'}
-                    </Text>
-                  )}
-                </TouchableOpacity>
-              </View>
-
-              {/* Location */}
-              <View style={[styles.infoSection, { borderTopColor: theme.colors.border.light }]}>
-                <Text variant="caption" style={{ color: theme.colors.text.tertiary, marginBottom: 4 }}>
-                  LOCATION
-                </Text>
-                <Text variant="body1" style={{ color: theme.colors.text.primary }}>
-                  📍 {venue.city}{venue.region ? `, ${venue.region}` : ''}
-                </Text>
-                {venue.address && (
-                  <TouchableOpacity onPress={handleAddressPress} style={{ marginTop: 4 }}>
-                    <Text variant="body2" style={{ color: theme.colors.text.secondary }}>
-                      {venue.address}
-                    </Text>
-                    <Text variant="caption" style={{ color: theme.colors.primary[500], marginTop: 2 }}>
-                      Tap to open in maps →
-                    </Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-
-              {/* Description */}
-              {venue.description && (
-                <View style={[styles.infoSection, { borderTopColor: theme.colors.border.light }]}>
-                  <Text variant="caption" style={{ color: theme.colors.text.tertiary, marginBottom: 4 }}>
-                    ABOUT
-                  </Text>
-                  <Text variant="body1" style={{ color: theme.colors.text.secondary, lineHeight: 22 }}>
-                    {venue.description}
-                  </Text>
-                </View>
-              )}
-
-              {/* Website */}
-              {venue.url && (
-                <TouchableOpacity
-                  style={[styles.websiteButton, {
-                    backgroundColor: theme.colors.background.primary,
-                    borderColor: theme.colors.border.light,
-                  }]}
-                  onPress={handleWebsitePress}
-                >
-                  <Text variant="body1" style={{ color: theme.colors.primary[500], fontWeight: '600' }}>
-                    🔗 Visit Website
-                  </Text>
-                </TouchableOpacity>
-              )}
-            </View>
-
-            {/* Upcoming Events Section */}
-            <View style={[styles.eventsSection, { backgroundColor: theme.colors.background.secondary }]}>
-              <Text variant="h3" style={{ color: theme.colors.text.primary, marginBottom: 16 }}>
-                Upcoming Events
-              </Text>
-
-              {upcomingEvents.length === 0 ? (
-                <View style={styles.noEventsContainer}>
-                  <Text variant="body1" color="secondary" style={{ textAlign: 'center' }}>
-                    No upcoming events scheduled at this venue.
-                  </Text>
-                </View>
-              ) : (
-                upcomingEvents.map((event) => (
-                  <TouchableOpacity
-                    key={event.id}
-                    style={[styles.eventCard, {
-                      backgroundColor: theme.colors.background.primary,
-                      borderColor: theme.colors.border.light,
-                    }]}
-                    onPress={() => handleEventPress(event.id)}
-                  >
-                    {event.image_url && (
-                      <Image
-                        source={{ uri: event.image_url }}
-                        style={styles.eventImage}
-                        resizeMode="cover"
-                      />
-                    )}
-                    <View style={styles.eventInfo}>
-                      <Text variant="body1" style={{ color: theme.colors.text.primary, fontWeight: '600' }} numberOfLines={2}>
-                        {event.title}
-                      </Text>
-                      {event.event_date && (
-                        <Text variant="caption" style={{ color: theme.colors.primary[500], marginTop: 4 }}>
-                          📅 {new Date(event.event_date).toLocaleDateString('en-US', {
-                            weekday: 'short',
-                            month: 'short',
-                            day: 'numeric',
-                          })}
-                          {event.start_time && ` • ${formatMilitaryTime(event.start_time)}`}
-                        </Text>
-                      )}
-                      {event.price && (
-                        <Text variant="caption" style={{ color: theme.colors.text.secondary, marginTop: 2 }}>
-                          {event.price}
-                        </Text>
-                      )}
-                    </View>
-                    <Text variant="body2" style={{ color: theme.colors.text.tertiary }}>›</Text>
-                  </TouchableOpacity>
-                ))
-              )}
-            </View>
+        {venue.description && (
+          <View style={[styles.descriptionCard, { backgroundColor: theme.colors.surface.sunken }]}>
+            <Text
+              variant="h4"
+              style={{
+                color: theme.colors.text.primary,
+                marginBottom: 8,
+                fontFamily: theme.typography.fontFamily.headingSemibold,
+              }}
+            >
+              About
+            </Text>
+            <Text variant="body1" style={{ color: theme.colors.text.secondary, lineHeight: 24 }}>
+              {venue.description}
+            </Text>
           </View>
-        </ScrollView>
+        )}
+
+        <Text
+          variant="h3"
+          style={{
+            color: theme.colors.text.primary,
+            fontFamily: theme.typography.fontFamily.headingSemibold,
+            marginTop: 8,
+            marginBottom: 16,
+          }}
+        >
+          Upcoming events
+        </Text>
+
+        {upcoming.length === 0 ? (
+          <Text variant="body2" color="secondary">
+            No upcoming events at this venue.
+          </Text>
+        ) : (
+          upcoming.map((event) => (
+            <TouchableOpacity
+              key={event.id}
+              onPress={() => router.push(`/event/${event.id}`)}
+              style={[
+                styles.eventRow,
+                {
+                  backgroundColor: theme.colors.surface.raised,
+                  borderColor: theme.colors.border.light,
+                },
+              ]}
+              activeOpacity={0.85}
+            >
+              {event.image_url ? (
+                <Image source={{ uri: event.image_url }} style={styles.eventThumb} />
+              ) : (
+                <View style={[styles.eventThumb, { backgroundColor: theme.colors.surface.sunken }]} />
+              )}
+              <View style={{ flex: 1 }}>
+                <Text variant="body1" style={{ color: theme.colors.text.primary, fontWeight: '600' }} numberOfLines={2}>
+                  {event.title}
+                </Text>
+                {event.event_date && (
+                  <Text variant="caption" color="secondary" style={{ marginTop: 4 }}>
+                    {format(parseISO(event.event_date), 'EEE · MMM d')}
+                    {event.start_time ? ` · ${event.start_time.slice(0, 5)}` : ''}
+                  </Text>
+                )}
+              </View>
+              <Icon name="chevron-right" size={18} color={theme.colors.text.tertiary} />
+            </TouchableOpacity>
+          ))
+        )}
       </View>
-    </PageView>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  scroll: {
+    paddingBottom: 48,
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  errorContainer: {
+  center: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 24,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-  },
-  headerBackButton: {
-    width: 70,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  venueImage: {
+  hero: {
     width: '100%',
-    height: 200,
+    aspectRatio: 16 / 9,
   },
-  content: {
-    padding: 16,
-  },
-  infoCard: {
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 16,
-  },
-  badgeRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 16,
-  },
-  badge: {
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  followRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 16,
-  },
-  followButton: {
+  body: {
     paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 20,
-    minWidth: 110,
+    paddingTop: 24,
+    width: '100%',
+    maxWidth: 720,
+    alignSelf: 'center',
+  },
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  linkRow: {
+    paddingVertical: 12,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    marginVertical: 16,
     alignItems: 'center',
   },
-  infoSection: {
-    paddingTop: 16,
-    marginTop: 16,
-    borderTopWidth: 1,
-  },
-  websiteButton: {
-    marginTop: 16,
-    padding: 14,
-    borderRadius: 12,
-    borderWidth: 1,
-    alignItems: 'center',
-  },
-  eventsSection: {
-    borderRadius: 16,
+  descriptionCard: {
     padding: 20,
+    borderRadius: 12,
+    marginBottom: 24,
   },
-  noEventsContainer: {
-    paddingVertical: 24,
-  },
-  eventCard: {
+  eventRow: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 12,
     borderRadius: 12,
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
+    gap: 12,
     marginBottom: 12,
   },
-  eventImage: {
-    width: 70,
-    height: 70,
+  eventThumb: {
+    width: 64,
+    height: 64,
     borderRadius: 8,
-    marginRight: 12,
   },
-  eventInfo: {
-    flex: 1,
-  },
-  backButton: {
+  primaryButton: {
+    height: 52,
     paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 20,
-    marginTop: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

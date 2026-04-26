@@ -33,7 +33,7 @@ const headSnippet = `
 <meta name="author" content="Find Local" />
 
 <!-- Theme color -->
-<meta name="theme-color" content="#006B5E" />
+<meta name="theme-color" content="#006565" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 <meta name="apple-mobile-web-app-title" content="Find Local" />
@@ -90,6 +90,10 @@ const headSnippet = `
   gtag('js', new Date());
   gtag('config', 'G-SK3E86M5F8', { send_page_view: false });
 </script>
+
+<!-- Material Symbols (icons) -->
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" />
 
 <!-- Microsoft Clarity -->
 <script type="text/javascript">

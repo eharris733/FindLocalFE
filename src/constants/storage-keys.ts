@@ -1,9 +1,5 @@
-// AsyncStorage keys for persisting user preferences
 export const STORAGE_KEYS = {
   FAVORITE_EVENTS: '@findlocal/favorite_events',
   PREFERRED_CITY: '@findlocal/preferred_city',
-  ONBOARDING_COMPLETED: '@findlocal/onboarding_completed',
-  SELECTED_INTERESTS: '@findlocal/selected_interests',
-  PENDING_RSVP: '@findlocal/pending_rsvp',
-  DEEP_LINK_CITY_INFERRED: '@findlocal/deep_link_city_inferred',
+  FILTERS: '@findlocal/filters',
 } as const;
