@@ -1,16 +1,16 @@
-import { TextStyle } from 'react-native';
+const fallback = '-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Arial, sans-serif';
 
 export const typography = {
-  // Font families with fallbacks
   fontFamily: {
-    light: 'WorkSans_300Light, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Arial, sans-serif',
-    regular: 'WorkSans_400Regular, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Arial, sans-serif',
-    medium: 'WorkSans_500Medium, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Arial, sans-serif',
-    semibold: 'WorkSans_600SemiBold, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Arial, sans-serif',
-    bold: 'WorkSans_700Bold, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Arial, sans-serif',
+    light: `Manrope_400Regular, ${fallback}`,
+    regular: `Manrope_400Regular, ${fallback}`,
+    medium: `Manrope_500Medium, ${fallback}`,
+    semibold: `Manrope_600SemiBold, ${fallback}`,
+    bold: `Manrope_700Bold, ${fallback}`,
+    headingSemibold: `Epilogue_600SemiBold, ${fallback}`,
+    headingBold: `Epilogue_700Bold, ${fallback}`,
   },
 
-  // Font sizes
   fontSize: {
     xs: 12,
     sm: 14,
@@ -22,7 +22,6 @@ export const typography = {
     '4xl': 36,
   },
 
-  // Line heights
   lineHeight: {
     xs: 16,
     sm: 20,
@@ -37,52 +36,51 @@ export const typography = {
     relaxed: 1.75,
   },
 
-  // Text styles
   heading1: {
     fontSize: 30,
-    fontFamily: 'WorkSans_700Bold',
+    fontFamily: 'Epilogue_700Bold',
     lineHeight: 36,
   },
-  
+
   heading2: {
     fontSize: 24,
-    fontFamily: 'WorkSans_700Bold',
-    lineHeight: 28,
+    fontFamily: 'Epilogue_700Bold',
+    lineHeight: 32,
   },
-  
+
   heading3: {
     fontSize: 20,
-    fontFamily: 'WorkSans_600SemiBold',
-    lineHeight: 24,
+    fontFamily: 'Epilogue_600SemiBold',
+    lineHeight: 28,
   },
-  
+
   heading4: {
     fontSize: 18,
-    fontFamily: 'WorkSans_600SemiBold',
-    lineHeight: 22,
-  },
-  
-  body: {
-    fontSize: 16,
-    fontFamily: 'WorkSans_400Regular',
+    fontFamily: 'Epilogue_600SemiBold',
     lineHeight: 24,
   },
-  
+
+  body: {
+    fontSize: 16,
+    fontFamily: 'Manrope_400Regular',
+    lineHeight: 24,
+  },
+
   bodySmall: {
     fontSize: 14,
-    fontFamily: 'WorkSans_400Regular',
+    fontFamily: 'Manrope_400Regular',
     lineHeight: 20,
   },
-  
+
   caption: {
     fontSize: 12,
-    fontFamily: 'WorkSans_400Regular',
+    fontFamily: 'Manrope_500Medium',
     lineHeight: 16,
   },
-  
+
   button: {
-    fontSize: 16,
-    fontFamily: 'WorkSans_600SemiBold',
+    fontSize: 14,
+    fontFamily: 'Manrope_600SemiBold',
     lineHeight: 20,
   },
 };

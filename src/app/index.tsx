@@ -1,58 +1,27 @@
-import { StatusBar, StyleSheet, View, ActivityIndicator } from "react-native";
-import { DiscoverPageContent } from "../components/DiscoverPageContent";
-import React from "react";
-import { useTheme } from "../context/ThemeContext";
-import { useCityLocation } from "../context/CityContext";
-import type { Event } from "../types/events";
+import React from 'react';
+import { View, StyleSheet } from 'react-native';
+import { useLocalSearchParams } from 'expo-router';
+import EventFeed from '../components/EventFeed';
+import { useTheme } from '../context/ThemeContext';
 import { StructuredData } from '../components/StructuredData';
-import { useRouter } from 'expo-router';
+import { useCityLocation } from '../context/CityContext';
 
 export default function IndexRoute() {
-    const { theme, isDark } = useTheme();
-    const { selectedCity } = useCityLocation();
-    const router = useRouter();
-    const [shouldRenderContent, setShouldRenderContent] = React.useState(false);
+  const { theme } = useTheme();
+  const { selectedCity } = useCityLocation();
+  const params = useLocalSearchParams<{ view?: string }>();
+  const viewMode: 'list' | 'map' = params.view === 'map' ? 'map' : 'list';
 
-    // Defer rendering the heavy component until after navigation completes
-    React.useEffect(() => {
-        // Use requestAnimationFrame to ensure navigation is complete
-        const frame = requestAnimationFrame(() => {
-            setShouldRenderContent(true);
-        });
-        return () => cancelAnimationFrame(frame);
-    }, []);
-
-    const handleEventPress = (event: Event) => {
-        router.push(`/event/${event.id}`);
-    };
-
-    return (
-        <View style={[styles.container, { backgroundColor: theme.colors.background.secondary }]}>
-            <StructuredData city={selectedCity} />
-            <StatusBar
-                barStyle={isDark ? "light-content" : "dark-content"}
-                backgroundColor={theme.colors.background.primary}
-            />
-            {shouldRenderContent ? (
-                <DiscoverPageContent
-                    onEventPress={handleEventPress}
-                />
-            ) : (
-                <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color={theme.colors.primary[500]} />
-                </View>
-            )}
-        </View>
-    );
+  return (
+    <View style={[styles.container, { backgroundColor: theme.colors.background.primary }]}>
+      <StructuredData city={selectedCity} />
+      <EventFeed viewMode={viewMode} />
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
-    loadingContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
+  container: {
+    flex: 1,
+  },
 });
