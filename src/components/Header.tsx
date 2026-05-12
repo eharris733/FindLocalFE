@@ -3,6 +3,7 @@ import { StyleSheet, TouchableOpacity, View, Platform } from 'react-native';
 import { useRouter, usePathname, useGlobalSearchParams } from 'expo-router';
 import { useTheme } from '../context/ThemeContext';
 import { useDeviceInfo } from '../hooks/useDeviceInfo';
+import { useFavorites } from '../context/FavoritesContext';
 import { Icon, Text, Logo } from './ui';
 import MapToggleButton from './MapToggleButton';
 
@@ -19,6 +20,9 @@ export default function Header() {
   const router = useRouter();
   const pathname = usePathname();
   const params = useGlobalSearchParams<{ view?: string }>();
+  const { favoriteEventIds } = useFavorites();
+  const savedCount = favoriteEventIds.length;
+  const savedBadgeLabel = savedCount > 9 ? '9+' : String(savedCount);
 
   const onDiscover = pathname === '/' || pathname === '/index';
   const viewMode = params.view === 'map' ? 'map' : 'list';
@@ -110,7 +114,9 @@ export default function Header() {
         <TouchableOpacity
           onPress={handleBookmark}
           accessibilityRole="link"
-          accessibilityLabel="Saved events"
+          accessibilityLabel={
+            savedCount > 0 ? `Saved events, ${savedCount} saved` : 'Saved events'
+          }
           style={[styles.iconButton, { borderColor: theme.colors.border.light }]}
         >
           <Icon
@@ -118,6 +124,29 @@ export default function Header() {
             size={20}
             color={theme.colors.primary[500]}
           />
+          {savedCount > 0 && (
+            <View
+              style={[
+                styles.badge,
+                {
+                  backgroundColor: theme.colors.primary[500],
+                  borderColor: theme.colors.background.primary,
+                },
+              ]}
+            >
+              <Text
+                variant="caption"
+                style={{
+                  color: theme.colors.text.inverse,
+                  fontSize: 10,
+                  fontWeight: '700',
+                  lineHeight: 12,
+                }}
+              >
+                {savedBadgeLabel}
+              </Text>
+            </View>
+          )}
         </TouchableOpacity>
       </View>
     </View>
@@ -156,6 +185,18 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 9999,
     borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  badge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9999,
+    borderWidth: 2,
+    paddingHorizontal: 4,
     alignItems: 'center',
     justifyContent: 'center',
   },
