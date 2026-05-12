@@ -19,10 +19,7 @@ export const FilterFAB: React.FC = () => {
       accessibilityLabel="Open filters"
       style={[
         styles.fab,
-        {
-          backgroundColor: theme.colors.primary[500],
-          shadowColor: '#000',
-        },
+        { backgroundColor: theme.colors.primary[500] },
       ]}
     >
       <Icon name="filter" size={24} color={theme.colors.text.inverse} />
@@ -47,11 +44,16 @@ const styles = StyleSheet.create({
     borderRadius: 9999,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
     elevation: 6,
-    ...(Platform.OS === 'web' ? { position: 'fixed' as any } : {}),
+    ...Platform.select({
+      web: { position: 'fixed' as any, boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.2)' },
+      default: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 8,
+      },
+    }),
   },
   badge: {
     position: 'absolute',

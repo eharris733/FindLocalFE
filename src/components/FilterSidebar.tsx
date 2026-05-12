@@ -31,7 +31,7 @@ export const FilterSidebar: React.FC = () => {
         {activeCount > 0 && (
           <TouchableOpacity onPress={reset} accessibilityRole="button">
             <Text variant="label" style={{ color: theme.colors.primary[500], fontWeight: '600' }}>
-              Reset
+              Reset · {activeCount}
             </Text>
           </TouchableOpacity>
         )}

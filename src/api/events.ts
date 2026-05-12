@@ -205,6 +205,31 @@ export async function getEventByIdWithFallback(eventId: string): Promise<EventWi
   }
 }
 
+/**
+ * Fetch a set of events by IDs from events_gold + old_events.
+ * Used by /saved so favorites from any city remain visible.
+ * events_gold wins on conflict (matches getEventByIdWithFallback ordering).
+ */
+export async function getEventsByIds(ids: string[]): Promise<Event[]> {
+  if (ids.length === 0) return [];
+  try {
+    const [goldResult, oldResult] = await Promise.all([
+      supabase.from('events_gold').select('*').in('id', ids),
+      supabase.from('old_events').select('*').in('id', ids),
+    ]);
+    if (goldResult.error) logger.warn('events_gold fetch in getEventsByIds:', goldResult.error);
+    if (oldResult.error) logger.warn('old_events fetch in getEventsByIds:', oldResult.error);
+
+    const byId = new Map<string, Event>();
+    for (const e of (goldResult.data ?? []) as Event[]) byId.set(e.id, e);
+    for (const e of (oldResult.data ?? []) as Event[]) if (!byId.has(e.id)) byId.set(e.id, e);
+    return Array.from(byId.values());
+  } catch (err: any) {
+    logger.error('Error in getEventsByIds:', err);
+    return [];
+  }
+}
+
 export async function getAvailableCities(): Promise<string[]> {
   try {
     //console.log('🏙️ Fetching available cities from events_gold table...');
@@ -244,6 +269,8 @@ export async function getEventsWithCommunities(
     let page = 0;
     let hasMore = true;
 
+    const today = new Date().toISOString().split('T')[0];
+
     while (hasMore) {
       let query = supabase
         .from('events_gold')
@@ -256,6 +283,8 @@ export async function getEventsWithCommunities(
             confidence
           )
         `)
+        .gte('event_date', today)
+        .or('is_deleted.is.null,is_deleted.eq.false')
         .order('event_date', { ascending: true })
         .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
 
@@ -445,6 +474,7 @@ export async function getUpcomingEventsForVenue(venueId: string, limit: number =
       .select('*')
       .eq('venue_id', venueId)
       .gte('event_date', today)
+      .or('is_deleted.is.null,is_deleted.eq.false')
       .order('event_date', { ascending: true })
       .limit(limit);
 

@@ -50,6 +50,11 @@ export const EventFeed: React.FC<EventFeedProps> = ({ viewMode }) => {
     [router]
   );
 
+  const handleVenuePress = useCallback(
+    (venue: Venue) => router.push(`/venue/${venue.id}`),
+    [router]
+  );
+
   const renderItem: ListRenderItem<Event> = useCallback(
     ({ item }) => (
       <EventCard
@@ -71,8 +76,10 @@ export const EventFeed: React.FC<EventFeedProps> = ({ viewMode }) => {
             venues={venues}
             venuesLoading={venuesLoading}
             onEventPress={handleEventPress}
+            onVenuePress={handleVenuePress}
             selectedCity={selectedCity}
           />
+          {!isDesktop && <FilterFAB />}
         </View>
       </View>
     );

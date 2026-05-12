@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, TouchableOpacity, View, Platform } from 'react-native';
-import { useRouter, usePathname, useLocalSearchParams } from 'expo-router';
+import { useRouter, usePathname, useGlobalSearchParams } from 'expo-router';
 import { useTheme } from '../context/ThemeContext';
 import { useDeviceInfo } from '../hooks/useDeviceInfo';
 import { Icon, Text, Logo } from './ui';
@@ -18,18 +18,14 @@ export default function Header() {
   const { isDesktop } = useDeviceInfo();
   const router = useRouter();
   const pathname = usePathname();
-  const params = useLocalSearchParams<{ view?: string }>();
+  const params = useGlobalSearchParams<{ view?: string }>();
 
   const onDiscover = pathname === '/' || pathname === '/index';
   const viewMode = params.view === 'map' ? 'map' : 'list';
   const showMapToggle = onDiscover;
 
   const handleMapToggle = () => {
-    if (viewMode === 'map') {
-      router.setParams({ view: 'list' as any });
-    } else {
-      router.setParams({ view: 'map' as any });
-    }
+    router.setParams({ view: viewMode === 'map' ? 'list' : 'map' } as any);
   };
 
   const handleBack = () => {

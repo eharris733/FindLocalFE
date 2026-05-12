@@ -18,6 +18,11 @@ export const FilterScreen: React.FC = () => {
   const { data: events = [] } = useEventsQuery(selectedCity);
   const matchCount = filterEvents(events, filters).length;
 
+  const dismiss = () => {
+    if (router.canGoBack()) router.back();
+    else router.replace('/');
+  };
+
   return (
     <SafeAreaView edges={['bottom']} style={[styles.container, { backgroundColor: theme.colors.background.primary }]}>
       <View
@@ -30,7 +35,7 @@ export const FilterScreen: React.FC = () => {
         ]}
       >
         <TouchableOpacity
-          onPress={() => router.back()}
+          onPress={dismiss}
           accessibilityRole="button"
           accessibilityLabel="Close filters"
           style={styles.iconButton}
@@ -65,7 +70,7 @@ export const FilterScreen: React.FC = () => {
         ]}
       >
         <TouchableOpacity
-          onPress={() => router.back()}
+          onPress={dismiss}
           style={[styles.applyButton, { backgroundColor: theme.colors.primary[500] }]}
           accessibilityRole="button"
         >

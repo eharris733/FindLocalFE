@@ -129,8 +129,25 @@ export default function RootLayout() {
   );
 }
 
+const ROUTE_TITLES: Record<string, string> = {
+  '/': 'Find Local — Discover local events',
+  '/saved': 'Saved · Find Local',
+  '/venues': 'Venues · Find Local',
+  '/about': 'About · Find Local',
+  '/privacy': 'Privacy · Find Local',
+  '/terms': 'Terms · Find Local',
+  '/filters': 'Filters · Find Local',
+};
+
 function RootNavigator() {
   const pathname = usePathname();
+
+  useEffect(() => {
+    if (Platform.OS !== 'web' || typeof document === 'undefined') return;
+    // Event and venue detail pages set their own SEO-friendly titles.
+    if (pathname.startsWith('/event/') || pathname.startsWith('/venue/')) return;
+    document.title = ROUTE_TITLES[pathname] ?? 'Find Local';
+  }, [pathname]);
 
   useEffect(() => {
     if (Platform.OS !== 'web') return;

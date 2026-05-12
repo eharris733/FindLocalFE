@@ -1,14 +1,15 @@
 import React, { useMemo, useCallback } from 'react';
 import { View, FlatList, StyleSheet, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useQuery } from '@tanstack/react-query';
 import EventCard from '../components/EventCard';
 import { Text } from '../components/ui';
 import { useTheme } from '../context/ThemeContext';
 import { useDeviceInfo } from '../hooks/useDeviceInfo';
 import { useFavorites } from '../context/FavoritesContext';
-import { useEventsQuery } from '../hooks/queries/useEventsQuery';
 import { useVenuesQuery } from '../hooks/queries/useVenuesQuery';
 import { useCityLocation } from '../context/CityContext';
+import { getEventsByIds } from '../api/events';
 import type { Event } from '../types/events';
 import type { Venue } from '../types/venues';
 
@@ -18,7 +19,18 @@ export default function SavedRoute() {
   const router = useRouter();
   const { favoriteEventIds, loading: favoritesLoading } = useFavorites();
   const { selectedCity } = useCityLocation();
-  const { data: events = [], isLoading: eventsLoading } = useEventsQuery(selectedCity);
+
+  // Sort IDs so the query key is stable regardless of toggle order.
+  const sortedIds = useMemo(() => [...favoriteEventIds].sort(), [favoriteEventIds]);
+
+  const { data: savedEventsRaw = [], isLoading: eventsLoading } = useQuery({
+    queryKey: ['saved-events', sortedIds],
+    queryFn: () => getEventsByIds(sortedIds),
+    enabled: sortedIds.length > 0,
+  });
+
+  // Venue lookup uses the current city; events from other cities will
+  // fall back to event-level location info in the card.
   const { data: venues = [] } = useVenuesQuery(selectedCity);
 
   const venueById = useMemo(() => {
@@ -28,8 +40,8 @@ export default function SavedRoute() {
   }, [venues]);
 
   const savedEvents = useMemo(
-    () => events.filter((e) => favoriteEventIds.includes(e.id)),
-    [events, favoriteEventIds]
+    () => savedEventsRaw.filter((e) => favoriteEventIds.includes(e.id)),
+    [savedEventsRaw, favoriteEventIds]
   );
 
   const renderItem = useCallback(
