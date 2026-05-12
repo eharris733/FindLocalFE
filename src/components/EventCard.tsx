@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Image, TouchableOpacity, StyleSheet, ImageSourcePropType } from 'react-native';
+import { View, Image, TouchableOpacity, StyleSheet } from 'react-native';
 import { Icon, Text } from './ui';
 import { useTheme } from '../context/ThemeContext';
 import type { Event } from '../types/events';
@@ -45,16 +45,15 @@ export const EventCard: React.FC<EventCardProps> = ({ event, venue, onPress }) =
   const venueName = venue?.name ?? event.custom_location ?? '';
   const region = event.region;
 
-  const imageSource: ImageSourcePropType = event.image_url
-    ? { uri: event.image_url }
-    : venue?.image
-      ? { uri: venue.image }
-      : require('../../assets/record.png');
+  const imageUri = event.image_url || venue?.image || null;
 
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.85} style={styles.card}>
       <View style={[styles.imageWrapper, { backgroundColor: theme.colors.surface.sunken }]}>
-        <Image source={imageSource} style={styles.image} resizeMode="cover" />
+        <Icon name="calendar" size={40} color={theme.colors.text.tertiary} />
+        {imageUri ? (
+          <Image source={{ uri: imageUri }} style={StyleSheet.absoluteFill as any} resizeMode="cover" />
+        ) : null}
         {priceLabel ? (
           <View style={[styles.pricePill, { backgroundColor: theme.colors.background.primary + 'E6' }]}>
             <Text
@@ -113,10 +112,8 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     overflow: 'hidden',
     position: 'relative',
-  },
-  image: {
-    width: '100%',
-    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   pricePill: {
     position: 'absolute',

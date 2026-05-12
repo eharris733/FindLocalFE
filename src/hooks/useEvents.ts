@@ -4,7 +4,6 @@ import {
   endOfDay,
   addDays,
   startOfWeek,
-  isWithinInterval,
 } from 'date-fns';
 import type { Event, FilterState, TimeOfDay } from '../types/events';
 
@@ -15,7 +14,7 @@ const getDateRange = (
   const today = new Date();
   switch (when) {
     case 'anytime':
-      return { start: null, end: null };
+      return { start: startOfDay(today), end: null };
     case 'today':
       return { start: startOfDay(today), end: endOfDay(today) };
     case 'tomorrow': {
@@ -42,14 +41,30 @@ const getTimeOfDayBucket = (hour: number): TimeOfDay | null => {
   return null;
 };
 
-const eventHasCategory = (event: Event, categoryIds: string[]): boolean => {
-  if (categoryIds.length === 0) return true;
-  if (event.event_type) {
-    if (event.event_type.some((t) => categoryIds.includes(t))) return true;
-  }
-  if (event.event_community_assignments) {
-    if (event.event_community_assignments.some((a) => categoryIds.includes(a.community_id))) return true;
-  }
+// Chip slugs (from FilterControls) → tokens that may appear in events_gold.event_type
+// (case-insensitive). Community UUIDs are not listed here because chip values are
+// slugs; if the DB later gains a slug column on communities we can match those too.
+const CATEGORY_TOKEN_MAP: Record<string, readonly string[]> = {
+  music: ['music', 'live music', 'jazz', 'rock', 'pop', 'classical', 'folk', 'alternative', 'hip hop', 'electronic'],
+  comedy: ['comedy', 'stand-up', 'improv', 'open mic', 'comedy show'],
+  theater: ['theater', 'play', 'performance'],
+  art: ['culture', 'art', 'art exhibition', 'gallery talk'],
+  food_drink: ['food', 'food & drink', 'drink', 'dining'],
+  family: ['family', 'family friendly', 'kids'],
+  market: ['market', 'markets'],
+  workshop: ['workshop', 'workshops', 'class', 'seminar'],
+  fitness: ['fitness', 'yoga', 'wellness'],
+  nightlife: ['nightlife', 'club', 'dj'],
+  community: ['community', 'community event'],
+  festival: ['festival'],
+};
+
+const eventHasCategory = (event: Event, chipSlugs: string[]): boolean => {
+  if (chipSlugs.length === 0) return true;
+  const wanted = new Set(
+    chipSlugs.flatMap((slug) => CATEGORY_TOKEN_MAP[slug] ?? [slug.toLowerCase()])
+  );
+  if (event.event_type?.some((t) => wanted.has(t.toLowerCase()))) return true;
   return false;
 };
 
@@ -64,7 +79,8 @@ export const filterEvents = (events: Event[], filters: FilterState): Event[] => 
     if (!event.event_date) return false;
     const eventDate = new Date(event.event_date);
 
-    if (start && end && !isWithinInterval(eventDate, { start, end })) return false;
+    if (start && eventDate < start) return false;
+    if (end && eventDate > end) return false;
 
     if (filters.regions.length > 0) {
       if (!event.region || !filters.regions.includes(event.region)) return false;

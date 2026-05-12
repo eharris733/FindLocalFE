@@ -22,7 +22,7 @@ import { useFavorites } from '../../context/FavoritesContext';
 import { addToGoogleCalendar, addToAppleCalendar } from '../../utils/calendarUtils';
 import { openMaps } from '../../utils/linkUtils';
 import { logger } from '../../utils/logger';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, startOfDay } from 'date-fns';
 import { EventPageSchema } from '../../components/EventPageSchema';
 
 const formatTime = (time: string | null): string | null => {
@@ -148,11 +148,12 @@ export default function EventPage() {
     if (url) Linking.openURL(url);
   };
 
-  const imageSource = event?.image_url
-    ? { uri: event.image_url }
-    : venue?.image
-      ? { uri: venue.image }
-      : require('../../../assets/record.png');
+  const handleBack = () => {
+    if (router.canGoBack()) router.back();
+    else router.replace('/');
+  };
+
+  const imageUri = event?.image_url || venue?.image || null;
 
   if (loading) {
     return (
@@ -189,6 +190,9 @@ export default function EventPage() {
   const timeLabel = formatTime(event.start_time);
   const saved = isFavorite(event.id);
   const ticketsUrl = event.ticket_page_url || event.detail_page_url || event.root_url || venue?.url;
+  const displayExpired =
+    isExpired ||
+    (event.event_date ? parseISO(event.event_date) < startOfDay(new Date()) : false);
 
   return (
     <ScrollView
@@ -197,10 +201,37 @@ export default function EventPage() {
     >
       <EventPageSchema event={event} venue={venue} />
 
-      <Image source={imageSource} style={styles.hero} resizeMode="cover" />
+      <View
+        style={[
+          styles.hero,
+          styles.heroPlaceholder,
+          { backgroundColor: theme.colors.surface.sunken },
+        ]}
+      >
+        <Icon name="calendar" size={48} color={theme.colors.text.tertiary} />
+        {imageUri ? (
+          <Image
+            source={{ uri: imageUri }}
+            style={StyleSheet.absoluteFill}
+            resizeMode="cover"
+          />
+        ) : null}
+      </View>
 
       <View style={styles.body}>
-        {isExpired && (
+        <TouchableOpacity
+          onPress={handleBack}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
+          style={[styles.backButton, { borderColor: theme.colors.border.light }]}
+        >
+          <Icon name="arrow-back" size={18} color={theme.colors.primary[500]} />
+          <Text variant="label" style={{ color: theme.colors.primary[500], marginLeft: 6, fontWeight: '600' }}>
+            Back
+          </Text>
+        </TouchableOpacity>
+
+        {displayExpired && (
           <View style={[styles.banner, { backgroundColor: theme.colors.warning + '20', borderColor: theme.colors.warning }]}>
             <Text variant="body2" style={{ color: theme.colors.text.primary }}>
               This event has already passed.
@@ -289,7 +320,7 @@ export default function EventPage() {
           </TouchableOpacity>
         </View>
 
-        {!isExpired && ticketsUrl && (
+        {!displayExpired && ticketsUrl && (
           <TouchableOpacity
             onPress={handleTickets}
             style={[styles.primaryButton, { backgroundColor: theme.colors.secondary[500], marginBottom: 24 }]}
@@ -361,6 +392,11 @@ const styles = StyleSheet.create({
   hero: {
     width: '100%',
     aspectRatio: 16 / 9,
+    ...(Platform.OS === 'web' ? { maxHeight: 360 } : {}),
+  },
+  heroPlaceholder: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   body: {
     paddingHorizontal: 20,
@@ -368,6 +404,16 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 720,
     alignSelf: 'center',
+  },
+  backButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 9999,
+    borderWidth: 1,
+    marginBottom: 16,
   },
   banner: {
     padding: 12,

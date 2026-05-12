@@ -60,16 +60,13 @@ const CustomMapMarker: React.FC<CustomMapMarkerProps> = ({
     }
   }, [isActive]);
 
-  // Get the image URL with fallback hierarchy: event image -> venue image -> record.png
-  const getImageUrl = (event: Event) => {
-    if (event?.image_url) {
-      return event.image_url;
-    }
-    if (venue?.image) {
-      return venue.image;
-    }
-    // Return the record.png as fallback
-    return require('../../assets/record.png');
+  // Returns a URL string, or null if neither the event nor venue has an image.
+  // Callers should render a placeholder (e.g. an icon) when null — the previous
+  // require('record.png') fallback did not render under React Native Web.
+  const getImageUrl = (event: Event): string | null => {
+    if (event?.image_url) return event.image_url;
+    if (venue?.image) return venue.image;
+    return null;
   };
 
   if (isNaN(latitude) || isNaN(longitude)) {
@@ -166,15 +163,20 @@ const CustomMapMarker: React.FC<CustomMapMarkerProps> = ({
               {hasEvents && (
                 <>
                   {/* Event Image with fallback */}
-                  <Image
-                    source={
-                      typeof getImageUrl(limitedEvents[currentEventIndex]) === 'string'
-                        ? { uri: getImageUrl(limitedEvents[currentEventIndex]) }
-                        : getImageUrl(limitedEvents[currentEventIndex])
-                    }
-                    style={styles.calloutImage}
-                    resizeMode="cover"
-                  />
+                  {(() => {
+                    const calloutImageUri = getImageUrl(limitedEvents[currentEventIndex]);
+                    return calloutImageUri ? (
+                      <Image
+                        source={{ uri: calloutImageUri }}
+                        style={styles.calloutImage}
+                        resizeMode="cover"
+                      />
+                    ) : (
+                      <View style={[styles.calloutImage, styles.calloutImagePlaceholder, { backgroundColor: theme.colors.surface.sunken }]}>
+                        <Text variant="caption" color="tertiary">📅</Text>
+                      </View>
+                    );
+                  })()}
 
                   {/* Close button */}
                   <TouchableOpacity
@@ -255,7 +257,7 @@ const CustomMapMarker: React.FC<CustomMapMarkerProps> = ({
                   {/* Event indicator for multiple events */}
                   {limitedEvents.length > 1 && (
                     <Text variant="caption" style={[styles.eventIndicator, { color: theme.colors.text.tertiary }]}>
-                      {currentEventIndex + 1} of {limitedEvents.length}{venueEvents.length > 9 ? ' (showing first 9)' : ''}
+                      {currentEventIndex + 1} of {limitedEvents.length}{venueEvents.length > 9 ? '+ — tap See Venue for all' : ''}
                     </Text>
                   )}
 
@@ -331,18 +333,21 @@ const styles = StyleSheet.create({
     borderRadius: 7,
     borderWidth: 2,
     borderColor: '#FFFFFF',
-    shadowColor: '#000',
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
-    ...(Platform.OS === 'web'
-      ? {
-          transitionProperty: 'background-color, transform',
-          transitionDuration: '150ms',
-          transitionTimingFunction: 'ease',
-          cursor: 'pointer',
-        }
-      : null),
+    ...Platform.select({
+      web: {
+        boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.3)',
+        transitionProperty: 'background-color, transform',
+        transitionDuration: '150ms',
+        transitionTimingFunction: 'ease',
+        cursor: 'pointer',
+      } as any,
+      default: {
+        shadowColor: '#000',
+        shadowOpacity: 0.3,
+        shadowRadius: 4,
+        shadowOffset: { width: 0, height: 2 },
+      },
+    }),
   },
   dotActive: {
     backgroundColor: '#EF4444',
@@ -393,19 +398,22 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     alignSelf: 'center',
     borderWidth: 1,
-    shadowColor: '#000',
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
     display: 'flex',
     boxSizing: 'border-box' as any,
-    ...(Platform.OS === 'web' ? {
-      marginLeft: -100,
-      marginTop: -10,
-    } : {
-      // iOS needs different positioning to prevent clipping
-      marginLeft: 0,
-      marginTop: 0,
+    ...Platform.select({
+      web: {
+        boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.15)',
+        marginLeft: -100,
+        marginTop: -10,
+      } as any,
+      default: {
+        shadowColor: '#000',
+        shadowOpacity: 0.15,
+        shadowRadius: 8,
+        shadowOffset: { width: 0, height: 4 },
+        marginLeft: 0,
+        marginTop: 0,
+      },
     }),
     zIndex: 10,
     overflow: 'hidden',
@@ -417,6 +425,10 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 12,
     borderTopRightRadius: 12,
     backgroundColor: '#f0f0f0', // Add background color in case image fails to load
+  },
+  calloutImagePlaceholder: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   
   // Close button
@@ -449,10 +461,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     zIndex: 20,
     opacity: 0.9,
-    shadowColor: '#000',
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
-    shadowOffset: { width: 0, height: 1 },
+    ...Platform.select({
+      web: { boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.2)' } as any,
+      default: {
+        shadowColor: '#000',
+        shadowOpacity: 0.2,
+        shadowRadius: 2,
+        shadowOffset: { width: 0, height: 1 },
+      },
+    }),
   },
   navArrowLeft: {
     left: 8,
@@ -520,10 +537,15 @@ const styles = StyleSheet.create({
     marginTop: -6,
     borderLeftWidth: 1,
     borderTopWidth: 1,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    shadowOffset: { width: 0, height: 1 },
+    ...Platform.select({
+      web: { boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.1)' } as any,
+      default: {
+        shadowColor: '#000',
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+        shadowOffset: { width: 0, height: 1 },
+      },
+    }),
   },
 });
 

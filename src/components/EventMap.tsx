@@ -313,17 +313,23 @@ const EventMap: React.FC<MapViewWebProps> = ({
       {Platform.OS !== 'web' && selectedVenue && (
         <View style={[styles.bottomSheet, { backgroundColor: theme.colors.background.primary, borderColor: theme.colors.border.light }]}>
           {/* Event Image */}
-          <Image
-            source={
-              selectedVenue.events[currentEventIndex]?.image_url
-                ? { uri: selectedVenue.events[currentEventIndex].image_url }
-                : selectedVenue.venue?.image
-                ? { uri: selectedVenue.venue.image }
-                : require('../../assets/record.png')
-            }
-            style={styles.bottomSheetImage}
-            resizeMode="cover"
-          />
+          {(() => {
+            const sheetImageUri =
+              selectedVenue.events[currentEventIndex]?.image_url ||
+              selectedVenue.venue?.image ||
+              null;
+            return sheetImageUri ? (
+              <Image
+                source={{ uri: sheetImageUri }}
+                style={styles.bottomSheetImage}
+                resizeMode="cover"
+              />
+            ) : (
+              <View style={[styles.bottomSheetImage, { backgroundColor: theme.colors.surface.sunken, alignItems: 'center', justifyContent: 'center' }]}>
+                <Text variant="caption" color="tertiary">📅</Text>
+              </View>
+            );
+          })()}
 
           {/* Close button */}
           <TouchableOpacity
@@ -436,11 +442,16 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
     borderTopWidth: 1,
-    shadowColor: '#000',
-    shadowOpacity: 0.2,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: -4 },
     elevation: 8,
+    ...Platform.select({
+      web: { boxShadow: '0px -4px 12px rgba(0, 0, 0, 0.2)' } as any,
+      default: {
+        shadowColor: '#000',
+        shadowOpacity: 0.2,
+        shadowRadius: 12,
+        shadowOffset: { width: 0, height: -4 },
+      },
+    }),
   },
   bottomSheetImage: {
     width: '100%',

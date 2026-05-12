@@ -106,6 +106,10 @@ screenshots/*.png
 screenshots/*.jpg
 screenshots/*.jpeg
 
+
+
+.playwright-mcp/*
+
 #build artifacts for ios and android
 ios/
 android/
