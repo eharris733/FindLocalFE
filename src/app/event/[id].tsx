@@ -148,6 +148,11 @@ export default function EventPage() {
     if (url) Linking.openURL(url);
   };
 
+  const handleBack = () => {
+    if (router.canGoBack()) router.back();
+    else router.replace('/');
+  };
+
   const imageUri = event?.image_url || venue?.image || null;
 
   if (loading) {
@@ -214,6 +219,18 @@ export default function EventPage() {
       </View>
 
       <View style={styles.body}>
+        <TouchableOpacity
+          onPress={handleBack}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
+          style={[styles.backButton, { borderColor: theme.colors.border.light }]}
+        >
+          <Icon name="arrow-back" size={18} color={theme.colors.primary[500]} />
+          <Text variant="label" style={{ color: theme.colors.primary[500], marginLeft: 6, fontWeight: '600' }}>
+            Back
+          </Text>
+        </TouchableOpacity>
+
         {displayExpired && (
           <View style={[styles.banner, { backgroundColor: theme.colors.warning + '20', borderColor: theme.colors.warning }]}>
             <Text variant="body2" style={{ color: theme.colors.text.primary }}>
@@ -387,6 +404,16 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 720,
     alignSelf: 'center',
+  },
+  backButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 9999,
+    borderWidth: 1,
+    marginBottom: 16,
   },
   banner: {
     padding: 12,
