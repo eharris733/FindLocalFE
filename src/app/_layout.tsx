@@ -73,6 +73,17 @@ export default function RootLayout() {
       document.head.appendChild(script);
     }
 
+    // Reserve the scrollbar gutter so window.width doesn't change when the
+    // scrollbar appears/disappears. Otherwise the width flip-flop feeds back into
+    // aspect-ratio image sizing and causes an infinite oscillation/re-render loop.
+    // (+html.tsx sets this for the static prod build; this covers dev too.)
+    if (!document.querySelector('style[data-scrollbar-gutter]')) {
+      const style = document.createElement('style');
+      style.dataset.scrollbarGutter = 'true';
+      style.textContent = 'html { overflow-y: scroll; scrollbar-gutter: stable; }';
+      document.head.appendChild(style);
+    }
+
     if (!document.querySelector('link[data-material-symbols]')) {
       const preconnect = document.createElement('link');
       preconnect.rel = 'preconnect';
