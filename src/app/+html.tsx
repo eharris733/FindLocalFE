@@ -83,14 +83,6 @@ export default function Root({ children }: { children: React.ReactNode }) {
 
         {/* Preload critical content for SEO */}
         <style dangerouslySetInnerHTML={{ __html: `
-          /*
-           * Always reserve the vertical scrollbar gutter. Without this the scrollbar
-           * appears/disappears as content height crosses the viewport, which changes
-           * window.width by the scrollbar width. useDeviceInfo reads that width to size
-           * aspect-ratio event images, so the width flip-flop causes an infinite
-           * oscillation/re-render loop (images grow and shrink, UI unusable).
-           */
-          html { overflow-y: scroll; scrollbar-gutter: stable; }
           .seo-content { position: absolute; left: -9999px; }
           noscript .seo-fallback {
             display: block;
