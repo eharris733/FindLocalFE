@@ -61,12 +61,14 @@ const fetchAllCitiesAndRegions = async (): Promise<CityData[]> => {
       return [];
     }
 
+    // A city appears as soon as it has active venues. Region is optional — new
+    // cities may not have region data yet, so we still list the city (with an
+    // empty region set) rather than hiding it.
     const cityMap = new Map<string, Set<string>>();
     for (const venue of data) {
-      if (venue.city && venue.region) {
-        if (!cityMap.has(venue.city)) cityMap.set(venue.city, new Set());
-        cityMap.get(venue.city)!.add(venue.region);
-      }
+      if (!venue.city) continue;
+      if (!cityMap.has(venue.city)) cityMap.set(venue.city, new Set());
+      if (venue.region) cityMap.get(venue.city)!.add(venue.region);
     }
 
     return Array.from(cityMap.entries())

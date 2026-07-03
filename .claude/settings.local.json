@@ -10,7 +10,12 @@
       "WebFetch(domain:support.google.com)",
       "WebSearch",
       "mcp__Snyk__snyk_code_scan",
-      "WebSearch"
+      "WebSearch",
+      "Read(//opt/homebrew/bin/**)",
+      "Read(//usr/local/bin/**)",
+      "Bash(swift --version)",
+      "Bash(mkdir -p hf)",
+      "Bash(swift extract2.swift rec.mov hf 2.6 3.6 10)"
     ]
   },
   "enabledMcpjsonServers": [

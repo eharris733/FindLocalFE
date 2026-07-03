@@ -134,9 +134,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  // The FlatList must stretch to the column's full width and center via the
+  // content container (like saved.tsx / venues.tsx). Centering with
+  // alignItems on this wrapper makes the list shrink-to-fit on web, so its
+  // width depends on which virtualized rows are mounted — rows mounting and
+  // unmounting then resize the whole feed in a loop (width oscillation).
   feedColumn: {
     flex: 1,
-    alignItems: 'center',
   },
   listContent: {
     paddingHorizontal: 20,
@@ -146,6 +150,7 @@ const styles = StyleSheet.create({
   listContentDesktop: {
     width: '100%',
     maxWidth: 720,
+    alignSelf: 'center',
     paddingHorizontal: 32,
     paddingTop: 32,
   },
