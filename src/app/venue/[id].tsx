@@ -19,6 +19,17 @@ import { openMaps } from '../../utils/linkUtils';
 import { logger } from '../../utils/logger';
 import { format, parseISO } from 'date-fns';
 
+const formatTime = (time: string | null): string | null => {
+  if (!time || !time.includes(':')) return null;
+  const [hStr, mStr] = time.split(':');
+  const h = Number.parseInt(hStr, 10);
+  const m = Number.parseInt(mStr, 10);
+  if (Number.isNaN(h) || Number.isNaN(m)) return null;
+  const isPM = h >= 12;
+  const display = isPM ? (h === 12 ? 12 : h - 12) : h === 0 ? 12 : h;
+  return `${display}:${m.toString().padStart(2, '0')} ${isPM ? 'PM' : 'AM'}`;
+};
+
 export default function VenuePage() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
@@ -115,7 +126,7 @@ export default function VenuePage() {
 
         {(venue.region || venue.city || venue.type) && (
           <Text variant="body2" color="secondary" style={{ marginBottom: 16 }}>
-            {[venue.type, venue.region, venue.city].filter(Boolean).join(' · ')}
+            {[...new Set([venue.type, venue.region, venue.city].filter(Boolean))].join(' · ')}
           </Text>
         )}
 
@@ -199,7 +210,7 @@ export default function VenuePage() {
                 {event.event_date && (
                   <Text variant="caption" color="secondary" style={{ marginTop: 4 }}>
                     {format(parseISO(event.event_date), 'EEE · MMM d')}
-                    {event.start_time ? ` · ${event.start_time.slice(0, 5)}` : ''}
+                    {formatTime(event.start_time) ? ` · ${formatTime(event.start_time)}` : ''}
                   </Text>
                 )}
               </View>

@@ -10,6 +10,8 @@ interface EventCardProps {
   event: Event;
   venue?: Venue | null;
   onPress: () => void;
+  /** True when this title repeats on multiple dates at the same venue. */
+  isRecurring?: boolean;
 }
 
 const formatTime = (time: string | null): string | null => {
@@ -38,7 +40,7 @@ const formatPrice = (event: Event): string => {
   return '';
 };
 
-export const EventCard: React.FC<EventCardProps> = ({ event, venue, onPress }) => {
+export const EventCard: React.FC<EventCardProps> = ({ event, venue, onPress, isRecurring }) => {
   const { theme } = useTheme();
   const dateLabel = formatDateLabel(event);
   const priceLabel = formatPrice(event);
@@ -61,6 +63,13 @@ export const EventCard: React.FC<EventCardProps> = ({ event, venue, onPress }) =
               style={{ color: theme.colors.text.primary, fontWeight: '600' }}
             >
               {priceLabel}
+            </Text>
+          </View>
+        ) : null}
+        {isRecurring ? (
+          <View style={[styles.recurringPill, { backgroundColor: theme.colors.background.primary + 'E6' }]}>
+            <Text variant="caption" style={{ color: theme.colors.text.primary, fontWeight: '600' }}>
+              ↻ Recurring
             </Text>
           </View>
         ) : null}
@@ -119,6 +128,14 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 8,
     right: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 9999,
+  },
+  recurringPill: {
+    position: 'absolute',
+    top: 8,
+    left: 8,
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 9999,

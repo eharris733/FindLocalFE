@@ -2,12 +2,15 @@ import React, { createContext, useContext, useState, useEffect, ReactNode, useMe
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../supabase';
 import { STORAGE_KEYS } from '../constants/storage-keys';
+import { sortCitiesByDistance } from '../constants/cities';
 import { logger } from '../utils/logger';
 
 interface CityData {
   name: string;
   regions: string[];
 }
+
+export type LocationStatus = 'idle' | 'locating' | 'granted' | 'denied' | 'unavailable';
 
 interface CityContextType {
   selectedCity: string;
@@ -18,6 +21,10 @@ interface CityContextType {
   onRegionsChange: (regions: string[]) => void;
   loading: boolean;
   error: boolean;
+  /** City names ordered nearest-first once the user shares their location. */
+  nearbyCities: string[];
+  locationStatus: LocationStatus;
+  requestLocation: () => void;
 }
 
 const CityContext = createContext<CityContextType | undefined>(undefined);
@@ -107,6 +114,36 @@ export const CityProvider: React.FC<CityProviderProps> = ({ children }) => {
     setSelectedRegions(regions);
   }, []);
 
+  const [locationStatus, setLocationStatus] = useState<LocationStatus>('idle');
+  const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+
+  const requestLocation = useCallback(() => {
+    // Web + modern RN both expose the W3C geolocation API when available.
+    const geo = typeof navigator !== 'undefined' ? navigator.geolocation : undefined;
+    if (!geo) {
+      setLocationStatus('unavailable');
+      return;
+    }
+    setLocationStatus('locating');
+    geo.getCurrentPosition(
+      (pos) => {
+        setUserLocation({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
+        setLocationStatus('granted');
+      },
+      (err) => {
+        logger.warn('Geolocation unavailable:', err?.message);
+        setLocationStatus(err?.code === 1 ? 'denied' : 'unavailable');
+      },
+      { enableHighAccuracy: false, timeout: 10000, maximumAge: 10 * 60 * 1000 }
+    );
+  }, []);
+
+  const nearbyCities = useMemo(() => {
+    const names = allCityData.map((c) => c.name);
+    if (!userLocation) return names;
+    return sortCitiesByDistance(names, userLocation.latitude, userLocation.longitude);
+  }, [allCityData, userLocation]);
+
   useEffect(() => {
     const init = async () => {
       try {
@@ -141,8 +178,11 @@ export const CityProvider: React.FC<CityProviderProps> = ({ children }) => {
       onRegionsChange,
       loading,
       error,
+      nearbyCities,
+      locationStatus,
+      requestLocation,
     }),
-    [selectedCity, availableRegions, selectedRegions, allCityData, onCityChange, onRegionsChange, loading, error]
+    [selectedCity, availableRegions, selectedRegions, allCityData, onCityChange, onRegionsChange, loading, error, nearbyCities, locationStatus, requestLocation]
   );
 
   return <CityContext.Provider value={value}>{children}</CityContext.Provider>;

@@ -42,11 +42,17 @@ export async function getVenueById(venueId: string): Promise<Venue | null> {
   }
 }
 
+// Columns needed by list/map/detail UI. Excludes scraper_config/transform_rules
+// and other pipeline JSONB blobs, which dominate payload size but are never
+// rendered by the app.
+const VENUE_COLUMNS =
+  'id, name, city, region, address, description, image, type, url, latitude, longitude, venue_size, event_types';
+
 export async function getVenuesByCity(city: string): Promise<Venue[]> {
   try {
     const { data, error } = await supabase
       .from('venues')
-      .select('*')
+      .select(VENUE_COLUMNS)
       .eq('city', city)
       .eq('is_active', true)
       .order('name');
@@ -67,7 +73,7 @@ export async function getVenuesByRegion(region: string): Promise<Venue[]> {
   try {
     const { data, error } = await supabase
       .from('venues')
-      .select('*')
+      .select(VENUE_COLUMNS)
       .eq('region', region)
       .eq('is_active', true)
       .order('name');
@@ -88,7 +94,7 @@ export async function getVenuesByCityAndRegion(city: string, region?: string): P
   try {
     let query = supabase
       .from('venues')
-      .select('*')
+      .select(VENUE_COLUMNS)
       .eq('city', city)
       .eq('is_active', true);
 
@@ -117,7 +123,7 @@ export async function getAllVenues(): Promise<Venue[]> {
     
     const { data, error } = await supabase
       .from('venues')
-      .select('*')
+      .select(VENUE_COLUMNS)
       .eq('is_active', true)
       .order('name');
 

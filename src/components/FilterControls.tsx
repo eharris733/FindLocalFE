@@ -1,9 +1,10 @@
-import React from 'react';
-import { View, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { View, TouchableOpacity, StyleSheet, ScrollView, TextInput } from 'react-native';
 import { Icon, Text } from './ui';
 import { useTheme } from '../context/ThemeContext';
 import { useFilters } from '../context/FiltersContext';
 import { useCityLocation } from '../context/CityContext';
+import { getCityInfo } from '../constants/cities';
 import type { WhenFilter, TimeOfDay } from '../types/events';
 
 const WHEN_OPTIONS: { value: WhenFilter; label: string }[] = [
@@ -92,13 +93,118 @@ interface CityPickerProps {
   onSelect: (name: string) => void;
 }
 
-const CityPicker: React.FC<CityPickerProps> = ({ cities, selected, onSelect }) => (
-  <View style={styles.chipRow}>
-    {cities.map((c) => (
-      <Chip key={c.name} label={c.name} active={c.name === selected} onPress={() => onSelect(c.name)} />
-    ))}
-  </View>
-);
+// Show a search box once the chip cloud stops being scannable at a glance.
+const CITY_SEARCH_THRESHOLD = 8;
+const NEARBY_COUNT = 4;
+
+const cityChipLabel = (name: string): string => {
+  const info = getCityInfo(name);
+  return info ? `${info.name}, ${info.state}` : name;
+};
+
+const CityPicker: React.FC<CityPickerProps> = ({ cities, selected, onSelect }) => {
+  const { theme } = useTheme();
+  const { nearbyCities, locationStatus, requestLocation } = useCityLocation();
+  const [search, setSearch] = useState('');
+
+  const names = useMemo(() => cities.map((c) => c.name), [cities]);
+  const showSearch = names.length > CITY_SEARCH_THRESHOLD;
+
+  const nearby = useMemo(
+    () => (locationStatus === 'granted' ? nearbyCities.slice(0, NEARBY_COUNT) : []),
+    [locationStatus, nearbyCities]
+  );
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return names;
+    return names.filter((n) => cityChipLabel(n).toLowerCase().includes(q));
+  }, [names, search]);
+
+  return (
+    <View>
+      <View style={[styles.chipRow, { marginBottom: 12 }]}>
+        <TouchableOpacity
+          onPress={requestLocation}
+          disabled={locationStatus === 'locating'}
+          accessibilityRole="button"
+          accessibilityLabel="Sort cities by distance from my location"
+          style={[
+            styles.chip,
+            styles.locationChip,
+            {
+              backgroundColor: theme.colors.surface.accent,
+              borderColor: locationStatus === 'granted' ? theme.colors.primary[500] : theme.colors.border.light,
+            },
+          ]}
+        >
+          <Icon name="location" size={14} color={theme.colors.primary[500]} />
+          <Text variant="label" style={{ color: theme.colors.text.secondary, fontWeight: '600' }}>
+            {locationStatus === 'locating'
+              ? 'Finding you…'
+              : locationStatus === 'granted'
+                ? 'Sorted by distance'
+                : locationStatus === 'denied'
+                  ? 'Location blocked'
+                  : 'Near me'}
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {nearby.length > 0 && (
+        <>
+          <Text variant="caption" color="secondary" style={styles.citySubhead}>
+            Nearby
+          </Text>
+          <View style={[styles.chipRow, { marginBottom: 12 }]}>
+            {nearby.map((name) => (
+              <Chip
+                key={`nearby-${name}`}
+                label={cityChipLabel(name)}
+                active={name === selected}
+                onPress={() => onSelect(name)}
+              />
+            ))}
+          </View>
+        </>
+      )}
+
+      {showSearch && (
+        <TextInput
+          value={search}
+          onChangeText={setSearch}
+          placeholder="Search cities"
+          placeholderTextColor={theme.colors.text.tertiary}
+          accessibilityLabel="Search cities"
+          style={[
+            styles.citySearch,
+            {
+              borderColor: theme.colors.border.light,
+              color: theme.colors.text.primary,
+              backgroundColor: theme.colors.surface.accent,
+            },
+          ]}
+        />
+      )}
+
+      {nearby.length > 0 && (
+        <Text variant="caption" color="secondary" style={styles.citySubhead}>
+          All cities
+        </Text>
+      )}
+      <View style={styles.chipRow}>
+        {filtered.map((name) => (
+          <Chip key={name} label={cityChipLabel(name)} active={name === selected} onPress={() => onSelect(name)} />
+        ))}
+        {filtered.length === 0 && (
+          <Text variant="body2" color="secondary">
+            No cities match “{search.trim()}”.
+          </Text>
+        )}
+      </View>
+    </View>
+  );
+};
 
 export const FilterControls: React.FC = () => {
   const { theme } = useTheme();
@@ -216,6 +322,25 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 9999,
     borderWidth: 1,
+  },
+  locationChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  citySubhead: {
+    marginBottom: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+    fontWeight: '700',
+  },
+  citySearch: {
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginBottom: 12,
+    fontSize: 14,
   },
 });
 

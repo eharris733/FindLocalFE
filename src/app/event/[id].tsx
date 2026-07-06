@@ -14,8 +14,9 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import type { Event } from '../../types/events';
 import type { Venue } from '../../types/venues';
-import { getEventByIdWithFallback } from '../../api/events';
+import { getEventByIdWithFallback, getUpcomingSeriesDates } from '../../api/events';
 import { getVenueById } from '../../api/venues';
+import { showToast } from '../../utils/toast';
 import { useTheme } from '../../context/ThemeContext';
 import { Icon, Text } from '../../components/ui';
 import { useFavorites } from '../../context/FavoritesContext';
@@ -47,6 +48,7 @@ export default function EventPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isExpired, setIsExpired] = useState(false);
+  const [seriesDates, setSeriesDates] = useState<string[]>([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -63,6 +65,13 @@ export default function EventPage() {
         }
         setEvent(eventData);
         setIsExpired(expired);
+        if (eventData.venue_id && eventData.title) {
+          getUpcomingSeriesDates(eventData.venue_id, eventData.title)
+            .then((dates) => {
+              if (!cancelled) setSeriesDates(dates);
+            })
+            .catch((err) => logger.warn('Could not fetch series dates:', err));
+        }
         if (eventData.venue_id) {
           try {
             const v = await getVenueById(eventData.venue_id);
@@ -101,7 +110,8 @@ export default function EventPage() {
           await (navigator as any).share({ title: event.title || '', text: message, url: shareUrl });
         } else {
           await navigator.clipboard.writeText(shareUrl);
-          Alert.alert('Link copied', 'Event link copied to clipboard.');
+          // Alert.alert is a no-op on react-native-web; toast actually renders.
+          showToast('Event link copied to clipboard');
         }
       } else {
         await Share.share({ message: `${message}\n${shareUrl}`, url: shareUrl, title: event.title || '' });
@@ -256,6 +266,19 @@ export default function EventPage() {
             <Text variant="body1" style={{ color: theme.colors.text.primary, marginLeft: 8 }}>
               {dateLabel}
               {timeLabel ? ` · ${timeLabel}` : ''}
+            </Text>
+          </View>
+        )}
+
+        {seriesDates.length > 1 && (
+          <View style={styles.metaRow}>
+            <Text variant="body1" style={{ color: theme.colors.primary[500] }}>↻</Text>
+            <Text variant="body2" style={{ color: theme.colors.text.secondary, marginLeft: 8, flex: 1 }}>
+              Recurring event · {seriesDates.length} upcoming dates
+              {(() => {
+                const next = seriesDates.find((d) => d !== event.event_date);
+                return next ? ` (also ${format(parseISO(next), 'EEE, MMM d')})` : '';
+              })()}
             </Text>
           </View>
         )}

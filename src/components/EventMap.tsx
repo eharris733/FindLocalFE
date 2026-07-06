@@ -4,6 +4,7 @@ import { Event } from '../types/events';
 import { Venue } from '../types/venues';
 import { useTheme } from '../context/ThemeContext';
 import CustomMapMarker from './CustomMapMarker';
+import { getCityInfo } from '../constants/cities';
 import { logger } from '../utils/logger';
 import { Text } from './ui/Text';
 const MapView = require('./MapView').default;
@@ -20,18 +21,9 @@ interface MapViewWebProps {
 }
 
 const getCityCenter = (city?: string) => {
-  //console.log('🎯 getCityCenter called with city:', city);
-  switch (city?.toLowerCase()) {
-    case 'boston':
-      //console.log('🎯 Returning Boston coordinates');
-      return { latitude: 42.3601, longitude: -71.0589 }; // Boston
-    case 'new york':
-      //console.log('🎯 Returning New York coordinates');
-      return { latitude: 40.6782, longitude: -73.9442 }; // New York
-    default:
-      //console.log('🎯 Returning default New York coordinates for unknown city:', city);
-      return { latitude: 40.6782, longitude: -73.9442 }; // Default to New York
-  }
+  const info = getCityInfo(city);
+  if (info) return { latitude: info.latitude, longitude: info.longitude };
+  return { latitude: 40.6782, longitude: -73.9442 }; // Fallback: New York
 };
 
 const customMapStyle = [

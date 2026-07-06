@@ -92,7 +92,7 @@ export default function SavedRoute() {
                 No saved events yet
               </Text>
               <Text variant="body2" color="secondary" align="center">
-                Tap the heart on any event to save it here.
+                Open an event and tap Save to keep it here.
               </Text>
             </View>
           )
