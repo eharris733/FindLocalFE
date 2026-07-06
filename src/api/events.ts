@@ -271,18 +271,21 @@ export async function getEventsWithCommunities(
 
     const today = new Date().toISOString().split('T')[0];
 
+    // Feed/map/cards only need these columns. Skipping `description` (the
+    // largest field) and the community join keeps list payloads small; the
+    // detail page refetches the full row by id. Only join communities when a
+    // community filter is actually requested.
+    const listColumns =
+      'id, title, event_date, start_time, end_time, image_url, venue_id, city, region, event_type, price, price_amount, custom_location';
+    const needsCommunities = (communityIds?.length ?? 0) > 0 || (labels?.length ?? 0) > 0;
+    const selectClause = needsCommunities
+      ? `${listColumns}, event_community_assignments(community_id, labels, assigned_by, confidence)`
+      : listColumns;
+
     while (hasMore) {
       let query = supabase
         .from('events_gold')
-        .select(`
-          *,
-          event_community_assignments(
-            community_id,
-            labels,
-            assigned_by,
-            confidence
-          )
-        `)
+        .select(selectClause as '*')
         .gte('event_date', today)
         .or('is_deleted.is.null,is_deleted.eq.false')
         .order('event_date', { ascending: true })
@@ -486,6 +489,36 @@ export async function getUpcomingEventsForVenue(venueId: string, limit: number =
     return (data || []) as Event[];
   } catch (error: any) {
     logger.error('Error fetching upcoming events for venue:', error);
+    return [];
+  }
+}
+
+/**
+ * Upcoming dates for a recurring series: same title at the same venue.
+ * Returns distinct dates ascending (includes the queried event's own date).
+ */
+export async function getUpcomingSeriesDates(venueId: string, title: string): Promise<string[]> {
+  try {
+    const today = new Date().toISOString().split('T')[0];
+
+    const { data, error } = await supabase
+      .from('events_gold')
+      .select('event_date')
+      .eq('venue_id', venueId)
+      .ilike('title', title)
+      .gte('event_date', today)
+      .or('is_deleted.is.null,is_deleted.eq.false')
+      .order('event_date', { ascending: true })
+      .limit(60);
+
+    if (error) {
+      logger.error('Error fetching series dates:', error);
+      return [];
+    }
+
+    return [...new Set((data || []).map((row: { event_date: string }) => row.event_date))];
+  } catch (error: any) {
+    logger.error('Error fetching series dates:', error);
     return [];
   }
 }

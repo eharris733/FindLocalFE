@@ -20,6 +20,7 @@ import { useFilters } from '../context/FiltersContext';
 import { useCityLocation } from '../context/CityContext';
 import { useEventsQuery } from '../hooks/queries/useEventsQuery';
 import { useVenuesQuery } from '../hooks/queries/useVenuesQuery';
+import { buildRecurrenceMap, isRecurringEvent } from '../utils/recurrence';
 import type { Event } from '../types/events';
 import type { Venue } from '../types/venues';
 
@@ -45,6 +46,10 @@ export const EventFeed: React.FC<EventFeedProps> = ({ viewMode }) => {
     return map;
   }, [venues]);
 
+  // Built from the unfiltered city feed so sibling dates hidden by filters
+  // still count toward a series.
+  const recurrenceMap = useMemo(() => buildRecurrenceMap(events), [events]);
+
   const handleEventPress = useCallback(
     (event: Event) => router.push(`/event/${event.id}`),
     [router]
@@ -61,9 +66,10 @@ export const EventFeed: React.FC<EventFeedProps> = ({ viewMode }) => {
         event={item}
         venue={item.venue_id ? venueById.get(item.venue_id) : null}
         onPress={() => handleEventPress(item)}
+        isRecurring={isRecurringEvent(item, recurrenceMap)}
       />
     ),
-    [venueById, handleEventPress]
+    [venueById, handleEventPress, recurrenceMap]
   );
 
   if (viewMode === 'map') {
