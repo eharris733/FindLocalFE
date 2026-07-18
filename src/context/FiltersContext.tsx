@@ -21,6 +21,7 @@ const initialState: FilterState = {
   paid: false,
   maxPrice: null,
   timeOfDay: [],
+  query: '',
 };
 
 const reducer = (state: FilterState, action: FilterAction): FilterState => {
@@ -66,6 +67,8 @@ const reducer = (state: FilterState, action: FilterAction): FilterState => {
           : [...state.timeOfDay, action.payload],
       };
     }
+    case 'SET_QUERY':
+      return { ...state, query: action.payload };
     case 'RESET':
       return initialState;
     case 'HYDRATE':
@@ -91,7 +94,9 @@ export const FiltersProvider: React.FC<{ children: ReactNode }> = ({ children })
       try {
         const raw = await AsyncStorage.getItem(STORAGE_KEYS.FILTERS);
         if (!raw) return;
-        const parsed = JSON.parse(raw);
+        // Search is session-only: drop any query that snuck into storage so a
+        // forgotten search never silently empties the feed on next visit.
+        const { query: _query, ...parsed } = JSON.parse(raw);
         const customDate = parsed.customDate ? new Date(parsed.customDate) : null;
         dispatch({ type: 'HYDRATE', payload: { ...parsed, customDate } });
       } catch (err) {
@@ -101,7 +106,8 @@ export const FiltersProvider: React.FC<{ children: ReactNode }> = ({ children })
   }, []);
 
   useEffect(() => {
-    AsyncStorage.setItem(STORAGE_KEYS.FILTERS, JSON.stringify(filters)).catch(() => {});
+    const { query: _query, ...persisted } = filters;
+    AsyncStorage.setItem(STORAGE_KEYS.FILTERS, JSON.stringify(persisted)).catch(() => {});
   }, [filters]);
 
   const reset = useCallback(() => dispatch({ type: 'RESET' }), []);

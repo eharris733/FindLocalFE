@@ -46,6 +46,8 @@ export interface FilterState {
   paid: boolean;
   maxPrice: number | null;
   timeOfDay: TimeOfDay[];
+  /** Free-text search over title / venue name. Session-only — never persisted. */
+  query: string;
 }
 
 export type FilterAction =
@@ -59,5 +61,6 @@ export type FilterAction =
   | { type: 'SET_PAID'; payload: boolean }
   | { type: 'SET_MAX_PRICE'; payload: number | null }
   | { type: 'TOGGLE_TIME_OF_DAY'; payload: TimeOfDay }
+  | { type: 'SET_QUERY'; payload: string }
   | { type: 'RESET' }
   | { type: 'HYDRATE'; payload: Partial<FilterState> };

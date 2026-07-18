@@ -12,7 +12,15 @@ interface EventCardProps {
   onPress: () => void;
   /** True when this title repeats on multiple dates at the same venue. */
   isRecurring?: boolean;
+  /** Venue's distance from the user in km; shown as miles when provided. */
+  distanceKm?: number;
 }
+
+const formatDistance = (km?: number): string | null => {
+  if (km == null || !Number.isFinite(km)) return null;
+  const miles = km * 0.621371;
+  return miles < 10 ? `${miles.toFixed(1)} mi` : `${Math.round(miles)} mi`;
+};
 
 const formatTime = (time: string | null): string | null => {
   if (!time || !time.includes(':')) return null;
@@ -40,12 +48,13 @@ const formatPrice = (event: Event): string => {
   return '';
 };
 
-export const EventCard: React.FC<EventCardProps> = ({ event, venue, onPress, isRecurring }) => {
+export const EventCard: React.FC<EventCardProps> = ({ event, venue, onPress, isRecurring, distanceKm }) => {
   const { theme } = useTheme();
   const dateLabel = formatDateLabel(event);
   const priceLabel = formatPrice(event);
   const venueName = venue?.name ?? event.custom_location ?? '';
   const region = event.region;
+  const distanceLabel = formatDistance(distanceKm);
 
   const imageUri = event.image_url || venue?.image || null;
 
@@ -101,7 +110,7 @@ export const EventCard: React.FC<EventCardProps> = ({ event, venue, onPress, isR
               style={[styles.locationText, { color: theme.colors.text.secondary }]}
               numberOfLines={1}
             >
-              {[venueName, region].filter(Boolean).join(' · ')}
+              {[venueName, region, distanceLabel].filter(Boolean).join(' · ')}
             </Text>
           </View>
         )}
