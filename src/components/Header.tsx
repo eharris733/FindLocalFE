@@ -1,9 +1,10 @@
 import React from 'react';
-import { StyleSheet, TouchableOpacity, View, Platform } from 'react-native';
+import { StyleSheet, TouchableOpacity, View, Platform, TextInput } from 'react-native';
 import { useRouter, usePathname, useGlobalSearchParams } from 'expo-router';
 import { useTheme } from '../context/ThemeContext';
 import { useDeviceInfo } from '../hooks/useDeviceInfo';
 import { useFavorites } from '../context/FavoritesContext';
+import { useFilters } from '../context/FiltersContext';
 import { Icon, Text, Logo } from './ui';
 import MapToggleButton from './MapToggleButton';
 
@@ -20,6 +21,8 @@ export default function Header() {
   const router = useRouter();
   const pathname = usePathname();
   const params = useGlobalSearchParams<{ view?: string }>();
+  const { filters, dispatch } = useFilters();
+  const searchQuery = filters.query ?? '';
   const { favoriteEventIds } = useFavorites();
   const savedCount = favoriteEventIds.length;
   const savedBadgeLabel = savedCount > 9 ? '9+' : String(savedCount);
@@ -45,6 +48,16 @@ export default function Header() {
     router.push('/saved');
   };
 
+  const handleSearchChange = (text: string) => {
+    dispatch({ type: 'SET_QUERY', payload: text });
+  };
+
+  // The query only filters the Discover feed, so Enter from another page
+  // takes you there to see the results.
+  const handleSearchSubmit = () => {
+    if (!onDiscover) router.push('/');
+  };
+
   return (
     <View
       style={[
@@ -57,9 +70,45 @@ export default function Header() {
     >
       <View style={styles.left}>
         {isDesktop ? (
-          <TouchableOpacity onPress={() => router.push('/')} accessibilityRole="link">
-            <Logo isMobile />
-          </TouchableOpacity>
+          <>
+            <TouchableOpacity onPress={() => router.push('/')} accessibilityRole="link">
+              <Logo isMobile />
+            </TouchableOpacity>
+            <View
+              style={[
+                styles.searchBox,
+                {
+                  backgroundColor: theme.colors.surface.accent,
+                  borderColor: theme.colors.border.light,
+                },
+              ]}
+            >
+              <Icon name="search" size={16} color={theme.colors.text.tertiary} />
+              <TextInput
+                value={searchQuery}
+                onChangeText={handleSearchChange}
+                onSubmitEditing={handleSearchSubmit}
+                placeholder="Search events"
+                placeholderTextColor={theme.colors.text.tertiary}
+                accessibilityLabel="Search events"
+                returnKeyType="search"
+                style={[
+                  styles.searchInput,
+                  { color: theme.colors.text.primary },
+                  Platform.OS === 'web' ? ({ outlineStyle: 'none' } as any) : null,
+                ]}
+              />
+              {searchQuery.length > 0 && (
+                <TouchableOpacity
+                  onPress={() => handleSearchChange('')}
+                  accessibilityRole="button"
+                  accessibilityLabel="Clear search"
+                >
+                  <Icon name="close" size={16} color={theme.colors.text.tertiary} />
+                </TouchableOpacity>
+              )}
+            </View>
+          </>
         ) : showMapToggle ? (
           <MapToggleButton current={viewMode} onToggle={handleMapToggle} />
         ) : (
@@ -187,6 +236,23 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  searchBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    height: 40,
+    width: 240,
+    borderRadius: 9999,
+    borderWidth: 1,
+    paddingHorizontal: 14,
+    marginLeft: 20,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 14,
+    height: '100%',
+    paddingVertical: 0,
   },
   badge: {
     position: 'absolute',

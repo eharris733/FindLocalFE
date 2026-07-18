@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { View, TouchableOpacity, StyleSheet, ScrollView, TextInput } from 'react-native';
 import { Icon, Text } from './ui';
 import { useTheme } from '../context/ThemeContext';
+import { useDeviceInfo } from '../hooks/useDeviceInfo';
 import { useFilters } from '../context/FiltersContext';
 import { useCityLocation } from '../context/CityContext';
 import { getCityInfo } from '../constants/cities';
@@ -208,6 +209,7 @@ const CityPicker: React.FC<CityPickerProps> = ({ cities, selected, onSelect }) =
 
 export const FilterControls: React.FC = () => {
   const { theme } = useTheme();
+  const { isDesktop } = useDeviceInfo();
   const { filters, dispatch } = useFilters();
   const { selectedCity, allCityData, onCityChange, availableRegions } = useCityLocation();
 
@@ -217,6 +219,29 @@ export const FilterControls: React.FC = () => {
       contentContainerStyle={styles.content}
       keyboardShouldPersistTaps="handled"
     >
+      {/* Desktop already has the header search bar; give mobile one here. */}
+      {!isDesktop && (
+        <Section title="Search">
+          <TextInput
+            value={filters.query ?? ''}
+            onChangeText={(text) => dispatch({ type: 'SET_QUERY', payload: text })}
+            placeholder="Search events or venues"
+            placeholderTextColor={theme.colors.text.tertiary}
+            accessibilityLabel="Search events"
+            returnKeyType="search"
+            style={[
+              styles.citySearch,
+              {
+                borderColor: theme.colors.border.light,
+                color: theme.colors.text.primary,
+                backgroundColor: theme.colors.surface.accent,
+                marginBottom: 0,
+              },
+            ]}
+          />
+        </Section>
+      )}
+
       {allCityData.length > 1 && (
         <Section title="City">
           <CityPicker

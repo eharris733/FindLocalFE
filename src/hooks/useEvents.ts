@@ -68,8 +68,14 @@ const eventHasCategory = (event: Event, chipSlugs: string[]): boolean => {
   return false;
 };
 
-export const filterEvents = (events: Event[], filters: FilterState): Event[] => {
+export const filterEvents = (
+  events: Event[],
+  filters: FilterState,
+  /** venue_id → venue name, so a search can also hit "Paradise Rock Club". */
+  venueNames?: ReadonlyMap<string, string>
+): Event[] => {
   const { start, end } = getDateRange(filters.when, filters.customDate);
+  const query = (filters.query ?? '').trim().toLowerCase();
   const priceMode: 'any' | 'free' | 'paid' | 'either' =
     filters.free && filters.paid ? 'either' :
     filters.free ? 'free' :
@@ -81,6 +87,15 @@ export const filterEvents = (events: Event[], filters: FilterState): Event[] => 
 
     if (start && eventDate < start) return false;
     if (end && eventDate > end) return false;
+
+    if (query) {
+      const venueName = event.venue_id ? venueNames?.get(event.venue_id) : undefined;
+      const haystack = [event.title, venueName, event.custom_location]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+      if (!haystack.includes(query)) return false;
+    }
 
     if (filters.regions.length > 0) {
       if (!event.region || !filters.regions.includes(event.region)) return false;
@@ -113,6 +128,7 @@ export const filterEvents = (events: Event[], filters: FilterState): Event[] => 
 
 export const countActiveFilters = (filters: FilterState): number => {
   let n = 0;
+  if ((filters.query ?? '').trim()) n++;
   if (filters.when !== 'anytime') n++;
   if (filters.categories.length > 0) n++;
   if (filters.regions.length > 0) n++;
@@ -122,5 +138,9 @@ export const countActiveFilters = (filters: FilterState): number => {
   return n;
 };
 
-export const useFilteredEvents = (events: Event[], filters: FilterState): Event[] =>
-  useMemo(() => filterEvents(events, filters), [events, filters]);
+export const useFilteredEvents = (
+  events: Event[],
+  filters: FilterState,
+  venueNames?: ReadonlyMap<string, string>
+): Event[] =>
+  useMemo(() => filterEvents(events, filters, venueNames), [events, filters, venueNames]);

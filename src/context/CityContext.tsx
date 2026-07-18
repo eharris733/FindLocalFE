@@ -1,8 +1,8 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo, useCallback, useRef } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../supabase';
 import { STORAGE_KEYS } from '../constants/storage-keys';
-import { sortCitiesByDistance } from '../constants/cities';
+import { sortCitiesByDistance, getCityInfo } from '../constants/cities';
 import { logger } from '../utils/logger';
 
 interface CityData {
@@ -11,6 +11,7 @@ interface CityData {
 }
 
 export type LocationStatus = 'idle' | 'locating' | 'granted' | 'denied' | 'unavailable';
+export type FeedSort = 'soonest' | 'nearest';
 
 interface CityContextType {
   selectedCity: string;
@@ -25,6 +26,11 @@ interface CityContextType {
   nearbyCities: string[];
   locationStatus: LocationStatus;
   requestLocation: () => void;
+  /** Set once the user shares their location; drives distance sort + labels. */
+  userLocation: { latitude: number; longitude: number } | null;
+  /** Feed ordering. Session-only; a granted "Near me" flips it to 'nearest'. */
+  feedSort: FeedSort;
+  setFeedSort: (sort: FeedSort) => void;
 }
 
 const CityContext = createContext<CityContextType | undefined>(undefined);
@@ -35,19 +41,37 @@ interface CityProviderProps {
 
 const DEFAULT_CITY = 'Boston';
 
+interface VenueRow {
+  city: string | null;
+  region: string | null;
+}
+
+// Supabase caps each response at 1000 rows, so page through active venues —
+// otherwise cities/regions silently vanish from the picker once the venue
+// count passes the cap.
+const VENUE_PAGE_SIZE = 1000;
+
+const fetchActiveVenues = async (city?: string): Promise<VenueRow[]> => {
+  const rows: VenueRow[] = [];
+  for (let page = 0; ; page++) {
+    let query = supabase
+      .from('venues')
+      .select('city, region')
+      .eq('is_active', true)
+      .order('id')
+      .range(page * VENUE_PAGE_SIZE, (page + 1) * VENUE_PAGE_SIZE - 1);
+    if (city) query = query.eq('city', city);
+    const { data, error } = await query;
+    if (error) throw error;
+    rows.push(...((data ?? []) as VenueRow[]));
+    if (!data || data.length < VENUE_PAGE_SIZE) break;
+  }
+  return rows;
+};
+
 const fetchRegionsForCity = async (city: string): Promise<string[]> => {
   try {
-    const { data, error } = await supabase
-      .from('venues')
-      .select('region')
-      .eq('city', city)
-      .eq('is_active', true);
-
-    if (error) {
-      logger.error('Error fetching regions:', error);
-      return [];
-    }
-
+    const data = await fetchActiveVenues(city);
     const regions = [...new Set(data.map((v) => v.region))].filter(Boolean) as string[];
     return regions.sort((a, b) => a.localeCompare(b));
   } catch (error) {
@@ -58,15 +82,7 @@ const fetchRegionsForCity = async (city: string): Promise<string[]> => {
 
 const fetchAllCitiesAndRegions = async (): Promise<CityData[]> => {
   try {
-    const { data, error } = await supabase
-      .from('venues')
-      .select('city, region')
-      .eq('is_active', true);
-
-    if (error) {
-      logger.error('Error fetching cities:', error);
-      return [];
-    }
+    const data = await fetchActiveVenues();
 
     // A city appears as soon as it has active venues. Region is optional — new
     // cities may not have region data yet, so we still list the city (with an
@@ -116,6 +132,10 @@ export const CityProvider: React.FC<CityProviderProps> = ({ children }) => {
 
   const [locationStatus, setLocationStatus] = useState<LocationStatus>('idle');
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [feedSort, setFeedSort] = useState<FeedSort>('soonest');
+  // Set per explicit "Near me" tap so a granted location switches the city
+  // exactly once, without fighting later manual picks.
+  const pendingNearestSelect = useRef(false);
 
   const requestLocation = useCallback(() => {
     // Web + modern RN both expose the W3C geolocation API when available.
@@ -125,12 +145,14 @@ export const CityProvider: React.FC<CityProviderProps> = ({ children }) => {
       return;
     }
     setLocationStatus('locating');
+    pendingNearestSelect.current = true;
     geo.getCurrentPosition(
       (pos) => {
         setUserLocation({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
         setLocationStatus('granted');
       },
       (err) => {
+        pendingNearestSelect.current = false;
         logger.warn('Geolocation unavailable:', err?.message);
         setLocationStatus(err?.code === 1 ? 'denied' : 'unavailable');
       },
@@ -143,6 +165,19 @@ export const CityProvider: React.FC<CityProviderProps> = ({ children }) => {
     if (!userLocation) return names;
     return sortCitiesByDistance(names, userLocation.latitude, userLocation.longitude);
   }, [allCityData, userLocation]);
+
+  // "Near me" should land you in the nearest available city, not just reorder
+  // the picker. Skip names without coordinate data — they sort last and would
+  // otherwise be picked alphabetically when nothing matches cities.ts.
+  useEffect(() => {
+    if (!pendingNearestSelect.current || !userLocation || allCityData.length === 0) return;
+    pendingNearestSelect.current = false;
+    setFeedSort('nearest');
+    const nearest = nearbyCities.find((name) => getCityInfo(name));
+    if (nearest && nearest !== selectedCity) {
+      onCityChange(nearest);
+    }
+  }, [userLocation, allCityData, nearbyCities, selectedCity, onCityChange]);
 
   useEffect(() => {
     const init = async () => {
@@ -181,8 +216,11 @@ export const CityProvider: React.FC<CityProviderProps> = ({ children }) => {
       nearbyCities,
       locationStatus,
       requestLocation,
+      userLocation,
+      feedSort,
+      setFeedSort,
     }),
-    [selectedCity, availableRegions, selectedRegions, allCityData, onCityChange, onRegionsChange, loading, error, nearbyCities, locationStatus, requestLocation]
+    [selectedCity, availableRegions, selectedRegions, allCityData, onCityChange, onRegionsChange, loading, error, nearbyCities, locationStatus, requestLocation, userLocation, feedSort]
   );
 
   return <CityContext.Provider value={value}>{children}</CityContext.Provider>;

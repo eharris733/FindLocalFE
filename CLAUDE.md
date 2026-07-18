@@ -71,10 +71,10 @@ There is no auth-gated route group, no `(private)`, no `(auth)`.
 
 ### Contexts (`src/context/`)
 1. **ThemeContext** — `theme`, `isDark`, `setThemeMode('system'|'light'|'dark')`. Theme mode is **not** persisted yet (state-only).
-2. **CityContext** — `selectedCity`, `allCityData` (cities + regions derived from active `venues` rows), `selectedRegions`, `availableRegions`, plus geolocation: `requestLocation()`, `locationStatus`, `nearbyCities` (city names sorted nearest-first). Default city = Boston. City persists to AsyncStorage via `STORAGE_KEYS.PREFERRED_CITY`. Switching city clears `selectedRegions`.
+2. **CityContext** — `selectedCity`, `allCityData` (cities + regions derived from active `venues` rows), `selectedRegions`, `availableRegions`, plus geolocation: `requestLocation()`, `locationStatus`, `userLocation`, `nearbyCities` (city names sorted nearest-first), and `feedSort` (`'soonest' | 'nearest'`, session-only). A granted `requestLocation()` auto-selects the nearest city that has coordinate data in `cities.ts` (once per tap — it doesn't fight later manual picks) and flips `feedSort` to `'nearest'`. Default city = Boston. City persists to AsyncStorage via `STORAGE_KEYS.PREFERRED_CITY`. Switching city clears `selectedRegions`.
    - `src/constants/cities.ts` is the canonical launch-city list (~31 cities) with lat/lng + state. It drives the "Nearby" sort, chip labels ("Boston, MA"), and map centering. Keep names in sync with `venues.city` values.
 3. **FavoritesContext** — `favoriteEventIds`, `isFavorite(id)`, `toggleFavorite(id)`. Local-only. Persisted to AsyncStorage as a JSON array.
-4. **FiltersContext** — `filters`, `setFilters`. Persisted to AsyncStorage.
+4. **FiltersContext** — `filters`, `setFilters`. Persisted to AsyncStorage — except `query` (free-text search), which is session-only so a forgotten search never empties the feed on the next visit.
 
 ### React Query (`src/hooks/queries/`)
 - `useEventsQuery(city)` → `events_gold` for the city
@@ -83,7 +83,8 @@ There is no auth-gated route group, no `(private)`, no `(auth)`.
 - `useCityData()` → composes city availability
 
 ### Filter logic (`src/hooks/useEvents.ts`)
-`filterEvents(events, filters)` filters by:
+`filterEvents(events, filters, venueNames?)` filters by:
+- `query`: case-insensitive substring over title + venue name (via the optional `venue_id → name` map) + `custom_location`
 - `when`: `anytime` (no date filter) / `today` / `tomorrow` / `this_weekend` / `custom`
 - `categories[]`: matches `event.event_type` OR `event_community_assignments.community_id`
 - `regions[]`: matches `event.region`
@@ -100,16 +101,16 @@ There is no auth-gated route group, no `(private)`, no `(auth)`.
 ## Component map (`src/components/`)
 
 - **`Header.tsx`** — sticky top bar.
-  - Desktop: logo + nav links (`Discover`, `Map`, `Venues`, `About`) + bookmark icon.
-  - Mobile: `MapToggleButton` (on `/`) or back arrow (elsewhere) + centered logo + bookmark icon.
+  - Desktop: logo + event search bar (filters the Discover feed via `filters.query`; Enter navigates to `/` from other pages) + nav links (`Discover`, `Map`, `Venues`, `About`) + bookmark icon.
+  - Mobile: `MapToggleButton` (on `/`) or back arrow (elsewhere) + centered logo + bookmark icon. No header search — mobile search lives at the top of the `/filters` modal.
   - Uses `useGlobalSearchParams` for the toggle state (works correctly).
 - **`MapToggleButton.tsx`** — toggles `?view=map` ↔ `?view=list`. Label is `'List'` when on map, `'Map'` when on list.
 - **`FilterFAB.tsx`** — fixed bottom-right floating button (mobile only). Badge shows `countActiveFilters(filters)`. Tap → `/filters`.
 - **`FilterSidebar.tsx`** — desktop left rail rendering `FilterControls` inline. Shows "Reset · N" when filters are active.
 - **`FilterScreen.tsx`** — body of `/filters` modal. Apply button shows match count, calls `router.back()`.
 - **`FilterControls.tsx`** — chip groups for City / When / What / Where / Price / Time of Day. The City section is a `CityPicker` with a "Near me" button (browser geolocation → "Nearby" chips sorted by distance) and a search box that appears once there are >8 cities.
-- **`EventFeed.tsx`** — orchestrator. List view: `FlatList` + (desktop) `FilterSidebar` or (mobile) `FilterFAB`. Map view: `FilterSidebar` (desktop) + `EventMap`.
-- **`EventCard.tsx`** — 16:9 image, price pill (top-right), date/time, title (2 lines), venue · region (1 line).
+- **`EventFeed.tsx`** — orchestrator. List view: `FlatList` + (desktop) `FilterSidebar` or (mobile) `FilterFAB`. Map view: `FilterSidebar` (desktop) + `EventMap`. Once the user shares a location, a "Sort: Soonest / Nearest" toggle appears above the list; Nearest orders by venue distance (ties → date, then start_time; venues without coords sink to the bottom). The API always returns date-ascending — "Soonest" is just that order.
+- **`EventCard.tsx`** — 16:9 image, price pill (top-right), date/time, title (2 lines), venue · region · distance-in-miles (1 line; distance only when location is shared and the venue has coords).
 - **`EventMap.tsx` + `CustomMapMarker.tsx`** — Google Maps via `@teovilla/react-native-web-maps`. Markers per venue with event count. Callout shows event title, venue, "See Event" and "See Venue" buttons (both wired). Initial center comes from `getCityInfo(selectedCity)` (all launch cities), then web fit-bounds to venue coords.
 - **`EventPageSchema.tsx`, `BreadcrumbSchema.tsx`, `StructuredData.tsx`** — JSON-LD for SEO. `EventPageSchema` also sets `document.title` (per-event titles work; static pages share `"Find Local"`).
 - **`ui/`** — `Text`, `Icon`, `Logo`, etc. Shared primitives.
