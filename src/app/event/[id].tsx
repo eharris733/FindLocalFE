@@ -220,27 +220,33 @@ export default function EventPage() {
       >
         <Icon name="calendar" size={48} color={theme.colors.text.tertiary} />
         {imageUri ? (
-          <Image
-            source={{ uri: imageUri }}
-            style={StyleSheet.absoluteFill}
-            resizeMode="cover"
-          />
+          <>
+            {/* Blurred cover fill behind an uncropped image, so tall poster
+                art shows whole without pushing the title below the fold. */}
+            <Image
+              source={{ uri: imageUri }}
+              style={StyleSheet.absoluteFill}
+              resizeMode="cover"
+              blurRadius={24}
+            />
+            <Image
+              source={{ uri: imageUri }}
+              style={StyleSheet.absoluteFill}
+              resizeMode="contain"
+            />
+          </>
         ) : null}
-      </View>
-
-      <View style={styles.body}>
         <TouchableOpacity
           onPress={handleBack}
           accessibilityRole="button"
           accessibilityLabel="Go back"
-          style={[styles.backButton, { borderColor: theme.colors.border.light }]}
+          style={[styles.backOverlay, { backgroundColor: theme.colors.background.primary + 'E6' }]}
         >
-          <Icon name="arrow-back" size={18} color={theme.colors.primary[500]} />
-          <Text variant="label" style={{ color: theme.colors.primary[500], marginLeft: 6, fontWeight: '600' }}>
-            Back
-          </Text>
+          <Icon name="arrow-back" size={20} color={theme.colors.primary[500]} />
         </TouchableOpacity>
+      </View>
 
+      <View style={styles.body}>
         {displayExpired && (
           <View style={[styles.banner, { backgroundColor: theme.colors.warning + '20', borderColor: theme.colors.warning }]}>
             <Text variant="body2" style={{ color: theme.colors.text.primary }}>
@@ -415,9 +421,20 @@ const styles = StyleSheet.create({
   hero: {
     width: '100%',
     aspectRatio: 16 / 9,
-    ...(Platform.OS === 'web' ? { maxHeight: 360 } : {}),
+    maxHeight: 320,
+    overflow: 'hidden',
   },
   heroPlaceholder: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  backOverlay: {
+    position: 'absolute',
+    top: 12,
+    left: 12,
+    width: 40,
+    height: 40,
+    borderRadius: 9999,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -427,16 +444,6 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 720,
     alignSelf: 'center',
-  },
-  backButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 9999,
-    borderWidth: 1,
-    marginBottom: 16,
   },
   banner: {
     padding: 12,

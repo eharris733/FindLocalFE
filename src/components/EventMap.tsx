@@ -3,11 +3,14 @@ import { Platform, View, StyleSheet, TouchableOpacity, Image, Modal } from 'reac
 import { Event } from '../types/events';
 import { Venue } from '../types/venues';
 import { useTheme } from '../context/ThemeContext';
+import { useCityLocation } from '../context/CityContext';
 import CustomMapMarker from './CustomMapMarker';
 import { getCityInfo } from '../constants/cities';
 import { logger } from '../utils/logger';
 import { Text } from './ui/Text';
+import { Icon } from './ui';
 const MapView = require('./MapView').default;
+const { Marker } = require('./MapComponents');
 
 
 interface MapViewWebProps {
@@ -58,7 +61,11 @@ const EventMap: React.FC<MapViewWebProps> = ({
   selectedCity
 }) => {
   const { theme } = useTheme();
+  const { userLocation, requestLocation, locationStatus } = useCityLocation();
   const mapRef = useRef<any>(null);
+  // Set when the locate button is tapped before a fix exists, so the camera
+  // recenters once the location arrives.
+  const wantCenterOnUserRef = useRef(false);
   const [activeCalloutId, setActiveCalloutId] = useState<string | null>(null);
   const markerClickedRef = useRef<boolean>(false);
   const lastActionRef = useRef<{ type: 'marker' | 'map' | 'callout', timestamp: number } | null>(null);
@@ -117,6 +124,31 @@ const EventMap: React.FC<MapViewWebProps> = ({
   useEffect(() => {
     setActiveCalloutId(null);
   }, [highlightedEventId]);
+
+  const centerOnUser = (loc: { latitude: number; longitude: number }) => {
+    hasUserInteractedRef.current = true;
+    mapRef.current?.animateCamera(
+      { center: loc, zoom: 13 },
+      { duration: 500 }
+    );
+  };
+
+  // Recenter once a location fix arrives after tapping the locate button.
+  useEffect(() => {
+    if (userLocation && wantCenterOnUserRef.current) {
+      wantCenterOnUserRef.current = false;
+      centerOnUser(userLocation);
+    }
+  }, [userLocation]);
+
+  const handleLocatePress = () => {
+    if (userLocation) {
+      centerOnUser(userLocation);
+    } else {
+      wantCenterOnUserRef.current = true;
+      requestLocation();
+    }
+  };
 
   // No forced remount; rely on render order and zIndex
 
@@ -251,7 +283,7 @@ const EventMap: React.FC<MapViewWebProps> = ({
         ref={mapRef}
         style={styles.map}
         initialRegion={initialRegion}
-        showsUserLocation={false}
+        showsUserLocation={Platform.OS !== 'web' && locationStatus === 'granted'}
         showsMyLocationButton={false}
         zoomEnabled={true}
         scrollEnabled={true}
@@ -289,8 +321,38 @@ const EventMap: React.FC<MapViewWebProps> = ({
             />
           );
         })}
+        {/* Native draws its own blue dot via showsUserLocation; web needs a marker. */}
+        {Platform.OS === 'web' && userLocation && (
+          <Marker coordinate={userLocation} anchor={{ x: 0.5, y: 0.5 }} tracksViewChanges={false}>
+            <View style={styles.userDotOuter}>
+              <View style={styles.userDotInner} />
+            </View>
+          </Marker>
+        )}
       </MapView>
-      
+
+      <TouchableOpacity
+        onPress={handleLocatePress}
+        accessibilityRole="button"
+        accessibilityLabel="Show my location on the map"
+        style={[
+          styles.locateButton,
+          {
+            backgroundColor: theme.colors.background.primary,
+            borderColor:
+              locationStatus === 'granted' ? theme.colors.primary[500] : theme.colors.border.light,
+          },
+        ]}
+      >
+        <Icon
+          name="location"
+          size={20}
+          color={
+            locationStatus === 'denied' ? theme.colors.text.tertiary : theme.colors.primary[500]
+          }
+        />
+      </TouchableOpacity>
+
       {/* Debug overlay - uncomment if necessary */}
       {/* <View style={[styles.debugOverlay, {
         backgroundColor: theme.colors.background.primary + 'CC',
@@ -424,6 +486,43 @@ const styles = StyleSheet.create({
   },
   debugText: {
     textAlign: 'center',
+  },
+  locateButton: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    width: 44,
+    height: 44,
+    borderRadius: 9999,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...Platform.select({
+      web: { boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.15)' } as any,
+      default: {
+        shadowColor: '#000',
+        shadowOpacity: 0.15,
+        shadowRadius: 8,
+        shadowOffset: { width: 0, height: 2 },
+        elevation: 4,
+      },
+    }),
+  },
+  userDotOuter: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: 'rgba(66, 133, 244, 0.25)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  userDotInner: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#4285F4',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
   },
   // Bottom sheet styles
   bottomSheet: {

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -7,8 +7,9 @@ import { useTheme } from '../context/ThemeContext';
 import { useFilters } from '../context/FiltersContext';
 import FilterControls from './FilterControls';
 import { useEventsQuery } from '../hooks/queries/useEventsQuery';
+import { useVenuesQuery } from '../hooks/queries/useVenuesQuery';
 import { useCityLocation } from '../context/CityContext';
-import { filterEvents } from '../hooks/useEvents';
+import { useFilteredEvents } from '../hooks/useEvents';
 
 export const FilterScreen: React.FC = () => {
   const router = useRouter();
@@ -16,7 +17,13 @@ export const FilterScreen: React.FC = () => {
   const { filters, reset } = useFilters();
   const { selectedCity } = useCityLocation();
   const { data: events = [] } = useEventsQuery(selectedCity);
-  const matchCount = filterEvents(events, filters).length;
+  const { data: venues = [] } = useVenuesQuery(selectedCity);
+  const venueNames = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const v of venues) if (v.name) map.set(v.id, v.name);
+    return map;
+  }, [venues]);
+  const matchCount = useFilteredEvents(events, filters, venueNames).length;
 
   const dismiss = () => {
     if (router.canGoBack()) router.back();

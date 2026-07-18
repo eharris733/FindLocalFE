@@ -1,6 +1,6 @@
 # FindLocal Frontend — Developer Documentation
 
-**Last Updated:** 2026-07-02
+**Last Updated:** 2026-07-18
 **React Native:** 0.81.5 · **Expo SDK:** 54 · **Expo Router:** ~6
 **Target platforms:** iOS, Android, Web (web is the primary build today)
 
@@ -71,10 +71,10 @@ There is no auth-gated route group, no `(private)`, no `(auth)`.
 
 ### Contexts (`src/context/`)
 1. **ThemeContext** — `theme`, `isDark`, `setThemeMode('system'|'light'|'dark')`. Theme mode is **not** persisted yet (state-only).
-2. **CityContext** — `selectedCity`, `allCityData` (cities + regions derived from active `venues` rows), `selectedRegions`, `availableRegions`, plus geolocation: `requestLocation()`, `locationStatus`, `nearbyCities` (city names sorted nearest-first). Default city = Boston. City persists to AsyncStorage via `STORAGE_KEYS.PREFERRED_CITY`. Switching city clears `selectedRegions`.
+2. **CityContext** — `selectedCity`, `allCityData` (cities + regions derived from active `venues` rows), `selectedRegions`, `availableRegions`, plus geolocation: `requestLocation()`, `locationStatus`, `userLocation`, `nearbyCities` (city names sorted nearest-first), and `feedSort` (`'soonest' | 'nearest'`, session-only). A granted `requestLocation()` auto-selects the nearest city that has coordinate data in `cities.ts` (once per tap — it doesn't fight later manual picks) and flips `feedSort` to `'nearest'`. Default city = Boston. City persists to AsyncStorage via `STORAGE_KEYS.PREFERRED_CITY`. Switching city clears `selectedRegions`.
    - `src/constants/cities.ts` is the canonical launch-city list (~31 cities) with lat/lng + state. It drives the "Nearby" sort, chip labels ("Boston, MA"), and map centering. Keep names in sync with `venues.city` values.
 3. **FavoritesContext** — `favoriteEventIds`, `isFavorite(id)`, `toggleFavorite(id)`. Local-only. Persisted to AsyncStorage as a JSON array.
-4. **FiltersContext** — `filters`, `setFilters`. Persisted to AsyncStorage.
+4. **FiltersContext** — `filters`, `setFilters`. Persisted to AsyncStorage — except `query` (free-text search), which is session-only so a forgotten search never empties the feed on the next visit.
 
 ### React Query (`src/hooks/queries/`)
 - `useEventsQuery(city)` → `events_gold` for the city
@@ -83,7 +83,8 @@ There is no auth-gated route group, no `(private)`, no `(auth)`.
 - `useCityData()` → composes city availability
 
 ### Filter logic (`src/hooks/useEvents.ts`)
-`filterEvents(events, filters)` filters by:
+`filterEvents(events, filters, venueNames?)` filters by:
+- `query`: case-insensitive substring over title + venue name (via the optional `venue_id → name` map) + `custom_location`
 - `when`: `anytime` (no date filter) / `today` / `tomorrow` / `this_weekend` / `custom`
 - `categories[]`: matches `event.event_type` OR `event_community_assignments.community_id`
 - `regions[]`: matches `event.region`
@@ -100,19 +101,35 @@ There is no auth-gated route group, no `(private)`, no `(auth)`.
 ## Component map (`src/components/`)
 
 - **`Header.tsx`** — sticky top bar.
-  - Desktop: logo + nav links (`Discover`, `Map`, `Venues`, `About`) + bookmark icon.
-  - Mobile: `MapToggleButton` (on `/`) or back arrow (elsewhere) + centered logo + bookmark icon.
+  - Desktop: logo + event search bar (filters the Discover feed via `filters.query`; Enter navigates to `/` from other pages) + nav links (`Discover`, `Map`, `Venues`, `About`) + bookmark icon.
+  - Mobile: `MapToggleButton` (on `/`) or back arrow (elsewhere) + centered logo + bookmark icon. No header search — mobile search lives at the top of the `/filters` modal.
   - Uses `useGlobalSearchParams` for the toggle state (works correctly).
 - **`MapToggleButton.tsx`** — toggles `?view=map` ↔ `?view=list`. Label is `'List'` when on map, `'Map'` when on list.
 - **`FilterFAB.tsx`** — fixed bottom-right floating button (mobile only). Badge shows `countActiveFilters(filters)`. Tap → `/filters`.
 - **`FilterSidebar.tsx`** — desktop left rail rendering `FilterControls` inline. Shows "Reset · N" when filters are active.
 - **`FilterScreen.tsx`** — body of `/filters` modal. Apply button shows match count, calls `router.back()`.
-- **`FilterControls.tsx`** — chip groups for City / When / What / Where / Price / Time of Day. The City section is a `CityPicker` with a "Near me" button (browser geolocation → "Nearby" chips sorted by distance) and a search box that appears once there are >8 cities.
-- **`EventFeed.tsx`** — orchestrator. List view: `FlatList` + (desktop) `FilterSidebar` or (mobile) `FilterFAB`. Map view: `FilterSidebar` (desktop) + `EventMap`.
-- **`EventCard.tsx`** — 16:9 image, price pill (top-right), date/time, title (2 lines), venue · region (1 line).
-- **`EventMap.tsx` + `CustomMapMarker.tsx`** — Google Maps via `@teovilla/react-native-web-maps`. Markers per venue with event count. Callout shows event title, venue, "See Event" and "See Venue" buttons (both wired). Initial center comes from `getCityInfo(selectedCity)` (all launch cities), then web fit-bounds to venue coords.
+- **`FilterControls.tsx`** — chip groups for When / What / Where / Price / Time of Day, plus the City section (a `CityDropdown`) and, on mobile, the event search box. Chips are **availability-aware**: an option only renders if selecting it (as the sole choice in its group, with every other group's filters applied) would match ≥1 event in the current city; active chips always stay visible so they can be unselected, and whole sections hide when empty. Regions are derived from the events themselves, not the venue table.
+- **`CityDropdown.tsx`** — searchable dropdown for city selection (trigger + modal list, always alphabetical). "Use my location" hands off to `CityContext.requestLocation()`, which selects the nearest city and flips the feed to distance sort — location never reorders the city list itself.
+- **`EventFeed.tsx`** — orchestrator. List view: `FlatList` + (desktop) `FilterSidebar` or (mobile) `FilterFAB`. Map view: `FilterSidebar` (desktop) + `EventMap`. Once the user shares a location, a "Sort: Soonest / Nearest" toggle appears above the list; Nearest orders by venue distance (ties → date, then start_time; venues without coords sink to the bottom). The API always returns date-ascending — "Soonest" is just that order.
+- **`EventCard.tsx`** — 16:9 image, price pill (top-right), date/time, title (2 lines), venue · region · distance-in-miles (1 line; distance only when location is shared and the venue has coords).
+- **`EventMap.tsx` + `CustomMapMarker.tsx`** — Google Maps via `@teovilla/react-native-web-maps`. Markers per venue with event count. Callout shows event title, venue, "See Event" and "See Venue" buttons (both wired). Initial center comes from `getCityInfo(selectedCity)` (all launch cities), then web fit-bounds to venue coords. A locate button (top-right) requests/centers on the user's position; web renders a blue-dot marker, native uses `showsUserLocation`.
 - **`EventPageSchema.tsx`, `BreadcrumbSchema.tsx`, `StructuredData.tsx`** — JSON-LD for SEO. `EventPageSchema` also sets `document.title` (per-event titles work; static pages share `"Find Local"`).
 - **`ui/`** — `Text`, `Icon`, `Logo`, etc. Shared primitives.
+
+---
+
+## SEO / Cloudflare Pages Functions (`functions/`)
+
+The web export is a single-page shell (`dist/index.html`); `_redirects` rewrites unknown paths to it with a 200. That once meant every `/event/*` URL served an identical homepage head — Search Console filed ~7.4k **Soft 404s** (dead events answering 200) and ~1.9k **Duplicate without user-selected canonical**. Fixed 2026-07-18 by Pages Functions, which run before static assets/redirects:
+
+- **`functions/event/[id].ts`** — fetches the event via PostgREST. Live event → 200 with per-event `<title>`, meta description, canonical, OG/Twitter tags, and Event JSON-LD injected into the shell. Past date or `old_events` fallback → **410 + noindex** (shell still renders the friendly page for humans). Unknown id → **404 + noindex**. Supabase outage → plain shell at 200, never a 500.
+- **`functions/venue/[id].ts`** — same pattern; unknown/inactive venue → 404.
+- **`functions/_shared.ts`** — meta-rewriting helpers (`applyMeta`, `supabaseSelect`, `htmlResponse`); underscore prefix keeps it unrouted.
+- **`functions/sitemap.ts`** — dynamic sitemap at `/sitemap` (future events + active venues), referenced by `public/robots.txt`.
+
+Client-side, `_layout.tsx` maintains a per-route canonical (query params stripped, so `/?view=map` folds into `/`) and noindexes `/saved`, `/filters`, `/map`; `EventPageSchema` keeps event meta in sync during client navigation. `public/robots.txt` allows AI/answer-engine crawlers (GEO) — don't re-add the GPTBot/ClaudeBot blocks.
+
+To test functions locally: build them with esbuild to CJS and invoke `onRequest` with a stub `ASSETS` binding plus the `.env` Supabase keys (no wrangler needed).
 
 ---
 
@@ -163,7 +180,7 @@ Currently used by `MapView.web.tsx`, `MapView.native.tsx`, `MapComponents.web.ts
 
 These reflect the state as of 2026-07-02 (full Playwright QA pass + code review). Issues #1, #3–#6, #8–#10 from the 2026-05-11 list are fixed and removed.
 
-1. **Event hero image dominates viewport.** `event/[id].tsx` hero is `aspectRatio: 16/9` at full width. At 1440px desktop that's 810px tall. Needs a `maxHeight`.
+1. ~~Event hero image dominates viewport~~ — fixed 2026-07-18: event/venue heroes cap at 320px, letterbox uncropped over a blurred fill, and host the floating back button (top-left).
 2. **Static legal text describes features that don't exist** (accounts, friend invites, contact-list import in Privacy). Coordinate with whoever maintains those pages.
 3. **Console deprecation noise:** `shadow*` style props and `props.pointerEvents` warnings from RNW. Cosmetic but worth a cleanup pass.
 4. **Prod fonts fail to load on findlocal.community.** Every Epilogue/Manrope `.ttf` under `/assets/node_modules/@expo-google-fonts/...` fails OTS parsing (`invalid sfntVersion`) — the deployed font binaries are corrupt (likely mangled by the build/CDN pipeline), so prod silently falls back to system fonts. Check `npm run build` output + hosting config.

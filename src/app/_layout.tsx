@@ -149,6 +149,32 @@ function RootNavigator() {
     document.title = ROUTE_TITLES[pathname] ?? 'Find Local';
   }, [pathname]);
 
+  // Every route declares a canonical (query params stripped, so /?view=map
+  // folds into /), and user-specific screens are noindexed. Detail pages get
+  // the same tags server-side from the Pages Functions; this keeps the
+  // rendered DOM in agreement during client navigation.
+  useEffect(() => {
+    if (Platform.OS !== 'web' || typeof document === 'undefined') return;
+    const cleanPath = pathname === '/index' ? '/' : pathname;
+
+    let canonical = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
+    if (!canonical) {
+      canonical = document.createElement('link');
+      canonical.rel = 'canonical';
+      document.head.appendChild(canonical);
+    }
+    canonical.href = `${window.location.origin}${cleanPath}`;
+
+    const noindex = cleanPath === '/saved' || cleanPath === '/filters' || cleanPath === '/map';
+    let robots = document.querySelector('meta[name="robots"]') as HTMLMetaElement | null;
+    if (!robots) {
+      robots = document.createElement('meta');
+      robots.name = 'robots';
+      document.head.appendChild(robots);
+    }
+    robots.content = noindex ? 'noindex, follow' : 'index, follow';
+  }, [pathname]);
+
   useEffect(() => {
     if (Platform.OS !== 'web') return;
     if (typeof window === 'undefined') return;

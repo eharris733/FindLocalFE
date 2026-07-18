@@ -6,6 +6,7 @@ import {
   StyleSheet,
   Platform,
   ListRenderItem,
+  TouchableOpacity,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import EventCard from './EventCard';
@@ -21,6 +22,8 @@ import { useCityLocation } from '../context/CityContext';
 import { useEventsQuery } from '../hooks/queries/useEventsQuery';
 import { useVenuesQuery } from '../hooks/queries/useVenuesQuery';
 import { buildRecurrenceMap, isRecurringEvent } from '../utils/recurrence';
+import { distanceKm } from '../constants/cities';
+import type { FeedSort } from '../context/CityContext';
 import type { Event } from '../types/events';
 import type { Venue } from '../types/venues';
 
@@ -28,23 +31,62 @@ interface EventFeedProps {
   viewMode: 'list' | 'map';
 }
 
+const SORT_OPTIONS: { value: FeedSort; label: string }[] = [
+  { value: 'soonest', label: 'Soonest' },
+  { value: 'nearest', label: 'Nearest' },
+];
+
 export const EventFeed: React.FC<EventFeedProps> = ({ viewMode }) => {
   const { theme } = useTheme();
   const { isDesktop } = useDeviceInfo();
   const router = useRouter();
-  const { selectedCity } = useCityLocation();
+  const { selectedCity, userLocation, feedSort, setFeedSort } = useCityLocation();
   const { filters } = useFilters();
 
   const { data: events = [], isLoading } = useEventsQuery(selectedCity);
   const { data: venues = [], isLoading: venuesLoading } = useVenuesQuery(selectedCity);
-
-  const filteredEvents = useFilteredEvents(events, filters);
 
   const venueById = useMemo(() => {
     const map = new Map<string, Venue>();
     for (const v of venues) map.set(v.id, v);
     return map;
   }, [venues]);
+
+  const venueNames = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const v of venues) if (v.name) map.set(v.id, v.name);
+    return map;
+  }, [venues]);
+
+  const filteredEvents = useFilteredEvents(events, filters, venueNames);
+
+  // venue_id → km from the user, once they've shared a location.
+  const venueDistances = useMemo(() => {
+    const map = new Map<string, number>();
+    if (!userLocation) return map;
+    for (const v of venues) {
+      if (v.latitude != null && v.longitude != null) {
+        map.set(v.id, distanceKm(userLocation.latitude, userLocation.longitude, v.latitude, v.longitude));
+      }
+    }
+    return map;
+  }, [venues, userLocation]);
+
+  // The API returns date-ascending ("soonest"); "nearest" reorders by venue
+  // distance, breaking ties by date so a venue's own events stay chronological.
+  // Events at venues without coordinates sink to the bottom rather than hide.
+  const sortedEvents = useMemo(() => {
+    if (feedSort !== 'nearest' || venueDistances.size === 0) return filteredEvents;
+    const dist = (e: Event) =>
+      e.venue_id != null ? (venueDistances.get(e.venue_id) ?? Number.POSITIVE_INFINITY) : Number.POSITIVE_INFINITY;
+    return [...filteredEvents].sort((a, b) => {
+      const d = dist(a) - dist(b);
+      if (d !== 0) return d;
+      const byDate = (a.event_date ?? '').localeCompare(b.event_date ?? '');
+      if (byDate !== 0) return byDate;
+      return (a.start_time ?? '').localeCompare(b.start_time ?? '');
+    });
+  }, [filteredEvents, feedSort, venueDistances]);
 
   // Built from the unfiltered city feed so sibling dates hidden by filters
   // still count toward a series.
@@ -67,10 +109,47 @@ export const EventFeed: React.FC<EventFeedProps> = ({ viewMode }) => {
         venue={item.venue_id ? venueById.get(item.venue_id) : null}
         onPress={() => handleEventPress(item)}
         isRecurring={isRecurringEvent(item, recurrenceMap)}
+        distanceKm={item.venue_id ? venueDistances.get(item.venue_id) : undefined}
       />
     ),
-    [venueById, handleEventPress, recurrenceMap]
+    [venueById, handleEventPress, recurrenceMap, venueDistances]
   );
+
+  const sortToggle = userLocation ? (
+    <View style={styles.sortRow}>
+      <Text variant="label" style={{ color: theme.colors.text.secondary, fontWeight: '600' }}>
+        Sort
+      </Text>
+      {SORT_OPTIONS.map((opt) => {
+        const active = feedSort === opt.value;
+        return (
+          <TouchableOpacity
+            key={opt.value}
+            onPress={() => setFeedSort(opt.value)}
+            accessibilityRole="button"
+            accessibilityState={{ selected: active }}
+            style={[
+              styles.sortChip,
+              {
+                backgroundColor: active ? theme.colors.primary[500] : theme.colors.surface.accent,
+                borderColor: active ? theme.colors.primary[500] : theme.colors.border.light,
+              },
+            ]}
+          >
+            <Text
+              variant="label"
+              style={{
+                color: active ? theme.colors.text.inverse : theme.colors.text.secondary,
+                fontWeight: '600',
+              }}
+            >
+              {opt.label}
+            </Text>
+          </TouchableOpacity>
+        );
+      })}
+    </View>
+  ) : null;
 
   if (viewMode === 'map') {
     return (
@@ -93,9 +172,10 @@ export const EventFeed: React.FC<EventFeedProps> = ({ viewMode }) => {
 
   const listContent = (
     <FlatList
-      data={filteredEvents}
+      data={sortedEvents}
       keyExtractor={(item) => item.id}
       renderItem={renderItem}
+      ListHeaderComponent={sortToggle}
       contentContainerStyle={[
         styles.listContent,
         isDesktop && styles.listContentDesktop,
@@ -168,6 +248,18 @@ const styles = StyleSheet.create({
     paddingVertical: 96,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  sortRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 20,
+  },
+  sortChip: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 9999,
+    borderWidth: 1,
   },
 });
 
