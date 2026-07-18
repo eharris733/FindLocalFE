@@ -110,7 +110,24 @@ export default function VenuePage() {
       style={{ backgroundColor: theme.colors.background.primary }}
       contentContainerStyle={styles.scroll}
     >
-      {venue.image && <Image source={{ uri: venue.image }} style={styles.hero} resizeMode="cover" />}
+      <View style={[styles.hero, { backgroundColor: theme.colors.surface.sunken }, !venue.image && styles.heroBare]}>
+        {venue.image && (
+          <>
+            {/* Blurred cover fill behind an uncropped image, so tall photos
+                show whole without pushing the venue name below the fold. */}
+            <Image source={{ uri: venue.image }} style={StyleSheet.absoluteFill} resizeMode="cover" blurRadius={24} />
+            <Image source={{ uri: venue.image }} style={StyleSheet.absoluteFill} resizeMode="contain" />
+          </>
+        )}
+        <TouchableOpacity
+          onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
+          style={[styles.backOverlay, { backgroundColor: theme.colors.background.primary + 'E6' }]}
+        >
+          <Icon name="arrow-back" size={20} color={theme.colors.primary[500]} />
+        </TouchableOpacity>
+      </View>
 
       <View style={styles.body}>
         <Text
@@ -235,6 +252,23 @@ const styles = StyleSheet.create({
   hero: {
     width: '100%',
     aspectRatio: 16 / 9,
+    maxHeight: 320,
+    overflow: 'hidden',
+  },
+  // No image: just enough room to host the floating back button.
+  heroBare: {
+    aspectRatio: undefined,
+    height: 64,
+  },
+  backOverlay: {
+    position: 'absolute',
+    top: 12,
+    left: 12,
+    width: 40,
+    height: 40,
+    borderRadius: 9999,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   body: {
     paddingHorizontal: 20,

@@ -1,12 +1,15 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { View, TouchableOpacity, StyleSheet, ScrollView, TextInput } from 'react-native';
-import { Icon, Text } from './ui';
+import { Text } from './ui';
 import { useTheme } from '../context/ThemeContext';
 import { useDeviceInfo } from '../hooks/useDeviceInfo';
 import { useFilters } from '../context/FiltersContext';
 import { useCityLocation } from '../context/CityContext';
-import { getCityInfo } from '../constants/cities';
-import type { WhenFilter, TimeOfDay } from '../types/events';
+import { useEventsQuery } from '../hooks/queries/useEventsQuery';
+import { useVenuesQuery } from '../hooks/queries/useVenuesQuery';
+import { filterEvents } from '../hooks/useEvents';
+import CityDropdown from './CityDropdown';
+import type { FilterState, WhenFilter, TimeOfDay } from '../types/events';
 
 const WHEN_OPTIONS: { value: WhenFilter; label: string }[] = [
   { value: 'anytime', label: 'Anytime' },
@@ -30,10 +33,10 @@ const CATEGORIES: { value: string; label: string }[] = [
   { value: 'festival', label: 'Festival' },
 ];
 
-const TIME_OPTIONS: { value: TimeOfDay; label: string; icon: 'clock' }[] = [
-  { value: 'morning', label: 'Morning', icon: 'clock' },
-  { value: 'afternoon', label: 'Afternoon', icon: 'clock' },
-  { value: 'evening', label: 'Evening', icon: 'clock' },
+const TIME_OPTIONS: { value: TimeOfDay; label: string }[] = [
+  { value: 'morning', label: 'Morning' },
+  { value: 'afternoon', label: 'Afternoon' },
+  { value: 'evening', label: 'Evening' },
 ];
 
 interface ChipProps {
@@ -88,130 +91,74 @@ const Section: React.FC<SectionProps> = ({ title, children }) => {
   );
 };
 
-interface CityPickerProps {
-  cities: { name: string }[];
-  selected: string;
-  onSelect: (name: string) => void;
-}
-
-// Show a search box once the chip cloud stops being scannable at a glance.
-const CITY_SEARCH_THRESHOLD = 8;
-const NEARBY_COUNT = 4;
-
-const cityChipLabel = (name: string): string => {
-  const info = getCityInfo(name);
-  return info ? `${info.name}, ${info.state}` : name;
-};
-
-const CityPicker: React.FC<CityPickerProps> = ({ cities, selected, onSelect }) => {
-  const { theme } = useTheme();
-  const { nearbyCities, locationStatus, requestLocation } = useCityLocation();
-  const [search, setSearch] = useState('');
-
-  const names = useMemo(() => cities.map((c) => c.name), [cities]);
-  const showSearch = names.length > CITY_SEARCH_THRESHOLD;
-
-  const nearby = useMemo(
-    () => (locationStatus === 'granted' ? nearbyCities.slice(0, NEARBY_COUNT) : []),
-    [locationStatus, nearbyCities]
-  );
-
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return names;
-    return names.filter((n) => cityChipLabel(n).toLowerCase().includes(q));
-  }, [names, search]);
-
-  return (
-    <View>
-      <View style={[styles.chipRow, { marginBottom: 12 }]}>
-        <TouchableOpacity
-          onPress={requestLocation}
-          disabled={locationStatus === 'locating'}
-          accessibilityRole="button"
-          accessibilityLabel="Sort cities by distance from my location"
-          style={[
-            styles.chip,
-            styles.locationChip,
-            {
-              backgroundColor: theme.colors.surface.accent,
-              borderColor: locationStatus === 'granted' ? theme.colors.primary[500] : theme.colors.border.light,
-            },
-          ]}
-        >
-          <Icon name="location" size={14} color={theme.colors.primary[500]} />
-          <Text variant="label" style={{ color: theme.colors.text.secondary, fontWeight: '600' }}>
-            {locationStatus === 'locating'
-              ? 'Finding you…'
-              : locationStatus === 'granted'
-                ? 'Sorted by distance'
-                : locationStatus === 'denied'
-                  ? 'Location blocked'
-                  : 'Near me'}
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      {nearby.length > 0 && (
-        <>
-          <Text variant="caption" color="secondary" style={styles.citySubhead}>
-            Nearby
-          </Text>
-          <View style={[styles.chipRow, { marginBottom: 12 }]}>
-            {nearby.map((name) => (
-              <Chip
-                key={`nearby-${name}`}
-                label={cityChipLabel(name)}
-                active={name === selected}
-                onPress={() => onSelect(name)}
-              />
-            ))}
-          </View>
-        </>
-      )}
-
-      {showSearch && (
-        <TextInput
-          value={search}
-          onChangeText={setSearch}
-          placeholder="Search cities"
-          placeholderTextColor={theme.colors.text.tertiary}
-          accessibilityLabel="Search cities"
-          style={[
-            styles.citySearch,
-            {
-              borderColor: theme.colors.border.light,
-              color: theme.colors.text.primary,
-              backgroundColor: theme.colors.surface.accent,
-            },
-          ]}
-        />
-      )}
-
-      {nearby.length > 0 && (
-        <Text variant="caption" color="secondary" style={styles.citySubhead}>
-          All cities
-        </Text>
-      )}
-      <View style={styles.chipRow}>
-        {filtered.map((name) => (
-          <Chip key={name} label={cityChipLabel(name)} active={name === selected} onPress={() => onSelect(name)} />
-        ))}
-        {filtered.length === 0 && (
-          <Text variant="body2" color="secondary">
-            No cities match “{search.trim()}”.
-          </Text>
-        )}
-      </View>
-    </View>
-  );
-};
-
 export const FilterControls: React.FC = () => {
   const { theme } = useTheme();
   const { isDesktop } = useDeviceInfo();
   const { filters, dispatch } = useFilters();
-  const { selectedCity, allCityData, onCityChange, availableRegions } = useCityLocation();
+  const { selectedCity, allCityData } = useCityLocation();
+
+  // Same query keys as the feed, so these are cache hits, not extra fetches.
+  const { data: events = [] } = useEventsQuery(selectedCity);
+  const { data: venues = [] } = useVenuesQuery(selectedCity);
+
+  const venueNames = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const v of venues) if (v.name) map.set(v.id, v.name);
+    return map;
+  }, [venues]);
+
+  // An option is offered only if choosing it — as the sole selection in its
+  // group, with every other group's current filters applied — matches at
+  // least one event. Active options always stay visible so they can be
+  // toggled off. While events are still loading we can't know availability,
+  // so everything shows.
+  const wouldMatch = useMemo(() => {
+    return (patch: Partial<FilterState>): boolean => {
+      if (events.length === 0) return true;
+      return filterEvents(events, { ...filters, ...patch }, venueNames).length > 0;
+    };
+  }, [events, filters, venueNames]);
+
+  const visibleWhen = useMemo(
+    () =>
+      WHEN_OPTIONS.filter(
+        (opt) =>
+          opt.value === 'anytime' ||
+          filters.when === opt.value ||
+          wouldMatch({ when: opt.value })
+      ),
+    [filters.when, wouldMatch]
+  );
+
+  const visibleCategories = useMemo(
+    () =>
+      CATEGORIES.filter(
+        (c) => filters.categories.includes(c.value) || wouldMatch({ categories: [c.value] })
+      ),
+    [filters.categories, wouldMatch]
+  );
+
+  // Regions come from the events themselves rather than the venue table, so a
+  // region with venues but no current events doesn't show a dead chip.
+  const visibleRegions = useMemo(() => {
+    const fromEvents = new Set<string>();
+    for (const e of filterEvents(events, { ...filters, regions: [] }, venueNames)) {
+      if (e.region) fromEvents.add(e.region);
+    }
+    for (const r of filters.regions) fromEvents.add(r);
+    return [...fromEvents].sort((a, b) => a.localeCompare(b));
+  }, [events, filters, venueNames]);
+
+  const visibleTimes = useMemo(
+    () =>
+      TIME_OPTIONS.filter(
+        (t) => filters.timeOfDay.includes(t.value) || wouldMatch({ timeOfDay: [t.value] })
+      ),
+    [filters.timeOfDay, wouldMatch]
+  );
+
+  const showFree = filters.free || wouldMatch({ free: true, paid: false });
+  const showPaid = filters.paid || wouldMatch({ free: false, paid: true });
 
   return (
     <ScrollView
@@ -230,12 +177,11 @@ export const FilterControls: React.FC = () => {
             accessibilityLabel="Search events"
             returnKeyType="search"
             style={[
-              styles.citySearch,
+              styles.searchInput,
               {
                 borderColor: theme.colors.border.light,
                 color: theme.colors.text.primary,
                 backgroundColor: theme.colors.surface.accent,
-                marginBottom: 0,
               },
             ]}
           />
@@ -244,46 +190,44 @@ export const FilterControls: React.FC = () => {
 
       {allCityData.length > 1 && (
         <Section title="City">
-          <CityPicker
-            cities={allCityData}
-            selected={selectedCity}
-            onSelect={(name) => {
-              onCityChange(name);
-            }}
-          />
+          <CityDropdown />
         </Section>
       )}
 
-      <Section title="When">
-        <View style={styles.chipRow}>
-          {WHEN_OPTIONS.map((opt) => (
-            <Chip
-              key={opt.value}
-              label={opt.label}
-              active={filters.when === opt.value}
-              onPress={() => dispatch({ type: 'SET_WHEN', payload: opt.value })}
-            />
-          ))}
-        </View>
-      </Section>
+      {visibleWhen.length > 1 && (
+        <Section title="When">
+          <View style={styles.chipRow}>
+            {visibleWhen.map((opt) => (
+              <Chip
+                key={opt.value}
+                label={opt.label}
+                active={filters.when === opt.value}
+                onPress={() => dispatch({ type: 'SET_WHEN', payload: opt.value })}
+              />
+            ))}
+          </View>
+        </Section>
+      )}
 
-      <Section title="What">
-        <View style={styles.chipRow}>
-          {CATEGORIES.map((c) => (
-            <Chip
-              key={c.value}
-              label={c.label}
-              active={filters.categories.includes(c.value)}
-              onPress={() => dispatch({ type: 'TOGGLE_CATEGORY', payload: c.value })}
-            />
-          ))}
-        </View>
-      </Section>
+      {visibleCategories.length > 0 && (
+        <Section title="What">
+          <View style={styles.chipRow}>
+            {visibleCategories.map((c) => (
+              <Chip
+                key={c.value}
+                label={c.label}
+                active={filters.categories.includes(c.value)}
+                onPress={() => dispatch({ type: 'TOGGLE_CATEGORY', payload: c.value })}
+              />
+            ))}
+          </View>
+        </Section>
+      )}
 
-      {availableRegions.length > 0 && (
+      {visibleRegions.length > 0 && (
         <Section title="Where">
           <View style={styles.chipRow}>
-            {availableRegions.map((r) => (
+            {visibleRegions.map((r) => (
               <Chip
                 key={r}
                 label={r}
@@ -295,33 +239,41 @@ export const FilterControls: React.FC = () => {
         </Section>
       )}
 
-      <Section title="Price">
-        <View style={styles.chipRow}>
-          <Chip
-            label="Free"
-            active={filters.free}
-            onPress={() => dispatch({ type: 'SET_FREE', payload: !filters.free })}
-          />
-          <Chip
-            label="Paid"
-            active={filters.paid}
-            onPress={() => dispatch({ type: 'SET_PAID', payload: !filters.paid })}
-          />
-        </View>
-      </Section>
+      {(showFree || showPaid) && (
+        <Section title="Price">
+          <View style={styles.chipRow}>
+            {showFree && (
+              <Chip
+                label="Free"
+                active={filters.free}
+                onPress={() => dispatch({ type: 'SET_FREE', payload: !filters.free })}
+              />
+            )}
+            {showPaid && (
+              <Chip
+                label="Paid"
+                active={filters.paid}
+                onPress={() => dispatch({ type: 'SET_PAID', payload: !filters.paid })}
+              />
+            )}
+          </View>
+        </Section>
+      )}
 
-      <Section title="Time of Day">
-        <View style={styles.chipRow}>
-          {TIME_OPTIONS.map((t) => (
-            <Chip
-              key={t.value}
-              label={t.label}
-              active={filters.timeOfDay.includes(t.value)}
-              onPress={() => dispatch({ type: 'TOGGLE_TIME_OF_DAY', payload: t.value })}
-            />
-          ))}
-        </View>
-      </Section>
+      {visibleTimes.length > 0 && (
+        <Section title="Time of Day">
+          <View style={styles.chipRow}>
+            {visibleTimes.map((t) => (
+              <Chip
+                key={t.value}
+                label={t.label}
+                active={filters.timeOfDay.includes(t.value)}
+                onPress={() => dispatch({ type: 'TOGGLE_TIME_OF_DAY', payload: t.value })}
+              />
+            ))}
+          </View>
+        </Section>
+      )}
     </ScrollView>
   );
 };
@@ -348,23 +300,11 @@ const styles = StyleSheet.create({
     borderRadius: 9999,
     borderWidth: 1,
   },
-  locationChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  citySubhead: {
-    marginBottom: 8,
-    textTransform: 'uppercase',
-    letterSpacing: 0.6,
-    fontWeight: '700',
-  },
-  citySearch: {
+  searchInput: {
     borderWidth: 1,
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 8,
-    marginBottom: 12,
     fontSize: 14,
   },
 });
