@@ -74,3 +74,28 @@ UPDATE events_gold SET price = NULL WHERE length(price) > 40;
 -- WHERE price_amount IS NULL
 --   AND price ~ '^\$?\d+(\.\d{1,2})?$';
 -- UPDATE events_gold SET price_amount = 0 WHERE price_amount IS NULL AND lower(trim(price)) IN ('free', 'free!', '$0', '0');
+
+------------------------------------------------------------------------------
+-- 9. Broken venue images (2026-07-24 audit). Some venues.image values can
+--    never render in the app: relative paths ("images/events/....png", ~21
+--    rows) and SVGs (react-native Image can't decode SVG, ~9 rows). Null
+--    them so scripts/venue-onboard.js treats those venues as imageless and
+--    finds a replacement; the UI shows its placeholder in the meantime.
+--    (Dead-but-well-formed URLs, e.g. old Squarespace links that now 404,
+--    can't be detected in SQL — the placeholder-behind-image rendering
+--    covers those.)
+------------------------------------------------------------------------------
+UPDATE venues SET image = NULL WHERE image IS NOT NULL AND image <> '' AND image NOT ILIKE 'http%';
+UPDATE venues SET image = NULL WHERE image ~* '\.svg(\?|$)';
+
+------------------------------------------------------------------------------
+-- 10. All-caps age-policy boilerplate stored as event descriptions
+--     ("THIS EVENT IS 18+ WITH A VALID I.D. 7:00 PM 8:00 PM", ~15 rows).
+--     Not a description; drop it so detail pages don't render shouting.
+------------------------------------------------------------------------------
+UPDATE events_gold
+SET description = NULL
+WHERE description = upper(description)
+  AND description ~ '[A-Z]'
+  AND length(description) < 120
+  AND description ILIKE '%THIS EVENT IS%';

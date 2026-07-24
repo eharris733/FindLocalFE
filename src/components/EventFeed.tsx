@@ -21,7 +21,7 @@ import { useFilters } from '../context/FiltersContext';
 import { useCityLocation } from '../context/CityContext';
 import { useEventsQuery } from '../hooks/queries/useEventsQuery';
 import { useVenuesQuery } from '../hooks/queries/useVenuesQuery';
-import { buildRecurrenceMap, isRecurringEvent } from '../utils/recurrence';
+import { buildRecurrenceMap, isRecurringEvent, getSeriesImage } from '../utils/recurrence';
 import { distanceKm } from '../constants/cities';
 import type { FeedSort } from '../context/CityContext';
 import type { Event } from '../types/events';
@@ -109,6 +109,7 @@ export const EventFeed: React.FC<EventFeedProps> = ({ viewMode }) => {
         venue={item.venue_id ? venueById.get(item.venue_id) : null}
         onPress={() => handleEventPress(item)}
         isRecurring={isRecurringEvent(item, recurrenceMap)}
+        seriesImageUrl={getSeriesImage(item, recurrenceMap)}
         distanceKm={item.venue_id ? venueDistances.get(item.venue_id) : undefined}
       />
     ),

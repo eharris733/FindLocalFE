@@ -3,6 +3,7 @@ import { Platform, View, StyleSheet, Image, TouchableOpacity } from 'react-nativ
 import { Event } from '../types/events';
 import { Venue } from '../types/venues';
 import { Text } from './ui/Text';
+import { ImagePlaceholder } from './ui/ImagePlaceholder';
 import { useTheme } from '../context/ThemeContext';
 
 // Import using require to bypass TypeScript issues with platform-specific modules
@@ -172,9 +173,11 @@ const CustomMapMarker: React.FC<CustomMapMarkerProps> = ({
                         resizeMode="cover"
                       />
                     ) : (
-                      <View style={[styles.calloutImage, styles.calloutImagePlaceholder, { backgroundColor: theme.colors.surface.sunken }]}>
-                        <Text variant="caption" color="tertiary">📅</Text>
-                      </View>
+                      <ImagePlaceholder
+                        eventTypes={limitedEvents[currentEventIndex]?.event_type}
+                        size={28}
+                        style={[styles.calloutImage, styles.calloutImagePlaceholder]}
+                      />
                     );
                   })()}
 

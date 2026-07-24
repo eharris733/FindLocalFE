@@ -494,16 +494,21 @@ export async function getUpcomingEventsForVenue(venueId: string, limit: number =
 }
 
 /**
- * Upcoming dates for a recurring series: same title at the same venue.
- * Returns distinct dates ascending (includes the queried event's own date).
+ * Upcoming info for a recurring series: same title at the same venue.
+ * Returns distinct dates ascending (includes the queried event's own date)
+ * plus the first non-empty image_url in the series, so imageless siblings
+ * can borrow it.
  */
-export async function getUpcomingSeriesDates(venueId: string, title: string): Promise<string[]> {
+export async function getUpcomingSeriesInfo(
+  venueId: string,
+  title: string
+): Promise<{ dates: string[]; imageUrl: string | null }> {
   try {
     const today = new Date().toISOString().split('T')[0];
 
     const { data, error } = await supabase
       .from('events_gold')
-      .select('event_date')
+      .select('event_date, image_url')
       .eq('venue_id', venueId)
       .ilike('title', title)
       .gte('event_date', today)
@@ -512,14 +517,18 @@ export async function getUpcomingSeriesDates(venueId: string, title: string): Pr
       .limit(60);
 
     if (error) {
-      logger.error('Error fetching series dates:', error);
-      return [];
+      logger.error('Error fetching series info:', error);
+      return { dates: [], imageUrl: null };
     }
 
-    return [...new Set((data || []).map((row: { event_date: string }) => row.event_date))];
+    const rows = (data || []) as { event_date: string; image_url: string | null }[];
+    return {
+      dates: [...new Set(rows.map((row) => row.event_date))],
+      imageUrl: rows.find((row) => row.image_url)?.image_url ?? null,
+    };
   } catch (error: any) {
-    logger.error('Error fetching series dates:', error);
-    return [];
+    logger.error('Error fetching series info:', error);
+    return { dates: [], imageUrl: null };
   }
 }
 

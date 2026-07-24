@@ -1,0 +1,199 @@
+#!/usr/bin/env node
+// Backfills missing event descriptions (and, opportunistically, images) by
+// scraping og:/meta tags from each event's detail_page_url.
+//
+// Phased by design — the durable fix is extracting these at scrape time in
+// the FindLocalData pipeline; this covers rows already in events_gold:
+//   Phase 1 (default): only recurring series (2+ description-less events with
+//                      the same venue + normalized title) — one representative
+//                      page is fetched and its description fills every row.
+//   Phase 2: --top-venues N adds description-less events at the N venues
+//            with the most upcoming events (deduped by URL).
+// There is intentionally no "scrape everything" mode (~14k URLs).
+//
+// Read-only against Supabase; writes two local files:
+//   scripts/event-desc-backfill.sql   — UPDATEs to apply via the dashboard
+//   scripts/event-desc-backfill-report.csv
+//
+// Usage:
+//   node scripts/event-desc-backfill.js [--limit N] [--city "Boston"]
+//                                       [--dry-run] [--top-venues N]
+
+require('dotenv').config();
+const fs = require('fs');
+const path = require('path');
+const { createClient } = require('@supabase/supabase-js');
+const {
+  fetchHtml,
+  extractMeta,
+  validateImageUrl,
+  cleanDescription,
+  isBoilerplate,
+  sqlQuote,
+  sleep,
+  csvField,
+} = require('./lib/og-scrape');
+
+const args = process.argv.slice(2);
+const getFlag = (name) => {
+  const i = args.indexOf(name);
+  return i >= 0 ? args[i + 1] : null;
+};
+const LIMIT = getFlag('--limit') ? Number(getFlag('--limit')) : 500;
+const CITY = getFlag('--city');
+const DRY_RUN = args.includes('--dry-run');
+const TOP_VENUES = getFlag('--top-venues') ? Number(getFlag('--top-venues')) : 0;
+
+const supabase = createClient(
+  process.env.EXPO_PUBLIC_SUPABASE_URL,
+  process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+);
+
+const SQL_PATH = path.join(__dirname, 'event-desc-backfill.sql');
+const CSV_PATH = path.join(__dirname, 'event-desc-backfill-report.csv');
+
+async function fetchDescriptionlessEvents() {
+  const today = new Date().toISOString().split('T')[0];
+  const rows = [];
+  for (let page = 0; ; page++) {
+    let query = supabase
+      .from('events_gold')
+      .select('id, title, venue_id, city, event_date, detail_page_url, image_url, description')
+      .gte('event_date', today)
+      .or('is_deleted.is.null,is_deleted.eq.false')
+      .or('description.is.null,description.eq.')
+      .not('detail_page_url', 'is', null)
+      .range(page * 1000, page * 1000 + 999);
+    if (CITY) query = query.eq('city', CITY);
+    const { data, error } = await query;
+    if (error) throw error;
+    rows.push(...data);
+    if (data.length < 1000) break;
+  }
+  return rows.filter((r) => r.detail_page_url);
+}
+
+async function main() {
+  console.log(
+    `event-desc-backfill: ${DRY_RUN ? 'DRY RUN' : 'live'}, city=${CITY || 'all'}, limit=${LIMIT} URLs, top-venues=${TOP_VENUES || 'off'}`
+  );
+
+  const events = await fetchDescriptionlessEvents();
+  console.log(`${events.length} future events lack a description (and have a detail URL)`);
+
+  // Group by series (venue + normalized title, matching src/utils/recurrence.ts):
+  // detail URLs are mostly unique per occurrence, but a series shares one
+  // description, so one representative page fills every row in the group.
+  const seriesKey = (e) =>
+    `${e.venue_id ?? ''}|${(e.title ?? '').toLowerCase().replace(/\s+/g, ' ').trim()}`;
+  const bySeries = new Map();
+  for (const e of events) {
+    const key = seriesKey(e);
+    if (!bySeries.has(key)) bySeries.set(key, []);
+    bySeries.get(key).push(e);
+  }
+  // Fetch the earliest occurrence's page — soonest to be seen by users, and
+  // least likely to have been taken down.
+  for (const evs of bySeries.values()) {
+    evs.sort((a, b) => (a.event_date ?? '').localeCompare(b.event_date ?? ''));
+  }
+
+  // [representativeUrl, eventsToFill]
+  let groups = [...bySeries.values()]
+    .filter((evs) => evs.length >= 2)
+    .map((evs) => [evs[0].detail_page_url, evs]);
+
+  if (TOP_VENUES > 0) {
+    const venueCounts = new Map();
+    for (const e of events) {
+      if (e.venue_id) venueCounts.set(e.venue_id, (venueCounts.get(e.venue_id) || 0) + 1);
+    }
+    const topIds = new Set(
+      [...venueCounts.entries()].sort((a, b) => b[1] - a[1]).slice(0, TOP_VENUES).map(([id]) => id)
+    );
+    for (const evs of bySeries.values()) {
+      if (evs.length < 2 && evs[0].venue_id && topIds.has(evs[0].venue_id)) {
+        groups.push([evs[0].detail_page_url, evs]);
+      }
+    }
+  }
+
+  // Most rows filled per fetch first.
+  groups.sort((a, b) => b[1].length - a[1].length);
+  const skippedGroups = groups.length - Math.min(groups.length, LIMIT);
+  groups = groups.slice(0, LIMIT);
+  console.log(
+    `Fetching ${groups.length} URLs covering ${groups.reduce((n, [, evs]) => n + evs.length, 0)} events` +
+      (skippedGroups > 0 ? ` (${skippedGroups} more URL groups beyond --limit)` : '')
+  );
+
+  const sqlLines = [
+    '-- Generated by scripts/event-desc-backfill.js — og:/meta tags from event detail pages.',
+    '-- Review before applying (Supabase dashboard). Guards only fill empty columns.',
+    '',
+  ];
+  const csvLines = ['detail_page_url,event_count,status,description_found,image_found,reason'];
+  let descHits = 0;
+  let imgHits = 0;
+
+  for (let i = 0; i < groups.length; i++) {
+    const [url, evs] = groups[i];
+    const report = (status, desc, img, reason) =>
+      csvLines.push([url, evs.length, status, desc, img, reason].map(csvField).join(','));
+
+    const page = await fetchHtml(url);
+    await sleep(1000);
+    if (!page) {
+      report('miss', false, false, 'fetch failed');
+      continue;
+    }
+
+    const meta = extractMeta(page.html, page.finalUrl);
+    let description = cleanDescription(meta.ogDescription || meta.metaDescription, 2000);
+    if (description && isBoilerplate(description)) description = null;
+    const imagelessIds = evs.filter((e) => !e.image_url).map((e) => e.id);
+    let image = null;
+    if (imagelessIds.length > 0 && meta.ogImage) {
+      image = (await validateImageUrl(meta.ogImage)) ? meta.ogImage : null;
+    }
+
+    if (!description && !image) {
+      report('miss', false, false, 'no usable og/meta tags');
+      continue;
+    }
+
+    const idList = (ids) => ids.map((id) => `'${id}'`).join(', ');
+    sqlLines.push(`-- ${evs[0].title} (${evs[0].city}) — ${evs.length} rows — ${url}`);
+    if (description) {
+      descHits += evs.length;
+      sqlLines.push(
+        `UPDATE events_gold SET description = ${sqlQuote(description)} WHERE id IN (${idList(evs.map((e) => e.id))}) AND (description IS NULL OR description = '');`
+      );
+    }
+    if (image) {
+      imgHits += imagelessIds.length;
+      sqlLines.push(
+        `UPDATE events_gold SET image_url = ${sqlQuote(image)} WHERE id IN (${idList(imagelessIds)}) AND (image_url IS NULL OR image_url = '');`
+      );
+    }
+    sqlLines.push('');
+    report('hit', Boolean(description), Boolean(image), '');
+
+    if ((i + 1) % 25 === 0) console.log(`  ${i + 1}/${groups.length} URLs, ${descHits} descriptions so far`);
+  }
+
+  console.log(`Done: descriptions for ${descHits} events, images for ${imgHits} events`);
+  if (DRY_RUN) {
+    console.log('Dry run — no files written.');
+    return;
+  }
+  fs.writeFileSync(SQL_PATH, sqlLines.join('\n'));
+  fs.writeFileSync(CSV_PATH, csvLines.join('\n'));
+  console.log(`Wrote ${SQL_PATH}`);
+  console.log(`Wrote ${CSV_PATH}`);
+}
+
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});

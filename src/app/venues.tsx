@@ -8,7 +8,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Icon, Text } from '../components/ui';
+import { Icon, ImagePlaceholder, Text } from '../components/ui';
 import { useTheme } from '../context/ThemeContext';
 import { useDeviceInfo } from '../hooks/useDeviceInfo';
 import { useVenuesQuery } from '../hooks/queries/useVenuesQuery';
@@ -39,11 +39,11 @@ export default function VenuesRoute() {
         ]}
         activeOpacity={0.85}
       >
-        {item.image ? (
-          <Image source={{ uri: item.image }} style={styles.thumb} />
-        ) : (
-          <View style={[styles.thumb, { backgroundColor: theme.colors.surface.sunken }]} />
-        )}
+        {/* Placeholder sits behind the image so broken URLs degrade to it. */}
+        <View style={styles.thumbWrapper}>
+          <ImagePlaceholder kind="venue" size={22} style={StyleSheet.absoluteFill} />
+          {item.image ? <Image source={{ uri: item.image }} style={StyleSheet.absoluteFill} /> : null}
+        </View>
         <View style={styles.rowBody}>
           <Text variant="h4" style={{ color: theme.colors.text.primary }} numberOfLines={1}>
             {item.name}
@@ -129,10 +129,11 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     gap: 12,
   },
-  thumb: {
+  thumbWrapper: {
     width: 56,
     height: 56,
     borderRadius: 8,
+    overflow: 'hidden',
   },
   rowBody: {
     flex: 1,

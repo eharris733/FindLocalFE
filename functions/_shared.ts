@@ -140,6 +140,28 @@ export function htmlResponse(html: string, status: number): Response {
   });
 }
 
+/**
+ * Strip HTML tags, decode common entities and collapse whitespace so scraped
+ * descriptions read as one clean sentence in meta tags. Mirrors the client's
+ * src/utils/formatDescription.ts (functions bundle separately, so no import).
+ */
+export function cleanMetaDescription(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  const named: Record<string, string> = {
+    amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ',
+    ndash: '–', mdash: '—', hellip: '…', lsquo: '‘', rsquo: '’', ldquo: '“', rdquo: '”',
+  };
+  const text = raw
+    .replace(/<(script|style)[^>]*>[\s\S]*?<\/\1\s*>/gi, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&#x([0-9a-f]+);/gi, (_, hex) => String.fromCodePoint(parseInt(hex, 16) || 32))
+    .replace(/&#(\d+);/g, (_, dec) => String.fromCodePoint(parseInt(dec, 10) || 32))
+    .replace(/&([a-z]+);/gi, (m, name) => named[name.toLowerCase()] ?? m)
+    .replace(/\s+/g, ' ')
+    .trim();
+  return text.length > 0 ? text : null;
+}
+
 /** Today in YYYY-MM-DD, matching how event_date is stored and queried. */
 export function todayString(): string {
   return new Date().toISOString().split('T')[0];
