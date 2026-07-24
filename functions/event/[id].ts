@@ -15,6 +15,7 @@ import {
   applyMeta,
   htmlResponse,
   todayString,
+  cleanMetaDescription,
 } from '../_shared';
 
 interface EventRow {
@@ -121,8 +122,9 @@ export async function onRequest(context: {
     .filter(Boolean)
     .join(' - ');
 
+  const cleanedDescription = cleanMetaDescription(event.description);
   const description =
-    event.description?.trim() ||
+    cleanedDescription ||
     [
       event.title,
       eventDay && `on ${eventDay}`,
@@ -136,7 +138,7 @@ export async function onRequest(context: {
     '@context': 'https://schema.org',
     '@type': 'Event',
     name: event.title,
-    ...(event.description && { description: event.description }),
+    ...(cleanedDescription && { description: cleanedDescription }),
     ...(eventDay && {
       startDate: event.start_time ? `${eventDay}T${event.start_time}` : eventDay,
     }),

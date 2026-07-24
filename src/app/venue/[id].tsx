@@ -14,7 +14,8 @@ import type { Event } from '../../types/events';
 import { getVenueById } from '../../api/venues';
 import { getUpcomingEventsForVenue } from '../../api/events';
 import { useTheme } from '../../context/ThemeContext';
-import { Icon, Text } from '../../components/ui';
+import { ExpandableText, Icon, ImagePlaceholder, Text } from '../../components/ui';
+import { formatDescription } from '../../utils/formatDescription';
 import { openMaps } from '../../utils/linkUtils';
 import { logger } from '../../utils/logger';
 import { format, parseISO } from 'date-fns';
@@ -105,20 +106,24 @@ export default function VenuePage() {
     );
   }
 
+  const description = formatDescription(venue.description);
+
   return (
     <ScrollView
       style={{ backgroundColor: theme.colors.background.primary }}
       contentContainerStyle={styles.scroll}
     >
       <View style={[styles.hero, { backgroundColor: theme.colors.surface.sunken }, !venue.image && styles.heroBare]}>
-        {venue.image && (
+        {/* Placeholder sits behind the image so broken URLs degrade to it. */}
+        <ImagePlaceholder kind="venue" size={48} style={StyleSheet.absoluteFill} />
+        {venue.image ? (
           <>
             {/* Blurred cover fill behind an uncropped image, so tall photos
                 show whole without pushing the venue name below the fold. */}
             <Image source={{ uri: venue.image }} style={StyleSheet.absoluteFill} resizeMode="cover" blurRadius={24} />
             <Image source={{ uri: venue.image }} style={StyleSheet.absoluteFill} resizeMode="contain" />
           </>
-        )}
+        ) : null}
         <TouchableOpacity
           onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
           accessibilityRole="button"
@@ -167,7 +172,7 @@ export default function VenuePage() {
           </TouchableOpacity>
         )}
 
-        {venue.description && (
+        {description && (
           <View style={[styles.descriptionCard, { backgroundColor: theme.colors.surface.sunken }]}>
             <Text
               variant="h4"
@@ -179,9 +184,9 @@ export default function VenuePage() {
             >
               About
             </Text>
-            <Text variant="body1" style={{ color: theme.colors.text.secondary, lineHeight: 24 }}>
-              {venue.description}
-            </Text>
+            <ExpandableText variant="body1" textStyle={{ color: theme.colors.text.secondary, lineHeight: 24 }}>
+              {description}
+            </ExpandableText>
           </View>
         )}
 
@@ -215,11 +220,13 @@ export default function VenuePage() {
               ]}
               activeOpacity={0.85}
             >
-              {event.image_url ? (
-                <Image source={{ uri: event.image_url }} style={styles.eventThumb} />
-              ) : (
-                <View style={[styles.eventThumb, { backgroundColor: theme.colors.surface.sunken }]} />
-              )}
+              {/* Placeholder sits behind the image so broken URLs degrade to it. */}
+              <View style={styles.eventThumb}>
+                <ImagePlaceholder eventTypes={event.event_type} size={24} style={StyleSheet.absoluteFill} />
+                {event.image_url || venue.image ? (
+                  <Image source={{ uri: event.image_url || venue.image! }} style={StyleSheet.absoluteFill} />
+                ) : null}
+              </View>
               <View style={{ flex: 1 }}>
                 <Text variant="body1" style={{ color: theme.colors.text.primary, fontWeight: '600' }} numberOfLines={2}>
                   {event.title}
@@ -255,10 +262,10 @@ const styles = StyleSheet.create({
     maxHeight: 320,
     overflow: 'hidden',
   },
-  // No image: just enough room to host the floating back button.
+  // No image: a modest placeholder band instead of a full 320px of grey.
   heroBare: {
     aspectRatio: undefined,
-    height: 64,
+    height: 160,
   },
   backOverlay: {
     position: 'absolute',
@@ -307,6 +314,7 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 8,
+    overflow: 'hidden',
   },
   primaryButton: {
     height: 52,

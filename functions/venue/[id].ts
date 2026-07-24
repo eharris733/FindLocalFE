@@ -1,7 +1,7 @@
 // Server-rendered meta + honest status codes for /venue/:id.
 // Mirrors functions/event/[id].ts: unknown or inactive venues 404 instead of
 // answering 200 with the homepage shell.
-import { Env, supabaseSelect, fetchShell, applyMeta, htmlResponse } from '../_shared';
+import { Env, supabaseSelect, fetchShell, applyMeta, htmlResponse, cleanMetaDescription } from '../_shared';
 
 interface VenueRow {
   id: string;
@@ -55,8 +55,9 @@ export async function onRequest(context: {
 
   const name = venue.name ?? 'Venue';
   const title = [name, venue.city && `in ${venue.city}`].filter(Boolean).join(' ');
+  const cleanedDescription = cleanMetaDescription(venue.description);
   const description =
-    venue.description?.trim() ||
+    cleanedDescription ||
     [
       `Upcoming events at ${name}`,
       venue.address,
@@ -69,7 +70,7 @@ export async function onRequest(context: {
     '@context': 'https://schema.org',
     '@type': 'Place',
     name,
-    ...(venue.description && { description: venue.description }),
+    ...(cleanedDescription && { description: cleanedDescription }),
     ...(venue.image && { image: venue.image }),
     url: canonical,
     ...(venue.url && { sameAs: venue.url }),

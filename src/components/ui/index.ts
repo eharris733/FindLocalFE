@@ -12,3 +12,5 @@ export type { TextVariant, TextColor } from './Text';
 export { ThemeToggle } from './ThemeToggle';
 export { Icon } from './Icon';
 export type { IconName } from './Icon';
+export { ImagePlaceholder, categoryGlyph } from './ImagePlaceholder';
+export { ExpandableText } from './ExpandableText';

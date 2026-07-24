@@ -1,6 +1,6 @@
 # FindLocal Frontend — Developer Documentation
 
-**Last Updated:** 2026-07-18
+**Last Updated:** 2026-07-24
 **React Native:** 0.81.5 · **Expo SDK:** 54 · **Expo Router:** ~6
 **Target platforms:** iOS, Android, Web (web is the primary build today)
 
@@ -94,7 +94,9 @@ There is no auth-gated route group, no `(private)`, no `(auth)`.
 
 `when='anytime'` filters to `eventDate >= startOfDay(today)`, so past events never render even though the API can return them.
 
-**Recurrence** (`src/hooks/../utils/recurrence.ts`): a "recurring event" is the same normalized title at the same venue on >1 distinct date. `EventFeed` builds the map from the unfiltered city feed and passes `isRecurring` to `EventCard` (↻ pill, top-left of image). The detail page queries `getUpcomingSeriesDates(venueId, title)` and shows "Recurring event · N upcoming dates".
+**Recurrence** (`src/utils/recurrence.ts`): a "recurring event" is the same normalized title at the same venue on >1 distinct date. `EventFeed` builds the map from the unfiltered city feed and passes `isRecurring` to `EventCard` (↻ pill, top-left of image) plus `seriesImageUrl` (first non-empty `image_url` in the series — imageless siblings borrow it). The detail page queries `getUpcomingSeriesInfo(venueId, title)` for the same dates + series image and shows "Recurring event · N upcoming dates".
+
+**Image fallback chain** (event surfaces): `event.image_url || seriesImageUrl || venue.image || <ImagePlaceholder>`. The placeholder always renders *behind* the `Image` so broken URLs (relative paths, dead links, SVGs) degrade to it instead of a blank box.
 
 ---
 
@@ -114,7 +116,9 @@ There is no auth-gated route group, no `(private)`, no `(auth)`.
 - **`EventCard.tsx`** — 16:9 image, price pill (top-right), date/time, title (2 lines), venue · region · distance-in-miles (1 line; distance only when location is shared and the venue has coords).
 - **`EventMap.tsx` + `CustomMapMarker.tsx`** — Google Maps via `@teovilla/react-native-web-maps`. Markers per venue with event count. Callout shows event title, venue, "See Event" and "See Venue" buttons (both wired). Initial center comes from `getCityInfo(selectedCity)` (all launch cities), then web fit-bounds to venue coords. A locate button (top-right) requests/centers on the user's position; web renders a blue-dot marker, native uses `showsUserLocation`.
 - **`EventPageSchema.tsx`, `BreadcrumbSchema.tsx`, `StructuredData.tsx`** — JSON-LD for SEO. `EventPageSchema` also sets `document.title` (per-event titles work; static pages share `"Find Local"`).
-- **`ui/`** — `Text`, `Icon`, `Logo`, etc. Shared primitives.
+- **`ui/`** — `Text`, `Icon`, `Logo`, etc. Shared primitives. Also:
+  - `ImagePlaceholder` — sunken box with a category emoji (🎵/🎤/🎭/🎬/🎲/🍻 from `event_type`) or calendar/location icon. Used behind every event/venue image so missing *and broken* URLs show it. Emoji on purpose — bundled-PNG fallbacks have silently failed under RNW before.
+  - `ExpandableText` — char-based clamp (~600 chars) with Read more / Show less. Used for event/venue descriptions.
 
 ---
 
@@ -124,7 +128,7 @@ The web export is a single-page shell (`dist/index.html`); `_redirects` rewrites
 
 - **`functions/event/[id].ts`** — fetches the event via PostgREST. Live event → 200 with per-event `<title>`, meta description, canonical, OG/Twitter tags, and Event JSON-LD injected into the shell. Past date or `old_events` fallback → **410 + noindex** (shell still renders the friendly page for humans). Unknown id → **404 + noindex**. Supabase outage → plain shell at 200, never a 500.
 - **`functions/venue/[id].ts`** — same pattern; unknown/inactive venue → 404.
-- **`functions/_shared.ts`** — meta-rewriting helpers (`applyMeta`, `supabaseSelect`, `htmlResponse`); underscore prefix keeps it unrouted.
+- **`functions/_shared.ts`** — meta-rewriting helpers (`applyMeta`, `supabaseSelect`, `htmlResponse`, `cleanMetaDescription` — strips HTML/entities from scraped descriptions before they hit meta tags/JSON-LD); underscore prefix keeps it unrouted.
 - **`functions/sitemap.ts`** — dynamic sitemap at `/sitemap` (future events + active venues), referenced by `public/robots.txt`.
 
 Client-side, `_layout.tsx` maintains a per-route canonical (query params stripped, so `/?view=map` folds into `/`) and noindexes `/saved`, `/filters`, `/map`; `EventPageSchema` keeps event meta in sync during client navigation. `public/robots.txt` allows AI/answer-engine crawlers (GEO) — don't re-add the GPTBot/ClaudeBot blocks.
@@ -138,7 +142,7 @@ To test functions locally: build them with esbuild to CJS and invoke `onRequest`
 `events.ts`, `venues.ts`, `communities.ts` — thin Supabase wrappers. Notable behaviors:
 - `getEventsWithCommunities(city)` (the feed query): paginated 1000-rows-per-page, `event_date >= today`, ordered ASC, and selects **only the 13 list columns** (no `description`, no community join unless a community/label filter is passed). ~66% payload reduction vs `select('*')+join`.
 - Venue list queries select `VENUE_COLUMNS` (no `scraper_config`/`transform_rules` JSONB) — ~92% payload reduction. `getVenueById`/`getVenueByName` still return full rows.
-- `getUpcomingSeriesDates(venueId, title)`: distinct future dates for a recurring series (event detail page).
+- `getUpcomingSeriesInfo(venueId, title)`: distinct future dates + first series image_url for a recurring series (event detail page).
 - `getEvents(city, region)`: legacy variant; paginated, ordered ASC, does **not** filter past dates.
 - `getEventByIdWithFallback(id)`: tries `events_gold` first, falls back to `old_events`. Returns `{event, isExpired}` where `isExpired` reflects which table it came from — *not* whether `event_date` < today. A "yesterday" event still in `events_gold` is treated as not-expired.
 - `getUpcomingEventsForVenue(venueId, limit=3)`: uses `gte('event_date', today)`. This is the only place past-date filtering is currently applied.
@@ -185,7 +189,8 @@ These reflect the state as of 2026-07-02 (full Playwright QA pass + code review)
 3. **Console deprecation noise:** `shadow*` style props and `props.pointerEvents` warnings from RNW. Cosmetic but worth a cleanup pass.
 4. **Prod fonts fail to load on findlocal.community.** Every Epilogue/Manrope `.ttf` under `/assets/node_modules/@expo-google-fonts/...` fails OTS parsing (`invalid sfntVersion`) — the deployed font binaries are corrupt (likely mangled by the build/CDN pipeline), so prod silently falls back to system fonts. Check `npm run build` output + hosting config.
 5. **`price_amount` is NULL on ~96% of events**, so Free/Paid filters return near-zero results (100% NULL for LA/Minneapolis). Real fix belongs in the FindLocalData gold pipeline; a conservative backfill is sketched in `scripts/data-cleanup.sql`.
-6. **Data hygiene backlog** lives in `scripts/data-cleanup.sql` (run manually): discovery_locations test rows/dupes/wrong coords, 'Saint Paul' vs 'St. Paul' region split, "club closed" placeholder events, fee-paragraph text stored in `events_gold.price`, trailing-whitespace venue names. `scripts/venue-backfill.sql` holds researched images/descriptions for ~50 venues (Supabase MCP is read-only; apply via dashboard).
+6. **Data hygiene backlog** lives in `scripts/data-cleanup.sql` (run manually): discovery_locations test rows/dupes/wrong coords, 'Saint Paul' vs 'St. Paul' region split, "club closed" placeholder events, fee-paragraph text stored in `events_gold.price`, trailing-whitespace venue names, broken venue images (relative paths / SVGs), all-caps age-policy boilerplate descriptions. `scripts/venue-backfill.sql` holds researched images/descriptions for ~50 venues (Supabase MCP is read-only; apply via dashboard).
+   - **Image/description coverage** (2026-07-24 audit): ~66% of active venues had no image, ~71% of future events no description. Backfill tooling: `scripts/venue-onboard.js` (scrapes og:image/og:description from venue websites → `venue-image-backfill.sql` + miss report CSV), `scripts/event-desc-backfill.js` (scrapes event `detail_page_url` pages, recurring series first → `event-desc-backfill.sql`), `scripts/sibling-image-backfill.sql` (copies a series sibling's image onto imageless rows). Shared scraping helpers in `scripts/lib/og-scrape.js` — descriptions from ticketing aggregators (Ticketmaster & co.) are rejected as boilerplate. The durable fix is og: extraction at scrape time in the FindLocalData pipeline; these are stopgaps for already-scraped rows.
 7. **Community joins are scaffolding.** `event_community_assignments` is only fetched when a community/label filter is passed, and no UI passes one; category chips filter on `event_type` tokens only.
 
 ---
