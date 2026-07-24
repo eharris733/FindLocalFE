@@ -14,11 +14,12 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import type { Event } from '../../types/events';
 import type { Venue } from '../../types/venues';
-import { getEventByIdWithFallback, getUpcomingSeriesDates } from '../../api/events';
+import { getEventByIdWithFallback, getUpcomingSeriesInfo } from '../../api/events';
 import { getVenueById } from '../../api/venues';
 import { showToast } from '../../utils/toast';
 import { useTheme } from '../../context/ThemeContext';
-import { Icon, Text } from '../../components/ui';
+import { ExpandableText, Icon, ImagePlaceholder, Text } from '../../components/ui';
+import { formatDescription } from '../../utils/formatDescription';
 import { useFavorites } from '../../context/FavoritesContext';
 import { addToGoogleCalendar, addToAppleCalendar } from '../../utils/calendarUtils';
 import { openMaps } from '../../utils/linkUtils';
@@ -49,6 +50,7 @@ export default function EventPage() {
   const [error, setError] = useState<string | null>(null);
   const [isExpired, setIsExpired] = useState(false);
   const [seriesDates, setSeriesDates] = useState<string[]>([]);
+  const [seriesImage, setSeriesImage] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -66,11 +68,13 @@ export default function EventPage() {
         setEvent(eventData);
         setIsExpired(expired);
         if (eventData.venue_id && eventData.title) {
-          getUpcomingSeriesDates(eventData.venue_id, eventData.title)
-            .then((dates) => {
-              if (!cancelled) setSeriesDates(dates);
+          getUpcomingSeriesInfo(eventData.venue_id, eventData.title)
+            .then((info) => {
+              if (cancelled) return;
+              setSeriesDates(info.dates);
+              setSeriesImage(info.imageUrl);
             })
-            .catch((err) => logger.warn('Could not fetch series dates:', err));
+            .catch((err) => logger.warn('Could not fetch series info:', err));
         }
         if (eventData.venue_id) {
           try {
@@ -163,7 +167,7 @@ export default function EventPage() {
     else router.replace('/');
   };
 
-  const imageUri = event?.image_url || venue?.image || null;
+  const imageUri = event?.image_url || seriesImage || venue?.image || null;
 
   if (loading) {
     return (
@@ -203,6 +207,7 @@ export default function EventPage() {
   const displayExpired =
     isExpired ||
     (event.event_date ? parseISO(event.event_date) < startOfDay(new Date()) : false);
+  const description = formatDescription(event.description);
 
   return (
     <ScrollView
@@ -218,7 +223,7 @@ export default function EventPage() {
           { backgroundColor: theme.colors.surface.sunken },
         ]}
       >
-        <Icon name="calendar" size={48} color={theme.colors.text.tertiary} />
+        <ImagePlaceholder eventTypes={event.event_type} size={48} style={StyleSheet.absoluteFill} />
         {imageUri ? (
           <>
             {/* Blurred cover fill behind an uncropped image, so tall poster
@@ -360,7 +365,7 @@ export default function EventPage() {
           </TouchableOpacity>
         )}
 
-        {event.description && (
+        {description && (
           <View style={[styles.descriptionCard, { backgroundColor: theme.colors.surface.sunken }]}>
             <Text
               variant="h4"
@@ -372,9 +377,9 @@ export default function EventPage() {
             >
               About this event
             </Text>
-            <Text variant="body1" style={{ color: theme.colors.text.secondary, lineHeight: 24 }}>
-              {event.description}
-            </Text>
+            <ExpandableText variant="body1" textStyle={{ color: theme.colors.text.secondary, lineHeight: 24 }}>
+              {description}
+            </ExpandableText>
           </View>
         )}
 

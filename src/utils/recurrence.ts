@@ -15,6 +15,8 @@ const seriesKey = (event: Pick<Event, 'venue_id' | 'title' | 'custom_location'>)
 export interface RecurrenceInfo {
   /** Distinct upcoming dates for this series (including the event itself). */
   dateCount: number;
+  /** First non-empty image_url in the series — fallback art for imageless siblings. */
+  imageUrl: string | null;
 }
 
 /**
@@ -23,15 +25,17 @@ export interface RecurrenceInfo {
  */
 export const buildRecurrenceMap = (events: Event[]): Map<string, RecurrenceInfo> => {
   const dates = new Map<string, Set<string>>();
+  const images = new Map<string, string>();
   for (const event of events) {
     if (!event.title || !event.event_date) continue;
     const key = seriesKey(event);
     if (!dates.has(key)) dates.set(key, new Set());
     dates.get(key)!.add(event.event_date);
+    if (event.image_url && !images.has(key)) images.set(key, event.image_url);
   }
   const map = new Map<string, RecurrenceInfo>();
   for (const [key, set] of dates) {
-    map.set(key, { dateCount: set.size });
+    map.set(key, { dateCount: set.size, imageUrl: images.get(key) ?? null });
   }
   return map;
 };
@@ -40,5 +44,11 @@ export const isRecurringEvent = (
   event: Event,
   recurrenceMap: Map<string, RecurrenceInfo>
 ): boolean => (recurrenceMap.get(seriesKey(event))?.dateCount ?? 0) > 1;
+
+/** Sibling image for an event whose own image_url is empty (null when none). */
+export const getSeriesImage = (
+  event: Event,
+  recurrenceMap: Map<string, RecurrenceInfo>
+): string | null => recurrenceMap.get(seriesKey(event))?.imageUrl ?? null;
 
 export const getSeriesKey = seriesKey;

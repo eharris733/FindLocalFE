@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Image, TouchableOpacity, StyleSheet } from 'react-native';
-import { Icon, Text } from './ui';
+import { Icon, ImagePlaceholder, Text } from './ui';
 import { useTheme } from '../context/ThemeContext';
 import type { Event } from '../types/events';
 import type { Venue } from '../types/venues';
@@ -12,6 +12,8 @@ interface EventCardProps {
   onPress: () => void;
   /** True when this title repeats on multiple dates at the same venue. */
   isRecurring?: boolean;
+  /** Image borrowed from a sibling date in the same series. */
+  seriesImageUrl?: string | null;
   /** Venue's distance from the user in km; shown as miles when provided. */
   distanceKm?: number;
 }
@@ -48,7 +50,7 @@ const formatPrice = (event: Event): string => {
   return '';
 };
 
-export const EventCard: React.FC<EventCardProps> = ({ event, venue, onPress, isRecurring, distanceKm }) => {
+export const EventCard: React.FC<EventCardProps> = ({ event, venue, onPress, isRecurring, seriesImageUrl, distanceKm }) => {
   const { theme } = useTheme();
   const dateLabel = formatDateLabel(event);
   const priceLabel = formatPrice(event);
@@ -56,12 +58,12 @@ export const EventCard: React.FC<EventCardProps> = ({ event, venue, onPress, isR
   const region = event.region;
   const distanceLabel = formatDistance(distanceKm);
 
-  const imageUri = event.image_url || venue?.image || null;
+  const imageUri = event.image_url || seriesImageUrl || venue?.image || null;
 
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.85} style={styles.card}>
       <View style={[styles.imageWrapper, { backgroundColor: theme.colors.surface.sunken }]}>
-        <Icon name="calendar" size={40} color={theme.colors.text.tertiary} />
+        <ImagePlaceholder eventTypes={event.event_type} size={40} style={StyleSheet.absoluteFill} />
         {imageUri ? (
           <Image source={{ uri: imageUri }} style={StyleSheet.absoluteFill as any} resizeMode="cover" />
         ) : null}
