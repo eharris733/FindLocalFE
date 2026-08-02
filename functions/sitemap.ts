@@ -74,6 +74,12 @@ export async function onRequest(context: { env: Env }) {
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>${baseUrl}/platform</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
     <loc>${baseUrl}/privacy</loc>
     <lastmod>${today}</lastmod>
     <changefreq>yearly</changefreq>
