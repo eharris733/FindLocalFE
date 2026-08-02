@@ -1,5 +1,9 @@
 # Static assets should not be routed to SPA
 /assets/*  /assets/:splat  200
 
+# Standalone marketing page - static HTML, not part of the Expo bundle
+/platform   /platform/index.html  200
+/platform/  /platform/index.html  200
+
 # SPA routing - serve index.html for all other routes
 /*    /index.html   200
