@@ -33,7 +33,8 @@ ${entries.join('\n')}
 }
 
 function staticEntries(): string[] {
-  const fixed = ['/', '/about', '/venues', '/platform', '/blog', '/privacy', '/terms'];
+  // /blog and its posts live in sitemap-blog.xml (emitted by the build).
+  const fixed = ['/', '/about', '/venues', '/platform', '/privacy', '/terms'];
   const cities = FUNCTION_CITIES.map((c) => `/city/${c.slug}`);
   // No <lastmod> here — fabricating "today" for pages that rarely change
   // teaches crawlers to ignore our lastmod everywhere else.

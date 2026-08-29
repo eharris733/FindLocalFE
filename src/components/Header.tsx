@@ -12,8 +12,14 @@ const NAV_LINKS: { label: string; path: string }[] = [
   { label: 'Discover', path: '/' },
   { label: 'Map', path: '/?view=map' },
   { label: 'Venues', path: '/venues' },
+  { label: 'Blog', path: '/blog' },
   { label: 'About', path: '/about' },
 ];
+
+// Static HTML sections served outside the SPA (build-time pages / Pages
+// Functions). router.push would dead-end in the expo-router route table, so
+// these need a full page load.
+const EXTERNAL_PATHS = new Set(['/blog', '/platform']);
 
 export default function Header() {
   const { theme } = useTheme();
@@ -41,6 +47,12 @@ export default function Header() {
   };
 
   const handleNavLink = (path: string) => {
+    if (EXTERNAL_PATHS.has(path)) {
+      if (Platform.OS === 'web' && typeof window !== 'undefined') {
+        window.location.assign(path);
+      }
+      return;
+    }
     router.push(path as any);
   };
 
