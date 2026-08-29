@@ -5,5 +5,10 @@
 /platform   /platform/index.html  200
 /platform/  /platform/index.html  200
 
+# Legacy URLs: the sitemap moved to the /sitemap function (now a sitemapindex),
+# and /map is a client-side alias of the homepage map view.
+/sitemap.xml  /sitemap    301
+/map          /?view=map  301
+
 # SPA routing - serve index.html for all other routes
 /*    /index.html   200

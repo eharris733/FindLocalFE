@@ -24,6 +24,7 @@ import { FiltersProvider } from '../context/FiltersContext';
 import { SplashScreenController } from '../components/SplashScreenController';
 import Header from '../components/Header';
 import { logger } from '../utils/logger';
+import { CANONICAL_ORIGIN } from '../constants/site';
 
 SplashScreen.preventAutoHideAsync().catch((error) => {
   logger.warn('SplashScreen.preventAutoHideAsync failed:', error);
@@ -129,13 +130,15 @@ export default function RootLayout() {
   );
 }
 
+// Keep in sync with the server-rendered titles in functions/*.ts so the
+// hydrated DOM agrees with the initial HTML.
 const ROUTE_TITLES: Record<string, string> = {
-  '/': 'Find Local — Discover local events',
+  '/': 'Find Local — Discover Local Events: Concerts, Comedy, Theater & More',
   '/saved': 'Saved · Find Local',
-  '/venues': 'Venues · Find Local',
-  '/about': 'About · Find Local',
-  '/privacy': 'Privacy · Find Local',
-  '/terms': 'Terms · Find Local',
+  '/venues': 'Browse Local Venues | Find Local',
+  '/about': 'About Find Local | Local Event Discovery',
+  '/privacy': 'Privacy Policy | Find Local',
+  '/terms': 'Terms of Service | Find Local',
   '/filters': 'Filters · Find Local',
 };
 
@@ -163,7 +166,14 @@ function RootNavigator() {
       canonical.rel = 'canonical';
       document.head.appendChild(canonical);
     }
-    canonical.href = `${window.location.origin}${cleanPath}`;
+    // Always the production origin — window.location.origin would make www/
+    // preview-host variants self-canonicalise. Detail-page ids are lowercased
+    // to match the server-side 301 normalisation.
+    const canonicalPath =
+      cleanPath.startsWith('/event/') || cleanPath.startsWith('/venue/')
+        ? cleanPath.toLowerCase()
+        : cleanPath;
+    canonical.href = `${CANONICAL_ORIGIN}${canonicalPath}`;
 
     const noindex = cleanPath === '/saved' || cleanPath === '/filters' || cleanPath === '/map';
     let robots = document.querySelector('meta[name="robots"]') as HTMLMetaElement | null;

@@ -1,7 +1,7 @@
 // Server-rendered meta + honest status codes for /venue/:id.
 // Mirrors functions/event/[id].ts: unknown or inactive venues 404 instead of
 // answering 200 with the homepage shell.
-import { Env, supabaseSelect, fetchShell, applyMeta, htmlResponse, cleanMetaDescription } from '../_shared';
+import { Env, ORIGIN, supabaseSelect, fetchShell, applyMeta, htmlResponse, cleanMetaDescription } from '../_shared';
 
 interface VenueRow {
   id: string;
@@ -25,8 +25,12 @@ export async function onRequest(context: {
   request: Request;
 }): Promise<Response> {
   const { env, params, request } = context;
-  const id = params.id;
-  const canonical = `https://findlocal.community/venue/${id}`;
+  // Collapse case variants (uuid equality is case-insensitive in Postgres).
+  const id = params.id.toLowerCase();
+  if (id !== params.id) {
+    return Response.redirect(`${ORIGIN}/venue/${id}`, 301);
+  }
+  const canonical = `${ORIGIN}/venue/${id}`;
   const shell = await fetchShell(env, request.url);
 
   let rows: VenueRow[] | null = null;

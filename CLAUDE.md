@@ -124,16 +124,26 @@ There is no auth-gated route group, no `(private)`, no `(auth)`.
 
 ## SEO / Cloudflare Pages Functions (`functions/`)
 
-The web export is a single-page shell (`dist/index.html`); `_redirects` rewrites unknown paths to it with a 200. That once meant every `/event/*` URL served an identical homepage head — Search Console filed ~7.4k **Soft 404s** (dead events answering 200) and ~1.9k **Duplicate without user-selected canonical**. Fixed 2026-07-18 by Pages Functions, which run before static assets/redirects:
+The web export is a single-page shell (`dist/index.html`); `_redirects` rewrites unknown paths to it with a 200. That once meant every URL served an identical homepage head — Search Console filed thousands of **Soft 404s** and **Duplicate without user-selected canonical**. Fixed in two passes (2026-07-18 detail pages, 2026-08-29 everything else) by Pages Functions, which run before static assets/redirects:
 
-- **`functions/event/[id].ts`** — fetches the event via PostgREST. Live event → 200 with per-event `<title>`, meta description, canonical, OG/Twitter tags, and Event JSON-LD injected into the shell. Past date or `old_events` fallback → **410 + noindex** (shell still renders the friendly page for humans). Unknown id → **404 + noindex**. Supabase outage → plain shell at 200, never a 500.
+- **`functions/event/[id].ts`** — fetches the event via PostgREST. Live event → 200 with per-event `<title>`, meta description, canonical, OG/Twitter tags, and Event JSON-LD injected into the shell. Past date or `old_events` fallback → **410 + noindex** (shell still renders the friendly page for humans; GSC reports these 410s under "Not found (404)" — that's expected, not breakage). Unknown id → **404 + noindex**. Case-variant ids → **301 to lowercase**. Supabase outage → plain shell at 200, never a 500.
 - **`functions/venue/[id].ts`** — same pattern; unknown/inactive venue → 404.
-- **`functions/_shared.ts`** — meta-rewriting helpers (`applyMeta`, `supabaseSelect`, `htmlResponse`, `cleanMetaDescription` — strips HTML/entities from scraped descriptions before they hit meta tags/JSON-LD); underscore prefix keeps it unrouted.
-- **`functions/sitemap.ts`** — dynamic sitemap at `/sitemap` (future events + active venues), referenced by `public/robots.txt`.
+- **`functions/index.ts` / `about.ts` / `venues.ts` / `privacy.ts` / `terms.ts`** — inject per-route title/description/absolute canonical into the shell (the built shell deliberately ships *no* canonical — see the comment in `scripts/inject-head.js`).
+- **Dead legacy routes** (`friends`, `create`, `home`, `profile`, `support`, `discover-creators`, `followed-venues`, `following-activity`, `followers`, `user/*`, `auth/*`, `invite/*`) → **410 + noindex** instead of a 200 shell. robots.txt deliberately does NOT disallow `/user/`//`/auth/` — crawlers must fetch them to see the 410.
+- **`functions/city/[slug].ts`** — standalone server-rendered "Things to do in {City}" pages at `/city/<slug>` (31 cities from `functions/_cities.ts`, a copy of `src/constants/cities.ts` — keep in sync). Date-grouped event links + ItemList JSON-LD; <3 events → noindex. Not an SPA route.
+- **`functions/sitemap.ts` + `functions/sitemaps/[name].ts`** — `/sitemap` is a **sitemapindex** pointing at `/sitemaps/static.xml`, `venues.xml`, `events-{n}.xml` (5,000 URLs per chunk, fetched in 1000-row `Range` windows — PostgREST caps every response at 1000 rows, so plain `.limit(50000)` silently truncates), plus the build-emitted `/sitemap-blog.xml`. Events filter `is_deleted=eq.false`.
+- **`functions/_shared.ts`** — `ORIGIN`, meta-rewriting (`applyMeta`), PostgREST helpers (`supabaseSelect`, `supabaseSelectRange`, `supabaseCount`), `staticPageMeta`, `goneResponse`, `htmlResponse`, `cleanMetaDescription`, `todayString()` (**America/New_York**, not UTC); underscore prefix keeps it unrouted.
+- **`public/_routes.json`** — limits which paths invoke functions (assets/`/platform`/`/blog` are excluded); copied to `dist/` by the build script. Add new function routes here or they'll never run.
+- **`public/_redirects`** — `/map → /?view=map` and `/sitemap.xml → /sitemap` 301s ahead of the SPA catch-all.
+- **`public/llms.txt`** — site description + URL shapes for AI answer engines.
 
-Client-side, `_layout.tsx` maintains a per-route canonical (query params stripped, so `/?view=map` folds into `/`) and noindexes `/saved`, `/filters`, `/map`; `EventPageSchema` keeps event meta in sync during client navigation. `public/robots.txt` allows AI/answer-engine crawlers (GEO) — don't re-add the GPTBot/ClaudeBot blocks.
+Client-side, `_layout.tsx` maintains a per-route canonical (hardcoded `CANONICAL_ORIGIN` from `src/constants/site.ts` — never `window.location.origin`; query params stripped so `/?view=map` folds into `/`) and noindexes `/saved`, `/filters`, `/map`; `EventPageSchema` keeps event meta in sync during client navigation. `public/robots.txt` allows AI/answer-engine crawlers (GEO) — don't re-add the GPTBot/ClaudeBot blocks.
 
 To test functions locally: build them with esbuild to CJS and invoke `onRequest` with a stub `ASSETS` binding plus the `.env` Supabase keys (no wrangler needed).
+
+### Blog (`content/blog/` → static HTML)
+
+`scripts/build-blog.js` (runs inside `npm run build`) renders `content/blog/*.md` (simple `key: value` frontmatter: `title`/`description`/`date` required; `updated`/`author`/`image`/`draft` optional; slug = filename) via `marked` + `scripts/lib/blog-template.js` into `dist/blog/<slug>/index.html` + `dist/blog/index.html` + `dist/sitemap-blog.xml`. Fully static and crawlable — Article/BreadcrumbList JSON-LD, canonical, GA4. Served ahead of the SPA catch-all as plain assets; the Header "Blog" nav link does a full-page navigation (`EXTERNAL_PATHS` in `Header.tsx`), NOT `router.push`.
 
 ---
 

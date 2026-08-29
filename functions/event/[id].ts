@@ -10,6 +10,7 @@
 //   - unknown id   → 404 + noindex
 import {
   Env,
+  ORIGIN,
   supabaseSelect,
   fetchShell,
   applyMeta,
@@ -48,8 +49,13 @@ export async function onRequest(context: {
   request: Request;
 }): Promise<Response> {
   const { env, params, request } = context;
-  const id = params.id;
-  const canonical = `https://findlocal.community/event/${id}`;
+  // uuid equality is case-insensitive in Postgres, so uppercase variants would
+  // otherwise 200 and self-canonicalise as duplicates. Collapse them first.
+  const id = params.id.toLowerCase();
+  if (id !== params.id) {
+    return Response.redirect(`${ORIGIN}/event/${id}`, 301);
+  }
+  const canonical = `${ORIGIN}/event/${id}`;
   const shell = await fetchShell(env, request.url);
 
   const notFound = (status: 404 | 410) =>

@@ -7,6 +7,16 @@ export interface Env {
   ASSETS: { fetch: (request: Request | string | URL) => Promise<Response> };
 }
 
+/** Canonical origin for every URL we publish — never the request's host. */
+export const ORIGIN = 'https://findlocal.community';
+
+function supabaseHeaders(env: Env): Record<string, string> {
+  return {
+    apikey: env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+    Authorization: `Bearer ${env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY}`,
+  };
+}
+
 /** Minimal PostgREST fetch — avoids bundling supabase-js into every function. */
 export async function supabaseSelect<T>(
   env: Env,
@@ -14,14 +24,46 @@ export async function supabaseSelect<T>(
   params: string
 ): Promise<T[] | null> {
   const url = `${env.EXPO_PUBLIC_SUPABASE_URL}/rest/v1/${table}?${params}`;
+  const res = await fetch(url, { headers: supabaseHeaders(env) });
+  if (!res.ok) return null;
+  return (await res.json()) as T[];
+}
+
+/**
+ * Paginated PostgREST fetch. The server caps every response at 1000 rows no
+ * matter what `limit=` says, so anything bigger must walk Range windows.
+ * `from`/`to` are inclusive row offsets.
+ */
+export async function supabaseSelectRange<T>(
+  env: Env,
+  table: string,
+  params: string,
+  from: number,
+  to: number
+): Promise<T[] | null> {
+  const url = `${env.EXPO_PUBLIC_SUPABASE_URL}/rest/v1/${table}?${params}`;
   const res = await fetch(url, {
-    headers: {
-      apikey: env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
-      Authorization: `Bearer ${env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY}`,
-    },
+    headers: { ...supabaseHeaders(env), Range: `${from}-${to}` },
   });
   if (!res.ok) return null;
   return (await res.json()) as T[];
+}
+
+/** Row count for a PostgREST filter without fetching rows. */
+export async function supabaseCount(
+  env: Env,
+  table: string,
+  params: string
+): Promise<number | null> {
+  const url = `${env.EXPO_PUBLIC_SUPABASE_URL}/rest/v1/${table}?${params}&select=id`;
+  const res = await fetch(url, {
+    method: 'HEAD',
+    headers: { ...supabaseHeaders(env), Prefer: 'count=exact', Range: '0-0' },
+  });
+  if (!res.ok) return null;
+  const total = res.headers.get('content-range')?.split('/')[1];
+  const parsed = total ? parseInt(total, 10) : NaN;
+  return Number.isFinite(parsed) ? parsed : null;
 }
 
 export function escapeHtml(value: string): string {
@@ -162,7 +204,38 @@ export function cleanMetaDescription(raw: string | null | undefined): string | n
   return text.length > 0 ? text : null;
 }
 
-/** Today in YYYY-MM-DD, matching how event_date is stored and queried. */
+/**
+ * Today in YYYY-MM-DD, Eastern time. Events are US-local; the previous UTC
+ * version flipped tonight's events to "expired" 5–8 hours early. en-CA
+ * formats as ISO.
+ */
 export function todayString(): string {
-  return new Date().toISOString().split('T')[0];
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' }).format(new Date());
+}
+
+/** PageMeta for a fixed route: absolute, query-free canonical. */
+export function staticPageMeta(path: string, title: string, description: string): PageMeta {
+  return { title, description, canonical: `${ORIGIN}${path}` };
+}
+
+/**
+ * Noindexed shell at 404/410 for routes that no longer (or never did) exist.
+ * The shell still renders whatever the SPA shows humans for the path.
+ */
+export async function goneResponse(
+  env: Env,
+  requestUrl: string,
+  status: 404 | 410
+): Promise<Response> {
+  const shell = await fetchShell(env, requestUrl);
+  const path = new URL(requestUrl).pathname;
+  return htmlResponse(
+    applyMeta(shell, {
+      title: 'Page not available | Find Local',
+      description: 'This page is no longer available. Browse upcoming local events on Find Local.',
+      canonical: `${ORIGIN}${path}`,
+      noindex: true,
+    }),
+    status
+  );
 }
