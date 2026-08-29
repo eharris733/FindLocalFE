@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import type { Event } from '../types/events';
 import type { Venue } from '../types/venues';
+import { CANONICAL_ORIGIN } from '../constants/site';
 
 interface EventPageSchemaProps {
   readonly event: Event;
@@ -30,10 +31,9 @@ function parsePriceValue(event: Event): number | undefined {
  * Adds Event structured data (schema.org) for better SEO and rich search results
  */
 export function EventPageSchema({ event, venue }: EventPageSchemaProps) {
-  // Build the event URL
-  const isWeb = typeof globalThis.window !== 'undefined';
-  const baseUrl = isWeb ? globalThis.window.location.origin : 'https://findlocal.community';
-  const eventUrl = `${baseUrl}/event/${event.id}`;
+  // Build the event URL — always the production origin, never
+  // window.location.origin (www/preview hosts must not self-canonicalise).
+  const eventUrl = `${CANONICAL_ORIGIN}/event/${event.id}`;
 
   // Format the event date and time
   const hasDate = Boolean(event.event_date);

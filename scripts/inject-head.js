@@ -23,12 +23,18 @@ if (html.includes('G-SK3E86M5F8')) {
 }
 
 // --- HEAD injections (before </head>) ---
+//
+// NOTE: deliberately NO <link rel="canonical"> here. This shell is served on
+// arbitrary paths by the SPA catch-all, so any canonical baked in would be
+// wrong everywhere except one URL. Per-route canonicals are injected
+// server-side by the Cloudflare Pages Functions in functions/ (and
+// client-side by src/app/_layout.tsx during navigation).
 
 const headSnippet = `
 <!-- SEO Meta Tags -->
-<title>Find Local - Discover Events in Boston & New York | Concerts, Comedy & More</title>
-<meta name="description" content="Discover the best local events near you. Browse concerts, comedy shows, live music, theater, dance performances, and cultural experiences in Boston and New York City. Free and paid events updated daily." />
-<meta name="keywords" content="local events, events near me, concerts, comedy shows, theater, live music, Boston events, New York events, NYC events, things to do, nightlife, cultural events, event discovery" />
+<title>Find Local — Discover Local Events: Concerts, Comedy, Theater & More</title>
+<meta name="description" content="Discover the best local events near you. Browse concerts, comedy shows, live music, theater, and cultural experiences across 31 US cities. Free and paid events updated daily." />
+<meta name="keywords" content="local events, events near me, concerts, comedy shows, theater, live music, things to do, nightlife, cultural events, event discovery" />
 <meta name="robots" content="index, follow" />
 <meta name="author" content="Find Local" />
 
@@ -42,7 +48,7 @@ const headSnippet = `
 <meta property="og:type" content="website" />
 <meta property="og:site_name" content="Find Local" />
 <meta property="og:locale" content="en_US" />
-<meta property="og:title" content="Find Local - Discover Events in Boston & New York" />
+<meta property="og:title" content="Find Local — Discover Local Events Near You" />
 <meta property="og:description" content="Discover the best local events near you. Browse concerts, comedy shows, live music, theater, and cultural experiences updated daily." />
 <meta property="og:image" content="https://findlocal.community/og-image.jpg" />
 <meta property="og:image:width" content="1200" />
@@ -52,7 +58,7 @@ const headSnippet = `
 <!-- Twitter -->
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:url" content="https://findlocal.community" />
-<meta name="twitter:title" content="Find Local - Discover Events in Boston & New York" />
+<meta name="twitter:title" content="Find Local — Discover Local Events Near You" />
 <meta name="twitter:description" content="Discover the best local events near you. Browse concerts, comedy shows, live music, theater, and cultural experiences updated daily." />
 <meta name="twitter:image" content="https://findlocal.community/og-image.jpg" />
 <meta name="twitter:image:alt" content="Find Local - Event Discovery Platform" />
@@ -67,7 +73,7 @@ const headSnippet = `
   "@type": "WebApplication",
   "name": "Find Local",
   "url": "https://findlocal.community",
-  "description": "Discover the best local events near you. Browse concerts, comedy shows, live music, theater, and cultural experiences in Boston and New York City.",
+  "description": "Discover the best local events near you. Browse concerts, comedy shows, live music, theater, and cultural experiences across 31 US cities.",
   "applicationCategory": "EntertainmentApplication",
   "operatingSystem": "Web, iOS, Android",
   "offers": {
@@ -75,10 +81,7 @@ const headSnippet = `
     "price": "0",
     "priceCurrency": "USD"
   },
-  "areaServed": [
-    { "@type": "City", "name": "Boston", "addressRegion": "MA" },
-    { "@type": "City", "name": "New York", "addressRegion": "NY" }
-  ]
+  "areaServed": { "@type": "Country", "name": "United States" }
 }
 </script>
 
@@ -110,14 +113,14 @@ const headSnippet = `
 const bodySnippet = `
 <!-- SEO content for crawlers -->
 <div style="position:absolute;left:-9999px">
-  <h1>Find Local Events in Boston & New York: Concerts, Comedy, Theater & More</h1>
-  <p>Discover the best local events in your city. Browse thousands of concerts, comedy shows, theater performances, dance events, and cultural experiences in Boston and New York, updated daily.</p>
+  <h1>Find Local Events: Concerts, Comedy, Theater & More</h1>
+  <p>Discover the best local events in your city. Browse thousands of concerts, comedy shows, theater performances, dance events, and cultural experiences across 31 US cities, updated daily.</p>
   <p>Filter by music, comedy, theater, culture, and more. Find events at jazz clubs, comedy venues, concert halls, and community spaces.</p>
 </div>
 <noscript>
   <div style="max-width:1200px;margin:40px auto;padding:20px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">
     <h1>Find Local Events</h1>
-    <p>Discover local events in Boston and New York including concerts, comedy shows, theater, and more.</p>
+    <p>Discover local events near you including concerts, comedy shows, theater, and more.</p>
     <p>Please enable JavaScript to use the full Find Local experience.</p>
   </div>
 </noscript>

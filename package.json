@@ -7,9 +7,9 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
-    "build": "expo export --platform web && node scripts/inject-head.js && cp -f public/_headers dist/_headers && cp -f public/_redirects dist/_redirects",
-    "build:web": "expo export --platform web && node scripts/inject-head.js && cp -f public/_headers dist/_headers && cp -f public/_redirects dist/_redirects",
-    "serve": "expo export --platform web && node scripts/inject-head.js && cp -f public/_headers dist/_headers && cp -f public/_redirects dist/_redirects && npx serve dist"
+    "build": "expo export --platform web && node scripts/inject-head.js && node scripts/build-blog.js && cp -f public/_headers dist/_headers && cp -f public/_redirects dist/_redirects && cp -f public/_routes.json dist/_routes.json",
+    "build:web": "npm run build",
+    "serve": "npm run build && npx serve dist"
   },
   "dependencies": {
     "@expo-google-fonts/epilogue": "^0.4.2",
