@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "description": "Only invoke Pages Functions on routes that have one; everything else (assets, /platform, /blog statics) is served directly.",
+  "include": [
+    "/",
+    "/about",
+    "/venues",
+    "/privacy",
+    "/terms",
+    "/event/*",
+    "/venue/*",
+    "/city/*",
+    "/sitemap",
+    "/sitemaps/*",
+    "/friends",
+    "/create",
+    "/home",
+    "/profile",
+    "/discover-creators",
+    "/followed-venues",
+    "/following-activity",
+    "/followers",
+    "/support",
+    "/user/*",
+    "/auth/*",
+    "/invite/*"
+  ],
+  "exclude": []
+}

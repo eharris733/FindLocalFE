@@ -2,6 +2,10 @@ import { ScrollViewStyleReset } from 'expo-router/html';
 
 // This file is web-only and used to configure the root HTML for every
 // web page during static rendering.
+//
+// NOTE: INERT under the current app.config.js `web.output: "single"` — Expo
+// only consults +html.tsx with `output: "static"`. The shipped equivalent is
+// scripts/inject-head.js; keep the two in sync if we ever switch to static.
 export default function Root({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
