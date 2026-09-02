@@ -5,8 +5,3 @@ declare namespace NodeJS {
     EXPO_PUBLIC_GOOGLE_MAPS_API_KEY: string;
   }
 }
-
-interface Window {
-  gtag: (...args: any[]) => void;
-  dataLayer: any[];
-}

@@ -1,37 +1,21 @@
 /*
   Cross-Origin-Resource-Policy: cross-origin
 
-# Allow CORS and long caching for all exported assets (hashed paths)
+# Content-hashed Metro bundles and chunks — safe to cache forever.
+/_expo/static/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Content-hashed exported assets. Pages sets MIME types itself; keep a single
+# matching rule per path so headers aren't comma-joined/duplicated.
 /assets/*
   Access-Control-Allow-Origin: *
   Cache-Control: public, max-age=31536000, immutable
-  Cross-Origin-Resource-Policy: cross-origin
 
-# Font files - proper MIME types and CORS
-/assets/*.ttf
-  Content-Type: font/ttf
+# Self-hosted woff2 fonts (declared in scripts/inject-head.js).
+/fonts/*
   Access-Control-Allow-Origin: *
-  Cache-Control: public, max-age=31536000, immutable, no-transform
-  Content-Encoding: identity
-  Cross-Origin-Resource-Policy: cross-origin
+  Cache-Control: public, max-age=31536000, immutable
 
-/assets/*.otf
-  Content-Type: font/otf
-  Access-Control-Allow-Origin: *
-  Cache-Control: public, max-age=31536000, immutable, no-transform
-  Content-Encoding: identity
-  Cross-Origin-Resource-Policy: cross-origin
-
-/assets/*.woff
-  Content-Type: font/woff
-  Access-Control-Allow-Origin: *
-  Cache-Control: public, max-age=31536000, immutable, no-transform
-  Content-Encoding: identity
-  Cross-Origin-Resource-Policy: cross-origin
-
-/assets/*.woff2
-  Content-Type: font/woff2
-  Access-Control-Allow-Origin: *
-  Cache-Control: public, max-age=31536000, immutable, no-transform
-  Content-Encoding: identity
-  Cross-Origin-Resource-Policy: cross-origin
+# Unhashed brand asset; short TTL so a swap propagates within a day.
+/logo.webp
+  Cache-Control: public, max-age=86400

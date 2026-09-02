@@ -1,12 +1,51 @@
 /**
- * Post-build script that injects Google Analytics, SEO meta tags, and
- * structured data into dist/index.html after `expo export`.
+ * Post-build script that injects SEO meta tags, structured data, self-hosted
+ * font declarations and resource hints into dist/index.html after `expo export`.
  *
  * Expo's `output: "single"` ignores +html.tsx, so we inject directly.
  * Keep this in sync with src/app/+html.tsx for when/if we switch to static.
+ *
+ * Deliberately NO third-party analytics here (GA4/Clarity were removed
+ * 2026-09-02 — no value, EU consent exposure, ~200 KB on the critical path).
  */
+require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
+
+const INJECTED_MARKER = 'data-findlocal-head';
+const SUPABASE_ORIGIN = (() => {
+  const url = process.env.EXPO_PUBLIC_SUPABASE_URL;
+  if (!url) {
+    console.error('EXPO_PUBLIC_SUPABASE_URL is not set; cannot emit the Supabase preconnect.');
+    process.exit(1);
+  }
+  return new URL(url).origin;
+})();
+
+// Google Fonts' latin subset range — keeps the woff2 small; anything outside
+// it (e.g. the ↻ recurring glyph) falls back to the system stack.
+const LATIN_RANGE =
+  'U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD';
+
+// The app references expo-style family names (src/theme/typography.ts), one
+// per weight. Each alias points at the same variable woff2 with a SINGLE
+// font-weight so `Manrope_700Bold` renders at 700 without the text having to
+// set fontWeight — and call sites that add fontWeight:'700' on a 400 alias
+// keep getting synthetic bold exactly as expo-font's declaration did. Do not
+// widen these to `400 700` ranges.
+const FONT_FACES = [
+  ['Manrope_400Regular', 'manrope-latin.woff2', 400],
+  ['Manrope_500Medium', 'manrope-latin.woff2', 500],
+  ['Manrope_600SemiBold', 'manrope-latin.woff2', 600],
+  ['Manrope_700Bold', 'manrope-latin.woff2', 700],
+  ['Epilogue_400Regular', 'epilogue-latin.woff2', 400],
+  ['Epilogue_600SemiBold', 'epilogue-latin.woff2', 600],
+  ['Epilogue_700Bold', 'epilogue-latin.woff2', 700],
+];
+const fontFaceCss = FONT_FACES.map(
+  ([family, file, weight]) =>
+    `@font-face{font-family:"${family}";src:url(/fonts/${file}) format("woff2");font-weight:${weight};font-style:normal;font-display:swap;unicode-range:${LATIN_RANGE}}`
+).join('\n');
 
 const distHtml = path.join(__dirname, '..', 'dist', 'index.html');
 
@@ -17,7 +56,7 @@ if (!fs.existsSync(distHtml)) {
 
 let html = fs.readFileSync(distHtml, 'utf8');
 
-if (html.includes('G-SK3E86M5F8')) {
+if (html.includes(INJECTED_MARKER)) {
   console.log('Already injected, skipping.');
   process.exit(0);
 }
@@ -31,6 +70,16 @@ if (html.includes('G-SK3E86M5F8')) {
 // client-side by src/app/_layout.tsx during navigation).
 
 const headSnippet = `
+<!-- Resource hints: the feed's first request is a Supabase fetch; warm the
+     connection while the bundle downloads. Fonts are preloaded so they're
+     discovered from the HTML rather than after the bundle executes. -->
+<link rel="preconnect" href="${SUPABASE_ORIGIN}" crossorigin ${INJECTED_MARKER} />
+<link rel="preload" href="/fonts/epilogue-latin.woff2" as="font" type="font/woff2" crossorigin />
+<link rel="preload" href="/fonts/manrope-latin.woff2" as="font" type="font/woff2" crossorigin />
+<style>
+${fontFaceCss}
+</style>
+
 <!-- SEO Meta Tags -->
 <title>Find Local — Discover Local Events: Concerts, Comedy, Theater & More</title>
 <meta name="description" content="Discover the best local events near you. Browse concerts, comedy shows, live music, theater, and cultural experiences across 31 US cities. Free and paid events updated daily." />
@@ -84,28 +133,6 @@ const headSnippet = `
   "areaServed": { "@type": "Country", "name": "United States" }
 }
 </script>
-
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-SK3E86M5F8"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-SK3E86M5F8', { send_page_view: false });
-</script>
-
-<!-- Material Symbols (icons) -->
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" />
-
-<!-- Microsoft Clarity -->
-<script type="text/javascript">
-  (function(c,l,a,r,i,t,y){
-    c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-    t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-    y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-  })(window, document, "clarity", "script", "vkzkf8j9n8");
-</script>
 `;
 
 // --- BODY injections (after <body>) ---
@@ -135,5 +162,14 @@ html = html.replace('</head>', headSnippet + '</head>');
 // Inject body content right after <body> (before existing content)
 html = html.replace('<body>', '<body>' + bodySnippet);
 
+// The entry bundle is `defer`red, which Chrome fetches at Low priority behind
+// images and third-party scripts. Nothing paints until it runs, so bump it.
+const scriptTag = /<script src="(\/_expo\/static\/js\/web\/[^"]+\.js)" defer><\/script>/;
+if (!scriptTag.test(html)) {
+  console.error('Could not find the Expo entry <script> tag in dist/index.html — did the export format change?');
+  process.exit(1);
+}
+html = html.replace(scriptTag, '<script src="$1" defer fetchpriority="high"></script>');
+
 fs.writeFileSync(distHtml, html, 'utf8');
-console.log('Injected SEO meta tags, structured data, Google Analytics, and Microsoft Clarity into dist/index.html');
+console.log('Injected SEO meta, structured data, font-face declarations and resource hints into dist/index.html');
