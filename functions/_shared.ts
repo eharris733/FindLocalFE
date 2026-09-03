@@ -66,6 +66,23 @@ export async function supabaseCount(
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+/** Value of one cookie from the request, decoded; null when absent. */
+export function readCookie(request: Request, name: string): string | null {
+  const header = request.headers.get('cookie');
+  if (!header) return null;
+  for (const part of header.split(';')) {
+    const eq = part.indexOf('=');
+    if (eq === -1) continue;
+    if (part.slice(0, eq).trim() !== name) continue;
+    try {
+      return decodeURIComponent(part.slice(eq + 1).trim());
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
 export function escapeHtml(value: string): string {
   return value
     .replace(/&/g, '&amp;')

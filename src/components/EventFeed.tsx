@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useLayoutEffect, useMemo } from 'react';
 import {
   View,
   FlatList,
@@ -23,6 +23,7 @@ import { useEventsQuery } from '../hooks/queries/useEventsQuery';
 import { useVenuesQuery } from '../hooks/queries/useVenuesQuery';
 import { buildRecurrenceMap, isRecurringEvent, getSeriesImage } from '../utils/recurrence';
 import { distanceKm } from '../constants/cities';
+import { removeSsrFeed } from '../utils/feedPreload';
 import type { FeedSort } from '../context/CityContext';
 import type { Event } from '../types/events';
 import type { Venue } from '../types/venues';
@@ -47,6 +48,15 @@ export const EventFeed: React.FC<EventFeedProps> = ({ viewMode }) => {
 
   const { data: events = [], isLoading } = useEventsQuery(selectedCity);
   const { data: venues = [], isLoading: venuesLoading } = useVenuesQuery(selectedCity);
+
+  // The homepage HTML ships a static copy of the first screen (#ssr-feed, from
+  // functions/index.ts) so there's something to paint before this bundle runs.
+  // Our first commit renders the same rows from window.__FEED_PRELOAD__, so
+  // dropping the fragment after commit but before paint is invisible. Runs
+  // unconditionally: a fragment for a different city must go too.
+  useLayoutEffect(() => {
+    removeSsrFeed();
+  }, []);
 
   const venueById = useMemo(() => {
     const map = new Map<string, Venue>();

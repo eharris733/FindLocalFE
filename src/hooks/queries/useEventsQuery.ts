@@ -7,6 +7,8 @@ import {
   type EventsPage,
 } from '../../api/events';
 import type { Event } from '../../types/events';
+import { getFeedPreload } from '../../utils/feedPreload';
+import { compareEventsByDayTime } from '../../utils/eventDate';
 
 /**
  * City feed as a flat `Event[]`, loaded progressively.
@@ -36,7 +38,22 @@ export function useEventsQuery(city: string | undefined) {
       const expected = pages.length === 1 ? FEED_FIRST_PAGE_SIZE : FEED_PAGE_SIZE;
       return lastPage.rows.length >= expected ? loaded : undefined;
     },
-    select: (data: InfiniteData<EventsPage, number>) => data.pages.flatMap((p) => p.rows),
+    // PostgREST orders by the raw timestamp, which interleaves the T00:00Z and
+    // T23:00Z stamp variants within a day; re-sort by calendar day + start time.
+    select: (data: InfiniteData<EventsPage, number>) =>
+      data.pages.flatMap((p) => p.rows).sort(compareEventsByDayTime),
+    // First paint from the server-inlined rows (see utils/feedPreload.ts) while
+    // page 1 is in flight. Placeholder data is never written to the cache, so
+    // the real fetch still runs immediately and the auto-drain below waits for it.
+    placeholderData: () => {
+      const preload = getFeedPreload(city);
+      if (!preload) return undefined;
+      const data: InfiniteData<EventsPage, number> = {
+        pages: [{ rows: preload.events, total: null }],
+        pageParams: [0],
+      };
+      return data;
+    },
   });
 
   const { hasNextPage, isFetchingNextPage, isPlaceholderData, fetchNextPage, data } = query;

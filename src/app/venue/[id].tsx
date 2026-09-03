@@ -18,7 +18,8 @@ import { ExpandableText, Icon, ImagePlaceholder, Text } from '../../components/u
 import { formatDescription } from '../../utils/formatDescription';
 import { openMaps } from '../../utils/linkUtils';
 import { logger } from '../../utils/logger';
-import { format, parseISO } from 'date-fns';
+import { format } from 'date-fns';
+import { eventDateToLocalDate } from '../../utils/eventDate';
 
 const formatTime = (time: string | null): string | null => {
   if (!time || !time.includes(':')) return null;
@@ -233,7 +234,7 @@ export default function VenuePage() {
                 </Text>
                 {event.event_date && (
                   <Text variant="caption" color="secondary" style={{ marginTop: 4 }}>
-                    {format(parseISO(event.event_date), 'EEE · MMM d')}
+                    {format(eventDateToLocalDate(event.event_date)!, 'EEE · MMM d')}
                     {formatTime(event.start_time) ? ` · ${formatTime(event.start_time)}` : ''}
                   </Text>
                 )}

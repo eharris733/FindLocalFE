@@ -4,7 +4,8 @@ import { Icon, ImagePlaceholder, Text } from './ui';
 import { useTheme } from '../context/ThemeContext';
 import type { Event } from '../types/events';
 import type { Venue } from '../types/venues';
-import { format, parseISO } from 'date-fns';
+import { format } from 'date-fns';
+import { eventDateToLocalDate } from '../utils/eventDate';
 
 interface EventCardProps {
   event: Event;
@@ -36,8 +37,8 @@ const formatTime = (time: string | null): string | null => {
 };
 
 const formatDateLabel = (event: Event): string => {
-  if (!event.event_date) return '';
-  const date = parseISO(event.event_date);
+  const date = eventDateToLocalDate(event.event_date);
+  if (!date) return '';
   const datePart = format(date, 'EEE · MMM d').toUpperCase();
   const timePart = formatTime(event.start_time);
   return timePart ? `${datePart} · ${timePart}` : datePart;
