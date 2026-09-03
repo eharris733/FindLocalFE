@@ -30,7 +30,7 @@ export const buildRecurrenceMap = (events: Event[]): Map<string, RecurrenceInfo>
     if (!event.title || !event.event_date) continue;
     const key = seriesKey(event);
     if (!dates.has(key)) dates.set(key, new Set());
-    dates.get(key)!.add(event.event_date);
+    dates.get(key)!.add(event.event_date.slice(0, 10));
     if (event.image_url && !images.has(key)) images.set(key, event.image_url);
   }
   const map = new Map<string, RecurrenceInfo>();

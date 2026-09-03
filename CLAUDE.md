@@ -128,18 +128,19 @@ The web export is a single-page shell (`dist/index.html`); `_redirects` rewrites
 
 - **`functions/event/[id].ts`** — fetches the event via PostgREST. Live event → 200 with per-event `<title>`, meta description, canonical, OG/Twitter tags, and Event JSON-LD injected into the shell. Past date or `old_events` fallback → **410 + noindex** (shell still renders the friendly page for humans; GSC reports these 410s under "Not found (404)" — that's expected, not breakage). Unknown id → **404 + noindex**. Case-variant ids → **301 to lowercase**. Supabase outage → plain shell at 200, never a 500.
 - **`functions/venue/[id].ts`** — same pattern; unknown/inactive venue → 404.
-- **`functions/index.ts` / `about.ts` / `venues.ts` / `privacy.ts` / `terms.ts`** — inject per-route title/description/absolute canonical into the shell (the built shell deliberately ships *no* canonical — see the comment in `scripts/inject-head.js`).
+- **`functions/index.ts`** — homepage. Injects the canonical head like the other static routes **and, for the list view, server-renders the first 12 event cards** (`functions/_feed.ts`) as a `#ssr-feed` overlay beside `#root`, plus `<link rel=preload as=image>` for card 1 and `window.__FEED_PRELOAD__` (the same rows + their venues). City = the `fl_city` cookie the app writes (`CityContext`), else Boston; `?view=map` and any Supabase failure serve the plain shell. Rendered pages are cached **per city in `caches.default` for 5 min** (Pages Function responses are never CDN-cached by `s-maxage` alone) and sent `private, no-cache` to browsers. `X-Feed-Cache: HIT|MISS|BYPASS` tells you which path ran. Client side, `useEventsQuery`/`useVenuesQuery` use the preload as **`placeholderData`** (never `initialData` — 12 rows must not be cached as the feed) and `EventFeed` removes `#ssr-feed` in a `useLayoutEffect` after its first commit. The PostgREST filter/order in `index.ts` must stay identical to `getEventsPage` in `src/api/events.ts`, and the card CSS in `_feed.ts` mirrors `EventCard`/mobile `Header`; the overlay is hidden ≥1024px (`TABLET_MAX`).
+- **`functions/about.ts` / `venues.ts` / `privacy.ts` / `terms.ts`** — inject per-route title/description/absolute canonical into the shell (the built shell deliberately ships *no* canonical — see the comment in `scripts/inject-head.js`).
 - **Dead legacy routes** (`friends`, `create`, `home`, `profile`, `support`, `discover-creators`, `followed-venues`, `following-activity`, `followers`, `user/*`, `auth/*`, `invite/*`) → **410 + noindex** instead of a 200 shell. robots.txt deliberately does NOT disallow `/user/`//`/auth/` — crawlers must fetch them to see the 410.
 - **`functions/city/[slug].ts`** — standalone server-rendered "Things to do in {City}" pages at `/city/<slug>` (31 cities from `functions/_cities.ts`, a copy of `src/constants/cities.ts` — keep in sync). Date-grouped event links + ItemList JSON-LD; <3 events → noindex. Not an SPA route.
 - **`functions/sitemap.ts` + `functions/sitemaps/[name].ts`** — `/sitemap` is a **sitemapindex** pointing at `/sitemaps/static.xml`, `venues.xml`, `events-{n}.xml` (5,000 URLs per chunk, fetched in 1000-row `Range` windows — PostgREST caps every response at 1000 rows, so plain `.limit(50000)` silently truncates), plus the build-emitted `/sitemap-blog.xml`. Events filter `is_deleted=eq.false`.
-- **`functions/_shared.ts`** — `ORIGIN`, meta-rewriting (`applyMeta`), PostgREST helpers (`supabaseSelect`, `supabaseSelectRange`, `supabaseCount`), `staticPageMeta`, `goneResponse`, `htmlResponse`, `cleanMetaDescription`, `todayString()` (**America/New_York**, not UTC); underscore prefix keeps it unrouted.
+- **`functions/_shared.ts`** — `ORIGIN`, meta-rewriting (`applyMeta`), PostgREST helpers (`supabaseSelect`, `supabaseSelectRange`, `supabaseCount`), `readCookie`, `staticPageMeta`, `goneResponse`, `htmlResponse`, `cleanMetaDescription`, `todayString()` (**America/New_York**, not UTC); underscore prefix keeps it unrouted.
 - **`public/_routes.json`** — limits which paths invoke functions (assets/`/platform`/`/blog` are excluded); copied to `dist/` by the build script. Add new function routes here or they'll never run.
 - **`public/_redirects`** — `/map → /?view=map` and `/sitemap.xml → /sitemap` 301s ahead of the SPA catch-all.
 - **`public/llms.txt`** — site description + URL shapes for AI answer engines.
 
 Client-side, `_layout.tsx` maintains a per-route canonical (hardcoded `CANONICAL_ORIGIN` from `src/constants/site.ts` — never `window.location.origin`; query params stripped so `/?view=map` folds into `/`) and noindexes `/saved`, `/filters`, `/map`; `EventPageSchema` keeps event meta in sync during client navigation. `public/robots.txt` allows AI/answer-engine crawlers (GEO) — don't re-add the GPTBot/ClaudeBot blocks.
 
-To test functions locally: build them with esbuild to CJS and invoke `onRequest` with a stub `ASSETS` binding plus the `.env` Supabase keys (no wrangler needed).
+To test functions locally: build them with esbuild to CJS and invoke `onRequest` with a stub `ASSETS` binding plus the `.env` Supabase keys (no wrangler needed). For `index.ts` also stub `globalThis.caches = { default: { match, put } }` and pass `waitUntil`; send `Cookie: fl_city=New York` to exercise the per-city path.
 
 ### Blog (`content/blog/` → static HTML)
 
@@ -189,7 +190,8 @@ Component.native.tsx # iOS/Android override
 Currently used by `MapView.web.tsx`, `MapView.native.tsx`, `MapComponents.web.ts`, `MapComponents.native.ts`.
 
 ### Date / time formatting
-- Date on detail page: `format(parseISO(event.event_date), 'EEEE, MMMM d, yyyy')`
+- **`event_date` is a timestamptz that means a calendar day, stamped inconsistently** (2026-09: 30% of upcoming Boston rows are `T00:00:00+00:00`, most are `T23:00:00+00:00`). Never `new Date(event_date)` / `parseISO(event_date)` — a midnight-UTC stamp is the previous evening in US zones, which hid those events from "today" and labelled them with yesterday's date. Always go through `src/utils/eventDate.ts`: `eventDay()` (UTC date part = intended day), `eventDateToLocalDate()` (local midnight for date-fns), `localToday()`, and `compareEventsByDayTime()` (feed order: day, start_time, id — `useEventsQuery` re-sorts after fetching because PostgREST can only order by the raw timestamp; `functions/_feed.ts` applies the same comparator).
+- Date on detail page: `format(eventDateToLocalDate(event.event_date), 'EEEE, MMMM d, yyyy')`
 - Date on card: `EEE · MMM d` (uppercase)
 - Time: 12-hour with AM/PM via `formatTime("HH:MM")`
 

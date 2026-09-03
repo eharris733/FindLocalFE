@@ -54,10 +54,26 @@ const readSavedCitySync = (): string | null => {
   }
 };
 
+// Tells the homepage Pages Function (functions/index.ts) which city to
+// pre-render for this browser. Not read by the app itself.
+const writeCityCookie = (city: string) => {
+  if (Platform.OS !== 'web' || typeof document === 'undefined') return;
+  try {
+    document.cookie = `fl_city=${encodeURIComponent(city)}; Path=/; Max-Age=31536000; SameSite=Lax`;
+  } catch {
+    // Cookies disabled — the edge falls back to the default city.
+  }
+};
+
 export const CityProvider: React.FC<CityProviderProps> = ({ children }) => {
   const [selectedCity, setSelectedCity] = useState<string>(() =>
     Platform.OS === 'web' ? readSavedCitySync() || DEFAULT_CITY : ''
   );
+
+  // Keep the edge's notion of the city in step with the saved preference.
+  useEffect(() => {
+    if (selectedCity) writeCityCookie(selectedCity);
+  }, [selectedCity]);
 
   const onCityChange = useCallback(async (city: string) => {
     setSelectedCity(city);

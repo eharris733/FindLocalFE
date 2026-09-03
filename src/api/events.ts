@@ -2,6 +2,7 @@
 import type { Event } from '../types/events';
 import { supabase } from '../supabase';
 import { logger } from '../utils/logger';
+import { localToday } from '../utils/eventDate';
 
 const PAGE_SIZE = 1000;
 
@@ -15,15 +16,6 @@ export const EVENT_LIST_COLUMNS =
  * PostgREST max so the rest of the city arrives in as few requests as possible. */
 export const FEED_FIRST_PAGE_SIZE = 100;
 export const FEED_PAGE_SIZE = PAGE_SIZE;
-
-/** Today's date as yyyy-MM-dd in the device's local zone. `toISOString()` is
- * UTC, which drops "tonight" for US users after ~8pm ET; `filterEvents` uses
- * local `startOfDay`, so the API cutoff must agree with it. */
-export const localToday = (): string => {
-  const d = new Date();
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-};
 
 export interface EventsPage {
   rows: Event[];
