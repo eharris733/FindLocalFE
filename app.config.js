@@ -52,29 +52,12 @@ module.exports = {
     web: {
       favicon: "./assets/monocle.png",
       bundler: "metro",
-      output: "single",
-      build: {
-        babel: {
-          include: ["@expo-google-fonts/work-sans"]
-        }
-      }
+      output: "single"
     },
     plugins: [
       "expo-router",
       "expo-secure-store",
       "expo-apple-authentication",
-      [
-        "expo-font",
-        {
-          fonts: [
-            "node_modules/@expo-google-fonts/work-sans/300Light/WorkSans_300Light.ttf",
-            "node_modules/@expo-google-fonts/work-sans/400Regular/WorkSans_400Regular.ttf",
-            "node_modules/@expo-google-fonts/work-sans/500Medium/WorkSans_500Medium.ttf",
-            "node_modules/@expo-google-fonts/work-sans/600SemiBold/WorkSans_600SemiBold.ttf",
-            "node_modules/@expo-google-fonts/work-sans/700Bold/WorkSans_700Bold.ttf"
-          ]
-        }
-      ],
       "expo-web-browser",
       "@react-native-community/datetimepicker"
     ],

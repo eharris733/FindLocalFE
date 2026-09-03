@@ -24,9 +24,6 @@ export default function Root({ children }: { children: React.ReactNode }) {
         {/* Theme color for mobile browsers */}
         <meta name="theme-color" content="#006565" />
 
-        {/* Material Symbols (icons) */}
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="Find Local" />
@@ -50,15 +47,6 @@ export default function Root({ children }: { children: React.ReactNode }) {
         <meta name="twitter:description" content="Discover the best local events near you. Browse concerts, comedy shows, live music, theater, and cultural experiences updated daily." />
         <meta name="twitter:image" content="https://findlocal.community/og-image.jpg" />
         <meta name="twitter:image:alt" content="Find Local - Event Discovery Platform" />
-
-        {/* Google Analytics (gtag.js) */}
-        <script async src="https://www.googletagmanager.com/gtag/js?id=G-SK3E86M5F8" />
-        <script dangerouslySetInnerHTML={{ __html: `
-          window.dataLayer = window.dataLayer || [];
-          function gtag(){dataLayer.push(arguments);}
-          gtag('js', new Date());
-          gtag('config', 'G-SK3E86M5F8', { send_page_view: false });
-        `}} />
 
         {/* Affiliate verification */}
         <meta name="impact-site-verification" {...{ value: "69cc4690-1595-47a6-9724-1c86ad3258b6" } as any} />

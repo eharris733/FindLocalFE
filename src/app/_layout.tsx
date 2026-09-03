@@ -3,17 +3,6 @@ import { Stack, usePathname } from 'expo-router';
 import Head from 'expo-router/head';
 import * as SplashScreen from 'expo-splash-screen';
 import React, { useEffect, useState } from 'react';
-import {
-  Epilogue_400Regular,
-  Epilogue_600SemiBold,
-  Epilogue_700Bold,
-} from '@expo-google-fonts/epilogue';
-import {
-  Manrope_400Regular,
-  Manrope_500Medium,
-  Manrope_600SemiBold,
-  Manrope_700Bold,
-} from '@expo-google-fonts/manrope';
 import { Platform, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -25,6 +14,7 @@ import { SplashScreenController } from '../components/SplashScreenController';
 import Header from '../components/Header';
 import { logger } from '../utils/logger';
 import { CANONICAL_ORIGIN } from '../constants/site';
+import { FONT_MAP } from '../theme/fonts';
 
 SplashScreen.preventAutoHideAsync().catch((error) => {
   logger.warn('SplashScreen.preventAutoHideAsync failed:', error);
@@ -43,51 +33,11 @@ const renderHeader = () => <Header />;
 
 export default function RootLayout() {
   const [fontTimeout, setFontTimeout] = useState(false);
-  const [fontsLoaded, fontError] = useFonts({
-    Epilogue_400Regular,
-    Epilogue_600SemiBold,
-    Epilogue_700Bold,
-    Manrope_400Regular,
-    Manrope_500Medium,
-    Manrope_600SemiBold,
-    Manrope_700Bold,
-  });
-
-  useEffect(() => {
-    if (Platform.OS !== 'web') return;
-    if (typeof document === 'undefined') return;
-
-    if (!document.querySelector('script[src*="googletagmanager"]')) {
-      const script = document.createElement('script');
-      script.src = 'https://www.googletagmanager.com/gtag/js?id=G-SK3E86M5F8';
-      script.async = true;
-      document.head.appendChild(script);
-      const inline = document.createElement('script');
-      inline.textContent = `window.dataLayer = window.dataLayer || [];function gtag(){dataLayer.push(arguments);}gtag('js', new Date());gtag('config', 'G-SK3E86M5F8', { send_page_view: false });`;
-      document.head.appendChild(inline);
-    }
-
-    if (!document.querySelector('script[data-clarity]')) {
-      const script = document.createElement('script');
-      script.dataset.clarity = 'true';
-      script.textContent = `(function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);})(window, document, "clarity", "script", "vkzkf8j9n8");`;
-      document.head.appendChild(script);
-    }
-
-    if (!document.querySelector('link[data-material-symbols]')) {
-      const preconnect = document.createElement('link');
-      preconnect.rel = 'preconnect';
-      preconnect.href = 'https://fonts.gstatic.com';
-      preconnect.crossOrigin = '';
-      document.head.appendChild(preconnect);
-      const stylesheet = document.createElement('link');
-      stylesheet.rel = 'stylesheet';
-      stylesheet.href =
-        'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap';
-      stylesheet.dataset.materialSymbols = 'true';
-      document.head.appendChild(stylesheet);
-    }
-  }, []);
+  // Native loads the Google Fonts .ttf files here. On web FONT_MAP is empty
+  // (src/theme/fonts.web.ts): the faces are self-hosted woff2 declared via
+  // @font-face in scripts/inject-head.js, so the browser's preload scanner
+  // discovers them from the HTML instead of waiting for the bundle.
+  const [fontsLoaded, fontError] = useFonts(FONT_MAP);
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -183,18 +133,6 @@ function RootNavigator() {
       document.head.appendChild(robots);
     }
     robots.content = noindex ? 'noindex, follow' : 'index, follow';
-  }, [pathname]);
-
-  useEffect(() => {
-    if (Platform.OS !== 'web') return;
-    if (typeof window === 'undefined') return;
-    const w = window as any;
-    if (typeof w.gtag !== 'function') return;
-    w.gtag('event', 'page_view', {
-      page_path: pathname,
-      page_location: w.location.href,
-      page_title: document.title,
-    });
   }, [pathname]);
 
   return (
