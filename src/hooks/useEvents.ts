@@ -6,6 +6,7 @@ import {
   startOfWeek,
 } from 'date-fns';
 import type { Event, FilterState, TimeOfDay } from '../types/events';
+import { eventDateToLocalDate } from '../utils/eventDate';
 
 const getDateRange = (
   when: FilterState['when'],
@@ -82,8 +83,10 @@ export const filterEvents = (
     filters.paid ? 'paid' : 'any';
 
   return events.filter((event) => {
-    if (!event.event_date) return false;
-    const eventDate = new Date(event.event_date);
+    // Calendar day at local midnight — see utils/eventDate.ts for why the raw
+    // timestamp must not be parsed as an instant.
+    const eventDate = eventDateToLocalDate(event.event_date);
+    if (!eventDate) return false;
 
     if (start && eventDate < start) return false;
     if (end && eventDate > end) return false;

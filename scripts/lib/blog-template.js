@@ -5,7 +5,6 @@
  */
 
 const ORIGIN = 'https://findlocal.community';
-const GA_ID = 'G-SK3E86M5F8';
 
 function escapeHtml(value) {
   return String(value)
@@ -65,8 +64,6 @@ ${image ? `<meta property="og:image" content="${escapeHtml(image)}" />` : ''}
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Epilogue:wght@600;700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
 ${headExtra}
-<script async src="https://www.googletagmanager.com/gtag/js?id=${GA_ID}"></script>
-<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)};gtag('js',new Date());gtag('config','${GA_ID}');</script>
 <style>${SHARED_CSS}</style>
 </head>
 <body>

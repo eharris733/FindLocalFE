@@ -1,8 +1,7 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useLayoutEffect, useMemo } from 'react';
 import {
   View,
   FlatList,
-  ActivityIndicator,
   StyleSheet,
   Platform,
   ListRenderItem,
@@ -10,7 +9,8 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import EventCard from './EventCard';
-import EventMap from './EventMap';
+import EventMap from './EventMapLazy';
+import EventCardSkeleton from './EventCardSkeleton';
 import FilterFAB from './FilterFAB';
 import FilterSidebar from './FilterSidebar';
 import { Text } from './ui';
@@ -23,6 +23,7 @@ import { useEventsQuery } from '../hooks/queries/useEventsQuery';
 import { useVenuesQuery } from '../hooks/queries/useVenuesQuery';
 import { buildRecurrenceMap, isRecurringEvent, getSeriesImage } from '../utils/recurrence';
 import { distanceKm } from '../constants/cities';
+import { removeSsrFeed } from '../utils/feedPreload';
 import type { FeedSort } from '../context/CityContext';
 import type { Event } from '../types/events';
 import type { Venue } from '../types/venues';
@@ -30,6 +31,8 @@ import type { Venue } from '../types/venues';
 interface EventFeedProps {
   viewMode: 'list' | 'map';
 }
+
+const SKELETON_KEYS = ['s0', 's1', 's2', 's3'];
 
 const SORT_OPTIONS: { value: FeedSort; label: string }[] = [
   { value: 'soonest', label: 'Soonest' },
@@ -40,11 +43,20 @@ export const EventFeed: React.FC<EventFeedProps> = ({ viewMode }) => {
   const { theme } = useTheme();
   const { isDesktop } = useDeviceInfo();
   const router = useRouter();
-  const { selectedCity, userLocation, feedSort, setFeedSort } = useCityLocation();
+  const { selectedCity, userLocation, locationStatus, feedSort, setFeedSort } = useCityLocation();
   const { filters } = useFilters();
 
   const { data: events = [], isLoading } = useEventsQuery(selectedCity);
   const { data: venues = [], isLoading: venuesLoading } = useVenuesQuery(selectedCity);
+
+  // The homepage HTML ships a static copy of the first screen (#ssr-feed, from
+  // functions/index.ts) so there's something to paint before this bundle runs.
+  // Our first commit renders the same rows from window.__FEED_PRELOAD__, so
+  // dropping the fragment after commit but before paint is invisible. Runs
+  // unconditionally: a fragment for a different city must go too.
+  useLayoutEffect(() => {
+    removeSsrFeed();
+  }, []);
 
   const venueById = useMemo(() => {
     const map = new Map<string, Venue>();
@@ -116,8 +128,12 @@ export const EventFeed: React.FC<EventFeedProps> = ({ viewMode }) => {
     [venueById, handleEventPress, recurrenceMap, venueDistances]
   );
 
-  const sortToggle = userLocation ? (
-    <View style={styles.sortRow}>
+  // Rendered from the moment a location is requested (not once it resolves),
+  // so the row's height is reserved before the feed is pushed down — a
+  // late-appearing toggle after the permission prompt was a layout shift.
+  const locating = locationStatus === 'locating';
+  const sortToggle = locating || userLocation ? (
+    <View style={[styles.sortRow, locating && styles.sortRowPending]}>
       <Text variant="label" style={{ color: theme.colors.text.secondary, fontWeight: '600' }}>
         Sort
       </Text>
@@ -127,8 +143,9 @@ export const EventFeed: React.FC<EventFeedProps> = ({ viewMode }) => {
           <TouchableOpacity
             key={opt.value}
             onPress={() => setFeedSort(opt.value)}
+            disabled={locating || !userLocation}
             accessibilityRole="button"
-            accessibilityState={{ selected: active }}
+            accessibilityState={{ selected: active, disabled: locating || !userLocation }}
             style={[
               styles.sortChip,
               {
@@ -177,14 +194,23 @@ export const EventFeed: React.FC<EventFeedProps> = ({ viewMode }) => {
       keyExtractor={(item) => item.id}
       renderItem={renderItem}
       ListHeaderComponent={sortToggle}
+      // Only the first screen needs to mount before paint; the rest streams in
+      // as the user scrolls. (removeClippedSubviews is a no-op on web, and
+      // getItemLayout can't be used because card height follows width.)
+      initialNumToRender={6}
+      maxToRenderPerBatch={6}
+      windowSize={7}
+      updateCellsBatchingPeriod={50}
       contentContainerStyle={[
         styles.listContent,
         isDesktop && styles.listContentDesktop,
       ]}
       ListEmptyComponent={
         isLoading ? (
-          <View style={styles.empty}>
-            <ActivityIndicator size="large" color={theme.colors.primary[500]} />
+          <View>
+            {SKELETON_KEYS.map((k) => (
+              <EventCardSkeleton key={k} />
+            ))}
           </View>
         ) : (
           <View style={styles.empty}>
@@ -255,6 +281,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     marginBottom: 20,
+  },
+  sortRowPending: {
+    opacity: 0.5,
   },
   sortChip: {
     paddingHorizontal: 16,

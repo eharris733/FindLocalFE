@@ -2,8 +2,57 @@
 import type { Event } from '../types/events';
 import { supabase } from '../supabase';
 import { logger } from '../utils/logger';
+import { localToday } from '../utils/eventDate';
 
 const PAGE_SIZE = 1000;
+
+/** Feed/map/cards only need these columns. Skipping `description` (the largest
+ * field) and the community join keeps list payloads small; the detail page
+ * refetches the full row by id. */
+export const EVENT_LIST_COLUMNS =
+  'id, title, event_date, start_time, end_time, image_url, venue_id, city, region, event_type, price, price_amount, custom_location';
+
+/** First feed page is small so the first cards paint fast; later pages use the
+ * PostgREST max so the rest of the city arrives in as few requests as possible. */
+export const FEED_FIRST_PAGE_SIZE = 100;
+export const FEED_PAGE_SIZE = PAGE_SIZE;
+
+export interface EventsPage {
+  rows: Event[];
+  /** Total upcoming rows for the city; only populated when `withCount` was requested. */
+  total: number | null;
+}
+
+/**
+ * One page of the city feed (upcoming, non-deleted, list columns only).
+ * Ordered by (event_date, start_time, id) so paging is deterministic — an
+ * `event_date`-only order can duplicate/skip rows across page boundaries.
+ * Keep the filter + order identical to functions/index.ts (PR 3) so the
+ * server-rendered first screen matches the client's first rows.
+ */
+export async function getEventsPage(
+  city: string,
+  from: number,
+  to: number,
+  withCount = false
+): Promise<EventsPage> {
+  const { data, error, count } = await supabase
+    .from('events_gold')
+    .select(EVENT_LIST_COLUMNS as '*', withCount ? { count: 'exact' } : undefined)
+    .eq('city', city)
+    .gte('event_date', localToday())
+    .or('is_deleted.is.null,is_deleted.eq.false')
+    .order('event_date', { ascending: true })
+    .order('start_time', { ascending: true, nullsFirst: false })
+    .order('id', { ascending: true })
+    .range(from, to);
+
+  if (error) {
+    logger.error('Error fetching events page:', error);
+    throw new Error(`Supabase error: ${error.message}`);
+  }
+  return { rows: (data ?? []) as Event[], total: count ?? null };
+}
 
 export interface EventWithExpiredStatus {
   event: Event | null;
@@ -269,14 +318,10 @@ export async function getEventsWithCommunities(
     let page = 0;
     let hasMore = true;
 
-    const today = new Date().toISOString().split('T')[0];
+    const today = localToday();
 
-    // Feed/map/cards only need these columns. Skipping `description` (the
-    // largest field) and the community join keeps list payloads small; the
-    // detail page refetches the full row by id. Only join communities when a
-    // community filter is actually requested.
-    const listColumns =
-      'id, title, event_date, start_time, end_time, image_url, venue_id, city, region, event_type, price, price_amount, custom_location';
+    // Only join communities when a community filter is actually requested.
+    const listColumns = EVENT_LIST_COLUMNS;
     const needsCommunities = (communityIds?.length ?? 0) > 0 || (labels?.length ?? 0) > 0;
     const selectClause = needsCommunities
       ? `${listColumns}, event_community_assignments(community_id, labels, assigned_by, confidence)`
@@ -289,6 +334,8 @@ export async function getEventsWithCommunities(
         .gte('event_date', today)
         .or('is_deleted.is.null,is_deleted.eq.false')
         .order('event_date', { ascending: true })
+        .order('start_time', { ascending: true, nullsFirst: false })
+        .order('id', { ascending: true })
         .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
 
       // Filter by city if provided

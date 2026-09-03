@@ -110,14 +110,8 @@ export default function TermsRoute() {
       <Text variant="h3" style={{ marginTop: theme.spacing.xl, marginBottom: theme.spacing.md }}>
         8. Third-Party Analytics and Tracking
       </Text>
-      <Text variant="body1" style={{ marginBottom: theme.spacing.sm, lineHeight: 22 }}>
-        The web version of the Service uses third-party analytics tools, including Google Analytics and Microsoft Clarity, to help us understand usage patterns and improve the Service. These tools may collect data about your interactions with the Service, including through the use of cookies.
-      </Text>
-      <Text variant="body1" style={{ marginBottom: theme.spacing.sm, lineHeight: 22 }}>
-        By using the web version of the Service, you acknowledge that these third-party tools operate under their own terms and privacy policies. FindLocal does not sell your personal data and uses these tools solely for internal analytics purposes. However, FindLocal does not control how Google or Microsoft process the data they collect through their respective services.
-      </Text>
       <Text variant="body1" style={{ marginBottom: theme.spacing.md, lineHeight: 22 }}>
-        For more information, please refer to our Privacy Policy and the privacy policies of Google (privacy.google.com) and Microsoft (privacy.microsoft.com).
+        FindLocal does not use third-party analytics or session-recording tools (such as Google Analytics or Microsoft Clarity) and does not set advertising or cross-site tracking cookies. Our hosting provider may record aggregate, cookie-free traffic metrics for security and reliability. For details, please refer to our Privacy Policy.
       </Text>
 
       <Text variant="h3" style={{ marginTop: theme.spacing.xl, marginBottom: theme.spacing.md }}>

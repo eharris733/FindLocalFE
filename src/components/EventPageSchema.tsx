@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import type { Event } from '../types/events';
 import type { Venue } from '../types/venues';
 import { CANONICAL_ORIGIN } from '../constants/site';
+import { eventDateToLocalDate } from '../utils/eventDate';
 
 interface EventPageSchemaProps {
   readonly event: Event;
@@ -176,7 +177,7 @@ export function EventPageSchema({ event, venue }: EventPageSchemaProps) {
   // Create a clean title for the page
   const titleParts = [event.title];
   if (event.event_date) {
-    titleParts.push(new Date(event.event_date).toLocaleDateString());
+    titleParts.push(eventDateToLocalDate(event.event_date)!.toLocaleDateString());
   }
   if (venue?.name) {
     titleParts.push(`at ${venue.name}`);
@@ -193,7 +194,7 @@ export function EventPageSchema({ event, venue }: EventPageSchemaProps) {
   } else {
     const descParts = [event.title];
     if (event.event_date) {
-      descParts.push(`on ${new Date(event.event_date).toLocaleDateString()}`);
+      descParts.push(`on ${eventDateToLocalDate(event.event_date)!.toLocaleDateString()}`);
     }
     if (venue?.name) {
       descParts.push(`at ${venue.name}`);

@@ -14,7 +14,7 @@ export function StructuredData({ city }: StructuredDataProps) {
       "@type": "Organization",
       "name": "Find Local",
       "url": "https://findlocal.community",
-      "logo": "https://findlocal.community/logo.png",
+      "logo": "https://findlocal.community/logo.webp",
       "description": "Discover local events in your city. Find concerts, comedy shows, theater, dance performances, and more.",
       "sameAs": [
         "https://www.instagram.com/findl0cal/"

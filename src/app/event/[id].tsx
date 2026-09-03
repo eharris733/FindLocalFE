@@ -24,7 +24,8 @@ import { useFavorites } from '../../context/FavoritesContext';
 import { addToGoogleCalendar, addToAppleCalendar } from '../../utils/calendarUtils';
 import { openMaps } from '../../utils/linkUtils';
 import { logger } from '../../utils/logger';
-import { format, parseISO, startOfDay } from 'date-fns';
+import { format } from 'date-fns';
+import { eventDateToLocalDate, eventDay, localToday } from '../../utils/eventDate';
 import { EventPageSchema } from '../../components/EventPageSchema';
 
 const formatTime = (time: string | null): string | null => {
@@ -198,15 +199,16 @@ export default function EventPage() {
     );
   }
 
-  const dateLabel = event.event_date
-    ? format(parseISO(event.event_date), 'EEEE, MMMM d, yyyy')
+  const eventLocalDate = eventDateToLocalDate(event.event_date);
+  const dateLabel = eventLocalDate
+    ? format(eventLocalDate, 'EEEE, MMMM d, yyyy')
     : null;
   const timeLabel = formatTime(event.start_time);
   const saved = isFavorite(event.id);
   const ticketsUrl = event.ticket_page_url || event.detail_page_url || event.root_url || venue?.url;
   const displayExpired =
     isExpired ||
-    (event.event_date ? parseISO(event.event_date) < startOfDay(new Date()) : false);
+    (eventDay(event.event_date) ? eventDay(event.event_date)! < localToday() : false);
   const description = formatDescription(event.description);
 
   return (
@@ -287,8 +289,9 @@ export default function EventPage() {
             <Text variant="body2" style={{ color: theme.colors.text.secondary, marginLeft: 8, flex: 1 }}>
               Recurring event · {seriesDates.length} upcoming dates
               {(() => {
-                const next = seriesDates.find((d) => d !== event.event_date);
-                return next ? ` (also ${format(parseISO(next), 'EEE, MMM d')})` : '';
+                const next = seriesDates.find((d) => eventDay(d) !== eventDay(event.event_date));
+                const nextDate = next ? eventDateToLocalDate(next) : null;
+                return nextDate ? ` (also ${format(nextDate, 'EEE, MMM d')})` : '';
               })()}
             </Text>
           </View>

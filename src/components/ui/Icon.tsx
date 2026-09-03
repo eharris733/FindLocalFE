@@ -1,25 +1,9 @@
 import React from 'react';
 import { Platform, Text, TextStyle } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import type { IconName } from './iconNames';
 
-export type IconName =
-  | 'map'
-  | 'list'
-  | 'bookmark'
-  | 'bookmark-filled'
-  | 'filter'
-  | 'share'
-  | 'calendar'
-  | 'heart'
-  | 'heart-filled'
-  | 'arrow-back'
-  | 'chevron-down'
-  | 'chevron-right'
-  | 'location'
-  | 'clock'
-  | 'close'
-  | 'menu'
-  | 'search';
+export type { IconName };
 
 interface IconProps {
   name: IconName;
