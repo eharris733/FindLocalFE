@@ -1,0 +1,44 @@
+---
+import { getCollection, render } from 'astro:content';
+import Layout from '../../layouts/Layout.astro';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import JsonLd from '../../components/JsonLd.astro';
+import { blogPostingJsonLd, breadcrumbJsonLd } from '../../lib/jsonld.js';
+export const prerender = true;
+
+export async function getStaticPaths() {
+  const posts = await getCollection('blog', (p) => !p.data.draft);
+  return posts.map((post) => ({ params: { slug: post.id }, props: { post } }));
+}
+const { post } = Astro.props;
+const { Content } = await render(post);
+const iso = (d: Date) => d.toISOString().slice(0, 10);
+const meta = {
+  slug: post.id,
+  title: post.data.title,
+  description: post.data.description,
+  date: iso(post.data.date),
+  updated: post.data.updated ? iso(post.data.updated) : undefined,
+  author: post.data.author,
+  image: post.data.image,
+};
+const crumbs = [{ name: 'Home', path: '/' }, { name: 'Blog', path: '/blog' }, { name: post.data.title, path: `/blog/${post.id}` }];
+const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+---
+<Layout title={post.data.title} description={post.data.description} canonicalPath={`/blog/${post.id}`} ogType="article" ogImage={post.data.image ?? null}>
+  <JsonLd data={[blogPostingJsonLd(meta), breadcrumbJsonLd(crumbs)]} slot="head" />
+  <article class="prose post">
+    <Breadcrumbs crumbs={crumbs} />
+    <h1>{post.data.title}</h1>
+    <p class="faint"><time datetime={meta.date}>{fmt(post.data.date)}</time>{post.data.author ? ` · ${post.data.author}` : ''}</p>
+    <Content />
+    <p class="back"><a href="/blog">← All posts</a></p>
+  </article>
+</Layout>
+
+<style>
+  .post h1 { margin: 0.4rem 0 0.4rem; }
+  .post :global(h2) { margin-top: 2rem; }
+  .post :global(img) { border-radius: var(--radius); }
+  .back { margin-top: 2rem; }
+</style>

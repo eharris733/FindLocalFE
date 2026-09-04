@@ -1,0 +1,23 @@
+{
+  "name": "@findlocal/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "check": "astro check",
+    "preview": "wrangler dev",
+    "d1:seed": "wrangler d1 execute findlocal --local --file ../shared/data/schema/0001_init.sql"
+  },
+  "dependencies": {
+    "@astrojs/cloudflare": "^14.3.0",
+    "@findlocal/shared": "*",
+    "astro": "^7.3.1",
+    "leaflet": "^1.9.4"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.6",
+    "@types/leaflet": "^1.9.22"
+  }
+}

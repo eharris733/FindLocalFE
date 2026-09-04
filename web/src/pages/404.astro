@@ -1,0 +1,8 @@
+---
+import Layout from '../layouts/Layout.astro';
+Astro.response.status = 404;
+---
+<Layout title="Page not found" noindex>
+  <h1>Page not found</h1>
+  <p class="empty">No such page. <a href="/">Browse upcoming events</a> or <a href="/venues">find a venue near you</a>.</p>
+</Layout>

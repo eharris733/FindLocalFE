@@ -1,0 +1,18 @@
+---
+import { PAGE_SIZE } from '@findlocal/shared';
+import { pageHref, type FeedState } from '../lib/feed.js';
+interface Props {
+  state: FeedState;
+}
+const { state } = Astro.props;
+const { page, pages, total } = state;
+const from = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
+const to = Math.min(page * PAGE_SIZE, total);
+---
+{pages > 1 && (
+  <nav class="pagination" aria-label="Pagination">
+    {page > 1 ? <a class="btn ghost" href={pageHref(state, page - 1)} rel="prev">← Previous</a> : <span class="btn ghost" aria-disabled="true" style="opacity:.4">← Previous</span>}
+    <span class="status">{from}–{to} of {total} · page {page} of {pages}</span>
+    {page < pages ? <a class="btn ghost" href={pageHref(state, page + 1)} rel="next">Next →</a> : <span class="btn ghost" aria-disabled="true" style="opacity:.4">Next →</span>}
+  </nav>
+)}

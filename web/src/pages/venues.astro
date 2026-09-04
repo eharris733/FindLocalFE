@@ -1,0 +1,60 @@
+---
+// Alphabetical venue directory for the cookie city, with a map.
+import Layout from '../layouts/Layout.astro';
+import VenueMap from '../components/VenueMap.astro';
+import { getDb, listVenues } from '../lib/db.js';
+import { SITE } from '@findlocal/shared';
+import { cleanText, truncate } from '../lib/format.js';
+
+const city = Astro.locals.city;
+const venues = await listVenues(getDb(), { city: city.name, withUpcoming: true });
+const active = venues.filter((v) => v.upcoming > 0);
+const rest = venues.filter((v) => v.upcoming === 0);
+const jsonAlternate = `${SITE}/api/venues?city=${encodeURIComponent(city.name)}`;
+---
+<Layout
+  title={`Venues in ${city.name}`}
+  description={`${venues.length} music halls, comedy clubs, theaters, bars and community spaces in ${city.name}, ${city.state} whose calendars feed Find Local — with upcoming event counts and a map.`}
+  jsonAlternate={jsonAlternate}
+  wide
+>
+  <h1>Venues in {city.name}</h1>
+  <p class="lede">{venues.length} venues whose calendars feed Find Local. Pick a spot to see everything it has coming up.</p>
+  <VenueMap venues={active} city={city} />
+  <h2 class="section">With upcoming events</h2>
+  <ul class="venue-list">
+    {active.map((v) => (
+      <li>
+        <a class="venue" href={`/venue/${v.id}`}>
+          <div class="thumb">{v.image ? <img src={v.image} alt="" loading="lazy" decoding="async" width="96" height="96" /> : <span class="ph" aria-hidden="true">📍</span>}</div>
+          <div>
+            <div class="name">{v.name}</div>
+            <div class="meta">{[v.region, v.type].filter(Boolean).join(' · ')}{v.description ? ` — ${truncate(cleanText(v.description), 90)}` : ''}</div>
+          </div>
+          <span class="badge teal">{v.upcoming} upcoming</span>
+        </a>
+      </li>
+    ))}
+  </ul>
+  {rest.length > 0 && (
+    <details class="more">
+      <summary>{rest.length} more venues with nothing listed right now</summary>
+      <ul class="plain">{rest.map((v) => <li><a href={`/venue/${v.id}`}>{v.name}</a>{v.region ? <span class="faint"> · {v.region}</span> : null}</li>)}</ul>
+    </details>
+  )}
+</Layout>
+
+<style>
+  .section { margin: 1.5rem 0 0.8rem; }
+  .venue-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 0.6rem; }
+  .venue { display: grid; grid-template-columns: 56px 1fr auto; gap: 0.7rem; align-items: center; padding: 0.55rem; border: 1px solid rgb(var(--border)); border-radius: var(--radius); color: inherit; background: rgb(var(--surface)); }
+  .venue:hover { text-decoration: none; border-color: rgb(var(--teal)); }
+  .thumb { width: 56px; height: 56px; border-radius: var(--radius-sm); overflow: hidden; background: rgb(var(--surface-sunken)); display: flex; align-items: center; justify-content: center; }
+  .thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .name { font-weight: 700; font-family: var(--font-head); }
+  .meta { color: rgb(var(--text-2)); font-size: 0.82rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .more { margin-top: 1.5rem; color: rgb(var(--text-2)); }
+  .more summary { cursor: pointer; font-weight: 600; }
+  .plain { columns: 2; padding-left: 1.2rem; margin: 0.6rem 0 0; }
+  @media (min-width: 760px) { .plain { columns: 3; } }
+</style>

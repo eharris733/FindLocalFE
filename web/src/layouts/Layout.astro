@@ -1,0 +1,369 @@
+---
+// Site shell: <head> parity with the Expo-era inject-head.js (title/description/
+// OG/Twitter/theme-color/impact-site-verification), self-hosted Epilogue +
+// Manrope, brand tokens as RGB triplets (src/theme/colors.ts) with dark values
+// under prefers-color-scheme, header with city picker, footer with all 31 city
+// links. JSON-LD goes through <slot name="head">.
+import { CITIES, IMPACT_SITE_VERIFICATION, SITE, canonicalUrl } from '@findlocal/shared';
+import CityLinks from '../components/CityLinks.astro';
+import CityPicker from '../components/CityPicker.astro';
+import Icon from '../components/Icon.astro';
+import IconSprite from '../components/IconSprite.astro';
+
+interface Props {
+  title: string;
+  description?: string;
+  /** Canonical path (query already canonicalised by the caller); defaults to the request path. */
+  canonicalPath?: string;
+  canonicalQuery?: string;
+  noindex?: boolean;
+  ogType?: string;
+  ogImage?: string | null;
+  /** Set false on pages whose titles are already long (event pages). */
+  brandInTitle?: boolean;
+  /** JSON API URL carrying the same data as this page. */
+  jsonAlternate?: string;
+  /** Wide layout (feed pages with a map). */
+  wide?: boolean;
+}
+const {
+  title,
+  description = 'Discover the best local events near you. Browse concerts, comedy shows, live music, theater, and cultural experiences across 31 US cities. Free and paid events updated daily.',
+  canonicalPath = Astro.url.pathname,
+  canonicalQuery = '',
+  noindex = false,
+  ogType = 'website',
+  ogImage,
+  brandInTitle = true,
+  jsonAlternate,
+  wide = false,
+} = Astro.props;
+const canonical = canonicalUrl(canonicalPath, canonicalQuery);
+const fullTitle = brandInTitle && !title.includes('Find Local') ? `${title} | Find Local` : title;
+const ogImageAbs = ogImage ? new URL(ogImage, SITE).toString() : `${SITE}/og-default.png`;
+const city = Astro.locals.city ?? CITIES.find((c) => c.slug === 'boston');
+const path = Astro.url.pathname;
+const nav = [
+  { href: '/', label: 'Discover', active: path === '/' || path.startsWith('/city/') || path.startsWith('/event/') },
+  { href: '/venues', label: 'Venues', active: path === '/venues' || path.startsWith('/venue/') },
+  { href: '/blog', label: 'Blog', active: path.startsWith('/blog') },
+  { href: '/about', label: 'About', active: path === '/about' },
+];
+const searchAction = city ? `/city/${city.slug}` : '/';
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <meta name="robots" content={noindex ? 'noindex, follow' : 'index, follow, max-image-preview:large'} />
+    <meta name="author" content="Find Local" />
+    <meta name="theme-color" content="#006565" />
+    <meta name="apple-mobile-web-app-title" content="Find Local" />
+    <meta property="og:type" content={ogType} />
+    <meta property="og:site_name" content="Find Local" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImageAbs} />
+    {!ogImage && <meta property="og:image:width" content="1200" />}
+    {!ogImage && <meta property="og:image:height" content="630" />}
+    <meta property="og:image:alt" content="Find Local — local event discovery" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={fullTitle} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImageAbs} />
+    <meta name="impact-site-verification" {...{ value: IMPACT_SITE_VERIFICATION }} />
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="preload" href="/fonts/epilogue-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/manrope-latin.woff2" as="font" type="font/woff2" crossorigin />
+    {jsonAlternate && <link rel="alternate" type="application/json" href={jsonAlternate} />}
+    <slot name="head" />
+  </head>
+  <body>
+    <IconSprite />
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header">
+      <div class="bar">
+        <a class="brand" href="/" aria-label="Find Local home">
+          <img src="/logo.webp" alt="Find Local" width="144" height="40" decoding="async" fetchpriority="high" />
+        </a>
+        <CityPicker current={city} />
+        <form class="search" method="get" action={searchAction} role="search">
+          <Icon name="search" size={16} />
+          <input type="search" name="q" placeholder="Search events or venues" aria-label="Search events" maxlength="100" />
+        </form>
+        <nav class="nav" aria-label="Primary">
+          {nav.map((n) => (
+            <a href={n.href} aria-current={n.active ? 'page' : undefined}>{n.label}</a>
+          ))}
+        </nav>
+        <a class="saved-link" href="/saved" aria-label="Saved events" data-saved-link>
+          <Icon name={path === '/saved' ? 'bookmark-filled' : 'bookmark'} size={20} />
+          <span class="saved-count" data-saved-count hidden></span>
+        </a>
+      </div>
+    </header>
+    <main id="main" tabindex="-1" class:list={{ wide }}>
+      <slot />
+    </main>
+    <footer class="site-footer">
+      <div class="inner">
+        <CityLinks current={path.startsWith('/city/') ? path.slice(6) : undefined} />
+        <nav class="legal" aria-label="Site">
+          <a href="/blog">Blog</a>
+          <a href="/about">About</a>
+          <a href="/privacy">Privacy</a>
+          <a href="/terms">Terms</a>
+          <a href="/platform">Platform &amp; API</a>
+          <a href="/saved">Saved</a>
+        </nav>
+        <p class="disclaimer">
+          © 2026 FindLocal. FindLocal is a registered trademark and operating name of EH Solutions LLC.
+          Event details come from venue calendars and ticketing pages — always confirm with the venue before you go.
+        </p>
+      </div>
+    </footer>
+    <script>
+      // Saved-events badge in the header (favorites live only in localStorage).
+      try {
+        const ids = JSON.parse(localStorage.getItem('findlocal.favorites') ?? '[]');
+        const n = Array.isArray(ids) ? ids.length : 0;
+        const el = document.querySelector<HTMLElement>('[data-saved-count]');
+        if (el && n > 0) {
+          el.textContent = n > 9 ? '9+' : String(n);
+          el.hidden = false;
+        }
+      } catch {}
+    </script>
+  </body>
+</html>
+
+<style is:global>
+  /* Self-hosted variable fonts (latin subset; public/fonts, OFL licensed). */
+  @font-face {
+    font-family: 'Epilogue';
+    src: url('/fonts/epilogue-latin.woff2') format('woff2');
+    font-weight: 400 800;
+    font-style: normal;
+    font-display: swap;
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+  }
+  @font-face {
+    font-family: 'Manrope';
+    src: url('/fonts/manrope-latin.woff2') format('woff2');
+    font-weight: 400 800;
+    font-style: normal;
+    font-display: swap;
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+  }
+  /* Metric-matched fallbacks so text laid out in the system font doesn't reflow when the web font swaps in. */
+  @font-face {
+    font-family: 'Manrope Fallback';
+    src: local('Arial');
+    size-adjust: 103%;
+    ascent-override: 98%;
+    descent-override: 28%;
+    line-gap-override: 0%;
+  }
+  @font-face {
+    font-family: 'Epilogue Fallback';
+    src: local('Arial');
+    size-adjust: 106%;
+    ascent-override: 92%;
+    descent-override: 24%;
+    line-gap-override: 0%;
+  }
+
+  /* Brand tokens (src/theme/colors.ts) as RGB triplets so alpha composes: rgb(var(--teal) / .1). */
+  :root {
+    --teal: 0 101 101;          /* primary.500 #006565 */
+    --teal-600: 0 84 84;
+    --teal-50: 230 247 245;
+    --teal-100: 179 232 224;
+    --orange: 236 124 53;       /* secondary.500 #EC7C35 */
+    --orange-600: 224 104 42;
+    --orange-50: 253 242 233;
+    --rust: 132 38 0;           /* accent.500 #842600 */
+    --bg: 255 255 255;
+    --bg-2: 249 250 251;
+    --surface: 255 255 255;
+    --surface-sunken: 243 244 246;
+    --surface-accent: 237 238 239;
+    --text: 17 24 39;
+    --text-2: 75 85 99;
+    --text-3: 156 163 175;
+    --text-inverse: 255 255 255;
+    --border: 229 231 235;
+    --border-2: 209 213 219;
+    --success: 16 185 129;
+    --warning: 245 158 11;
+    --error: 239 68 68;
+    --font-body: 'Manrope', 'Manrope Fallback', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+    --font-head: 'Epilogue', 'Epilogue Fallback', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.1);
+    --shadow-md: 0 2px 4px rgb(0 0 0 / 0.15);
+    --maxw: 1100px;
+    color-scheme: light dark;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --teal: 99 186 171;       /* dark primary.500 #63BAAB */
+      --teal-600: 128 216 202;
+      --teal-50: 0 34 34;
+      --teal-100: 0 51 51;
+      --orange: 236 124 53;
+      --orange-600: 241 151 80;
+      --orange-50: 72 22 0;
+      --rust: 183 92 41;
+      --bg: 17 24 39;
+      --bg-2: 31 41 55;
+      --surface: 30 41 59;
+      --surface-sunken: 11 18 32;
+      --surface-accent: 31 41 55;
+      --text: 249 250 251;
+      --text-2: 229 231 235;
+      --text-3: 156 163 175;
+      --text-inverse: 17 24 39;
+      --border: 55 65 81;
+      --border-2: 75 85 99;
+      --success: 5 150 105;
+      --warning: 217 119 6;
+      --error: 220 38 38;
+      --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+      --shadow-md: 0 2px 6px rgb(0 0 0 / 0.5);
+    }
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; overflow-x: hidden; }
+  body {
+    margin: 0;
+    background: rgb(var(--bg));
+    color: rgb(var(--text));
+    font: 16px/1.5 var(--font-body);
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  img, svg { max-width: 100%; }
+  a { color: rgb(var(--teal)); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  h1, h2, h3, h4 { font-family: var(--font-head); letter-spacing: -0.02em; line-height: 1.15; margin: 0; font-weight: 700; }
+  h1 { font-size: clamp(1.7rem, 4.5vw, 2.25rem); }
+  h2 { font-size: 1.35rem; }
+  h3 { font-size: 1.15rem; font-weight: 600; }
+  h4 { font-size: 1rem; font-weight: 600; }
+  p { margin: 0 0 1rem; }
+  *:focus-visible { outline: 2px solid rgb(var(--teal)); outline-offset: 2px; }
+  button { font: inherit; }
+  input, select { font: inherit; color: inherit; }
+  .skip-link { position: absolute; left: -999px; top: 0.5rem; z-index: 100; background: rgb(var(--surface)); color: rgb(var(--text)); border: 2px solid rgb(var(--teal)); border-radius: var(--radius-sm); padding: 0.5rem 0.9rem; }
+  .skip-link:focus { left: 0.5rem; }
+  .visually-hidden { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+  /* Header */
+  .site-header { background: rgb(var(--bg)); border-bottom: 1px solid rgb(var(--border)); position: sticky; top: 0; z-index: 50; }
+  .site-header .bar { max-width: var(--maxw); margin: 0 auto; padding: 0.55rem 1rem; display: flex; align-items: center; gap: 0.75rem; min-height: 60px; }
+  .brand { display: inline-flex; align-items: center; flex-shrink: 0; }
+  .brand img { height: 36px; width: auto; display: block; }
+  .search { display: none; align-items: center; gap: 0.4rem; background: rgb(var(--surface-accent)); border: 1px solid rgb(var(--border)); border-radius: 999px; padding: 0.35rem 0.8rem; color: rgb(var(--text-3)); flex: 1; max-width: 300px; }
+  .search input { border: 0; background: transparent; outline: none; width: 100%; font-size: 0.9rem; color: rgb(var(--text)); }
+  .search input::placeholder { color: rgb(var(--text-3)); }
+  .search input::-webkit-search-cancel-button { -webkit-appearance: none; }
+  .nav { display: none; gap: 1.1rem; margin-left: auto; }
+  .nav a { color: rgb(var(--text-2)); font-weight: 600; font-size: 0.92rem; }
+  .nav a[aria-current='page'] { color: rgb(var(--teal)); font-weight: 700; }
+  .nav a:hover { color: rgb(var(--teal)); text-decoration: none; }
+  .saved-link { margin-left: auto; position: relative; width: 40px; height: 40px; border: 1px solid rgb(var(--border)); border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; color: rgb(var(--teal)); flex-shrink: 0; }
+  .saved-link:hover { text-decoration: none; background: rgb(var(--teal) / 0.08); }
+  .saved-count { position: absolute; top: -4px; right: -4px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; background: rgb(var(--teal)); color: rgb(var(--text-inverse)); font-size: 10px; font-weight: 700; line-height: 18px; text-align: center; border: 2px solid rgb(var(--bg)); }
+  @media (min-width: 760px) {
+    .search { display: flex; }
+    .nav { display: flex; }
+    .saved-link { margin-left: 0; }
+  }
+
+  /* Main */
+  main { max-width: var(--maxw); margin: 0 auto; padding: 1.25rem 1rem 3rem; scroll-margin-top: 4rem; }
+  main:focus { outline: none; }
+  .prose { max-width: 46rem; }
+  .prose p, .prose li { color: rgb(var(--text-2)); line-height: 1.65; }
+  .prose h2 { margin: 2rem 0 0.6rem; }
+  .prose h3 { margin: 1.5rem 0 0.5rem; }
+  .prose ul { padding-left: 1.2rem; }
+  .prose a { text-decoration: underline; }
+  .lede { color: rgb(var(--text-2)); font-size: 1.05rem; max-width: 46rem; }
+  .muted { color: rgb(var(--text-2)); }
+  .faint { color: rgb(var(--text-3)); }
+  .empty { color: rgb(var(--text-2)); padding: 2rem 0; }
+
+  /* Buttons + chips */
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; padding: 0.6rem 1.1rem; border-radius: var(--radius); font-weight: 700; font-size: 0.95rem; border: 1px solid transparent; cursor: pointer; background: rgb(var(--teal)); color: rgb(var(--text-inverse)); text-decoration: none; }
+  .btn:hover { text-decoration: none; background: rgb(var(--teal-600)); }
+  .btn.orange { background: rgb(var(--orange)); }
+  .btn.orange:hover { background: rgb(var(--orange-600)); }
+  .btn.ghost { background: transparent; color: rgb(var(--teal)); border-color: rgb(var(--border)); }
+  .btn.ghost:hover { background: rgb(var(--teal) / 0.08); }
+  .btn.ghost[aria-pressed='true'] { background: rgb(var(--teal)); color: rgb(var(--text-inverse)); border-color: rgb(var(--teal)); }
+  .chips { display: flex; flex-wrap: wrap; gap: 0.45rem; }
+  .chip { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.35rem 0.8rem; border-radius: 999px; font-size: 0.85rem; font-weight: 600; background: rgb(var(--surface-accent)); border: 1px solid rgb(var(--border)); color: rgb(var(--text-2)); white-space: nowrap; }
+  .chip:hover { text-decoration: none; border-color: rgb(var(--teal)); color: rgb(var(--teal)); }
+  .chip[aria-current='true'], .chip.active { background: rgb(var(--teal)); border-color: rgb(var(--teal)); color: rgb(var(--text-inverse)); }
+  .chip .count { font-weight: 500; opacity: 0.75; font-size: 0.78em; }
+  .badge { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.15rem 0.6rem; border-radius: 999px; font-size: 0.75rem; font-weight: 700; background: rgb(var(--surface-sunken)); color: rgb(var(--text)); }
+  .badge.teal { background: rgb(var(--teal-50)); color: rgb(var(--teal)); }
+  .badge.orange { background: rgb(var(--orange-50)); color: rgb(var(--rust)); }
+  .badge.warn { background: rgb(var(--warning) / 0.15); color: rgb(var(--text)); }
+
+  /* Event grid + cards */
+  .day-group { margin: 1.5rem 0 0; }
+  .day-header { font-family: var(--font-head); font-size: 1.05rem; font-weight: 700; color: rgb(var(--teal)); margin: 0 0 0.8rem; padding-bottom: 0.4rem; border-bottom: 1px solid rgb(var(--border)); position: sticky; top: 60px; background: rgb(var(--bg)); z-index: 5; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1.25rem 1rem; }
+  .card { display: block; color: inherit; }
+  .card:hover { text-decoration: none; }
+  .card .thumb { position: relative; aspect-ratio: 16 / 9; border-radius: var(--radius); overflow: hidden; background: rgb(var(--surface-sunken)); }
+  .card .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .card:hover .thumb img { filter: brightness(1.05); }
+  .thumb .placeholder { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #006565 0%, #4DA399 60%, #80D8CA 100%); color: #fff; font-family: var(--font-head); font-weight: 700; font-size: 1.1rem; letter-spacing: 0.02em; text-transform: uppercase; }
+  .pill { position: absolute; top: 8px; padding: 0.2rem 0.7rem; border-radius: 999px; background: rgb(var(--bg) / 0.9); color: rgb(var(--text)); font-size: 0.75rem; font-weight: 700; }
+  .pill.price { right: 8px; }
+  .pill.recurring { left: 8px; }
+  .card .body { padding: 0.5rem 0.2rem 0; }
+  .card .when { color: rgb(var(--orange)); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 0.2rem; }
+  .card .title { font-family: var(--font-head); font-weight: 600; font-size: 1.05rem; line-height: 1.25; margin: 0 0 0.25rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .card .where { display: flex; align-items: center; gap: 0.25rem; color: rgb(var(--text-2)); font-size: 0.88rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card .where svg { flex-shrink: 0; color: rgb(var(--text-3)); }
+
+  /* Maps (Leaflet) */
+  .fl-map { height: 380px; border-radius: var(--radius); border: 1px solid rgb(var(--border)); background: rgb(var(--surface-sunken)); margin: 0 0 1.25rem; overflow: hidden; }
+  .fl-map.tall { height: min(70vh, 560px); }
+  .fl-map .leaflet-popup-content-wrapper { border-radius: var(--radius-sm); background: rgb(var(--surface)); color: rgb(var(--text)); box-shadow: var(--shadow-md); }
+  .fl-map .leaflet-popup-tip { background: rgb(var(--surface)); }
+  .fl-map .leaflet-popup-content { font-family: var(--font-body); font-size: 0.85rem; margin: 0.6rem 0.8rem; line-height: 1.4; }
+  .fl-map .popup-title { font-weight: 700; font-family: var(--font-head); margin-bottom: 0.2rem; }
+  .fl-map .popup-list { margin: 0.3rem 0 0; padding: 0; list-style: none; }
+  .fl-map .popup-list li { margin: 0.15rem 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 240px; }
+  .fl-marker { background: #006565; color: #fff; border: 2px solid #fff; border-radius: 999px; box-shadow: 0 1px 3px rgb(0 0 0 / 0.4); display: flex; align-items: center; justify-content: center; font: 700 12px/1 var(--font-body); }
+  @media (prefers-color-scheme: dark) { .fl-map .leaflet-tile { filter: brightness(0.85) contrast(1.05); } }
+
+  /* Footer */
+  .site-footer { border-top: 1px solid rgb(var(--border)); background: rgb(var(--bg-2)); color: rgb(var(--text-2)); font-size: 0.88rem; }
+  .site-footer .inner { max-width: var(--maxw); margin: 0 auto; padding: 1.5rem 1rem 2.5rem; }
+  .site-footer .legal { display: flex; flex-wrap: wrap; gap: 0.5rem 1.2rem; margin: 1.5rem 0 0.8rem; }
+  .site-footer .legal a { color: rgb(var(--text-2)); font-weight: 600; }
+  .site-footer .disclaimer { color: rgb(var(--text-3)); font-size: 0.78rem; margin: 0; max-width: 60rem; }
+
+  /* Pagination */
+  .pagination { display: flex; align-items: center; justify-content: center; gap: 0.6rem; margin: 2rem 0 0; flex-wrap: wrap; }
+  .pagination .status { color: rgb(var(--text-2)); font-size: 0.9rem; }
+  .breadcrumbs { font-size: 0.85rem; color: rgb(var(--text-3)); margin: 0 0 0.8rem; }
+  .breadcrumbs ol { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.3rem; }
+  .breadcrumbs li + li::before { content: '›'; margin-right: 0.3rem; }
+  .breadcrumbs a { color: rgb(var(--text-2)); }
+</style>
