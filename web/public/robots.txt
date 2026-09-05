@@ -1,0 +1,12 @@
+# All crawlers — including AI/answer engines (GPTBot, ClaudeBot, PerplexityBot,
+# etc.) — may index public content. Blocking them was killing GEO visibility;
+# event discovery only works if engines can cite our pages.
+# Legacy app routes (/auth/, /user/, /friends …) are deliberately NOT disallowed:
+# they answer 410 and crawlers must be able to fetch them to drop them from the
+# index (a robots block would freeze them as "indexed, though blocked").
+User-agent: *
+Disallow: /api/
+Disallow: /saved
+Disallow: /filters
+
+Sitemap: https://findlocal.community/sitemap.xml

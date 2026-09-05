@@ -1,0 +1,2 @@
+# Copy to `.dev.vars` (git-ignored) for local `npm run dev:mcp`.
+COOKIE_ENCRYPTION_KEY="change-me-to-any-long-random-string"

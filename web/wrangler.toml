@@ -1,0 +1,31 @@
+# Base Workers config for the Astro SSR site (findlocal.community).
+# The @astrojs/cloudflare adapter merges this into the deployable config it
+# generates at dist/server/wrangler.json (adding main + assets); deploy with
+# `wrangler deploy` from web/ after `astro build` (root: npm run deploy:web).
+# Do NOT add main, assets, or pages_build_output_dir here.
+name = "findlocal-web"
+compatibility_date = "2026-08-01"
+compatibility_flags = ["nodejs_compat"]
+
+routes = [
+  { pattern = "findlocal.community", custom_domain = true },
+  { pattern = "www.findlocal.community", custom_domain = true }
+]
+
+# --- D1: the database the FindLocalData pipeline writes. READ-ONLY BY
+# DISCIPLINE — this site only ever calls the SELECT helpers in @findlocal/shared.
+[[d1_databases]]
+binding = "DB"
+database_name = "findlocal"
+database_id = "70f5c88b-958d-46be-ba63-cfc695f1d496"
+
+# Astro sessions store (auto-enabled by the adapter; unused by the app).
+# Replace the id with a real namespace before the first deploy:
+#   wrangler kv namespace create SESSION
+[[kv_namespaces]]
+binding = "SESSION"
+id = "8a6974fc5a1e4384afb7f2eb8d03209f"
+
+[observability]
+[observability.logs]
+enabled = true

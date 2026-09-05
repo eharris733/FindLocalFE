@@ -13,7 +13,6 @@ dist-ssr/
 
 # Editor settings
 .vscode/*
-.expo
 !.vscode/extensions.json
 .idea/
 .DS_Store
@@ -101,16 +100,18 @@ jspm_packages/
 tmp/
 temp/
 
-# Screenshots (optional - remove if you want to track them)
-screenshots/*.png
-screenshots/*.jpg
-screenshots/*.jpeg
 
 
 
 .playwright-mcp/*
 
-#build artifacts for ios and android
-ios/
-android/
 AuthKey_7K24HXLYD5.p8
+
+# Workers / TypeScript build state
+.wrangler/
+.dev.vars
+*.tsbuildinfo
+
+# Astro site (web/)
+web/dist/
+web/.astro/

@@ -1,0 +1,26 @@
+---
+// Date-grouped card grid with sticky day headers.
+import type { EventRow } from '@findlocal/shared';
+import { dayHeader } from '../lib/format.js';
+import EventCard from './EventCard.astro';
+interface Props {
+  events: EventRow[];
+  tz: string;
+}
+const { events, tz } = Astro.props;
+const byDay = new Map<string, EventRow[]>();
+for (const e of events) {
+  const list = byDay.get(e.event_date) ?? [];
+  list.push(e);
+  byDay.set(e.event_date, list);
+}
+let index = 0;
+---
+{[...byDay.entries()].map(([day, list]) => (
+  <section class="day-group">
+    <h2 class="day-header">{dayHeader(day, tz)}</h2>
+    <div class="grid">
+      {list.map((e) => <EventCard event={e} tz={tz} eager={index++ < 4} />)}
+    </div>
+  </section>
+))}

@@ -1,0 +1,113 @@
+---
+// Server-rendered filters. Chips are plain links (multi-select for categories
+// and time of day toggles the value); the date picker and search are GET forms
+// that keep the other params as hidden inputs. Categories with 0 matches under
+// the other filters are hidden unless selected.
+import { TOD_CHIPS, WHEN_CHIPS, chipHref, toggled, toQueryable, type FeedState } from '../lib/feed.js';
+import { filtersToQuery } from '@findlocal/shared';
+import Icon from './Icon.astro';
+interface Props {
+  state: FeedState;
+}
+const { state } = Astro.props;
+const f = state.filters;
+const hidden = new URLSearchParams(filtersToQuery(toQueryable(state)));
+const clearHref = state.basePath;
+const anyFilter = state.canonical !== '';
+const listHref = chipHref(state, {}, false);
+const mapHref = `${listHref}${listHref.includes('?') ? '&' : '?'}view=map`;
+---
+<section class="filters" aria-label="Filters">
+  <div class="row top">
+    <form class="q" method="get" action={state.basePath} role="search">
+      {[...hidden.entries()].filter(([k]) => k !== 'q' && k !== 'page').map(([k, v]) => <input type="hidden" name={k} value={v} />)}
+      {state.view === 'map' && <input type="hidden" name="view" value="map" />}
+      <Icon name="search" size={16} />
+      <input type="search" name="q" value={f.text ?? ''} placeholder="Search events or venues" aria-label="Search events" maxlength="100" />
+      <button type="submit" class="visually-hidden">Search</button>
+    </form>
+    <div class="view-toggle" role="group" aria-label="View">
+      <a class="chip" href={listHref} aria-current={state.view === 'list' ? 'true' : undefined}><Icon name="list" size={16} /> List</a>
+      <a class="chip" href={mapHref} aria-current={state.view === 'map' ? 'true' : undefined}><Icon name="map" size={16} /> Map</a>
+    </div>
+  </div>
+
+  <div class="row">
+    <span class="label">When</span>
+    <div class="chips">
+      {WHEN_CHIPS.map((w) => (
+        <a class="chip" href={chipHref(state, { when: w.value === 'anytime' ? undefined : w.value })} aria-current={state.when === w.value ? 'true' : undefined}>{w.label}</a>
+      ))}
+      <form class="date" method="get" action={state.basePath}>
+        {[...hidden.entries()].filter(([k]) => k !== 'when' && k !== 'page').map(([k, v]) => <input type="hidden" name={k} value={v} />)}
+        {state.view === 'map' && <input type="hidden" name="view" value="map" />}
+        <label class="visually-hidden" for="when-date">Pick a date</label>
+        <input id="when-date" type="date" name="when" value={state.whenDate ?? ''} class:list={['chip', { active: !!state.whenDate }]} />
+        <button type="submit" class="chip">Go</button>
+      </form>
+    </div>
+  </div>
+
+  {state.categoryOptions.length > 0 && (
+    <div class="row">
+      <span class="label">Category</span>
+      <div class="chips">
+        {state.categoryOptions.map((c) => (
+          <a class="chip" href={chipHref(state, { categories: toggled(f.categories, c.slug) })} aria-current={c.active ? 'true' : undefined}>
+            {c.label} <span class="count">{c.count}</span>
+          </a>
+        ))}
+      </div>
+    </div>
+  )}
+
+  <div class="row">
+    <span class="label">Price</span>
+    <div class="chips">
+      <a class="chip" href={chipHref(state, { free: !f.free, paid: f.paid })} aria-current={f.free ? 'true' : undefined}>Free</a>
+      <a class="chip" href={chipHref(state, { paid: !f.paid, free: f.free })} aria-current={f.paid ? 'true' : undefined}>Ticketed</a>
+    </div>
+    <span class="label">Time</span>
+    <div class="chips">
+      {TOD_CHIPS.map((t) => (
+        <a class="chip" href={chipHref(state, { timeOfDay: toggled(f.timeOfDay, t.value) })} aria-current={f.timeOfDay?.includes(t.value) ? 'true' : undefined}>{t.label}</a>
+      ))}
+    </div>
+  </div>
+
+  {state.regions.length > 1 && (
+    <div class="row">
+      <span class="label">Area</span>
+      <div class="chips">
+        {state.regions.slice(0, 14).map((r) => (
+          <a class="chip" href={chipHref(state, { region: f.region === r.region ? undefined : r.region })} aria-current={f.region === r.region ? 'true' : undefined}>
+            {r.region} <span class="count">{r.count}</span>
+          </a>
+        ))}
+      </div>
+    </div>
+  )}
+
+  {anyFilter && (
+    <div class="row">
+      <a class="chip clear" href={clearHref}><Icon name="close" size={14} /> Clear filters</a>
+    </div>
+  )}
+</section>
+
+<style>
+  .filters { margin: 0.75rem 0 0.5rem; display: flex; flex-direction: column; gap: 0.6rem; }
+  .row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.7rem; }
+  .row.top { justify-content: space-between; }
+  .label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: rgb(var(--text-3)); min-width: 3.6rem; }
+  .q { display: flex; align-items: center; gap: 0.4rem; background: rgb(var(--surface-accent)); border: 1px solid rgb(var(--border)); border-radius: 999px; padding: 0.4rem 0.9rem; color: rgb(var(--text-3)); flex: 1; max-width: 420px; }
+  .q input { border: 0; background: transparent; outline: none; width: 100%; color: rgb(var(--text)); }
+  .q input::-webkit-search-cancel-button { -webkit-appearance: none; }
+  @media (min-width: 760px) { .q { display: none; } }
+  .view-toggle { display: flex; gap: 0.4rem; margin-left: auto; }
+  .date { display: inline-flex; gap: 0.3rem; align-items: center; }
+  .date input[type='date'] { padding: 0.25rem 0.6rem; background: rgb(var(--surface-accent)); border: 1px solid rgb(var(--border)); color: rgb(var(--text-2)); font-size: 0.85rem; }
+  .date input.active { background: rgb(var(--teal)); color: rgb(var(--text-inverse)); border-color: rgb(var(--teal)); }
+  .date button { cursor: pointer; }
+  .clear { color: rgb(var(--rust)); }
+</style>

@@ -1,0 +1,19 @@
+{
+  "name": "@findlocal/mcp",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "FindLocal Events MCP server — curated local-event data as OAuth-gated, metered MCP tools over D1.",
+  "scripts": {
+    "kv:create": "wrangler kv namespace create OAUTH_KV && wrangler kv namespace create USAGE_KV",
+    "seed:customers": "wrangler kv key put --binding USAGE_KV \"customer:demo-pro\" \"{\\\"plan\\\":\\\"pro\\\",\\\"monthly_quota\\\":10000,\\\"active\\\":true}\" && wrangler kv key put --binding USAGE_KV \"customer:demo-free\" \"{\\\"plan\\\":\\\"free\\\",\\\"monthly_quota\\\":100,\\\"active\\\":true}\""
+  },
+  "dependencies": {
+    "@cloudflare/workers-oauth-provider": "^0.10.3",
+    "@findlocal/shared": "*",
+    "@modelcontextprotocol/sdk": "1.23.0",
+    "agents": "^0.2.0",
+    "ai": "^7.0.48",
+    "zod": "^4.4.3"
+  }
+}

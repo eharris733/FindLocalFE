@@ -1,0 +1,27 @@
+---
+// Crawlable links to all 31 city pages (the city picker is a client island and
+// produces no <a> hrefs, so without this the /city/* pages would be orphans).
+import { CITIES } from '@findlocal/shared';
+interface Props {
+  current?: string | undefined;
+  heading?: string;
+}
+const { current, heading = 'Events by city' } = Astro.props;
+---
+<nav class="city-links" aria-label={heading}>
+  <h2>{heading}</h2>
+  <ul>
+    {CITIES.map((c) => (
+      <li>{c.slug === current ? <span class="here">{c.name}</span> : <a href={`/city/${c.slug}`}>{c.name}</a>}</li>
+    ))}
+  </ul>
+</nav>
+
+<style>
+  h2 { font-size: 0.95rem; margin: 0 0 0.5rem; color: rgb(var(--text)); }
+  ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.3rem 1rem; }
+  li { font-size: 0.88rem; }
+  a { color: rgb(var(--text-2)); }
+  a:hover { color: rgb(var(--teal)); }
+  .here { color: rgb(var(--teal)); font-weight: 700; }
+</style>

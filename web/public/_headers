@@ -1,0 +1,19 @@
+# Static-asset caching. SSR responses are handled by src/middleware.ts —
+# this file only applies to files served from the Workers assets bucket.
+
+# Content-hashed Astro bundles — safe to cache forever.
+/_astro/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Self-hosted woff2 fonts (declared in src/layouts/Layout.astro).
+/fonts/*
+  Access-Control-Allow-Origin: *
+  Cache-Control: public, max-age=31536000, immutable
+
+# Unhashed brand assets; long TTL, but a swap still propagates within a day.
+/logo.webp
+  Cache-Control: public, max-age=86400
+/og-default.png
+  Cache-Control: public, max-age=86400
+/favicon.ico
+  Cache-Control: public, max-age=86400

@@ -1,0 +1,24 @@
+---
+// One marker per venue with the number of listed events; popup links to the
+// venue page and the first few events.
+import type { City, EventRow } from '@findlocal/shared';
+import LeafletMap, { type MapMarker } from './LeafletMap.astro';
+interface Props {
+  events: EventRow[];
+  city: City;
+}
+const { events, city } = Astro.props;
+const byVenue = new Map<string, MapMarker & { n: number }>();
+for (const e of events) {
+  if (e.venue_lat == null || e.venue_lng == null) continue;
+  let m = byVenue.get(e.venue_id);
+  if (!m) {
+    m = { lat: e.venue_lat, lng: e.venue_lng, count: 0, n: 0, title: e.venue_name, href: `/venue/${e.venue_id}`, subtitle: e.venue_address ?? undefined, items: [] };
+    byVenue.set(e.venue_id, m);
+  }
+  m.count += 1;
+  if (m.items!.length < 4) m.items!.push({ label: e.title, href: `/event/${e.id}` });
+}
+const markers = [...byVenue.values()].map(({ n: _n, ...m }) => m);
+---
+<LeafletMap markers={markers} center={{ lat: city.lat, lng: city.lng, zoom: city.zoom }} tall label={`Map of events in ${city.name}`} />

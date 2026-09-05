@@ -1,0 +1,12 @@
+{
+  "extends": "astro/tsconfigs/strict",
+  "compilerOptions": {
+    "noUncheckedIndexedAccess": true,
+    "baseUrl": ".",
+    "paths": {
+      "@cloudflare/workers-types": ["src/types/workers-types.d.ts"]
+    }
+  },
+  "include": [".astro/types.d.ts", "src/**/*", "test/**/*"],
+  "exclude": ["dist", ".wrangler"]
+}

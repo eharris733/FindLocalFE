@@ -1,0 +1,75 @@
+---
+// Leaflet map (OSM raster tiles). Leaflet (~150 KB) is imported only once the
+// map scrolls into view (IntersectionObserver), so it stays out of the initial
+// render path on every page. Marker data travels in data-markers.
+import 'leaflet/dist/leaflet.css';
+
+export interface MapMarker {
+  lat: number;
+  lng: number;
+  /** Number shown inside the marker (upcoming events at the venue). */
+  count: number;
+  title: string;
+  href: string;
+  subtitle?: string | undefined;
+  /** Up to a few linked lines (event titles) under the title. */
+  items?: { label: string; href: string }[] | undefined;
+}
+interface Props {
+  markers: MapMarker[];
+  center: { lat: number; lng: number; zoom: number };
+  tall?: boolean;
+  label?: string;
+}
+const { markers, center, tall = false, label = 'Map of venues' } = Astro.props;
+---
+<div class:list={['fl-map', { tall }]} data-markers={JSON.stringify(markers)} data-center={JSON.stringify(center)} role="region" aria-label={label}></div>
+
+<script>
+  type Marker = { lat: number; lng: number; count: number; title: string; href: string; subtitle?: string; items?: { label: string; href: string }[] };
+  const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] as string);
+
+  async function initMap(el: HTMLElement) {
+    const { default: L } = await import('leaflet');
+    const markers = JSON.parse(el.dataset.markers ?? '[]') as Marker[];
+    const center = JSON.parse(el.dataset.center ?? '{"lat":42.36,"lng":-71.06,"zoom":12}') as { lat: number; lng: number; zoom: number };
+    const map = L.map(el, { scrollWheelZoom: false });
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    }).addTo(map);
+    const bounds = L.latLngBounds([]);
+    for (const m of markers) {
+      const size = m.count > 9 ? 34 : 28;
+      const icon = L.divIcon({ className: '', html: `<div class="fl-marker" style="width:${size}px;height:${size}px">${m.count}</div>`, iconSize: [size, size], iconAnchor: [size / 2, size / 2] });
+      const items = (m.items ?? []).map((i) => `<li><a href="${esc(i.href)}">${esc(i.label)}</a></li>`).join('');
+      L.marker([m.lat, m.lng], { icon })
+        .addTo(map)
+        .bindPopup(
+          `<div class="popup-title"><a href="${esc(m.href)}">${esc(m.title)}</a></div>` +
+            (m.subtitle ? `<div>${esc(m.subtitle)}</div>` : '') +
+            (items ? `<ul class="popup-list">${items}</ul>` : ''),
+        );
+      bounds.extend([m.lat, m.lng]);
+    }
+    if (markers.length > 1 && bounds.isValid()) map.fitBounds(bounds.pad(0.15), { maxZoom: 14 });
+    else if (markers.length === 1) map.setView([markers[0]!.lat, markers[0]!.lng], 15);
+    else map.setView([center.lat, center.lng], center.zoom);
+  }
+
+  const maps = document.querySelectorAll<HTMLElement>('.fl-map[data-markers]');
+  if (maps.length > 0) {
+    const observer = new IntersectionObserver(
+      (entries, obs) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            obs.unobserve(entry.target);
+            void initMap(entry.target as HTMLElement);
+          }
+        }
+      },
+      { rootMargin: '200px' },
+    );
+    for (const el of maps) observer.observe(el);
+  }
+</script>
