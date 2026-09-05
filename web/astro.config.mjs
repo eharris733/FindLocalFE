@@ -18,3 +18,5 @@ export default defineConfig({
     },
   }),
 });
+
+// Deployed by Cloudflare Workers Builds (see repo settings); wrangler reads dist/server/wrangler.json.
