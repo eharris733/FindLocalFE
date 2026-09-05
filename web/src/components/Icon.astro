@@ -1,0 +1,13 @@
+---
+// Inline SVG via <use> against the sprite Layout.astro emits once per page,
+// so 100 event cards don't each carry a 700-byte path.
+import type { IconName } from '../lib/icons.js';
+interface Props {
+  name: IconName;
+  size?: number;
+  label?: string;
+  class?: string;
+}
+const { name, size = 20, label, class: cls } = Astro.props;
+---
+<svg width={size} height={size} fill="currentColor" role={label ? 'img' : undefined} aria-label={label} aria-hidden={label ? undefined : 'true'} class={cls} style="display:inline-block;flex-shrink:0;vertical-align:middle"><use href={`#fl-${name}`} /></svg>

@@ -1,0 +1,33 @@
+{
+  "_comment": "Canonical event categories. `tokens` are matched case-insensitively against event_type tokens from every source; first category (in list order) with a matching token wins. `venue_types` maps venues.type (lowercased) to category slugs; `community_map` maps the legacy community names used at migration. FindLocalFE vendors a copy via `npm run sync-data`.",
+  "categories": [
+    { "slug": "music", "label": "Music", "tokens": ["music", "live music", "concert", "jazz", "rock", "pop", "classical", "folk", "alternative", "indie", "hip hop", "hip-hop", "electronic", "edm", "dj set", "country", "blues", "latin", "reggae", "metal", "r&b", "soul", "funk", "punk", "world", "opera", "swing", "musical", "band", "singer-songwriter", "acoustic", "bluegrass", "gospel"] },
+    { "slug": "comedy", "label": "Comedy", "tokens": ["comedy", "stand-up", "standup", "stand up", "improv", "open mic", "comedy show", "sketch", "variety"] },
+    { "slug": "theater", "label": "Theater", "tokens": ["theater", "theatre", "play", "performance", "performance art", "cabaret", "drama", "musical theater", "arts & theatre"] },
+    { "slug": "dance", "label": "Dance", "tokens": ["dance", "social dance", "latin dance", "salsa", "bachata", "ballet", "hip hop dance", "contemporary", "swing dance", "tango"] },
+    { "slug": "art", "label": "Arts & Culture", "tokens": ["culture", "art", "arts", "art exhibition", "exhibition", "gallery talk", "gallery", "museum", "film", "film screening", "screening", "lecture", "talk", "book reading", "reading", "author", "poetry", "literary", "panel discussion", "history", "tour"] },
+    { "slug": "food_drink", "label": "Food & Drink", "tokens": ["food", "food & drink", "food and drink", "drink", "dining", "tasting", "beer", "wine", "brunch", "happy hour", "cocktails", "pop-up dinner"] },
+    { "slug": "family", "label": "Family", "tokens": ["family", "family friendly", "family-friendly", "kids", "children", "all ages", "storytime"] },
+    { "slug": "market", "label": "Markets", "tokens": ["market", "markets", "farmers market", "flea market", "craft fair", "vendor", "pop-up market", "bazaar"] },
+    { "slug": "workshop", "label": "Classes & Workshops", "tokens": ["workshop", "workshops", "class", "classes", "seminar", "course", "tutorial", "training"] },
+    { "slug": "fitness", "label": "Fitness & Wellness", "tokens": ["fitness", "yoga", "wellness", "run club", "running", "meditation", "workout", "cycling"] },
+    { "slug": "nightlife", "label": "Nightlife", "tokens": ["nightlife", "club", "clubbing", "dj", "party", "trivia", "karaoke", "bingo", "drag", "drag show", "late night", "date night", "games", "game night"] },
+    { "slug": "community", "label": "Community", "tokens": ["community", "community event", "meetup", "volunteer", "social", "networking", "fundraiser", "benefit", "religious", "civic"] },
+    { "slug": "festival", "label": "Festivals", "tokens": ["festival", "fair", "parade", "celebration", "block party", "street fair"] },
+    { "slug": "parks", "label": "Parks & Outdoors", "tokens": ["outdoors", "outdoor", "park", "parks", "nature", "ranger program", "ranger-led", "guided walk", "hike", "hiking", "birding", "campfire", "stargazing"] }
+  ],
+  "venue_types": {
+    "music venue": "music", "music_venue": "music", "music": "music", "concert hall": "music", "jazz club": "music", "rock club": "music", "piano bar": "music", "record_store": "music", "record store": "music",
+    "comedy_club": "comedy", "comedy club": "comedy",
+    "theater": "theater", "theatre": "theater",
+    "dance club": "dance", "dance_hall": "dance", "salsa club": "dance",
+    "art gallery": "art", "museum": "art", "cultural_center": "art", "cultural center": "art", "bookstore": "art", "book store": "art",
+    "bar": "nightlife", "night club": "nightlife", "lounge": "nightlife", "eatertainment": "nightlife",
+    "brewery": "food_drink", "restaurant": "food_drink", "cafe": "food_drink", "winery": "food_drink", "distillery": "food_drink", "cidery": "food_drink", "food_hall": "food_drink", "food hall": "food_drink",
+    "outdoors": "parks",
+    "community center": "community", "community_center": "community", "church": "community",
+    "market": "market"
+  },
+  "community_map": { "Music": "music", "Dance": "dance", "Comedy": "comedy", "Theater": "theater", "Culture": "art" },
+  "ignored_tokens": ["free", "paid", "other", "event", "events", "bar"]
+}

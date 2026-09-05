@@ -1,0 +1,43 @@
+---
+// Canonical per-city page ("things to do in Boston"). ItemList + BreadcrumbList
+// JSON-LD; noindex when filtered or thin (<3 events).
+import Layout from '../../layouts/Layout.astro';
+import Feed from '../../components/Feed.astro';
+import JsonLd from '../../components/JsonLd.astro';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import { getDb } from '../../lib/db.js';
+import { loadFeed } from '../../lib/feed.js';
+import { breadcrumbJsonLd, itemListJsonLd } from '../../lib/jsonld.js';
+import { SITE, cityBySlug } from '@findlocal/shared';
+
+const slug = Astro.params.slug ?? '';
+const city = cityBySlug(slug);
+if (!city) return Astro.rewrite('/404');
+if (city.slug !== slug) return Astro.redirect(`/city/${city.slug}${Astro.url.search}`, 301);
+
+const state = await loadFeed(getDb(), city, Astro.url);
+const filtered = state.canonical !== '';
+const thin = state.total < 3;
+const cityLabel = `${city.name}, ${city.state}`;
+const crumbs = [
+  { name: 'Home', path: '/' },
+  { name: `Events in ${city.name}`, path: state.basePath },
+];
+const jsonAlternate = `${SITE}/api/events?city=${encodeURIComponent(city.name)}${state.canonical ? `&${state.canonical}` : ''}`;
+---
+<Layout
+  title={`Things to Do in ${city.name} — Concerts, Comedy, Theater & More`}
+  description={`Upcoming live music, comedy, theater, and community events in ${cityLabel}, pulled straight from local venue calendars and updated daily.`}
+  canonicalPath={state.basePath}
+  noindex={filtered || thin}
+  jsonAlternate={jsonAlternate}
+  wide
+>
+  <JsonLd data={[itemListJsonLd(`Upcoming events in ${cityLabel}`, state.events, state.total), breadcrumbJsonLd(crumbs)]} slot="head" />
+  <Breadcrumbs crumbs={crumbs} />
+  <Feed
+    state={state}
+    heading={`Things to do in ${cityLabel}`}
+    intro={filtered ? undefined : `${state.total.toLocaleString('en-US')} upcoming events in ${city.name} — concerts, comedy, theater, and community happenings, collected straight from local venue calendars and updated daily.`}
+  />
+</Layout>

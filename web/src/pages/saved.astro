@@ -1,0 +1,67 @@
+---
+// Island page: reads localStorage `findlocal.favorites` and fetches the events
+// from /api/events?ids=. Noindex (robots.txt disallows it too).
+import Layout from '../layouts/Layout.astro';
+import Icon from '../components/Icon.astro';
+---
+<Layout title="Saved events" description="Events you've saved on this device." noindex>
+  <h1>Saved events</h1>
+  <p class="lede">Saved events live only in this browser — nothing is sent to us. Tap <Icon name="heart" size={16} /> Save on any event to add it here.</p>
+  <div id="saved" aria-live="polite"><p class="muted">Loading your saved events…</p></div>
+  <template id="saved-card">
+    <a class="card" href="">
+      <div class="thumb"><div class="placeholder" aria-hidden="true">Event</div></div>
+      <div class="body"><div class="when"></div><h3 class="title"></h3><div class="where"></div></div>
+    </a>
+  </template>
+</Layout>
+
+<script>
+  const KEY = 'findlocal.favorites';
+  const root = document.getElementById('saved')!;
+  const tpl = document.getElementById('saved-card') as HTMLTemplateElement;
+  let ids: string[] = [];
+  try {
+    const v = JSON.parse(localStorage.getItem(KEY) ?? '[]');
+    ids = Array.isArray(v) ? v.filter((x) => typeof x === 'string') : [];
+  } catch {}
+
+  const fmtDate = (ymd: string) => {
+    const [y, m, d] = ymd.split('-').map(Number);
+    return new Date(Date.UTC(y!, m! - 1, d!)).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' });
+  };
+  const fmtTime = (t: string | null) => {
+    const m = t && /^(\d{1,2}):(\d{2})/.exec(t);
+    if (!m) return '';
+    const h = Number(m[1]);
+    return `${h % 12 === 0 ? 12 : h % 12}:${m[2]} ${h < 12 ? 'AM' : 'PM'}`;
+  };
+
+  async function load() {
+    if (ids.length === 0) {
+      root.innerHTML = '<p class="empty">No saved events yet. <a href="/">Browse what\'s on</a> and save the ones you like.</p>';
+      return;
+    }
+    const res = await fetch(`/api/events?ids=${encodeURIComponent(ids.join(','))}`);
+    const { data } = (await res.json()) as { data: any[] };
+    const today = new Date().toISOString().slice(0, 10);
+    root.innerHTML = '';
+    const grid = document.createElement('div');
+    grid.className = 'grid';
+    for (const e of data) {
+      const node = tpl.content.firstElementChild!.cloneNode(true) as HTMLAnchorElement;
+      node.href = `/event/${e.id}`;
+      const img = e.image_url || e.series_image || e.venue_image;
+      if (img) node.querySelector('.thumb')!.innerHTML = `<img src="${img}" alt="" loading="lazy" width="640" height="360">`;
+      const time = fmtTime(e.start_time);
+      node.querySelector('.when')!.textContent = `${fmtDate(e.event_date)}${time ? ` · ${time}` : ''}${e.event_date < today ? ' · past' : ''}`;
+      node.querySelector('.title')!.textContent = e.title;
+      node.querySelector('.where')!.textContent = [e.venue_name, e.region].filter(Boolean).join(' · ');
+      grid.appendChild(node);
+    }
+    root.appendChild(grid);
+    const missing = ids.length - data.length;
+    if (missing > 0) root.insertAdjacentHTML('beforeend', `<p class="muted">${missing} saved ${missing === 1 ? 'event is' : 'events are'} no longer available.</p>`);
+  }
+  load().catch(() => { root.innerHTML = '<p class="empty">Could not load saved events right now.</p>'; });
+</script>

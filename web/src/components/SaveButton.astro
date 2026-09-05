@@ -1,0 +1,49 @@
+---
+// Island: toggles an event id in localStorage `findlocal.favorites` (JSON array
+// of ids). No server round-trip; /saved reads the same key.
+import Icon from './Icon.astro';
+interface Props {
+  eventId: string;
+}
+const { eventId } = Astro.props;
+---
+<button type="button" class="btn ghost" data-save={eventId} aria-pressed="false">
+  <span class="ico off"><Icon name="heart" size={18} /></span>
+  <span class="ico on" hidden><Icon name="heart-filled" size={18} /></span>
+  <span data-save-label>Save</span>
+</button>
+
+<script>
+  const KEY = 'findlocal.favorites';
+  function read(): string[] {
+    try {
+      const v = JSON.parse(localStorage.getItem(KEY) ?? '[]');
+      return Array.isArray(v) ? v.filter((x) => typeof x === 'string') : [];
+    } catch { return []; }
+  }
+  function write(ids: string[]) {
+    try { localStorage.setItem(KEY, JSON.stringify(ids)); } catch {}
+  }
+  for (const btn of document.querySelectorAll<HTMLButtonElement>('[data-save]')) {
+    const id = btn.dataset.save ?? '';
+    const paint = () => {
+      const on = read().includes(id);
+      btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      btn.querySelector<HTMLElement>('.ico.on')!.hidden = !on;
+      btn.querySelector<HTMLElement>('.ico.off')!.hidden = on;
+      btn.querySelector('[data-save-label]')!.textContent = on ? 'Saved' : 'Save';
+    };
+    btn.addEventListener('click', () => {
+      const ids = read();
+      write(ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]);
+      paint();
+      const badge = document.querySelector<HTMLElement>('[data-saved-count]');
+      if (badge) {
+        const n = read().length;
+        badge.textContent = n > 9 ? '9+' : String(n);
+        badge.hidden = n === 0;
+      }
+    });
+    paint();
+  }
+</script>

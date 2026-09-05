@@ -1,0 +1,33 @@
+---
+// Shared body for / and /city/[slug]: heading, filters, optional map, the
+// date-grouped list and pagination.
+import { filterSummary, type FeedState } from '../lib/feed.js';
+import EventList from './EventList.astro';
+import EventMap from './EventMap.astro';
+import FilterBar from './FilterBar.astro';
+import Pagination from './Pagination.astro';
+interface Props {
+  state: FeedState;
+  heading: string;
+  intro?: string;
+}
+const { state, heading, intro } = Astro.props;
+const summary = filterSummary(state);
+---
+<h1>{heading}</h1>
+{intro && <p class="lede">{intro}</p>}
+<FilterBar state={state} />
+<p class="muted result-line" aria-live="polite">
+  {state.total === 0 ? 'No events match' : `${state.total.toLocaleString('en-US')} ${state.total === 1 ? 'event' : 'events'}`}{summary ? ` · ${summary}` : ''}
+</p>
+{state.view === 'map' && <EventMap events={state.events} city={state.city} />}
+{state.events.length === 0 ? (
+  <p class="empty">Nothing listed for these filters yet — listings update daily. <a href={state.basePath}>Clear filters</a> or pick another city below.</p>
+) : (
+  <EventList events={state.events} tz={state.city.tz} />
+)}
+<Pagination state={state} />
+
+<style>
+  .result-line { margin: 0.5rem 0 0; font-size: 0.9rem; }
+</style>

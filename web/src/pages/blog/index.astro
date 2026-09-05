@@ -1,0 +1,27 @@
+---
+import { getCollection } from 'astro:content';
+import Layout from '../../layouts/Layout.astro';
+export const prerender = true;
+const posts = (await getCollection('blog', (p) => !p.data.draft)).sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
+const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+---
+<Layout title="Blog" description="Guides and writing about local event discovery: how Find Local finds events, city venue guides, and how to actually go out more." canonicalPath="/blog">
+  <h1>Blog</h1>
+  <p class="lede">Guides and notes on finding the good stuff in your city.</p>
+  <ul class="posts">
+    {posts.map((p) => (
+      <li>
+        <a href={`/blog/${p.id}`}><h2>{p.data.title}</h2></a>
+        <p class="muted">{p.data.description}</p>
+        <p class="faint">{fmt(p.data.date)}{p.data.city ? ` · ${p.data.city}` : ''}</p>
+      </li>
+    ))}
+  </ul>
+</Layout>
+
+<style>
+  .posts { list-style: none; margin: 0; padding: 0; max-width: 46rem; }
+  .posts li { padding: 1.1rem 0; border-bottom: 1px solid rgb(var(--border)); }
+  .posts h2 { font-size: 1.25rem; margin-bottom: 0.3rem; }
+  .posts p { margin: 0 0 0.2rem; }
+</style>

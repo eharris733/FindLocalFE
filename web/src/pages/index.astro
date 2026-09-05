@@ -1,0 +1,32 @@
+---
+// Home: the feed for the fl_city cookie city (default Boston). Same body as
+// the city page; Organization + WebSite JSON-LD. Filtered views canonicalise
+// to the city page. Edge cache key includes `_city=<cookie>` (middleware).
+import Layout from '../layouts/Layout.astro';
+import Feed from '../components/Feed.astro';
+import JsonLd from '../components/JsonLd.astro';
+import { getDb } from '../lib/db.js';
+import { loadFeed } from '../lib/feed.js';
+import { organizationJsonLd, webApplicationJsonLd, webSiteJsonLd } from '../lib/jsonld.js';
+import { SITE } from '@findlocal/shared';
+
+const city = Astro.locals.city;
+const state = await loadFeed(getDb(), city, Astro.url);
+const filtered = state.canonical !== '';
+const jsonAlternate = `${SITE}/api/events?city=${encodeURIComponent(city.name)}`;
+---
+<Layout
+  title="Find Local — Discover Local Events: Concerts, Comedy, Theater & More"
+  description={`Discover the best local events in ${city.name} and 30 other US cities. Browse concerts, comedy shows, live music, theater, and cultural experiences pulled straight from venue calendars. Free and paid events updated daily.`}
+  canonicalPath={filtered ? state.basePath : '/'}
+  noindex={filtered}
+  jsonAlternate={jsonAlternate}
+  wide
+>
+  {!filtered && <JsonLd data={[organizationJsonLd(), webSiteJsonLd(city), webApplicationJsonLd()]} slot="head" />}
+  <Feed
+    state={state}
+    heading={`What's on in ${city.name}`}
+    intro={filtered ? undefined : `Concerts, comedy, theater, and community happenings across ${city.name}, ${city.state} — collected straight from local venue calendars and updated daily.`}
+  />
+</Layout>

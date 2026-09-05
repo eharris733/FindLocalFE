@@ -1,0 +1,11 @@
+---
+// One JSON-LD block. Pass a single schema.org object or an array; use with
+// slot="head" so the script lands in <head>. `<` is escaped so no description
+// can break out of the script element.
+interface Props {
+  data: unknown;
+}
+const { data } = Astro.props;
+const json = JSON.stringify(data).replace(/</g, '\\u003c');
+---
+<script is:inline type="application/ld+json" set:html={json} />

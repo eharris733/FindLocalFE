@@ -1,0 +1,34 @@
+---
+import type { EventRow } from '@findlocal/shared';
+import { cardDateLabel, categoryLabel, eventImage, priceLabel } from '../lib/format.js';
+import Icon from './Icon.astro';
+interface Props {
+  event: EventRow;
+  tz: string;
+  /** Above-the-fold cards get eager images. */
+  eager?: boolean;
+}
+const { event, tz, eager = false } = Astro.props;
+const img = eventImage(event);
+const price = priceLabel(event);
+const where = [event.venue_name, event.region ?? event.venue_region].filter(Boolean).join(' · ');
+const placeholder = categoryLabel(event.category) || 'Event';
+---
+<a class="card" href={`/event/${event.id}`}>
+  <div class="thumb">
+    {img ? (
+      <img src={img} alt="" loading={eager ? 'eager' : 'lazy'} decoding="async" width="640" height="360" />
+    ) : (
+      <div class="placeholder" aria-hidden="true">{placeholder}</div>
+    )}
+    {price && <span class="pill price">{price}</span>}
+    {event.series_count > 1 && <span class="pill recurring">↻ Recurring</span>}
+  </div>
+  <div class="body">
+    <div class="when">{cardDateLabel(event, tz)}</div>
+    <h3 class="title">{event.title}</h3>
+    {where && (
+      <div class="where"><Icon name="location" size={14} /><span>{where}</span></div>
+    )}
+  </div>
+</a>

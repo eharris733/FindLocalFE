@@ -1,0 +1,76 @@
+---
+// /venue/<uuid>: Place JSON-LD + upcoming list; unknown or inactive -> 404.
+import Layout from '../../layouts/Layout.astro';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import EventList from '../../components/EventList.astro';
+import JsonLd from '../../components/JsonLd.astro';
+import VenueMap from '../../components/VenueMap.astro';
+import { getDb, getVenue, listUpcomingEventsForVenue } from '../../lib/db.js';
+import { cleanText, truncate } from '../../lib/format.js';
+import { breadcrumbJsonLd, venueJsonLd } from '../../lib/jsonld.js';
+import { SITE, getCity, isUuid } from '@findlocal/shared';
+
+const id = Astro.params.id ?? '';
+const venue = isUuid(id) ? await getVenue(getDb(), id) : null;
+if (!venue || venue.is_active !== 1) Astro.response.status = 404;
+const city = venue ? getCity(venue.city) : undefined;
+const events = venue && venue.is_active === 1 ? await listUpcomingEventsForVenue(getDb(), venue.id, 100) : [];
+const description = venue ? cleanText(venue.description) : '';
+const metaDescription = venue
+  ? truncate(description || [`Upcoming events at ${venue.name}`, venue.address, [venue.region, venue.city].filter(Boolean).join(', ')].filter(Boolean).join(' · '), 160)
+  : '';
+const crumbs = venue
+  ? [{ name: 'Home', path: '/' }, ...(city ? [{ name: `Events in ${city.name}`, path: `/city/${city.slug}` }] : []), { name: 'Venues', path: '/venues' }, { name: venue.name, path: `/venue/${venue.id}` }]
+  : [];
+const mapsHref = venue?.address ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${venue.name}, ${venue.address}`)}` : null;
+---
+{!venue || venue.is_active !== 1 ? (
+  <Layout title="Venue not available" description="This venue is no longer listed. Browse local venues and events on Find Local." noindex>
+    <h1>Venue not found</h1>
+    <p class="empty">This venue is no longer listed. <a href="/venues">Browse venues</a> or <a href="/">upcoming events</a>.</p>
+  </Layout>
+) : (
+  <Layout
+    title={`${venue.name} in ${venue.city}`}
+    description={metaDescription}
+    canonicalPath={`/venue/${venue.id}`}
+    ogImage={venue.image}
+    ogType="place"
+    jsonAlternate={`${SITE}/api/events?venue=${venue.id}`}
+    wide
+  >
+    <JsonLd data={[venueJsonLd(venue, description), breadcrumbJsonLd(crumbs)]} slot="head" />
+    <Breadcrumbs crumbs={crumbs} />
+    <header class="venue-head">
+      {venue.image && <img class="photo" src={venue.image} alt="" width="240" height="240" decoding="async" fetchpriority="high" />}
+      <div>
+        <h1>{venue.name}</h1>
+        <p class="muted">
+          {[venue.type, venue.region, venue.city].filter(Boolean).join(' · ')}
+          {venue.address && <><br />{mapsHref ? <a href={mapsHref} target="_blank" rel="noopener">{venue.address}</a> : venue.address}</>}
+        </p>
+        <p class="links">
+          {venue.url && <a class="btn ghost" href={venue.url} rel="noopener nofollow" target="_blank">Website</a>}
+          <span class="badge teal">{venue.upcoming} upcoming</span>
+        </p>
+        {description && <p class="desc">{description}</p>}
+      </div>
+    </header>
+    {city && venue.latitude != null && venue.longitude != null && <VenueMap venues={[venue]} city={city} />}
+    <h2 class="section">Upcoming at {venue.name}</h2>
+    {events.length === 0 ? (
+      <p class="empty">Nothing listed right now — listings update daily. {city && <a href={`/city/${city.slug}`}>See what else is on in {city.name}</a>}.</p>
+    ) : (
+      <EventList events={events} tz={city?.tz ?? 'America/New_York'} />
+    )}
+  </Layout>
+)}
+
+<style>
+  .venue-head { display: flex; gap: 1.25rem; align-items: flex-start; margin-bottom: 1.25rem; flex-wrap: wrap; }
+  .photo { width: 160px; height: 160px; object-fit: cover; border-radius: var(--radius); background: rgb(var(--surface-sunken)); flex-shrink: 0; }
+  .venue-head h1 { margin-bottom: 0.4rem; }
+  .links { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+  .desc { white-space: pre-line; color: rgb(var(--text-2)); max-width: 46rem; }
+  .section { margin: 0.5rem 0 0; }
+</style>

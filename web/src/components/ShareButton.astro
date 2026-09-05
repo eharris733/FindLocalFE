@@ -1,0 +1,30 @@
+---
+// Island: Web Share API with a copy-to-clipboard fallback.
+import Icon from './Icon.astro';
+interface Props {
+  title: string;
+  url: string;
+}
+const { title, url } = Astro.props;
+---
+<button type="button" class="btn ghost" data-share-title={title} data-share-url={url}>
+  <Icon name="share" size={18} /><span data-share-label>Share</span>
+</button>
+
+<script>
+  for (const btn of document.querySelectorAll<HTMLButtonElement>('[data-share-url]')) {
+    btn.addEventListener('click', async () => {
+      const url = btn.dataset.shareUrl ?? location.href;
+      const title = btn.dataset.shareTitle ?? document.title;
+      const label = btn.querySelector('[data-share-label]');
+      try {
+        if (navigator.share) {
+          await navigator.share({ title, url });
+          return;
+        }
+        await navigator.clipboard.writeText(url);
+        if (label) { label.textContent = 'Link copied'; setTimeout(() => (label.textContent = 'Share'), 2000); }
+      } catch { /* user cancelled */ }
+    });
+  }
+</script>

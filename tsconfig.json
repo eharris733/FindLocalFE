@@ -1,12 +1,4 @@
 {
-  "extends": "expo/tsconfig.base",
-  "compilerOptions": {
-    "strict": true,
-    "typeRoots": ["./node_modules/@types", "./src/types"]
-  },
-  "include": [
-    "**/*.ts",
-    "**/*.tsx",
-    "src/types/**/*.d.ts"
-  ]
+  "files": [],
+  "references": [{ "path": "shared" }, { "path": "workers/mcp" }]
 }

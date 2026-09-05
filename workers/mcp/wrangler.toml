@@ -1,0 +1,45 @@
+# FindLocal Events MCP server (OAuth + metered). AUTHORITATIVE for bindings.
+# Deliberately a SEPARATE worker from the FindLocalData scraper/data-api so a
+# public-facing MCP endpoint never collides with the production pipeline.
+name = "findlocal-mcp"
+main = "src/index.ts"
+compatibility_date = "2026-08-01"
+compatibility_flags = ["nodejs_compat"]   # required by the OAuth provider / MCP SDK
+
+routes = [
+  { pattern = "mcp.findlocal.community", custom_domain = true }
+]
+
+# --- D1: the same database the FindLocalData pipeline writes. READ-ONLY BY
+# DISCIPLINE — this worker only ever calls the SELECT helpers in @findlocal/shared.
+[[d1_databases]]
+binding = "DB"
+database_name = "findlocal"
+database_id = "70f5c88b-958d-46be-ba63-cfc695f1d496"
+
+# --- Durable Object backing McpAgent (holds per-session MCP transport state) ---
+[[durable_objects.bindings]]
+name = "MCP_OBJECT"
+class_name = "FindLocalMCP"
+
+# McpAgent uses a SQLite-backed Durable Object — must be new_sqlite_classes.
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["FindLocalMCP"]
+
+# --- KV: OAuth grant/token store (binding name MUST be OAUTH_KV) ---
+[[kv_namespaces]]
+binding = "OAUTH_KV"
+id = "660e7821cfab4ebf9c2cb1c50b27571e"
+
+# --- KV: per-customer records + monthly usage counters (metering) ---
+[[kv_namespaces]]
+binding = "USAGE_KV"
+id = "41e6a9fd61934f4b86b6d336cee8a8db"
+
+[observability]
+[observability.logs]
+enabled = true
+
+# Secrets (set with `wrangler secret put <NAME> --config workers/mcp/wrangler.toml`; never commit):
+#   COOKIE_ENCRYPTION_KEY     any long random string (used by the OAuth provider)

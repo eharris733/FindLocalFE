@@ -1,0 +1,9 @@
+---
+// One hidden <svg> with every icon as a <symbol>; Icon.astro references them.
+import { ICONS } from '../lib/icons.js';
+---
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+  {Object.entries(ICONS).map(([name, d]) => (
+    <symbol id={`fl-${name}`} viewBox="0 -960 960 960"><path d={d} /></symbol>
+  ))}
+</svg>
