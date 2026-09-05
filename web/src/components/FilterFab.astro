@@ -1,0 +1,22 @@
+---
+// Mobile-only floating "Filters" button (bottom-right) that opens FilterSheet.
+// Badge = number of active filter groups.
+import { activeFilterCount, type FeedState } from '../lib/feed.js';
+import Icon from './Icon.astro';
+interface Props {
+  state: FeedState;
+}
+const { state } = Astro.props;
+const n = activeFilterCount(state);
+---
+<button id="filter-fab" type="button" class="fab" aria-haspopup="dialog" aria-controls="filter-sheet" aria-label={n ? `Filters, ${n} active` : 'Filters'}>
+  <Icon name="filter" size={26} />
+  {n > 0 && <span class="fab-badge" aria-hidden="true">{n}</span>}
+</button>
+
+<style>
+  .fab { position: fixed; right: 1.25rem; bottom: calc(1.25rem + env(safe-area-inset-bottom)); width: 56px; height: 56px; border-radius: 999px; border: 0; display: inline-flex; align-items: center; justify-content: center; background: rgb(var(--teal)); color: rgb(var(--text-inverse)); box-shadow: 0 4px 12px rgb(0 0 0 / 0.25); cursor: pointer; z-index: 1100; }
+  .fab:hover { background: rgb(var(--teal-600)); }
+  .fab-badge { position: absolute; top: -4px; right: -4px; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 999px; background: rgb(var(--orange)); color: #fff; font-size: 0.72rem; font-weight: 800; display: inline-flex; align-items: center; justify-content: center; border: 2px solid rgb(var(--bg)); }
+  @media (min-width: 760px) { .fab { display: none; } }
+</style>

@@ -1,7 +1,7 @@
 // URL <-> EventFilters: the single filter contract shared by the site, its
 // JSON API and the MCP worker. Known query keys:
 //   when   anytime|today|tomorrow|weekend|week|YYYY-MM-DD (default anytime)
-//   cat    comma list of category slugs
+//   cat    comma list of category slugs (or repeated: cat=a&cat=b)
 //   free=1 paid=1
 //   max    number (USD)
 //   tod    comma list of morning|afternoon|evening
@@ -48,6 +48,17 @@ function normWhen(raw: string | null): When | null {
   return null;
 }
 
+/** First non-empty value for a key (a form may submit `when=&when=weekend`). */
+function firstNonEmpty(params: URLSearchParams, key: string): string | null {
+  return params.getAll(key).find((v) => v.trim() !== '') ?? null;
+}
+
+/** Comma list, repeated params (`cat=a&cat=b`), or a mix — same result. */
+function listParam(params: URLSearchParams, key: string): string | null {
+  const all = params.getAll(key).filter((v) => v.trim() !== '');
+  return all.length ? all.join(',') : null;
+}
+
 function normList(raw: string | null, allowed: readonly string[]): string[] {
   if (!raw) return [];
   const set = new Set(
@@ -79,18 +90,18 @@ function normText(raw: string | null): string | null {
 /** Parse a request's search params into EventFilters for `city` (dates resolved in city.tz). */
 export function parseFilters(params: URLSearchParams, city: City, now: Date = new Date()): EventFilters {
   const f: EventFilters = { city: city.name };
-  const range = dateRangeFor(normWhen(params.get('when')) ?? 'anytime', city.tz, now);
+  const range = dateRangeFor(normWhen(firstNonEmpty(params, 'when')) ?? 'anytime', city.tz, now);
   f.from = range.from;
   f.to = range.to;
-  const cats = normList(params.get('cat'), CATEGORY_SLUGS);
+  const cats = normList(listParam(params, 'cat'), CATEGORY_SLUGS);
   if (cats.length) f.categories = cats;
   if (params.get('free') === '1') f.free = true;
   if (params.get('paid') === '1') f.paid = true;
   const max = normMax(params.get('max'));
   if (max !== null) f.maxPrice = max;
-  const tod = normList(params.get('tod'), TIME_OF_DAY) as TimeOfDay[];
+  const tod = normList(listParam(params, 'tod'), TIME_OF_DAY) as TimeOfDay[];
   if (tod.length) f.timeOfDay = tod;
-  const region = normText(params.get('region'));
+  const region = normText(firstNonEmpty(params, 'region'));
   if (region) f.region = region;
   const q = normText(params.get('q'));
   if (q) f.text = q;
@@ -107,17 +118,17 @@ export function parseFilters(params: URLSearchParams, city: City, now: Date = ne
  */
 export function canonicalQuery(params: URLSearchParams): string {
   const out = new URLSearchParams();
-  const when = normWhen(params.get('when'));
+  const when = normWhen(firstNonEmpty(params, 'when'));
   if (when) out.set('when', when);
-  const cats = normList(params.get('cat'), CATEGORY_SLUGS);
+  const cats = normList(listParam(params, 'cat'), CATEGORY_SLUGS);
   if (cats.length) out.set('cat', cats.join(','));
   if (params.get('free') === '1') out.set('free', '1');
   if (params.get('paid') === '1') out.set('paid', '1');
   const max = normMax(params.get('max'));
   if (max !== null) out.set('max', String(max));
-  const tod = normList(params.get('tod'), TIME_OF_DAY);
+  const tod = normList(listParam(params, 'tod'), TIME_OF_DAY);
   if (tod.length) out.set('tod', tod.join(','));
-  const region = normText(params.get('region'));
+  const region = normText(firstNonEmpty(params, 'region'));
   if (region) out.set('region', region);
   const q = normText(params.get('q'));
   if (q) out.set('q', q);

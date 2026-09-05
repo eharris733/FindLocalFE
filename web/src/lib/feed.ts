@@ -124,6 +124,20 @@ export function pageHref(s: FeedState, page: number): string {
   return `${s.basePath}${query ? `?${query}` : ''}`;
 }
 
+/** Number of filter groups in use (FAB badge): when, categories, price, max price, time, area, text. */
+export function activeFilterCount(s: FeedState): number {
+  const f = s.filters;
+  let n = 0;
+  if (s.when !== 'anytime') n++;
+  if (f.categories?.length) n++;
+  if (f.free || f.paid) n++;
+  if (f.maxPrice !== undefined) n++;
+  if (f.timeOfDay?.length) n++;
+  if (f.region) n++;
+  if (f.text) n++;
+  return n;
+}
+
 /** Human summary of the active filters for headings/meta. */
 export function filterSummary(s: FeedState): string {
   const bits: string[] = [];
