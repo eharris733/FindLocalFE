@@ -3,7 +3,7 @@
 // and time of day toggles the value); the date picker and search are GET forms
 // that keep the other params as hidden inputs. Categories with 0 matches under
 // the other filters are hidden unless selected.
-import { TOD_CHIPS, WHEN_CHIPS, chipHref, toggled, toQueryable, type FeedState } from '../lib/feed.js';
+import { TOD_CHIPS, WHEN_CHIPS, chipHref, filterSummary, toggled, toQueryable, type FeedState } from '../lib/feed.js';
 import { filtersToQuery } from '@findlocal/shared';
 import Icon from './Icon.astro';
 interface Props {
@@ -15,6 +15,7 @@ const hidden = new URLSearchParams(filtersToQuery(toQueryable(state)));
 const clearHref = state.basePath;
 const anyFilter = state.canonical !== '';
 const listHref = chipHref(state, {}, false);
+const summary = filterSummary(state);
 const mapHref = `${listHref}${listHref.includes('?') ? '&' : '?'}view=map`;
 ---
 <section class="filters" aria-label="Filters">
@@ -31,6 +32,13 @@ const mapHref = `${listHref}${listHref.includes('?') ? '&' : '?'}view=map`;
       <a class="chip" href={mapHref} aria-current={state.view === 'map' ? 'true' : undefined}><Icon name="map" size={16} /> Map</a>
     </div>
   </div>
+
+  {anyFilter && (
+    <p class="row mobile-summary">
+      <span class="muted">{summary}</span>
+      <a class="chip clear" href={clearHref}><Icon name="close" size={14} /> Clear</a>
+    </p>
+  )}
 
   <div class="row">
     <span class="label">When</span>
@@ -110,4 +118,10 @@ const mapHref = `${listHref}${listHref.includes('?') ? '&' : '?'}view=map`;
   .date input.active { background: rgb(var(--teal)); color: rgb(var(--text-inverse)); border-color: rgb(var(--teal)); }
   .date button { cursor: pointer; }
   .clear { color: rgb(var(--rust)); }
+  .mobile-summary { display: none; margin: 0; font-size: 0.85rem; }
+  /* Phones: only search + view toggle stay inline; the rest lives in FilterSheet (opened by FilterFab). */
+  @media (max-width: 759.98px) {
+    .row:not(.top):not(.mobile-summary) { display: none; }
+    .mobile-summary { display: flex; }
+  }
 </style>

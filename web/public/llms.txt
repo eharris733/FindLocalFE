@@ -23,4 +23,6 @@ Find Local's data is scraped from the venues themselves rather than ticketing ag
 
 - Sitemap: https://findlocal.community/sitemap.xml
 - JSON API: https://findlocal.community/api/events?city=Boston (also /api/events/<uuid>, /api/venues?city=Boston); noindex, CORS enabled
+- API guide: https://findlocal.community/blog/findlocal-events-api
+- MCP server: https://mcp.findlocal.community/mcp — guide: https://findlocal.community/blog/findlocal-mcp-server
 - Cities covered: Atlanta, Austin, Baltimore, Boston, Burlington, Charlotte, Chicago, Cincinnati, Dallas, Denver, Detroit, Houston, Kansas City, Las Vegas, Los Angeles, Miami, Minneapolis, New York, Orlando, Philadelphia, Phoenix, Pittsburgh, Portland, Sacramento, San Antonio, San Diego, San Francisco, Seattle, St. Louis, Tampa, Washington DC
