@@ -21,6 +21,6 @@ That means the listings include the shows that only ever existed as a line on a 
 
 ## For builders
 
-The same structured event data behind the site is available to developers through the [FindLocal platform](/platform), including an MCP server you can plug into AI assistants.
+The same structured event data behind the site is available to developers through the [FindLocal platform](/platform): a free [JSON API](/blog/findlocal-events-api) and an [MCP server](/blog/findlocal-mcp-server) you can plug into Claude, Cursor, and other AI assistants.
 
 Find Local is free to use — pick your city and see what's on tonight at [findlocal.community](/).

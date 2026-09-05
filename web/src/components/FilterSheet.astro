@@ -1,0 +1,136 @@
+---
+// Mobile-only full-screen filter sheet (< 760px). One GET form: radios and
+// checkboxes styled as chips, submitted in a batch by the sticky "Show events"
+// button. Repeated params (cat=a&cat=b, when=&when=weekend) are normalised by
+// parseFilters/canonicalQuery, so the resulting URL is the same one the desktop
+// chips produce. Opened by FilterFab via the native <dialog> API.
+import { TOD_CHIPS, WHEN_CHIPS, type FeedState } from '../lib/feed.js';
+import Icon from './Icon.astro';
+interface Props {
+  state: FeedState;
+}
+const { state } = Astro.props;
+const f = state.filters;
+type CategoryOption = FeedState['categoryOptions'][number];
+type RegionOption = FeedState['regions'][number];
+---
+<dialog id="filter-sheet" class="filter-sheet" aria-labelledby="filter-sheet-title">
+  <form method="get" action={state.basePath} class="sheet-form">
+    {f.text && <input type="hidden" name="q" value={f.text} />}
+    {state.view === 'map' && <input type="hidden" name="view" value="map" />}
+
+    <header class="sheet-head">
+      <button type="button" class="icon-btn" data-close aria-label="Close filters"><Icon name="close" size={22} /></button>
+      <h2 id="filter-sheet-title">Filters</h2>
+      <a class="reset" href={state.basePath}>Reset</a>
+    </header>
+
+    <div class="sheet-body">
+      <section>
+        <h3>When</h3>
+        <div class="chips">
+          {WHEN_CHIPS.map((w) => (
+            <label class="chip">
+              <input class="visually-hidden" type="radio" name="when" value={w.value === 'anytime' ? '' : w.value} checked={state.when === w.value} />
+              {w.label}
+            </label>
+          ))}
+        </div>
+        <label class="date-row">
+          <span>Or pick a date</span>
+          <input type="date" name="when" value={state.whenDate ?? ''} class:list={['chip', { active: !!state.whenDate }]} />
+        </label>
+      </section>
+
+      {state.categoryOptions.length > 0 && (
+        <section>
+          <h3>Category</h3>
+          <div class="chips">
+            {state.categoryOptions.map((c: CategoryOption) => (
+              <label class="chip">
+                <input class="visually-hidden" type="checkbox" name="cat" value={c.slug} checked={c.active} />
+                {c.label} <span class="count">{c.count}</span>
+              </label>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <section>
+        <h3>Price</h3>
+        <div class="chips">
+          <label class="chip"><input class="visually-hidden" type="checkbox" name="free" value="1" checked={!!f.free} />Free</label>
+          <label class="chip"><input class="visually-hidden" type="checkbox" name="paid" value="1" checked={!!f.paid} />Ticketed</label>
+        </div>
+      </section>
+
+      <section>
+        <h3>Time of day</h3>
+        <div class="chips">
+          {TOD_CHIPS.map((t) => (
+            <label class="chip">
+              <input class="visually-hidden" type="checkbox" name="tod" value={t.value} checked={f.timeOfDay?.includes(t.value)} />
+              {t.label}
+            </label>
+          ))}
+        </div>
+      </section>
+
+      {state.regions.length > 1 && (
+        <section>
+          <h3>Area</h3>
+          <div class="chips">
+            <label class="chip"><input class="visually-hidden" type="radio" name="region" value="" checked={!f.region} />Anywhere</label>
+            {state.regions.slice(0, 14).map((r: RegionOption) => (
+              <label class="chip">
+                <input class="visually-hidden" type="radio" name="region" value={r.region} checked={f.region === r.region} />
+                {r.region} <span class="count">{r.count}</span>
+              </label>
+            ))}
+          </div>
+        </section>
+      )}
+    </div>
+
+    <footer class="sheet-foot">
+      <button type="submit" class="btn apply">Show events</button>
+    </footer>
+  </form>
+</dialog>
+
+<script>
+  const dialog = document.getElementById('filter-sheet') as HTMLDialogElement | null;
+  const fab = document.getElementById('filter-fab');
+  if (dialog && fab) {
+    fab.addEventListener('click', () => dialog.showModal());
+    dialog.querySelector('[data-close]')?.addEventListener('click', () => dialog.close());
+    // Tap on the backdrop closes too.
+    dialog.addEventListener('click', (e) => {
+      if (e.target === dialog) dialog.close();
+    });
+  }
+</script>
+
+<style>
+  .filter-sheet { position: fixed; inset: 0; width: 100%; max-width: none; height: 100dvh; max-height: none; margin: 0; padding: 0; border: 0; background: rgb(var(--bg)); color: rgb(var(--text)); }
+  .filter-sheet::backdrop { background: rgb(0 0 0 / 0.4); }
+  .sheet-form { display: flex; flex-direction: column; height: 100%; }
+  .sheet-head { display: flex; align-items: center; gap: 0.75rem; min-height: 56px; padding: 0 0.75rem 0 0.5rem; border-bottom: 1px solid rgb(var(--border)); }
+  .sheet-head h2 { flex: 1; text-align: center; margin: 0; font-size: 1.05rem; }
+  .icon-btn { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; border: 0; background: transparent; color: rgb(var(--text)); border-radius: 999px; cursor: pointer; }
+  .icon-btn:hover { background: rgb(var(--surface-accent)); }
+  .reset { font-weight: 700; color: rgb(var(--rust)); font-size: 0.9rem; }
+  .sheet-body { flex: 1; overflow-y: auto; padding: 0.5rem 1rem 1.5rem; -webkit-overflow-scrolling: touch; }
+  section { padding: 1rem 0; border-bottom: 1px solid rgb(var(--border)); }
+  section:last-child { border-bottom: 0; }
+  h3 { margin: 0 0 0.7rem; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: rgb(var(--text-3)); }
+  .chip { cursor: pointer; user-select: none; }
+  .chip:has(:checked) { background: rgb(var(--teal)); border-color: rgb(var(--teal)); color: rgb(var(--text-inverse)); }
+  .chip:has(:focus-visible) { outline: 2px solid rgb(var(--orange)); outline-offset: 2px; }
+  .date-row { display: flex; align-items: center; gap: 0.6rem; margin-top: 0.7rem; font-size: 0.85rem; color: rgb(var(--text-2)); }
+  .date-row input[type='date'] { padding: 0.3rem 0.7rem; background: rgb(var(--surface-accent)); border: 1px solid rgb(var(--border)); color: rgb(var(--text-2)); font-size: 0.85rem; }
+  .date-row input.active { background: rgb(var(--teal)); color: rgb(var(--text-inverse)); border-color: rgb(var(--teal)); }
+  .sheet-foot { padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom)); border-top: 1px solid rgb(var(--border)); background: rgb(var(--bg)); }
+  .apply { width: 100%; min-height: 52px; font-size: 1rem; }
+  @media (min-width: 760px) { .filter-sheet { display: none; } }
+</style>
