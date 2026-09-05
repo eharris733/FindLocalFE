@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
+    "postbuild": "node scripts/write-root-deploy-config.mjs",
     "check": "astro check",
     "preview": "wrangler dev",
     "d1:seed": "wrangler d1 execute findlocal --local --file ../shared/data/schema/0001_init.sql"
