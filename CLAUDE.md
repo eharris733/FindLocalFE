@@ -34,9 +34,9 @@ workers/mcp/          @findlocal/mcp — findlocal-mcp Worker (mcp.findlocal.com
 web/                  @findlocal/web — Astro 7 SSR Worker (findlocal.community)
   astro.config.mjs    output:'server', @astrojs/cloudflare (platformProxy reads wrangler.toml)
   wrangler.toml       findlocal-web: D1 `DB` findlocal, `SESSION` KV placeholder, custom_domain route
-  src/middleware.ts   301/410 tables, fl_city cookie -> locals.city, Cache API edge cache, X-Robots-Tag
+  src/middleware.ts   301/410 tables, crawler block (meta-externalagent -> 403, list in lib/crawlerLimit.ts), fl_city cookie -> locals.city, Cache API edge cache, X-Robots-Tag
   src/lib/            db.ts (ONLY importer of cloudflare:workers), feed.ts, cacheKey.ts, cacheHeaders.ts,
-                      jsonld.ts, ics.ts, format.ts, icons.ts — pure helpers unit-tested in web/test/
+                      jsonld.ts, ics.ts, format.ts, icons.ts, crawlerLimit.ts — pure helpers unit-tested in web/test/
   src/pages/          one file per route in the route table below; about/privacy/terms/blog/platform/developers are prerendered
                       embed/events.astro = the widget iframe page (EmbedLayout, no site chrome); lib/embed.ts = its query contract
   src/content/blog/   markdown posts (Astro content collection)
