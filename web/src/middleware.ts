@@ -2,6 +2,7 @@ import { defineMiddleware } from 'astro:middleware';
 import { getCity, isGonePath, redirectTargetFor, type City } from '@findlocal/shared';
 import { browserCacheControl, cachePolicyFor, edgeCacheControl } from './lib/cacheHeaders.js';
 import { CITY_COOKIE, DEFAULT_CITY_NAME, cacheKeyFor, readCookie } from './lib/cacheKey.js';
+import { blockedCrawlerResponse, isBlockedCrawler } from './lib/crawlerLimit.js';
 
 const GONE_HTML = `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Gone | Find Local</title>
 <meta name="robots" content="noindex"><meta name="viewport" content="width=device-width, initial-scale=1">
@@ -41,6 +42,11 @@ export const onRequest = defineMiddleware(async (context, next) => {
       headers: { 'Content-Type': 'text/html; charset=utf-8', 'X-Robots-Tag': 'noindex', 'Cache-Control': 'public, max-age=3600' },
     });
   }
+
+  // --- Blocked crawlers (Meta): matched on user agent, not IP, so it holds
+  // against fan-out. Runs before the edge cache so blocked fetches never
+  // touch D1 or the cache. The list lives in lib/crawlerLimit.ts.
+  if (isBlockedCrawler(request.headers.get('user-agent'))) return blockedCrawlerResponse();
 
   const { city, raw: cookieCity } = resolveCity(request.headers.get('cookie'));
   context.locals.city = city;
