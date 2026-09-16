@@ -2,6 +2,12 @@
 // Leaflet map (OSM raster tiles). Leaflet (~150 KB) is imported only once the
 // map scrolls into view (IntersectionObserver), so it stays out of the initial
 // render path on every page. Marker data travels in data-markers.
+//
+// `live` turns it into a viewport-driven map: after the first render it refetches
+// pins from GET /api/events/map on every pan/zoom (debounced, previous request
+// aborted), so "anytime" on the map is no longer limited to the current list
+// page. Auto-refresh can be turned off, leaving a "Search this area" button.
+// Without `live` (venue maps, the embed widget) the behaviour is unchanged.
 import 'leaflet/dist/leaflet.css';
 
 export interface MapMarker {
@@ -13,55 +19,195 @@ export interface MapMarker {
   href: string;
   subtitle?: string | undefined;
   /** Up to a few linked lines (event titles) under the title. */
-  items?: { label: string; href: string }[] | undefined;
-  /** 96x96 image shown to the left of the title in the popup, when present. */
+  items?: { label: string; href: string; meta?: string | undefined }[] | undefined;
+  /** Thumbnail shown inside the pin and in the popup, when present. */
   image?: string | undefined;
+  /** Category slug of the pin's lead event; colours the pin ring. */
+  category?: string | undefined;
 }
 interface Props {
   markers: MapMarker[];
   center: { lat: number; lng: number; zoom: number };
   tall?: boolean;
   label?: string;
+  /** Refetch pins from /api/events/map as the viewport changes. */
+  live?: boolean;
+  /** Filter query string (when/cat/free/paid/q/authors) appended to the map API URL. */
+  filters?: string;
 }
-const { markers, center, tall = false, label = 'Map of venues' } = Astro.props;
+const { markers, center, tall = false, label = 'Map of venues', live = false, filters = '' } = Astro.props;
 ---
-<div class:list={['fl-map', { tall }]} data-markers={JSON.stringify(markers)} data-center={JSON.stringify(center)} role="region" aria-label={label}></div>
+<div
+  class:list={['fl-map', { tall, live }]}
+  data-markers={JSON.stringify(markers)}
+  data-center={JSON.stringify(center)}
+  data-live={live ? '1' : undefined}
+  data-filters={live ? filters : undefined}
+  role="region"
+  aria-label={label}
+>
+  {live && (
+    <div class="fl-map-ui">
+      <label class="fl-map-auto"><input type="checkbox" data-map-auto checked /> Auto-update</label>
+      <button type="button" class="fl-map-search" data-map-search hidden>Search this area</button>
+      <span class="fl-map-status" data-map-status role="status" aria-live="polite"></span>
+    </div>
+  )}
+</div>
 
 <script>
-  type Marker = { lat: number; lng: number; count: number; title: string; href: string; subtitle?: string; items?: { label: string; href: string }[]; image?: string };
+  import { bboxParam, groupByVenue, pinColor, type MapApiResponse, type VenuePin } from '../lib/mapPins.js';
+
+  type Marker = { lat: number; lng: number; count: number; title: string; href: string; subtitle?: string; items?: { label: string; href: string; meta?: string }[]; image?: string; category?: string };
   const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] as string);
 
   type MapEl = HTMLElement & { _flMap?: import('leaflet').Map; _flInit?: Promise<void> };
 
+  const AUTO_KEY = 'fl_map_auto';
+  const DEBOUNCE_MS = 400;
+
+  /** localStorage is unavailable in some embedded/private contexts — never throw over it. */
+  function readAuto(): boolean {
+    try {
+      return localStorage.getItem(AUTO_KEY) !== '0';
+    } catch {
+      return true;
+    }
+  }
+  function writeAuto(on: boolean) {
+    try {
+      localStorage.setItem(AUTO_KEY, on ? '1' : '0');
+    } catch {
+      /* ignore */
+    }
+  }
+
+  function pinHtml(m: Marker): string {
+    const color = pinColor(m.category ?? null);
+    const badge = m.count > 1 ? `<b class="fl-pin-n">${m.count > 99 ? '99+' : m.count}</b>` : '';
+    const inner = m.image
+      ? `<img src="${esc(m.image)}" alt="" loading="lazy" decoding="async">`
+      : `<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 2h2v2h6V2h2v2h3v18H4V4h3V2Zm11 8H6v10h12V10Z"/></svg>`;
+    return `<span class="fl-pin" style="--pin:${color}">${inner}${badge}</span>`;
+  }
+
+  function popupHtml(m: Marker): string {
+    const img = m.image ? `<img src="${esc(m.image)}" width="96" height="96" loading="lazy" alt="">` : '';
+    const items = (m.items ?? [])
+      .map((i) => `<li><a href="${esc(i.href)}">${esc(i.label)}</a>${i.meta ? `<span class="popup-meta">${esc(i.meta)}</span>` : ''}</li>`)
+      .join('');
+    const more = m.count > (m.items?.length ?? 0) ? `<li class="popup-more"><a href="${esc(m.href)}">+${m.count - (m.items?.length ?? 0)} more at this venue</a></li>` : '';
+    const body =
+      `<div class="popup-title"><a href="${esc(m.href)}">${esc(m.title)}</a></div>` +
+      (m.subtitle ? `<div>${esc(m.subtitle)}</div>` : '') +
+      (items ? `<ul class="popup-list">${items}${more}</ul>` : '');
+    return `<div class="fl-popup">${img}<div class="fl-popup-body">${body}</div></div>`;
+  }
+
   async function initMap(el: MapEl) {
     const { default: L } = await import('leaflet');
-    const markers = JSON.parse(el.dataset.markers ?? '[]') as Marker[];
+    const initial = JSON.parse(el.dataset.markers ?? '[]') as Marker[];
     const center = JSON.parse(el.dataset.center ?? '{"lat":42.36,"lng":-71.06,"zoom":12}') as { lat: number; lng: number; zoom: number };
     const map = L.map(el, { scrollWheelZoom: false });
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
     }).addTo(map);
-    const bounds = L.latLngBounds([]);
-    for (const m of markers) {
-      const size = m.count > 9 ? 34 : 28;
-      const icon = L.divIcon({ className: '', html: `<div class="fl-marker" style="width:${size}px;height:${size}px">${m.count}</div>`, iconSize: [size, size], iconAnchor: [size / 2, size / 2] });
-      const items = (m.items ?? []).map((i) => `<li><a href="${esc(i.href)}">${esc(i.label)}</a></li>`).join('');
-      const img = m.image ? `<img src="${esc(m.image)}" width="96" height="96" loading="lazy" alt="">` : '';
-      const body =
-        `<div class="popup-title"><a href="${esc(m.href)}">${esc(m.title)}</a></div>` +
-        (m.subtitle ? `<div>${esc(m.subtitle)}</div>` : '') +
-        (items ? `<ul class="popup-list">${items}</ul>` : '');
-      L.marker([m.lat, m.lng], { icon })
-        .addTo(map)
-        .bindPopup(`<div class="fl-popup">${img}<div class="fl-popup-body">${body}</div></div>`, { maxWidth: m.image ? 320 : 300 });
-      bounds.extend([m.lat, m.lng]);
+
+    const layer = L.layerGroup().addTo(map);
+    function draw(list: Marker[]) {
+      layer.clearLayers();
+      for (const m of list) {
+        const size = m.count > 1 ? 44 : 38;
+        const icon = L.divIcon({ className: '', html: pinHtml(m), iconSize: [size, size], iconAnchor: [size / 2, size / 2] });
+        L.marker([m.lat, m.lng], { icon }).addTo(layer).bindPopup(popupHtml(m), { maxWidth: m.image ? 320 : 300 });
+      }
     }
-    if (markers.length > 1 && bounds.isValid()) map.fitBounds(bounds.pad(0.15), { maxZoom: 14 });
-    else if (markers.length === 1) map.setView([markers[0]!.lat, markers[0]!.lng], 15);
+    draw(initial);
+
+    const bounds = L.latLngBounds([]);
+    for (const m of initial) bounds.extend([m.lat, m.lng]);
+    if (initial.length > 1 && bounds.isValid()) map.fitBounds(bounds.pad(0.15), { maxZoom: 14 });
+    else if (initial.length === 1) map.setView([initial[0]!.lat, initial[0]!.lng], 15);
     else map.setView([center.lat, center.lng], center.zoom);
+
     el._flMap = map;
+    if (el.dataset.live === '1') wireLive(el, map, draw);
     document.dispatchEvent(new CustomEvent('fl:map-ready', { detail: el }));
+  }
+
+  /** Viewport-driven refresh: debounce, abort the in-flight request, redraw. */
+  function wireLive(el: HTMLElement, map: import('leaflet').Map, draw: (list: VenuePin[]) => void) {
+    const status = el.querySelector<HTMLElement>('[data-map-status]');
+    const searchBtn = el.querySelector<HTMLButtonElement>('[data-map-search]');
+    const autoBox = el.querySelector<HTMLInputElement>('[data-map-auto]');
+    let auto = readAuto();
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let controller: AbortController | undefined;
+    let dirty = false;
+    let first = true;
+
+    if (autoBox) autoBox.checked = auto;
+    const syncButton = () => {
+      if (searchBtn) searchBtn.hidden = auto || !dirty;
+    };
+
+    async function load() {
+      controller?.abort();
+      controller = new AbortController();
+      const b = map.getBounds();
+      const bbox = bboxParam({ west: b.getWest(), south: b.getSouth(), east: b.getEast(), north: b.getNorth() });
+      const query = [`bbox=${bbox}`, el.dataset.filters || ''].filter(Boolean).join('&');
+      if (status) status.textContent = 'Loading…';
+      try {
+        const res = await fetch(`/api/events/map?${query}`, { signal: controller.signal, headers: { accept: 'application/json' } });
+        if (!res.ok) {
+          // 400 = the viewport is bigger than the API answers; say so instead of blanking.
+          if (status) status.textContent = res.status === 400 ? 'Zoom in to search this area' : 'Could not load events';
+          return;
+        }
+        const body = (await res.json()) as MapApiResponse;
+        const pins = groupByVenue(body.data ?? []);
+        draw(pins);
+        dirty = false;
+        syncButton();
+        const n = body.data?.length ?? 0;
+        if (status) status.textContent = n === 0 ? 'No events in view' : `${n} event${n === 1 ? '' : 's'}${body.meta?.truncated ? '+' : ''} in view`;
+      } catch (err) {
+        if ((err as Error)?.name === 'AbortError') return;
+        if (status) status.textContent = 'Could not load events';
+      }
+    }
+
+    function schedule() {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(load, DEBOUNCE_MS);
+    }
+
+    map.on('moveend', () => {
+      // fitBounds during init fires one moveend; that first pass is the initial load.
+      if (first) {
+        first = false;
+        schedule();
+        return;
+      }
+      dirty = true;
+      if (auto) schedule();
+      else {
+        if (status) status.textContent = '';
+        syncButton();
+      }
+    });
+    autoBox?.addEventListener('change', () => {
+      auto = !!autoBox.checked;
+      writeAuto(auto);
+      if (auto && dirty) schedule();
+      syncButton();
+    });
+    searchBtn?.addEventListener('click', () => load());
+    // The map may already be at its final bounds (no moveend to wait for).
+    schedule();
+    syncButton();
   }
 
   /** Init a map on demand (used when the map starts `hidden`, where the
@@ -94,3 +240,82 @@ const { markers, center, tall = false, label = 'Map of venues' } = Astro.props;
     for (const el of maps) observer.observe(el);
   }
 </script>
+
+<style is:global>
+  /* Leaflet sets this itself on init; declare it up front so the live controls
+     have a containing block before the lazy import resolves. */
+  .fl-map { position: relative; }
+  /* Photo pins: circular thumbnail, category-coloured ring, count badge. */
+  .fl-pin {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: 999px;
+    overflow: visible;
+    background: rgb(var(--surface, 255 255 255));
+    box-shadow: 0 0 0 3px var(--pin, #006565), 0 2px 6px rgb(0 0 0 / 0.35);
+    color: var(--pin, #006565);
+  }
+  .fl-pin img,
+  .fl-pin svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: 999px;
+    object-fit: cover;
+    padding: 0;
+  }
+  .fl-pin svg { padding: 22%; width: 56%; height: 56%; margin: auto; }
+  .fl-pin-n {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 4px;
+    border-radius: 999px;
+    background: var(--pin, #006565);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 18px;
+    text-align: center;
+    box-shadow: 0 0 0 2px #fff;
+  }
+  /* Top-right: Leaflet's own zoom control owns the top-left corner. */
+  .fl-map-ui {
+    position: absolute;
+    z-index: 500;
+    top: 8px;
+    left: 56px;
+    right: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.4rem;
+    pointer-events: none;
+  }
+  .fl-map-ui > * { pointer-events: auto; }
+  .fl-map-auto,
+  .fl-map-search,
+  .fl-map-status {
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 0.25rem 0.6rem;
+    border-radius: 999px;
+    background: rgb(255 255 255 / 0.92);
+    color: #1f2937;
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.25);
+    line-height: 1.5;
+  }
+  .fl-map-auto { display: inline-flex; align-items: center; gap: 0.35rem; cursor: pointer; }
+  .fl-map-search { border: 0; cursor: pointer; color: #006565; }
+  .fl-map-status:empty { display: none; }
+  /* The shared popup-list rule clamps rows to one nowrap line; rows that carry a
+     date line need two. */
+  .fl-map .popup-list li:has(.popup-meta) { white-space: normal; }
+  .popup-meta { display: block; font-size: 0.75rem; color: #6b7280; }
+  .popup-more a { font-weight: 700; }
+</style>

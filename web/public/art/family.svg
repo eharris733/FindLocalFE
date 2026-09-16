@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" width="1200" height="800" role="img" aria-label="Family">
+  <defs>
+    <pattern id="familyG" width="18" height="18" patternUnits="userSpaceOnUse">
+      <circle cx="3" cy="3" r="1.7" fill="#ffffff" fill-opacity=".22"/>
+      <circle cx="12" cy="11" r="1.1" fill="#000000" fill-opacity=".05"/>
+    </pattern>
+    <radialGradient id="familyV" cx="50%" cy="34%" r="78%">
+      <stop offset=".55" stop-color="#ffffff" stop-opacity=".22"/>
+      <stop offset="1" stop-color="#6b5b8a" stop-opacity=".22"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1200" height="800" fill="#efd9ff"/>
+
+  <!-- pastel layers -->
+  <circle cx="900" cy="150" r="230" fill="#ffe59e"/>
+  <path d="M0 610C260 520 430 700 1200 570V800H0Z" fill="#9be7d2"/>
+  <path d="M0 700C300 640 500 780 1200 690V800H0Z" fill="#7fdcc0"/>
+
+  <!-- balloon strings -->
+  <g fill="none" stroke="#6b5b8a" stroke-width="7" stroke-linecap="round" stroke-opacity=".6">
+    <path d="M330 300c30 90-20 160 24 300"/>
+    <path d="M540 216c-34 100 34 170-10 384"/>
+    <path d="M746 288c36 96-18 168 20 312"/>
+    <path d="M900 358c-28 74 20 140-8 242"/>
+  </g>
+
+  <!-- balloons -->
+  <g>
+    <ellipse cx="330" cy="222" rx="96" ry="112" fill="#ff9eb8"/>
+    <polygon points="330,330 312,362 348,362" fill="#ff9eb8"/>
+    <ellipse cx="540" cy="142" rx="86" ry="100" fill="#8ed3f5"/>
+    <polygon points="540,238 524,268 558,268" fill="#8ed3f5"/>
+    <ellipse cx="746" cy="210" rx="92" ry="106" fill="#ffd166"/>
+    <polygon points="746,310 730,342 764,342" fill="#ffd166"/>
+    <ellipse cx="900" cy="286" rx="72" ry="84" fill="#b6a2f0"/>
+    <polygon points="900,364 886,392 916,392" fill="#b6a2f0"/>
+  </g>
+
+  <!-- highlights -->
+  <ellipse cx="300" cy="186" rx="26" ry="34" fill="#ffffff" fill-opacity=".55"/>
+  <ellipse cx="514" cy="110" rx="22" ry="30" fill="#ffffff" fill-opacity=".55"/>
+  <ellipse cx="718" cy="176" rx="24" ry="32" fill="#ffffff" fill-opacity=".55"/>
+
+  <!-- confetti -->
+  <g fill-opacity=".8">
+    <circle cx="150" cy="420" r="14" fill="#ff9eb8"/>
+    <circle cx="1080" cy="470" r="18" fill="#8ed3f5"/>
+    <circle cx="1010" cy="620" r="12" fill="#ffd166"/>
+    <circle cx="200" cy="640" r="16" fill="#b6a2f0"/>
+  </g>
+
+  <rect width="1200" height="800" fill="url(#familyG)"/>
+  <rect width="1200" height="800" fill="url(#familyV)"/>
+</svg>

@@ -8,6 +8,7 @@ import EventMap from './EventMap.astro';
 import FilterBar from './FilterBar.astro';
 import FilterFab from './FilterFab.astro';
 import FilterSheet from './FilterSheet.astro';
+import GeoHint from './GeoHint.astro';
 import Pagination from './Pagination.astro';
 interface Props {
   state: FeedState;
@@ -24,15 +25,16 @@ const summary = filterSummary(state);
   {state.total === 0 ? 'No events match' : `${state.total.toLocaleString('en-US')} ${state.total === 1 ? 'event' : 'events'}`}{summary ? ` · ${summary}` : ''}
   <span class="sep" aria-hidden="true">·</span><a class="all-venues" href="/venues">All venues in {state.city.name}</a>
 </p>
-{state.view === 'map' && <EventMap events={state.events} city={state.city} />}
+{state.view === 'map' && <EventMap events={state.events} city={state.city} state={state} />}
 {state.events.length === 0 ? (
   <p class="empty">Nothing listed for these filters yet — listings update daily. <a href={state.basePath}>Clear filters</a> or pick another city below.</p>
 ) : (
-  <EventList events={state.events} tz={state.city.tz} />
+  <EventList events={state.events} tz={state.city.tz} flat={state.sort === 'featured'} />
 )}
 <Pagination state={state} />
 <FilterFab state={state} />
 <FilterSheet state={state} />
+<GeoHint city={state.city} />
 
 <style>
   .result-line { margin: 0.5rem 0 0; font-size: 0.9rem; }

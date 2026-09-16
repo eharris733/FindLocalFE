@@ -2,6 +2,12 @@
 // /venue/<uuid>: Place JSON-LD + upcoming list; unknown or inactive -> 404.
 // A venue with no upcoming events, no description and no address is noindex
 // (it reads as a soft 404); the sitemap only lists venues with upcoming events.
+//
+// Layout: header (photo + description + map) across the full content width, then
+// the upcoming events as ONE flat card grid. Day-grouping was what made this page
+// look like a single column of cards with acres of whitespace — most venues have
+// one event per day, so every day group rendered a header plus a single card in a
+// 4-column grid.
 import Layout from '../../layouts/Layout.astro';
 import BackLink from '../../components/BackLink.astro';
 import Breadcrumbs from '../../components/Breadcrumbs.astro';
@@ -9,6 +15,8 @@ import EventList from '../../components/EventList.astro';
 import JsonLd from '../../components/JsonLd.astro';
 import VenueMap from '../../components/VenueMap.astro';
 import { getDb, getVenue, listUpcomingEventsForVenue } from '../../lib/db.js';
+import { categoryArtUrl } from '../../lib/categoryArt.js';
+import { imageAttribution, wikipediaUrl } from '../../lib/enrichment.js';
 import { cleanText, truncate } from '../../lib/format.js';
 import { breadcrumbJsonLd, venueJsonLd } from '../../lib/jsonld.js';
 import { SITE, getCity, imageUrl, isUuid } from '@findlocal/shared';
@@ -27,6 +35,12 @@ const crumbs = venue
   : [];
 const empty = !!venue && events.length === 0 && !description && !venue.address;
 const mapsHref = venue?.address ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${venue.name}, ${venue.address}`)}` : null;
+// Photo → category poster art (never the old gradient + label placeholder).
+const photo = venue?.image ? imageUrl(venue.image, { width: 480, height: 480 }) : null;
+const art = photo ? null : categoryArtUrl(venue?.type ?? venue?.categories?.[0] ?? null);
+const credit = photo ? imageAttribution(venue) : null;
+const wiki = wikipediaUrl(venue);
+const hasMap = !!city && venue?.latitude != null && venue?.longitude != null;
 ---
 {!venue || venue.is_active !== 1 ? (
   <Layout title="Venue not available" description="This venue is no longer listed. Browse local venues and events on Find Local." noindex>
@@ -47,28 +61,38 @@ const mapsHref = venue?.address ? `https://www.google.com/maps/search/?api=1&que
     <JsonLd data={[venueJsonLd(venue, description), breadcrumbJsonLd(crumbs)]} slot="head" />
     <Breadcrumbs crumbs={crumbs} />
     <BackLink href="/venues" label={city ? `All venues in ${city.name}` : 'All venues'} />
-    <header class="venue-head">
-      {venue.image && <img class="photo" src={imageUrl(venue.image, { width: 320, height: 320 })} alt="" width="240" height="240" decoding="async" fetchpriority="high" />}
-      <div>
-        <h1>{venue.name}</h1>
-        <p class="muted">
-          {[venue.type, venue.region, venue.city].filter(Boolean).join(' · ')}
-          {venue.address && <><br />{mapsHref ? <a href={mapsHref} target="_blank" rel="noopener">{venue.address}</a> : venue.address}</>}
-        </p>
-        <p class="links">
-          {venue.url && <a class="btn ghost" href={venue.url} rel="noopener nofollow" target="_blank">Website</a>}
-          <span class="badge teal">{venue.upcoming} upcoming</span>
-        </p>
-        {description && <p class="desc">{description}</p>}
-      </div>
-    </header>
-    {city && venue.latitude != null && venue.longitude != null && <VenueMap venues={[venue]} city={city} />}
+    <div class:list={['venue-top', { 'with-map': hasMap }]}>
+      <header class="venue-head">
+        <figure class="shot">
+          <img src={photo ?? art!} alt="" width="240" height="240" decoding="async" fetchpriority="high" class:list={{ art: !photo }} />
+          {credit && <figcaption class="faint">{credit}</figcaption>}
+        </figure>
+        <div class="head-body">
+          <h1>{venue.name}</h1>
+          <p class="muted">
+            {[venue.type, venue.region, venue.city].filter(Boolean).join(' · ')}
+            {venue.address && <><br />{mapsHref ? <a href={mapsHref} target="_blank" rel="noopener">{venue.address}</a> : venue.address}</>}
+          </p>
+          <p class="links">
+            {venue.url && <a class="btn ghost" href={venue.url} rel="noopener nofollow" target="_blank">Website</a>}
+            <span class="badge teal">{venue.upcoming} upcoming</span>
+          </p>
+          {description && (
+            <p class="desc">{description}
+              {wiki && <> <a href={wiki} rel="noopener nofollow" target="_blank">Read more on Wikipedia</a></>}
+            </p>
+          )}
+          {!description && wiki && <p class="desc"><a href={wiki} rel="noopener nofollow" target="_blank">Read about {venue.name} on Wikipedia</a></p>}
+        </div>
+      </header>
+      {hasMap && <div class="venue-map"><VenueMap venues={[venue]} city={city!} /></div>}
+    </div>
     <h2 class="section">Upcoming at {venue.name}</h2>
     {events.length === 0 ? (
       <p class="empty">Nothing listed right now — listings update daily. {city && <a href={`/city/${city.slug}`}>See what else is on in {city.name}</a>}.</p>
     ) : (
       <>
-        <EventList events={events} tz={city?.tz ?? 'America/New_York'} />
+        <EventList events={events} tz={city?.tz ?? 'America/New_York'} flat />
         {venue.upcoming > events.length && <p class="muted">Showing the first {events.length} of {venue.upcoming} upcoming events.</p>}
       </>
     )}
@@ -76,10 +100,23 @@ const mapsHref = venue?.address ? `https://www.google.com/maps/search/?api=1&que
 )}
 
 <style>
-  .venue-head { display: flex; gap: 1.25rem; align-items: flex-start; margin-bottom: 1.25rem; flex-wrap: wrap; }
-  .photo { width: 160px; height: 160px; object-fit: cover; border-radius: var(--radius); background: rgb(var(--surface-sunken)); flex-shrink: 0; }
+  /* Header and map share the full content width; the card grid below gets all of it. */
+  .venue-top { display: grid; gap: 1.25rem; margin-bottom: 1.25rem; align-items: start; }
+  .venue-top.with-map { grid-template-columns: 1fr; }
+  @media (min-width: 900px) {
+    .venue-top.with-map { grid-template-columns: minmax(0, 1.5fr) minmax(280px, 1fr); }
+  }
+  .venue-head { display: flex; gap: 1.25rem; align-items: flex-start; flex-wrap: wrap; }
+  .shot { margin: 0; flex-shrink: 0; width: 160px; }
+  .shot img { width: 160px; height: 160px; object-fit: cover; border-radius: var(--radius); background: rgb(var(--surface-sunken)); display: block; }
+  .shot figcaption { font-size: 0.68rem; margin-top: 0.3rem; line-height: 1.3; }
+  .head-body { min-width: 16rem; flex: 1; }
   .venue-head h1 { margin-bottom: 0.4rem; }
   .links { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
-  .desc { white-space: pre-line; color: rgb(var(--text-2)); max-width: 46rem; }
+  .desc { white-space: pre-line; color: rgb(var(--text-2)); max-width: 46rem; line-height: 1.6; }
+  /* Layout's global .fl-map rule sets 380px + a bottom margin; in the header column
+     it is shorter and flush. */
+  .venue-map :global(.fl-map) { margin: 0; height: 280px; }
+  @media (min-width: 900px) { .venue-map :global(.fl-map) { height: 320px; } }
   .section { margin: 0.5rem 0 0; }
 </style>

@@ -1,6 +1,6 @@
 ---
 import { imageUrl, type EventRow } from '@findlocal/shared';
-import { cardDateLabel, categoryLabel, eventImage, leadPerformerLine, priceLabel, shortPriceLabel } from '../lib/format.js';
+import { bestEventImage, cardDateLabel, leadPerformerLine, priceLabel, shortPriceLabel } from '../lib/format.js';
 import Icon from './Icon.astro';
 interface Props {
   event: EventRow;
@@ -9,22 +9,28 @@ interface Props {
   eager?: boolean;
 }
 const { event, tz, eager = false } = Astro.props;
-const img = eventImage(event);
-const imgSrc = imageUrl(img, { width: 640, height: 360 });
-const imgSrcSet = img ? `${imageUrl(img, { width: 1280, height: 720 })} 2x` : undefined;
+// Image chain: book cover → author photo → event image → series → venue image →
+// category poster art (never the old gradient + category text).
+const pick = bestEventImage(event, { coverSize: 'M' });
+const imgSrc = pick.isArt ? pick.src : imageUrl(pick.src, { width: 640, height: 360, fit: pick.contain ? 'contain' : 'cover' })!;
+const imgSrcSet = pick.isArt || pick.contain ? undefined : `${imageUrl(pick.src, { width: 1280, height: 720 })} 2x`;
 const price = priceLabel(event);
 const pillPrice = shortPriceLabel(event);
 const where = [event.venue_name, event.region ?? event.venue_region].filter(Boolean).join(' · ');
-const placeholder = categoryLabel(event.category) || 'Event';
 const who = leadPerformerLine(event.performers ?? []);
 ---
 <a class="card" href={`/event/${event.id}`}>
   <div class="thumb">
-    {img ? (
-      <img src={imgSrc} srcset={imgSrcSet} alt="" loading={eager ? 'eager' : 'lazy'} decoding="async" width="640" height="360" />
-    ) : (
-      <div class="placeholder" aria-hidden="true">{placeholder}</div>
-    )}
+    <img
+      class:list={['shot', pick.kind, { art: pick.isArt, contain: pick.contain }]}
+      src={imgSrc}
+      srcset={imgSrcSet}
+      alt={pick.alt}
+      loading={eager ? 'eager' : 'lazy'}
+      decoding="async"
+      width="640"
+      height="360"
+    />
     {price && <span class="pill price" title={price}>{pillPrice}</span>}
     {event.series_count > 1 && <span class="pill recurring">↻ Recurring</span>}
   </div>
@@ -39,3 +45,12 @@ const who = leadPerformerLine(event.performers ?? []);
     )}
   </div>
 </a>
+
+<style>
+  /* Layout.astro styles `.card .thumb img` (object-fit: cover); these overrides
+     are more specific so they win regardless of stylesheet order. */
+  .card .thumb img.contain { object-fit: contain; background: rgb(var(--surface-sunken)); padding: 0.4rem; box-sizing: border-box; }
+  /* Poster art is 3:2 flat-colour illustration: crop it, never label it. */
+  .card .thumb img.art { object-fit: cover; }
+  .card:hover .thumb img.art { filter: none; transform: scale(1.02); transition: transform 0.2s ease; }
+</style>

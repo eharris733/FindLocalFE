@@ -1,5 +1,6 @@
 ---
-// Island: "Something wrong?" → small form that POSTs to the FindLocalData
+// Island: small flag icon button (sits inline to the right of the event's h1) →
+// popover form that POSTs to the FindLocalData
 // backend (the only write path the site has; this repo's D1 binding stays
 // read-only). Reports on recurring occurrences attach to their rule upstream
 // and trigger a re-check of the rule's evidence page.
@@ -23,7 +24,7 @@ const REASONS: [string, string][] = [
 ];
 ---
 <details class="report" data-report data-api={api} data-event={eventId} data-sitekey={siteKey}>
-  <summary class="btn ghost"><Icon name="flag" size={18} /><span>Report</span></summary>
+  <summary class="flag" title="Report a problem" aria-label="Report a problem"><Icon name="flag" size={16} /></summary>
   <form class="menu" novalidate>
     <p class="lead">Something wrong with this listing?</p>
     <label>
@@ -85,10 +86,15 @@ const REASONS: [string, string][] = [
 </script>
 
 <style>
-  .report { position: relative; }
-  .report summary { list-style: none; cursor: pointer; display: inline-flex; align-items: center; gap: 0.4rem; }
+  .report { position: relative; display: inline-flex; vertical-align: middle; }
+  .report summary { list-style: none; cursor: pointer; }
   .report summary::-webkit-details-marker { display: none; }
-  .menu { position: absolute; top: calc(100% + 4px); left: 0; z-index: 20; width: min(340px, 90vw); background: rgb(var(--surface)); border: 1px solid rgb(var(--border)); border-radius: var(--radius-sm); box-shadow: var(--shadow-md); padding: 0.8rem; display: flex; flex-direction: column; gap: 0.5rem; }
+  /* Small, quiet flag — it sits next to the event title, so it must not compete with it. */
+  .flag { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 999px; color: rgb(var(--text-3)); background: transparent; border: 1px solid transparent; }
+  .flag:hover, .report[open] .flag { color: rgb(var(--orange)); background: rgb(var(--orange) / 0.1); border-color: rgb(var(--orange) / 0.35); }
+  .flag:focus-visible { outline: 2px solid rgb(var(--teal)); outline-offset: 2px; }
+  .menu { position: absolute; top: calc(100% + 6px); right: 0; z-index: 20; width: min(340px, 90vw); background: rgb(var(--surface)); border: 1px solid rgb(var(--border)); border-radius: var(--radius-sm); box-shadow: var(--shadow-md); padding: 0.8rem; display: flex; flex-direction: column; gap: 0.5rem; }
+  @media (max-width: 480px) { .menu { right: auto; left: 0; } }
   .lead { margin: 0; font-weight: 700; font-size: 0.92rem; }
   select, textarea { width: 100%; font: inherit; padding: 0.45rem 0.5rem; border: 1px solid rgb(var(--border)); border-radius: var(--radius-sm); background: rgb(var(--bg)); color: rgb(var(--text)); box-sizing: border-box; }
   .row { display: flex; align-items: center; gap: 0.6rem; }

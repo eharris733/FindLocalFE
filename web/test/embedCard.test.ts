@@ -65,11 +65,13 @@ describe('cardThumb', () => {
   it('prefers the linked cover, sized to M', () => {
     expect(cardThumb(event({ books: [SLUG, ISBN] }), latest)).toEqual({ src: 'https://covers.openlibrary.org/b/id/1-M.jpg', kind: 'cover', alt: 'Cover of Exact' });
   });
-  it('then the latest-book cover, then the author photo, then event/venue image, then nothing', () => {
+  it('then the latest-book cover, then the author photo, then event/venue image, then the category art', () => {
     expect(cardThumb(event({ author_ids: ['ada'], authors: [ADA] }), latest)?.src).toBe('https://covers.openlibrary.org/b/id/2-M.jpg');
     expect(cardThumb(event({ author_ids: ['ada'], authors: [ADA] }), new Map())).toEqual({ src: 'https://covers.openlibrary.org/a/id/9-M.jpg', kind: 'photo', alt: 'Ada Debut' });
     expect(cardThumb(event({ authors: [NELL], image_url: 'https://img/e.jpg' }), new Map())).toEqual({ src: 'https://img/e.jpg', kind: 'image', alt: '' });
     expect(cardThumb(event({ venue_image: 'https://img/v.jpg' }), new Map())?.src).toBe('https://img/v.jpg');
-    expect(cardThumb(event({}), new Map())).toBeNull();
+    // Last resort is the category poster art, never null — the widget rows used to
+    // fall back to a grey book glyph.
+    expect(cardThumb(event({}), new Map())).toEqual({ src: '/art/literary.svg', kind: 'art', alt: '' });
   });
 });

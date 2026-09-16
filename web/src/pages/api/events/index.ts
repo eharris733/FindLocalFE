@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { PAGE_SIZE, getCity, cityBySlug, isUuid, parseFilters } from '@findlocal/shared';
+import { API_DEFAULT_SORT, PAGE_SIZE, getCity, cityBySlug, isUuid, parseFilters } from '@findlocal/shared';
 import { jsonResponse } from '../../../lib/apiHeaders.js';
 import { getDb, countUpcomingEvents, getEventsByIds, getVenue, listUpcomingEvents } from '../../../lib/db.js';
 import { cityForVenue, parseLimit, venueFiltersFor } from '../../../lib/venueQuery.js';
@@ -9,9 +9,14 @@ const MAX_IDS = 200;
 /**
  * GET /api/events?city=Boston&when=weekend&cat=music&free=1&tod=evening&region=&q=&page=
  *   — the same filter contract as the site (parseFilters); `limit` (<=500) optional.
+ *   `sort=featured` opts into the site's editorial ranking; the default stays
+ *   `date` (chronological) so existing consumers are untouched.
+ *   `near=<lat>,<lng>&radius_km=<km>` restricts to venues within the radius and
+ *   orders by distance (overrides `sort`).
  * GET /api/events?ids=<uuid>,<uuid>  — any date, deleted included (the /saved page).
  * GET /api/events?venue=<uuid>       — upcoming at one venue; the city comes from the
  *   venue (not `city=`), default limit 500, 404 for an unknown venue.
+ * GET /api/events/map?bbox=...       — compact pin rows for a viewport (see ./map.ts).
  */
 export const GET: APIRoute = async ({ url }) => {
   const db = getDb();
@@ -50,6 +55,7 @@ export const GET: APIRoute = async ({ url }) => {
         total,
         page: (filters.offset ?? 0) / PAGE_SIZE + 1,
         page_size: filters.limit ?? PAGE_SIZE,
+        sort: filters.near ? 'distance' : (filters.sort ?? API_DEFAULT_SORT),
       },
     });
   }

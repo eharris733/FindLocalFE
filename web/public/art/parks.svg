@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" width="1200" height="800" role="img" aria-label="Parks and outdoors">
+  <defs>
+    <pattern id="parksG" width="18" height="18" patternUnits="userSpaceOnUse">
+      <circle cx="3" cy="3" r="1.7" fill="#ffffff" fill-opacity=".14"/>
+      <circle cx="12" cy="11" r="1.1" fill="#000000" fill-opacity=".09"/>
+    </pattern>
+    <radialGradient id="parksV" cx="50%" cy="32%" r="78%">
+      <stop offset=".55" stop-color="#ffffff" stop-opacity=".12"/>
+      <stop offset="1" stop-color="#000000" stop-opacity=".26"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1200" height="800" fill="#8fd4e8"/>
+
+  <!-- sun -->
+  <circle cx="900" cy="190" r="120" fill="#f5c542"/>
+  <circle cx="900" cy="190" r="164" fill="#f5c542" fill-opacity=".28"/>
+
+  <!-- back ridge -->
+  <polygon points="140,470 420,150 700,470" fill="#2a7a4b"/>
+  <polygon points="420,150 520,264 470,300 390,240 340,300 300,262" fill="#eef7f4"/>
+  <!-- front peak -->
+  <polygon points="520,520 860,180 1200,520 1200,560 520,560" fill="#14452f"/>
+  <polygon points="860,180 960,290 900,320 830,264 780,314 740,288" fill="#e6f2ec"/>
+
+  <!-- ground -->
+  <path d="M0 520C280 470 470 560 1200 508V800H0Z" fill="#1d5c3b"/>
+  <path d="M0 660C300 610 520 720 1200 646V800H0Z" fill="#123d28"/>
+
+  <!-- pines -->
+  <g fill="#0c2f1f">
+    <rect x="212" y="640" width="24" height="90" rx="6"/>
+    <polygon points="224,430 140,560 308,560"/>
+    <polygon points="224,500 156,626 292,626"/>
+    <polygon points="224,566 168,680 280,680"/>
+  </g>
+  <g fill="#17492f">
+    <rect x="1000" y="646" width="22" height="86" rx="6"/>
+    <polygon points="1011,470 940,586 1082,586"/>
+    <polygon points="1011,534 954,644 1068,644"/>
+    <polygon points="1011,592 964,690 1058,690"/>
+  </g>
+  <g fill="#0c2f1f">
+    <rect x="590" y="690" width="20" height="74" rx="6"/>
+    <polygon points="600,566 542,668 658,668"/>
+    <polygon points="600,620 554,714 646,714"/>
+  </g>
+
+  <rect width="1200" height="800" fill="url(#parksG)"/>
+  <rect width="1200" height="800" fill="url(#parksV)"/>
+</svg>

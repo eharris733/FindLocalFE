@@ -13,11 +13,12 @@ import PerformerList from '../../components/PerformerList.astro';
 import ReportButton from '../../components/ReportButton.astro';
 import SaveButton from '../../components/SaveButton.astro';
 import ShareButton from '../../components/ShareButton.astro';
-import { booksByAuthorIds, getDb, getEvent, listSeriesDates, listUpcomingEventsForVenue } from '../../lib/db.js';
-import { categoryLabel, cleanText, eventImage, eventLink, longDate, performersLabel, priceLabel, shortDate, truncate } from '../../lib/format.js';
+import { attachAuthors, booksByAuthorIds, getDb, getEvent, getVenue, listSeriesDates, listUpcomingEventsForVenue } from '../../lib/db.js';
+import { bestEventImage, categoryLabel, cleanText, eventImage, eventLink, longDate, performersLabel, priceLabel, shortDate, truncate } from '../../lib/format.js';
+import { imageAttribution, wikipediaUrl } from '../../lib/enrichment.js';
 import { googleCalendarUrl } from '../../lib/ics.js';
 import { breadcrumbJsonLd, eventJsonLd } from '../../lib/jsonld.js';
-import { BOOKSHOP_LINK_REL, BOOKSHOP_STOREFRONT_URL, buyLink } from '../../lib/bookshop.js';
+import { buyLink } from '../../lib/bookshop.js';
 import { DEFAULT_TZ, SITE, formatEventDate, formatTime, getCity, imageUrl, isUuid, todayIn } from '@findlocal/shared';
 
 const id = Astro.params.id ?? '';
@@ -32,13 +33,24 @@ const isPast = !!event && event.event_date < today;
 const isDelisted = !!event && !isPast && event.is_deleted === 1;
 if (isPast || isDelisted) Astro.response.status = 410;
 
+// Gazetteer authors (photo / bio / Wikipedia) — one extra query, literary events only.
+if (event && event.author_ids.length > 0) await attachAuthors(getDb(), [event]);
+// The venue row carries the (Wikidata-enriched) description, Wikipedia link and
+// image credit that the denormalised event columns don't.
+const venue = event ? await getVenue(getDb(), event.venue_id) : null;
+const venueDescription = cleanText(venue?.description);
+const venueWiki = wikipediaUrl(venue);
 const description = event ? cleanText(event.description) : '';
 const metaDescription = event
   ? truncate(description || `${event.title} at ${event.venue_name} in ${event.city} on ${shortDate(event.event_date, tz)}.`, 160)
   : '';
 const image = event ? eventImage(event) : null;
-// OG image (ogImage below) and JSON-LD stay on the raw `image`; only the hero <img> is CDN-sized.
-const heroImage = imageUrl(image, { width: 1280, height: 720 });
+// OG image (ogImage below) and JSON-LD stay on the raw `image`; only the hero <img>
+// is CDN-sized. The hero itself uses the full chain (book cover → author photo →
+// event → series → venue → category poster art), so it is never a bare gradient.
+const hero = event ? bestEventImage(event, { coverSize: 'L', venue }) : null;
+const heroImage = hero && !hero.isArt ? imageUrl(hero.src, { width: 1280, height: 720, fit: hero.contain ? 'contain' : 'cover' }) : hero?.src ?? null;
+const heroCredit = hero?.attribution ?? (hero?.kind === 'venue' ? imageAttribution(venue) : null);
 const link = event ? eventLink(event) : null;
 const price = event ? priceLabel(event) : '';
 const [seriesDates, more] = event && !isPast
@@ -69,8 +81,8 @@ const authorBooks = live && isLiterary && books.length === 0 && event!.author_id
   ? (await booksByAuthorIds(getDb(), event!.author_ids)).filter((b) => buyLink(b).exact).slice(0, 3)
   : [];
 const authorLabel = authorNames.length === 1 ? authorNames[0] : null;
-// Storefront fallback only when we have neither a linked book nor any buyable author book.
-const showBookshopFallback = live && isLiterary && books.length === 0 && authorBooks.length === 0;
+// authors.id → display name, so each book row can credit its author.
+const authorNameById = Object.fromEntries((event?.authors ?? []).map((a) => [a.id, a.canonical_name]));
 const jsonLd = event && live && city ? [eventJsonLd(event, city, description, image), breadcrumbJsonLd(crumbs)] : null;
 const canonicalPath = event ? `/event/${event.id}` : Astro.url.pathname;
 const pageTitle = event ? `${event.title} - ${shortDate(event.event_date, tz)} at ${event.venue_name} | Find Local Events` : 'Event not available';
@@ -98,20 +110,28 @@ const mapsHref = event?.venue_address ? `https://www.google.com/maps/search/?api
       <Breadcrumbs crumbs={crumbs} />
       {city && <BackLink href={`/city/${city.slug}`} label={`Back to events in ${city.name}`} />}
       <div class="hero">
-        {image ? (
-          <img src={heroImage} alt="" width="1280" height="720" fetchpriority="high" decoding="async" />
-        ) : (
-          <div class="placeholder" aria-hidden="true">{categoryLabel(event.category) || 'Event'}</div>
-        )}
+        <img
+          class:list={[hero!.kind, { art: hero!.isArt, contain: hero!.contain }]}
+          src={heroImage}
+          alt={hero!.alt}
+          width="1280"
+          height="720"
+          fetchpriority="high"
+          decoding="async"
+        />
         {price && <span class="pill price">{price}</span>}
         {event.series_count > 1 && <span class="pill recurring">↻ Recurring</span>}
       </div>
+      {heroCredit && <p class="credit faint">{heroCredit}</p>}
 
       {isPast && <p class="notice warn"><strong>This event has already passed.</strong> Looking for something current? <a href={`/venue/${event.venue_id}`}>See what's next at {event.venue_name}</a>.</p>}
       {isDelisted && <p class="notice warn"><strong>This event is no longer listed by the venue.</strong> It may have been cancelled or moved — check with <a href={`/venue/${event.venue_id}`}>{event.venue_name}</a> before you go.</p>}
       {live && /cancel/i.test(event.status ?? '') && <p class="notice warn"><strong>Cancelled</strong> according to the source listing.</p>}
 
-      <h1>{event.title}</h1>
+      <div class="head">
+        <h1>{event.title}</h1>
+        {!isPast && <ReportButton eventId={event.id} />}
+      </div>
       <ul class="meta">
         <li><Icon name="calendar" size={18} /><span>{longDate(event.event_date, tz)}{formatTime(event.start_time) ? ` · ${formatTime(event.start_time)}` : ''}{event.end_time && formatTime(event.end_time) ? ` – ${formatTime(event.end_time)}` : ''}</span></li>
         {otherDates.length > 0 && (
@@ -136,10 +156,8 @@ const mapsHref = event?.venue_address ? `https://www.google.com/maps/search/?api
           </details>
         )}
         <SaveButton eventId={event.id} />
-        {!isPast && <ReportButton eventId={event.id} />}
       </div>
       {live && link && <a class="btn orange cta" href={link.href} rel="noopener nofollow" target="_blank">{link.label}</a>}
-      {showBookshopFallback && <a class="btn ghost book-cta" href={BOOKSHOP_STOREFRONT_URL} rel={BOOKSHOP_LINK_REL} target="_blank"><Icon name="bookmark" size={18} /> Shop books on Bookshop.org</a>}
 
       {description && (
         <section class="panel">
@@ -150,25 +168,30 @@ const mapsHref = event?.venue_address ? `https://www.google.com/maps/search/?api
       {event.performers.length > 0 && (
         <section class="panel">
           <h2>Who</h2>
-          <PerformerList performers={event.performers} citySlug={city?.slug} />
+          <PerformerList performers={event.performers} citySlug={city?.slug} authors={event.authors ?? []} />
         </section>
       )}
       {books.length > 0 && (
         <section class="panel">
           <h2>{books.length > 1 ? 'Books' : 'The book'}</h2>
-          <BookList books={books} />
+          <BookList books={books} authorNames={authorNameById} />
         </section>
       )}
       {authorBooks.length > 0 && (
         <section class="panel">
           <h2>{authorLabel ? `Books by ${authorLabel}` : 'Books by these authors'}</h2>
-          <BookList books={authorBooks} />
+          <BookList books={authorBooks} authorNames={authorNameById} />
         </section>
       )}
       <section class="panel">
         <h2>Venue</h2>
         <p><a class="venue-name" href={`/venue/${event.venue_id}`}>{event.venue_name}</a></p>
         {event.venue_address && <p class="muted">{mapsHref ? <a href={mapsHref} target="_blank" rel="noopener">{event.venue_address}</a> : event.venue_address}</p>}
+        {venueDescription && (
+          <p class="venue-desc">{truncate(venueDescription, 320)}
+            {venueWiki && <> <a href={venueWiki} rel="noopener nofollow" target="_blank">Read more on Wikipedia</a></>}
+          </p>
+        )}
         {event.venue_url && <p><a href={event.venue_url} rel="noopener nofollow" target="_blank">Venue website</a></p>}
         <p class="venue-links"><a href={`/venue/${event.venue_id}`}>All events at {event.venue_name}</a>{city && <> · <a href="/venues">All venues in {city.name}</a></>}</p>
       </section>
@@ -189,12 +212,18 @@ const mapsHref = event?.venue_address ? `https://www.google.com/maps/search/?api
   .event { max-width: 820px; }
   .hero { position: relative; aspect-ratio: 16 / 9; max-height: 400px; border-radius: var(--radius); overflow: hidden; background: rgb(var(--surface-sunken)); margin-bottom: 1rem; }
   .hero img { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .hero .placeholder { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #006565 0%, #4DA399 60%, #80D8CA 100%); color: #fff; font-family: var(--font-head); font-weight: 700; font-size: 1.6rem; text-transform: uppercase; letter-spacing: 0.04em; }
+  /* Book covers and author portraits are not croppable; poster art is. */
+  .hero img.contain { object-fit: contain; background: rgb(var(--surface-sunken)); }
+  .credit { font-size: 0.72rem; margin: -0.6rem 0 1rem; text-align: right; }
   .hero .pill { position: absolute; top: 10px; padding: 0.25rem 0.8rem; border-radius: 999px; background: rgb(var(--bg) / 0.92); font-size: 0.8rem; font-weight: 700; }
   .hero .price { right: 10px; }
   .hero .recurring { left: 10px; }
   .notice { padding: 0.7rem 0.9rem; border-radius: var(--radius-sm); border: 1px solid rgb(var(--warning)); background: rgb(var(--warning) / 0.12); }
-  h1 { margin: 0.4rem 0 0.8rem; }
+  /* Title + the small report flag on one line (flag stays top-aligned on wraps). */
+  .head { display: flex; align-items: flex-start; gap: 0.4rem; margin: 0.4rem 0 0.8rem; }
+  /* h1 stays content-width so the flag sits right after the title, not across the page. */
+  .head h1 { margin: 0; min-width: 0; }
+  .head :global(.report) { margin-top: 0.3rem; }
   .meta { list-style: none; margin: 0 0 1rem; padding: 0; display: flex; flex-direction: column; gap: 0.45rem; }
   .meta li { display: flex; gap: 0.5rem; align-items: flex-start; }
   .meta svg, .glyph { color: rgb(var(--teal)); flex-shrink: 0; margin-top: 0.15rem; width: 18px; text-align: center; font-weight: 700; }
@@ -206,7 +235,7 @@ const mapsHref = event?.venue_address ? `https://www.google.com/maps/search/?api
   .calendar .menu a { padding: 0.55rem 0.9rem; color: rgb(var(--text)); font-weight: 600; font-size: 0.9rem; }
   .calendar .menu a:hover { background: rgb(var(--teal) / 0.08); text-decoration: none; }
   .cta { margin: 0 0 1.25rem; min-width: 200px; }
-  .book-cta { margin: 0 0 1.25rem; }
+  .venue-desc { color: rgb(var(--text-2)); line-height: 1.6; }
   .panel { background: rgb(var(--surface-sunken)); border-radius: var(--radius); padding: 1rem 1.1rem; margin: 0 0 1rem; }
   .panel h2 { font-size: 1.05rem; margin: 0 0 0.5rem; }
   .panel p:last-child { margin-bottom: 0; }

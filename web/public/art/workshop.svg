@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" width="1200" height="800" role="img" aria-label="Classes and workshops">
+  <defs>
+    <pattern id="workshopG" width="18" height="18" patternUnits="userSpaceOnUse">
+      <circle cx="3" cy="3" r="1.7" fill="#ffffff" fill-opacity=".13"/>
+      <circle cx="12" cy="11" r="1.1" fill="#000000" fill-opacity=".09"/>
+    </pattern>
+    <radialGradient id="workshopV" cx="50%" cy="36%" r="76%">
+      <stop offset=".55" stop-color="#ffffff" stop-opacity=".10"/>
+      <stop offset="1" stop-color="#000000" stop-opacity=".28"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1200" height="800" fill="#0e5b57"/>
+
+  <!-- layered shapes -->
+  <circle cx="820" cy="240" r="250" fill="#14746e"/>
+  <path d="M0 640C280 570 460 730 1200 604V800H0Z" fill="#083f3c"/>
+
+  <!-- gear -->
+  <g fill="#f0a31e">
+    <circle cx="600" cy="380" r="176"/>
+    <rect x="570" y="152" width="60" height="70" rx="10"/>
+    <rect x="570" y="538" width="60" height="70" rx="10"/>
+    <rect x="372" y="350" width="70" height="60" rx="10"/>
+    <rect x="758" y="350" width="70" height="60" rx="10"/>
+    <rect x="570" y="152" width="60" height="70" rx="10" transform="rotate(45 600 380)"/>
+    <rect x="570" y="538" width="60" height="70" rx="10" transform="rotate(45 600 380)"/>
+    <rect x="372" y="350" width="70" height="60" rx="10" transform="rotate(45 600 380)"/>
+    <rect x="758" y="350" width="70" height="60" rx="10" transform="rotate(45 600 380)"/>
+  </g>
+  <circle cx="600" cy="380" r="92" fill="#0e5b57"/>
+  <circle cx="600" cy="380" r="52" fill="#f6ecd8"/>
+
+  <!-- wrench -->
+  <g fill="#f6ecd8" transform="rotate(-38 600 400)">
+    <rect x="300" y="368" width="420" height="58" rx="26"/>
+    <path d="M254 318c44-30 106-22 140 20l-52 40 52 40c-34 42-96 50-140 20-46-32-46-88 0-120Z"/>
+    <path d="M700 340h72c30 0 54 24 54 54s-24 54-54 54h-72Z"/>
+  </g>
+
+  <!-- tool dots -->
+  <circle cx="180" cy="220" r="26" fill="#f0a31e" fill-opacity=".7"/>
+  <circle cx="1040" cy="640" r="20" fill="#f6ecd8" fill-opacity=".7"/>
+
+  <rect width="1200" height="800" fill="url(#workshopG)"/>
+  <rect width="1200" height="800" fill="url(#workshopV)"/>
+</svg>

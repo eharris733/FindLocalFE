@@ -31,5 +31,11 @@ Disallow: /*?performer=
 Disallow: /*&performer=
 Disallow: /*?view=
 Disallow: /*&view=
+# sort=date and near= reorder/narrow the same listings (the default `featured`
+# order lives on the bare URL and is the only one worth crawling).
+Disallow: /*?sort=
+Disallow: /*&sort=
+Disallow: /*?near=
+Disallow: /*&near=
 
 Sitemap: https://findlocal.community/sitemap.xml

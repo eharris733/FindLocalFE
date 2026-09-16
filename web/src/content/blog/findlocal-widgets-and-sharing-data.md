@@ -56,7 +56,7 @@ The [widget page](/developers/widgets) has a builder that writes the tag for you
 
 **The MCP server** at `https://mcp.findlocal.community/mcp` gives an assistant seven tools — search events, look up a venue, list categories and so on — so "anything free in Cambridge tonight?" gets a sourced answer with links instead of a confident guess. It uses OAuth plus an account key; `demo-free` gets you a hundred calls a month to try it. [Reference](/developers/mcp) · [walkthrough](/blog/findlocal-mcp-server).
 
-And if you're a team evaluating the data rather than a person embedding a calendar, the [platform overview](/platform) is the short version of why it's different: aggregated across sources, structured, and kept current, with the long tail of venue-site events the big platforms never see.
+And if you're a team evaluating the data rather than a person embedding a calendar, the [platform overview](/) is the short version of why it's different: aggregated across sources, structured, and kept current, with the long tail of venue-site events the big platforms never see.
 
 ## What's next
 

@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" width="1200" height="800" role="img" aria-label="Nightlife">
+  <defs>
+    <pattern id="nightlifeG" width="18" height="18" patternUnits="userSpaceOnUse">
+      <circle cx="3" cy="3" r="1.7" fill="#ffffff" fill-opacity=".14"/>
+      <circle cx="12" cy="11" r="1.1" fill="#000000" fill-opacity=".10"/>
+    </pattern>
+    <radialGradient id="nightlifeV" cx="50%" cy="34%" r="76%">
+      <stop offset=".5" stop-color="#ffffff" stop-opacity=".12"/>
+      <stop offset="1" stop-color="#000000" stop-opacity=".34"/>
+    </radialGradient>
+    <clipPath id="nightlifeBall">
+      <circle cx="600" cy="360" r="180"/>
+    </clipPath>
+  </defs>
+
+  <rect width="1200" height="800" fill="#2e0b57"/>
+
+  <!-- light beams -->
+  <g fill="#14e0d0" fill-opacity=".22">
+    <polygon points="600,360 40,600 20,760"/>
+    <polygon points="600,360 1160,600 1180,760"/>
+    <polygon points="600,360 200,800 470,800"/>
+    <polygon points="600,360 1000,800 730,800"/>
+  </g>
+  <g fill="#ff4fd8" fill-opacity=".20">
+    <polygon points="600,360 60,300 30,180"/>
+    <polygon points="600,360 1140,300 1170,180"/>
+  </g>
+
+  <!-- hanger -->
+  <rect x="592" y="60" width="16" height="130" rx="8" fill="#9f7fd6"/>
+
+  <!-- ball -->
+  <circle cx="600" cy="360" r="180" fill="#14e0d0"/>
+  <g clip-path="url(#nightlifeBall)">
+    <g fill="#0b7f92" fill-opacity=".55">
+      <rect x="420" y="220" width="360" height="34"/>
+      <rect x="420" y="300" width="360" height="34"/>
+      <rect x="420" y="380" width="360" height="34"/>
+      <rect x="420" y="460" width="360" height="34"/>
+    </g>
+    <g fill="#0b7f92" fill-opacity=".45">
+      <rect x="440" y="180" width="30" height="360"/>
+      <rect x="520" y="180" width="30" height="360"/>
+      <rect x="600" y="180" width="30" height="360"/>
+      <rect x="680" y="180" width="30" height="360"/>
+    </g>
+    <rect x="470" y="256" width="46" height="38" fill="#d8fffb" fill-opacity=".8"/>
+    <rect x="550" y="336" width="46" height="38" fill="#d8fffb" fill-opacity=".6"/>
+    <rect x="630" y="256" width="46" height="38" fill="#d8fffb" fill-opacity=".5"/>
+  </g>
+  <circle cx="600" cy="360" r="180" fill="none" stroke="#d8fffb" stroke-width="8" stroke-opacity=".4"/>
+
+  <!-- floor -->
+  <ellipse cx="600" cy="760" rx="460" ry="60" fill="#14e0d0" fill-opacity=".22"/>
+
+  <rect width="1200" height="800" fill="url(#nightlifeG)"/>
+  <rect width="1200" height="800" fill="url(#nightlifeV)"/>
+</svg>

@@ -1,0 +1,113 @@
+---
+// "Looks like you're near Denver — switch?" — a dismissible suggestion, never a
+// redirect and never part of the rendered decision.
+//
+// The city a page renders must NOT depend on Cloudflare geo headers: pages are
+// edge-cached (per fl_city only) and Googlebot's copy would otherwise depend on
+// the colo that served it. So this island asks /api/geo (uncached, private)
+// AFTER paint, and only when the visitor has no fl_city cookie yet. It is a
+// fixed-position toast, so showing it shifts nothing on the page.
+import type { City } from '@findlocal/shared';
+import Icon from './Icon.astro';
+interface Props {
+  /** The city the page is currently showing. */
+  city: City;
+}
+const { city } = Astro.props;
+---
+<aside class="geo-hint" data-geo-hint data-current={city.slug} hidden>
+  <Icon name="location" size={16} />
+  <p>Looks like you're near <a data-geo-link href="/"><strong data-geo-name></strong></a> — switch?</p>
+  <a class="switch" data-geo-switch href="/">Switch</a>
+  <button type="button" class="dismiss" data-geo-dismiss aria-label="Dismiss"><Icon name="close" size={16} /></button>
+</aside>
+
+<script>
+  const KEY = 'fl_geo_hint_dismissed';
+  const el = document.querySelector<HTMLElement>('[data-geo-hint]');
+
+  function dismissed(): boolean {
+    try {
+      return localStorage.getItem(KEY) === '1';
+    } catch {
+      return false;
+    }
+  }
+  function remember() {
+    try {
+      localStorage.setItem(KEY, '1');
+    } catch {
+      /* private mode: the hint simply comes back next visit */
+    }
+  }
+  const hasCityCookie = () => /(?:^|;\s*)fl_city=/.test(document.cookie);
+
+  async function suggest(root: HTMLElement) {
+    const res = await fetch('/api/geo', { headers: { accept: 'application/json' } });
+    if (!res.ok) return;
+    const body = (await res.json()) as { city?: { slug: string; name: string } | null };
+    const city = body.city;
+    if (!city || city.slug === root.dataset.current) return;
+    const name = root.querySelector<HTMLElement>('[data-geo-name]');
+    if (name) name.textContent = city.name;
+    for (const a of root.querySelectorAll<HTMLAnchorElement>('[data-geo-link], [data-geo-switch]')) {
+      a.href = `/city/${city.slug}`;
+      // Mirrors CityPicker's cookie so the choice sticks on "/" too.
+      a.addEventListener('click', () => {
+        document.cookie = `fl_city=${encodeURIComponent(city.name)}; Path=/; Max-Age=31536000; SameSite=Lax`;
+        remember();
+      });
+    }
+    root.hidden = false;
+  }
+
+  if (el && !dismissed() && !hasCityCookie()) {
+    el.querySelector('[data-geo-dismiss]')?.addEventListener('click', () => {
+      el.hidden = true;
+      remember();
+    });
+    suggest(el).catch(() => {});
+  }
+</script>
+
+<style>
+  .geo-hint {
+    position: fixed;
+    z-index: 1050;
+    left: 1rem;
+    bottom: calc(1rem + env(safe-area-inset-bottom));
+    max-width: min(22rem, calc(100vw - 2rem));
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.55rem 0.65rem 0.55rem 0.8rem;
+    border: 1px solid rgb(var(--border));
+    border-radius: 999px;
+    background: rgb(var(--surface));
+    color: rgb(var(--text));
+    box-shadow: var(--shadow-md);
+    font-size: 0.85rem;
+  }
+  .geo-hint[hidden] { display: none; }
+  .geo-hint p { margin: 0; }
+  .geo-hint svg { flex-shrink: 0; color: rgb(var(--teal)); }
+  .switch { font-weight: 700; color: rgb(var(--teal)); white-space: nowrap; }
+  .dismiss {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: rgb(var(--text-3));
+    cursor: pointer;
+  }
+  .dismiss:hover { background: rgb(var(--surface-accent)); }
+  /* Clear of the mobile filter FAB (bottom-right). */
+  @media (max-width: 759.98px) {
+    .geo-hint { right: 5.5rem; max-width: none; }
+  }
+</style>

@@ -1,35 +1,258 @@
 ---
-// Home: the feed for the fl_city cookie city (default Boston). Same body as
-// the city page; Organization + WebSite JSON-LD. Filtered and paginated views
-// canonicalise to the city page (its ?page=N is the indexable one). Edge cache key includes `_city=<cookie>` (middleware).
+// Home (/) — the PLATFORM landing page. Discovery lives on /city/<slug> (and in
+// the app); this page shows the four ways the catalogue leaves the building:
+// widgets, JSON API, MCP server, and the catalogue itself.
+//
+// Folds in the old /platform page (deleted Sept 2026; /platform now 301s here
+// via redirectTargetFor). Live numbers come from platformStats() — one batched
+// aggregate pass — and the route is edge-cached for an hour (cacheHeaders.ts).
+// Cached per city: the CTA, the example widget and the coverage highlight follow
+// the fl_city cookie, and the edge key already includes `_city=<cookie>`.
 import Layout from '../layouts/Layout.astro';
-import Feed from '../components/Feed.astro';
 import JsonLd from '../components/JsonLd.astro';
+import MetroCoverage from '../components/MetroCoverage.astro';
 import { getDb } from '../lib/db.js';
-import { loadFeed } from '../lib/feed.js';
+import { buildEmbedSrc } from '../lib/embed.js';
+import { approxCount, shortDate } from '../lib/format.js';
 import { organizationJsonLd, webApplicationJsonLd, webSiteJsonLd } from '../lib/jsonld.js';
-import { CITIES, SITE } from '@findlocal/shared';
+import { SITE, platformStats } from '@findlocal/shared';
+
+const MCP_URL = 'https://mcp.findlocal.community/mcp';
+/** No public iOS build yet (FindLocalMobile/docs/app-store.md is the runbook). */
+const APP_STORE_URL: string | null = null;
 
 const city = Astro.locals.city;
-const state = await loadFeed(getDb(), city, Astro.url);
-const filtered = state.filterCanonical !== '';
-const paged = !filtered && state.page > 1;
-const beyond = state.page > state.pages;
-const jsonAlternate = `${SITE}/api/events?city=${encodeURIComponent(city.name)}`;
+const stats = await platformStats(getDb());
+const byCity = stats.eventsByCity;
+
+const num = (n: number) => n.toLocaleString('en-US');
+// The example widget is city-scoped when this metro really has author events on
+// the bill; otherwise it falls back to the multi-metro literary preset so a
+// quiet city never renders an empty frame.
+const widgetAttrs = (stats.authorEventsByCity.get(city.name) ?? 0) >= 10
+  ? { city: city.slug, cat: 'literary', authors: '1', limit: '6' }
+  : { widget: 'literary-new-england-authors', limit: '6' };
+const widgetTag = `<script src="${SITE}/widget.js"${Object.entries(widgetAttrs)
+  .map(([k, v]) => ` data-${k}="${v}"`)
+  .join('')}></script>`;
+const widgetSrc = buildEmbedSrc(Astro.url.origin, widgetAttrs);
+const widgetLabel = 'city' in widgetAttrs ? `author events in ${city.name}` : 'author events across New England';
+
+const tiles = [
+  { label: 'Upcoming events', value: num(stats.upcomingEvents), note: `${num(stats.upcomingNext30)} inside the next 30 days` },
+  { label: 'Venues tracked', value: num(stats.venuesTracked), note: `${num(stats.venuesLive)} with something on the calendar` },
+  { label: 'US metros', value: num(stats.metrosCovered), note: `${num(stats.metrosLive)} with live listings today` },
+  { label: 'From the venue’s own calendar', value: `${stats.primaryPct}%`, note: `the other ${num(stats.partnerEvents)} events arrive via partner APIs` },
+  { label: 'Tagged with author + book', value: num(stats.authorAndBookEvents), note: `of ${num(stats.authorEvents)} ${stats.authorEvents === 1 ? 'event' : 'events'} with an author on the bill` },
+  { label: 'Authors / books indexed', value: `${num(stats.authors)} / ${num(stats.books)}`, note: 'linked to events, not just mentioned in them' },
+];
+
+const comparison = [
+  {
+    h: 'Primary sources, not a resale feed',
+    p: `${stats.primaryPct}% of upcoming events come from the venue's own calendar page, or from a schedule we verified there — the bookshop reading and the Tuesday trivia night included. Ticketing and platform APIs fill in the arena shows (${num(stats.partnerEvents)} events), and every row records which route it took.`,
+  },
+  {
+    h: 'Literary events indexed by author AND book',
+    p: `${num(stats.authorAndBookEvents)} upcoming events carry both a linked author and a linked book — ${num(stats.authors)} authors and ${num(stats.books)} books, resolved to OpenLibrary and ISBN-13 where they exist. Ask which author is touring, or which title is being discussed, and the data answers.`,
+  },
+  {
+    h: 'Recurring events carry their evidence',
+    p: 'A weekly open mic is stored as a rule, not 52 guesses. Each rule keeps the page that proves it, gets re-checked on a rolling schedule, and goes to a human when that page changes — so the calendar does not quietly rot.',
+  },
+  {
+    h: 'Updated daily, retired when it disappears',
+    p: 'Venue calendars are re-rendered on a schedule, broken extractors are detected and repaired automatically, and events that vanish from the source are retired rather than left to go stale. Every front door reads one database, so the widget, the API and the MCP tools always agree.',
+  },
+];
+
+const catalogue: [string, string][] = [
+  ['What we index', 'Events — title, calendar day and start time in the venue’s own zone, category, price label plus a parsed amount, detail and ticket links, image — and venues, with address, coordinates, neighborhood, type and categories. Literary events also carry authors, books and performers.'],
+  ['How it is sourced', 'Mostly the venue’s own calendar, rendered and parsed per venue. Recurring schedules are researched once and materialised with an evidence URL. Ticketing and platform APIs (StubHub, Dice, OvationTix, Bookmanager, the National Park Service) cover what venues never publish themselves.'],
+  ['Update cadence', 'Every metro is re-scraped weekly, with daily passes that materialise recurring events, re-verify evidence pages and enrich literary listings. The JSON API is cached 5 minutes at the edge, widgets 10.'],
+  ['What you can build', 'A calendar on your venue or bookstore site, a newsletter roundup, a city guide, or an assistant that answers “what’s on near me?” from sourced listings instead of guesses.'],
+];
+
+const description = `Live local event data for ${stats.metrosCovered} US metros — ${num(stats.upcomingEvents)} upcoming events from ${num(stats.venuesTracked)} venues, ${stats.primaryPct}% straight from the venue's own calendar. Embed a widget, call the free JSON API, or connect the MCP server.`;
 ---
 <Layout
-  title="Find Local — Discover Local Events: Concerts, Comedy, Theater & More"
-  description={`Discover the best local events in ${city.name} and ${CITIES.length - 1} other US cities. Browse concerts, comedy shows, live music, theater, and cultural experiences pulled straight from venue calendars. Free and paid events updated daily.`}
-  canonicalPath={filtered || paged ? state.basePath : '/'}
-  canonicalQuery={paged ? `page=${state.page}` : ''}
-  noindex={filtered || beyond}
-  jsonAlternate={jsonAlternate}
+  title="Find Local — Local Event Data: Widgets, JSON API & MCP Server"
+  description={description}
+  canonicalPath="/"
+  jsonAlternate={`${SITE}/api/events?city=${encodeURIComponent(city.name)}`}
   wide
 >
-  {!filtered && !paged && <JsonLd data={[organizationJsonLd(), webSiteJsonLd(city), webApplicationJsonLd()]} slot="head" />}
-  <Feed
-    state={state}
-    heading={`What's on in ${city.name}`}
-    intro={filtered ? undefined : `Concerts, comedy, theater, and community happenings across ${city.name}, ${city.state} — collected straight from local venue calendars and updated daily.`}
-  />
+  <JsonLd data={[organizationJsonLd(), webSiteJsonLd(city), webApplicationJsonLd()]} slot="head" />
+
+  <section class="hero">
+    <p class="eyebrow">Local event data platform</p>
+    <h1>Every local event, structured — and usable anywhere.</h1>
+    <p class="lede">
+      Find Local indexes {num(stats.upcomingEvents)} upcoming events at {num(stats.venuesTracked)} venues across {stats.metrosCovered} US
+      metros, mostly straight from the venues' own calendars. Put it on your site with a widget, pull it with a free JSON
+      API, hand it to an AI assistant over MCP — or just browse it.
+    </p>
+    <div class="cta">
+      <a class="btn" href={`/city/${city.slug}`}>Explore events in {city.name} →</a>
+      <a class="btn ghost" href="/developers/widgets">Get the widget</a>
+      <a class="btn ghost" href="/developers">Read the docs</a>
+    </div>
+    <p class="faint small">
+      Browsing? <a href={`/city/${city.slug}`}>{approxCount(byCity.get(city.name) ?? 0)} things to do in {city.name}</a>,
+      or <a href="#metros">pick another metro</a> — {stats.metrosLive} {stats.metrosLive === 1 ? 'has' : 'have'} listings today.
+    </p>
+    <ul class="tiles">
+      {tiles.map((t) => (
+        <li>
+          <span class="v">{t.value}</span>
+          <span class="k">{t.label}</span>
+          <span class="n">{t.note}</span>
+        </li>
+      ))}
+    </ul>
+    <p class="faint small">Counted from the live database on {shortDate(stats.today, city.tz)}.</p>
+  </section>
+
+  <section id="products" class="sec">
+    <p class="eyebrow">Four ways in</p>
+    <h2>One catalogue, four front doors.</h2>
+    <div class="products">
+      <article class="product">
+        <h3 id="widgets">Widgets</h3>
+        <p>One script tag renders a live list, calendar or map of events on any page — light or dark, resizing itself, nothing to maintain. Presets target a metro, a region group, or a category such as literary.</p>
+        <div class="codebox">
+          <div class="hd"><span>any HTML page</span><button type="button" class="copy" data-copy-target="#c-widget">Copy</button></div>
+          <pre id="c-widget">{widgetTag}</pre>
+        </div>
+        <figure class="demo">
+          <iframe src={widgetSrc} title={`Find Local widget example: ${widgetLabel}`} loading="lazy" scrolling="no"></iframe>
+          <figcaption class="faint">Live example — the real widget, showing {widgetLabel} right now.</figcaption>
+        </figure>
+        <a class="more" href="/developers/widgets">Widget builder &amp; reference →</a>
+      </article>
+
+      <article class="product">
+        <h3 id="api">JSON API</h3>
+        <p>A plain HTTPS GET with the same filters as the site's own URLs: city, date window, category, price, time of day, neighborhood, search, performer. No key, no signup, CORS open.</p>
+        <div class="codebox">
+          <div class="hd"><span>curl</span><button type="button" class="copy" data-copy-target="#c-api">Copy</button></div>
+          <pre id="c-api">{`curl '${SITE}/api/events?city=${city.slug}&when=weekend'`}</pre>
+        </div>
+        <p class="small faint">Also <code>/api/events/&lt;uuid&gt;</code> and <code>/api/venues?city={city.slug}</code>; responses are cached 5 minutes at the edge.</p>
+        <a class="more" href="/developers/api">API reference →</a>
+      </article>
+
+      <article class="product">
+        <h3 id="mcp">MCP server</h3>
+        <p>
+          A remote Model Context Protocol server, so Claude, Cursor or any MCP client can answer "what's on near me this
+          weekend?" from live, sourced listings. Seven typed tools cover event search, event and venue lookup, categories,
+          neighborhoods and author events; OAuth issues a metered account key.
+        </p>
+        <div class="codebox">
+          <div class="hd"><span>~/.cursor/mcp.json</span><button type="button" class="copy" data-copy-target="#c-mcp">Copy</button></div>
+          <pre id="c-mcp">{`{
+  "mcpServers": {
+    "findlocal": { "url": "${MCP_URL}" }
+  }
+}`}</pre>
+        </div>
+        <a class="more" href="/developers/mcp">MCP reference →</a>
+      </article>
+
+      <article class="product">
+        <h3 id="catalogue">Catalogue</h3>
+        <p>What is actually in the database, where each row came from, and how often it changes.</p>
+        <dl class="facts">
+          {catalogue.map(([h, p]) => (<><dt>{h}</dt><dd>{p}</dd></>))}
+        </dl>
+        <a class="more" href="#metros">Coverage by metro ↓</a>
+      </article>
+    </div>
+  </section>
+
+  <section id="different" class="sec">
+    <p class="eyebrow">How it's different</p>
+    <h2>Primary sources, tagged deeper.</h2>
+    <div class="compare">
+      {comparison.map((c) => (<div class="cmp"><h3>{c.h}</h3><p>{c.p}</p></div>))}
+    </div>
+    <p class="muted small">
+      The long version: <a href="/blog/how-find-local-finds-events">how Find Local finds events the big platforms miss</a>.
+    </p>
+  </section>
+
+  <section id="metros" class="sec">
+    <p class="eyebrow">Coverage</p>
+    <h2>{stats.metrosCovered} metros, {num(stats.upcomingEvents)} upcoming events.</h2>
+    <p class="lede">Live upcoming-event counts per metro. Each one has a browsable page, and can be embedded as a widget or queried by name or slug.</p>
+    <MetroCoverage byCity={byCity} current={city.name} />
+  </section>
+
+  <section id="start" class="sec">
+    <h2>Start where you are.</h2>
+    <ul class="plain">
+      <li><strong>A venue, bookstore or library</strong> — paste the <a href="/developers/widgets">widget</a> into your site; it keeps itself current.</li>
+      <li><strong>A newsletter or local site</strong> — pull the <a href="/developers/api">JSON API</a>; one feed covers every venue in town, not just the ones you track by hand.</li>
+      <li><strong>An app or an agent</strong> — connect the <a href="/developers/mcp">MCP server</a>, or call the API directly.</li>
+      <li>
+        <strong>Looking for something to do</strong> — <a href={`/city/${city.slug}`}>browse {city.name}</a>{APP_STORE_URL
+          ? <> or <a href={APP_STORE_URL}>get the iOS app</a>.</>
+          : <>. The iOS app is coming soon.</>}
+      </li>
+    </ul>
+    <p class="muted small">Volume, guarantees or licensing: <a href="mailto:findlocalinternal@gmail.com">findlocalinternal@gmail.com</a>.</p>
+  </section>
 </Layout>
+
+<script>
+  import { wireCopyButtons } from '../lib/copy.js';
+  wireCopyButtons();
+</script>
+
+<style>
+  .eyebrow { text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.75rem; font-weight: 700; color: rgb(var(--orange)); margin: 0 0 0.5rem; }
+  .small { font-size: 0.85rem; }
+  .hero { padding: 0.5rem 0 2rem; }
+  .hero h1 { font-size: clamp(1.9rem, 5vw, 3rem); max-width: 48rem; }
+  .hero .lede { margin-top: 0.9rem; }
+  .cta { display: flex; flex-wrap: wrap; gap: 0.6rem; margin: 1.2rem 0 0.8rem; }
+
+  .tiles { list-style: none; margin: 1.5rem 0 0.5rem; padding: 0; display: grid; gap: 0.75rem; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+  .tiles li { border: 1px solid rgb(var(--border)); border-radius: var(--radius); padding: 0.9rem; background: rgb(var(--surface)); display: flex; flex-direction: column; gap: 0.15rem; }
+  .tiles .v { font-family: var(--font-head); font-weight: 700; font-size: 1.5rem; line-height: 1.1; color: rgb(var(--teal)); }
+  .tiles .k { font-weight: 700; font-size: 0.86rem; }
+  .tiles .n { color: rgb(var(--text-2)); font-size: 0.78rem; line-height: 1.35; }
+
+  .sec { padding: 2.25rem 0; border-top: 1px solid rgb(var(--border)); scroll-margin-top: 4.5rem; }
+  .sec h2 { font-size: clamp(1.4rem, 3.5vw, 2rem); margin-bottom: 0.6rem; }
+
+  .products { display: grid; gap: 1.2rem; grid-template-columns: 1fr; margin-top: 1.2rem; }
+  @media (min-width: 760px) { .products { grid-template-columns: 1fr 1fr; } }
+  .product { border: 1px solid rgb(var(--border)); border-radius: var(--radius); padding: 1.2rem; background: rgb(var(--surface)); display: flex; flex-direction: column; gap: 0.7rem; }
+  .product > p { margin: 0; color: rgb(var(--text-2)); font-size: 0.94rem; }
+  .product h3 { scroll-margin-top: 5rem; }
+  .product .more { font-weight: 700; margin-top: auto; }
+
+  .codebox { border: 1px solid rgb(var(--border)); border-radius: var(--radius); overflow: hidden; background: rgb(var(--surface-sunken)); }
+  .codebox .hd { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; padding: 0.45rem 0.8rem; font-size: 0.78rem; color: rgb(var(--text-2)); border-bottom: 1px solid rgb(var(--border)); background: rgb(var(--surface)); }
+  .codebox pre { margin: 0; padding: 0.85rem 0.9rem; overflow-x: auto; font-size: 0.78rem; line-height: 1.5; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space: pre-wrap; word-break: break-word; }
+  .copy { font-size: 0.75rem; font-weight: 700; padding: 0.2rem 0.6rem; border-radius: 999px; border: 1px solid rgb(var(--border)); background: rgb(var(--surface)); color: rgb(var(--teal)); cursor: pointer; flex-shrink: 0; }
+
+  .demo { margin: 0; }
+  .demo iframe { width: 100%; height: 420px; border: 1px solid rgb(var(--border)); border-radius: var(--radius); background: rgb(var(--bg)); display: block; }
+  .demo figcaption { font-size: 0.78rem; margin-top: 0.4rem; }
+
+  .facts { margin: 0; }
+  .facts dt { font-weight: 700; font-family: var(--font-head); margin-top: 0.7rem; }
+  .facts dt:first-of-type { margin-top: 0; }
+  .facts dd { margin: 0.15rem 0 0; color: rgb(var(--text-2)); font-size: 0.9rem; }
+
+  .compare { display: grid; gap: 1rem 1.6rem; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); margin-top: 1.2rem; }
+  .cmp { border-left: 3px solid rgb(var(--teal)); padding: 0.1rem 0 0.1rem 0.9rem; }
+  .cmp h3 { margin-bottom: 0.3rem; }
+  .cmp p { margin: 0; color: rgb(var(--text-2)); font-size: 0.92rem; }
+
+  .plain { list-style: none; padding: 0; margin: 0 0 1rem; max-width: 52rem; }
+  .plain li { padding: 0.5rem 0; border-top: 1px solid rgb(var(--border)); color: rgb(var(--text-2)); font-size: 0.94rem; }
+</style>

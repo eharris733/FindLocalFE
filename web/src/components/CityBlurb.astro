@@ -1,0 +1,24 @@
+---
+// Per-city footer note. The long "what this feed is" sentence used to sit above
+// the fold in the city page's intro; it lives down here now so the H1 + one
+// short line are all a visitor meets first. `City.blurb` is one specific
+// sentence per metro, owned by FindLocalData/src/data/cities.json (vendored).
+import type { City } from '@findlocal/shared';
+interface Props {
+  city: City;
+}
+const { city } = Astro.props;
+---
+<section class="city-blurb" aria-label={`About events in ${city.name}`}>
+  <h2>Events in {city.name}, {city.state}</h2>
+  <p>
+    Concerts, comedy, theater, author readings and community happenings, collected straight from local venue calendars
+    and updated daily. {city.blurb}
+  </p>
+</section>
+
+<style>
+  .city-blurb { margin: 2.5rem 0 0; padding-top: 1.25rem; border-top: 1px solid rgb(var(--border)); max-width: 46rem; }
+  .city-blurb h2 { font-size: 1.05rem; margin-bottom: 0.35rem; }
+  .city-blurb p { margin: 0; color: rgb(var(--text-2)); font-size: 0.92rem; line-height: 1.65; }
+</style>

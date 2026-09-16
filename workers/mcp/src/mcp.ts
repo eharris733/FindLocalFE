@@ -83,6 +83,10 @@ export class FindLocalMCP extends McpAgent<Env, unknown, CustomerProps> {
         query: z.string().optional().describe("Free-text search over event title, venue name and performer/author names."),
         performer: z.string().optional().describe("Only events featuring this performer/author/instructor (substring match on names)."),
         authors_only: z.boolean().optional().describe("Only literary events with a known author on the bill (author signings, readings, talks); drops book clubs and storytimes."),
+        sort: z
+          .enum(["date", "featured"])
+          .optional()
+          .describe("Ordering: 'date' (default) = soonest first; 'featured' = FindLocal's editorial ranking (image/description/bill quality, starting soon, reshuffled daily)."),
         limit: z.number().int().min(1).max(200).optional().describe("Max events to return (default 50)."),
       },
       async (input) => {
@@ -237,6 +241,7 @@ interface SearchInput {
   query?: string;
   performer?: string;
   authors_only?: boolean;
+  sort?: "date" | "featured";
   limit?: number;
 }
 
@@ -262,5 +267,8 @@ function buildFilters(city: City, p: SearchInput): EventFilters {
   if (p.query) f.text = p.query;
   if (p.performer) f.performer = p.performer;
   if (p.authors_only) f.authorsOnly = true;
+  // Left unset = chronological (API_DEFAULT_SORT): machine consumers keep the
+  // order they have always had unless they ask for `featured`.
+  if (p.sort) f.sort = p.sort;
   return f;
 }

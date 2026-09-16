@@ -34,3 +34,18 @@ describe('leadPerformerLine', () => {
     expect(leadPerformerLine([{ name: 'DJ Q', role: 'dj' }])).toBe('DJ Q');
   });
 });
+
+describe('approxCount', () => {
+  it('rounds down to one decimal of k above 1,000 and leaves smaller counts exact', async () => {
+    const { approxCount } = await import('../src/lib/format.js');
+    expect(approxCount(2423)).toBe('2.4k+');
+    expect(approxCount(640)).toBe('640+');
+    expect(approxCount(999)).toBe('999+');
+    expect(approxCount(1000)).toBe('1k+');
+    expect(approxCount(1099)).toBe('1k+');
+    expect(approxCount(2000)).toBe('2k+');
+    expect(approxCount(54260)).toBe('54.2k+');
+    expect(approxCount(0)).toBe('0+');
+    expect(approxCount(-5)).toBe('0+');
+  });
+});
