@@ -423,7 +423,9 @@ export async function getEvent(db: D1Database, id: string): Promise<EventRow | n
     .first<RawEvent>();
   if (!row) return null;
   const event = mapEvent(row);
-  await attachBooks(db, [event]); // no-op for non-literary events (empty book_ids)
+  // Both are no-ops for non-literary events (empty book_ids / author_ids). The mobile
+  // app's image chain (book cover → author photo → …) reads these off /api/events/<id>.
+  await Promise.all([attachBooks(db, [event]), attachAuthors(db, [event])]);
   return event;
 }
 
