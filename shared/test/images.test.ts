@@ -1,7 +1,16 @@
 // Tests for shared/src/images.ts. Kept in its own file (rather than added to
 // pure.test.ts) to avoid clashing with concurrent edits to that file.
 import { describe, expect, it } from 'vitest';
-import { buildImageUrl, imageUrl, IMAGE_CDN_BASE, IMAGE_CDN_ENABLED } from '../src/images.js';
+import { buildImageUrl, imageUrl, IMAGE_CDN_BASE, IMAGE_CDN_ENABLED, openLibraryCover } from '../src/images.js';
+
+describe('openLibraryCover', () => {
+  it('swaps the size suffix on OpenLibrary cover/author URLs only', () => {
+    expect(openLibraryCover('https://covers.openlibrary.org/b/id/456-L.jpg', 'M')).toBe('https://covers.openlibrary.org/b/id/456-M.jpg');
+    expect(openLibraryCover('https://covers.openlibrary.org/a/id/123-M.jpg', 'S')).toBe('https://covers.openlibrary.org/a/id/123-S.jpg');
+    expect(openLibraryCover('https://img/cover-L.jpg', 'M')).toBe('https://img/cover-L.jpg');
+    expect(openLibraryCover(null, 'M')).toBeNull();
+  });
+});
 
 const SRC = 'https://images.example.com/a photo.jpg';
 

@@ -10,9 +10,12 @@ export function getDb(): D1Database {
 }
 
 export {
+  attachAuthors,
   attachBooks,
+  authorsByIds,
   booksByIds,
   booksByAuthorIds,
+  latestBooksByAuthors,
   categoryCounts,
   countUpcomingEvents,
   countUpcomingEventsByCity,
@@ -30,6 +33,7 @@ export {
   listVenues,
   listVenueTypes,
   countUpcomingEventsForVenue,
+  type AuthorRow,
   type BookRow,
   type EventFilters,
   type EventRow,

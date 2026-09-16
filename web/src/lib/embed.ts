@@ -24,15 +24,18 @@ export interface EmbedAttrs {
   theme?: string;
   limit?: string;
   partner?: string;
+  /** '1' = only events with a known author on the bill. */
+  authors?: string;
 }
 
 /** Named presets; `data-widget="literary-new-england"` expands to region + cat. */
-export const WIDGET_PRESETS: Record<string, { region?: string; city?: string; cat?: string }> = {
+export const WIDGET_PRESETS: Record<string, { region?: string; city?: string; cat?: string; authors?: string }> = {
   'literary-new-england': { region: 'new-england', cat: 'literary' },
+  'literary-new-england-authors': { region: 'new-england', cat: 'literary', authors: '1' },
   'new-england': { region: 'new-england' },
 };
 
-const KEYS: (keyof EmbedAttrs)[] = ['region', 'city', 'cat', 'when', 'view', 'theme', 'limit', 'partner'];
+const KEYS: (keyof EmbedAttrs)[] = ['region', 'city', 'cat', 'when', 'view', 'theme', 'limit', 'partner', 'authors'];
 
 /** Iframe URL for a set of attributes: preset expanded, explicit attrs win,
  * defaults dropped, keys sorted. KEEP IN SYNC WITH public/widget.js. */
@@ -48,6 +51,7 @@ export function buildEmbedSrc(origin: string, attrs: EmbedAttrs): string {
   if (merged.view === 'list' || (merged.view && !EMBED_VIEWS.includes(merged.view as EmbedView))) delete merged.view;
   if (merged.theme === 'auto' || (merged.theme && !EMBED_THEMES.includes(merged.theme as EmbedTheme))) delete merged.theme;
   if (merged.when === 'anytime') delete merged.when;
+  if (merged.authors !== undefined && merged.authors !== '1') delete merged.authors;
   if (merged.limit !== undefined) {
     const n = Number.parseInt(merged.limit, 10);
     if (!Number.isInteger(n) || n < 1 || n === EMBED_DEFAULT_LIMIT) delete merged.limit;
@@ -71,7 +75,11 @@ export interface EmbedParams {
   partner?: string;
   /** Copy of the request params without the embed-only keys, safe for parseFilters. */
   filterParams: URLSearchParams;
-  error?: 'unknown-region' | 'unknown-city';
+  /** Valid category slugs from `cat` (invalid ones dropped). */
+  categories: string[];
+  /** `authors=1`: only events with a known author on the bill. */
+  authorsOnly: boolean;
+  error?: 'unknown-region' | 'unknown-city' | 'unknown-category';
   /** utm_campaign value: preset name, or region/city + category. */
   campaign: string;
 }
@@ -90,7 +98,10 @@ export function parseEmbedParams(params: URLSearchParams): EmbedParams {
   const n = Number.parseInt(params.get('limit') ?? '', 10);
   const limit = Number.isInteger(n) && n > 0 ? Math.min(n, EMBED_MAX_LIMIT) : EMBED_DEFAULT_LIMIT;
   const partner = (params.get('partner') ?? '').trim().replace(/[^\w.-]/g, '').slice(0, 40) || undefined;
-  const out: EmbedParams = { view, theme, limit, filterParams, campaign: '' };
+  const catRaw = (params.get('cat') ?? '').trim();
+  const cats = catRaw.split(',').map((s) => s.trim().toLowerCase()).filter((s) => CATEGORY_SLUGS.includes(s));
+  const authorsOnly = params.get('authors') === '1';
+  const out: EmbedParams = { view, theme, limit, filterParams, categories: cats, authorsOnly, campaign: '' };
   if (partner) out.partner = partner;
   const fromRaw = params.get('from');
   const toRaw = params.get('to');
@@ -110,10 +121,21 @@ export function parseEmbedParams(params: URLSearchParams): EmbedParams {
   } else {
     out.city = getCity('Boston');
   }
-  const cats = (params.get('cat') ?? '').split(',').map((s) => s.trim().toLowerCase()).filter((s) => CATEGORY_SLUGS.includes(s));
+  // A typo'd category must not silently widen the widget to every category.
+  if (!out.error && catRaw && !cats.length) out.error = 'unknown-category';
   const scope = out.group?.slug ?? out.city?.slug ?? 'unknown';
-  out.campaign = cats.length ? `${scope}-${cats.join('-')}` : scope;
+  out.campaign = (cats.length ? `${scope}-${cats.join('-')}` : scope) + (authorsOnly ? '-authors' : '');
   return out;
+}
+
+/** The same embed URL with `authors=1` switched on or off (keys kept sorted). */
+export function toggleAuthorsHref(url: URL, on: boolean): string {
+  const p = new URLSearchParams(url.search);
+  if (on) p.set('authors', '1');
+  else p.delete('authors');
+  p.sort();
+  const q = p.toString();
+  return `${url.pathname}${q ? `?${q}` : ''}`;
 }
 
 /** Filters for a single-city embed (the site's contract, plus the explicit from/to override). */

@@ -67,8 +67,11 @@ npm run deploy:web               # astro build + wrangler deploy (needs a real S
   so every front door returns identical results for identical inputs.
   URL keys: `when` (anytime|today|tomorrow|weekend|week|YYYY-MM-DD), `cat`
   (comma slugs), `free=1`, `paid=1`, `max`, `tod` (comma morning|afternoon|evening),
-  `region`, `q`, `page` (100/page). `canonicalQuery()` = sorted, defaults dropped
-  — use it as the edge-cache key and in the canonical URL.
+  `region`, `q`, `performer`, `authors=1` (only events with a gazetteer author on the
+  bill), `page` (100/page). `canonicalQuery()` = sorted, defaults dropped
+  — use it as the edge-cache key and in the canonical URL. `cat=literary` is
+  venue-scoped: it also matches every event at a venue categorised literary
+  (bookstore/library), since their storytimes are classified `family` by tokens.
 - **Vendored data, never hand-edited.** `shared/data/*` is copied from
   FindLocalData by `npm run sync-data`; CI runs `sync-data:check`. Change the
   source files in FindLocalData, then re-sync here.

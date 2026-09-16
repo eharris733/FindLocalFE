@@ -30,6 +30,15 @@ export interface BookRow {
   author_ids: string[];
 }
 
+/** One row of the `authors` gazetteer (migrations 0009/0010), fetched via
+ * author_ids and attached by attachAuthors(). photo_url is OpenLibrary's. */
+export interface AuthorRow {
+  id: string;
+  canonical_name: string;
+  photo_url: string | null;
+  openlibrary_id: string | null;
+}
+
 export interface EventRow {
   id: string;
   venue_id: string;
@@ -52,6 +61,8 @@ export interface EventRow {
   book_ids: string[];
   /** Books resolved from book_ids — present only after attachBooks() runs (undefined otherwise). */
   books?: BookRow[];
+  /** Authors resolved from author_ids — present only after attachAuthors() runs. */
+  authors?: AuthorRow[];
   price: string | null;
   price_amount: number | null;
   status: string | null;

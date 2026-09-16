@@ -2,6 +2,7 @@
  * Usage: <script src="https://findlocal.community/widget.js" data-widget="literary-new-england"></script>
  * Attributes: data-widget | data-region | data-city | data-cat | data-when | data-view (list|calendar|map)
  *             data-theme (light|dark|auto) | data-limit (1-300) | data-height (initial px) | data-partner
+ *             data-authors="1" (only events with a known author on the bill)
  * Injects an auto-resizing iframe after the script tag. No dependencies, no cookies, no tracking.
  * The URL rules mirror web/src/lib/embed.ts::buildEmbedSrc — keep both in sync. */
 (function () {
@@ -10,9 +11,10 @@
   var origin = new URL(script.src, location.href).origin;
   var PRESETS = {
     'literary-new-england': { region: 'new-england', cat: 'literary' },
+    'literary-new-england-authors': { region: 'new-england', cat: 'literary', authors: '1' },
     'new-england': { region: 'new-england' }
   };
-  var KEYS = ['region', 'city', 'cat', 'when', 'view', 'theme', 'limit', 'partner'];
+  var KEYS = ['region', 'city', 'cat', 'when', 'view', 'theme', 'limit', 'partner', 'authors'];
   var VIEWS = ['list', 'calendar', 'map'];
   var THEMES = ['light', 'dark', 'auto'];
 
@@ -32,6 +34,7 @@
   if (merged.view === 'list' || (merged.view && VIEWS.indexOf(merged.view) < 0)) delete merged.view;
   if (merged.theme === 'auto' || (merged.theme && THEMES.indexOf(merged.theme) < 0)) delete merged.theme;
   if (merged.when === 'anytime') delete merged.when;
+  if (merged.authors !== undefined && merged.authors !== '1') delete merged.authors;
   if (merged.limit !== undefined) {
     var n = parseInt(merged.limit, 10);
     if (!(n >= 1) || n === 100) delete merged.limit;

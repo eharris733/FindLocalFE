@@ -1,7 +1,12 @@
 import { env } from 'cloudflare:test';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { attachBooks, booksByAuthorIds, booksByIds, getEvent, listUpcomingEventsForCities } from '../src/index.js';
-import { AUTHOR_ID, BK_ISBN, BK_SLUG, BOOK_EVENT_ISBN, BOOK_EVENT_SLUG, eid, seed, TODAY } from './seed.js';
+import {
+  attachAuthors, attachBooks, authorsByIds, booksByAuthorIds, booksByIds, getEvent, latestBooksByAuthors, listUpcomingEventsForCities,
+} from '../src/index.js';
+import {
+  AUTHOR_ID, AUTHOR_NOBOOK, AUTHOR_PHOTO, AUTHOR_TWO, BK_BOOKMANAGER, BK_ISBN, BK_NEW, BK_OLD, BK_SLUG, BOOK_CLUB_EVENT, BOOK_EVENT_ISBN,
+  BOOK_EVENT_SLUG, eid, NOBOOK_AUTHOR_EVENT, seed, TODAY, TWO_BOOK_AUTHOR_EVENT,
+} from './seed.js';
 
 const db = env.DB;
 
@@ -37,6 +42,39 @@ describe('booksByAuthorIds', () => {
   it('returns [] for empty/unknown authors', async () => {
     expect(await booksByAuthorIds(db, [])).toEqual([]);
     expect(await booksByAuthorIds(db, ['nobody'])).toEqual([]);
+  });
+
+  it('puts buyable books first — an ISBN-13 id counts even when isbn13 is NULL — then newest', async () => {
+    const ids = (await booksByAuthorIds(db, [AUTHOR_TWO])).map((b) => b.id);
+    expect(ids).toEqual([BK_BOOKMANAGER, BK_NEW, BK_OLD]);
+  });
+});
+
+describe('latestBooksByAuthors', () => {
+  it('maps each author to their newest buyable book; authors with none are absent', async () => {
+    const m = await latestBooksByAuthors(db, [AUTHOR_ID, AUTHOR_TWO, AUTHOR_NOBOOK, 'nobody', ' ']);
+    expect(m.get(AUTHOR_ID)?.id).toBe(BK_ISBN);
+    expect(m.get(AUTHOR_TWO)?.id).toBe(BK_BOOKMANAGER);
+    expect(m.has(AUTHOR_NOBOOK)).toBe(false);
+    expect(m.size).toBe(2);
+    expect((await latestBooksByAuthors(db, [])).size).toBe(0);
+  });
+});
+
+describe('authorsByIds / attachAuthors', () => {
+  it('returns gazetteer authors with photo + openlibrary id, dropping unknowns', async () => {
+    const rows = await authorsByIds(db, [AUTHOR_ID, 'nobody', AUTHOR_ID]);
+    expect(rows).toEqual([{ id: AUTHOR_ID, canonical_name: 'Ada Debut', photo_url: AUTHOR_PHOTO, openlibrary_id: 'OL1A' }]);
+    expect(await authorsByIds(db, [])).toEqual([]);
+  });
+
+  it('attaches authors in author_ids order and leaves authorless events untouched', async () => {
+    const events = await listUpcomingEventsForCities(db, { cities: ['Providence', 'Portland ME'], from: TODAY, tz: 'America/New_York' });
+    await attachAuthors(db, events);
+    expect(events.find((e) => e.id === TWO_BOOK_AUTHOR_EVENT)?.authors?.map((a) => a.canonical_name)).toEqual(['Rex Prolific']);
+    expect(events.find((e) => e.id === NOBOOK_AUTHOR_EVENT)?.authors?.[0]?.photo_url).toBeNull();
+    expect(events.find((e) => e.id === BOOK_CLUB_EVENT)?.authors).toBeUndefined();
+    expect(events.find((e) => e.id === BOOK_CLUB_EVENT)?.author_ids).toEqual([]);
   });
 });
 

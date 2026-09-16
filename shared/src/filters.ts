@@ -8,6 +8,7 @@
 //   region borough / neighbourhood label
 //   q      free text
 //   performer  performer/author/instructor name (substring match)
+//   authors=1  only events with a known (gazetteer-linked) author on the bill
 //   page   1-based, 100 events per page
 import { CATEGORY_SLUGS } from './categories.js';
 import type { City } from './cities.js';
@@ -31,6 +32,8 @@ export interface EventFilters {
   text?: string;
   /** Substring match on performer names only (not roles/urls). */
   performer?: string;
+  /** Only events whose author_ids is non-empty (an author is on the bill). */
+  authorsOnly?: boolean;
   venueId?: string;
   ids?: string[];
   limit?: number;
@@ -38,7 +41,7 @@ export interface EventFilters {
   includeDeleted?: boolean;
 }
 
-export const FILTER_KEYS = ['when', 'cat', 'free', 'paid', 'max', 'tod', 'region', 'q', 'performer', 'page'] as const;
+export const FILTER_KEYS = ['when', 'cat', 'free', 'paid', 'max', 'tod', 'region', 'q', 'performer', 'authors', 'page'] as const;
 export type FilterKey = (typeof FILTER_KEYS)[number];
 
 const WHEN_BUCKETS = new Set(['anytime', 'today', 'tomorrow', 'weekend', 'week']);
@@ -110,6 +113,7 @@ export function parseFilters(params: URLSearchParams, city: City, now: Date = ne
   if (q) f.text = q;
   const performer = normText(params.get('performer'));
   if (performer) f.performer = performer;
+  if (params.get('authors') === '1') f.authorsOnly = true;
   const page = normPage(params.get('page')) ?? 1;
   f.limit = PAGE_SIZE;
   f.offset = (page - 1) * PAGE_SIZE;
@@ -139,6 +143,7 @@ export function canonicalQuery(params: URLSearchParams): string {
   if (q) out.set('q', q);
   const performer = normText(params.get('performer'));
   if (performer) out.set('performer', performer);
+  if (params.get('authors') === '1') out.set('authors', '1');
   const page = normPage(params.get('page'));
   if (page) out.set('page', String(page));
   out.sort();
@@ -164,6 +169,7 @@ export function filtersToQuery(f: QueryableFilters): string {
   if (f.region) p.set('region', f.region);
   if (f.text) p.set('q', f.text);
   if (f.performer) p.set('performer', f.performer);
+  if (f.authorsOnly) p.set('authors', '1');
   const page = f.page ?? (f.offset && f.offset > 0 ? Math.floor(f.offset / PAGE_SIZE) + 1 : undefined);
   if (page) p.set('page', String(page));
   return canonicalQuery(p);

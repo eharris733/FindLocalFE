@@ -12,7 +12,8 @@ const attrs: [string, string, string][] = [
   ['data-widget', Object.keys(WIDGET_PRESETS).join(' · '), 'A preset: expands to a region + category. Explicit attributes override it.'],
   ['data-region', REGION_GROUPS.map((g) => g.slug).join(' · '), 'A region group (several metros). Wins over data-city.'],
   ['data-city', 'City slug or name, e.g. boston, portland-me', 'One metro. Defaults to Boston when neither region nor city is set.'],
-  ['data-cat', 'Comma list of category slugs', 'Leave out for all categories.'],
+  ['data-cat', 'Comma list of category slugs', 'Leave out for all categories. literary also includes everything at bookstores, libraries and literary organizations.'],
+  ['data-authors', '1', 'Only events with a known author on the bill (name matched to our author index) — an author-event calendar. Book clubs and storytimes drop out; visitors can toggle it in the widget.'],
   ['data-when', 'anytime · today · tomorrow · weekend · week · YYYY-MM-DD', 'Date window, resolved in the local time zone. Default anytime (everything upcoming).'],
   ['data-view', 'list · calendar · map', 'Initial view; visitors can switch. Default list.'],
   ['data-theme', 'auto · light · dark', 'auto follows the visitor\'s OS setting. Default auto.'],
@@ -30,7 +31,7 @@ const attrs: [string, string, string][] = [
     <h2 id="quickstart">Quick start</h2>
     <p>Paste this where the calendar should appear:</p>
     <div class="copy-wrap"><button type="button" class="copy-btn" data-copy-target="#qs">Copy</button><pre id="qs"><code>{SNIPPET}</code></pre></div>
-    <p>That's the <strong>Literary New England</strong> preset: author talks, readings, book clubs and poetry across the region's independent bookstores, libraries and literary organizations, in {regionGroupCities(REGION_GROUPS[0]!).length} metros from Stamford to Bangor.</p>
+    <p>That's the <strong>Literary New England</strong> preset: author talks, readings, book clubs and poetry across the region's independent bookstores, libraries and literary organizations, in {regionGroupCities(REGION_GROUPS[0]!).length} metros from Stamford to Bangor. Rows show the book's cover, the author, and a Bookshop.org buy link that supports independent bookstores. Add <code>data-authors="1"</code> (or use the <code>literary-new-england-authors</code> preset) for author events only.</p>
 
     <h2 id="builder">Build your own</h2>
     <form class="builder" data-builder>
@@ -46,6 +47,7 @@ const attrs: [string, string, string][] = [
       <label>Dates
         <select name="when"><option value="">Everything upcoming</option><option value="week">Next 7 days</option><option value="weekend">This weekend</option><option value="today">Today</option></select>
       </label>
+      <label class="check"><input type="checkbox" name="authors" value="1" /> Author events only</label>
       <label>Initial view
         <select name="view"><option value="">List</option><option value="calendar">Calendar</option><option value="map">Map</option></select>
       </label>
@@ -119,17 +121,21 @@ const attrs: [string, string, string][] = [
     const a: EmbedAttrs = {};
     if (scope.startsWith('region:')) a.region = scope.slice(7);
     else if (scope.startsWith('city:')) a.city = scope.slice(5);
-    for (const k of ['cat', 'when', 'view', 'theme', 'limit', 'partner'] as const) {
+    for (const k of ['cat', 'when', 'view', 'theme', 'limit', 'partner', 'authors'] as const) {
       const v = String(fd.get(k) ?? '').trim();
       if (v) a[k] = v;
     }
     // Collapse to the preset when it matches exactly.
-    if (a.region === 'new-england' && a.cat === 'literary') { delete a.region; delete a.cat; a.widget = 'literary-new-england'; }
+    if (a.region === 'new-england' && a.cat === 'literary') {
+      delete a.region; delete a.cat;
+      a.widget = a.authors === '1' ? 'literary-new-england-authors' : 'literary-new-england';
+      delete a.authors;
+    }
     return a;
   }
 
   function snippet(a: EmbedAttrs): string {
-    const order: (keyof EmbedAttrs)[] = ['widget', 'region', 'city', 'cat', 'when', 'view', 'theme', 'limit', 'partner'];
+    const order: (keyof EmbedAttrs)[] = ['widget', 'region', 'city', 'cat', 'authors', 'when', 'view', 'theme', 'limit', 'partner'];
     const parts = order.filter((k) => a[k]).map((k) => ` data-${k}="${String(a[k]).replace(/"/g, '&quot;')}"`).join('');
     return `<script src="https://findlocal.community/widget.js"${parts}><\/script>`;
   }
@@ -162,5 +168,7 @@ const attrs: [string, string, string][] = [
   .builder { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.7rem 1rem; margin: 0.8rem 0 1rem; padding: 1rem; border: 1px solid rgb(var(--border)); border-radius: var(--radius); background: rgb(var(--surface)); }
   .builder label { display: flex; flex-direction: column; gap: 0.3rem; font-size: 0.85rem; font-weight: 600; color: rgb(var(--text-2)); }
   .builder select, .builder input { padding: 0.45rem 0.6rem; border: 1px solid rgb(var(--border-2)); border-radius: var(--radius-sm); background: rgb(var(--bg)); color: rgb(var(--text)); font-weight: 500; }
+  .builder label.check { flex-direction: row; align-items: center; gap: 0.5rem; align-self: end; padding-bottom: 0.5rem; }
+  .builder label.check input { width: auto; padding: 0; accent-color: rgb(var(--teal)); }
   .preview { border: 1px dashed rgb(var(--border-2)); border-radius: var(--radius); padding: 0.5rem; background: rgb(var(--bg-2)); margin: 0.5rem 0 1rem; }
 </style>
