@@ -36,6 +36,10 @@ describe('widget.js loader', () => {
     const cases: EmbedAttrs[] = [
       { widget: 'literary-new-england' },
       { widget: 'literary-new-england', view: 'map', theme: 'dark' },
+      { widget: 'literary-new-england-authors' },
+      { widget: 'literary-new-england-authors', authors: '0' },
+      { region: 'new-england', authors: '1' },
+      { city: 'boston', authors: 'yes' },
       { region: 'new-england', city: 'boston', cat: 'music', limit: '50' },
       { city: 'boston', view: 'list', theme: 'auto', when: 'anytime', limit: '100' },
       { city: 'boston', view: 'calendar', when: 'week', limit: '9999', partner: 'acme' },

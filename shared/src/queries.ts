@@ -6,17 +6,24 @@ import type { D1Database } from '@cloudflare/workers-types';
 import { getCity } from './cities.js';
 import { addDays, todayIn } from './dates.js';
 import type { EventFilters } from './filters.js';
-import type { EventRow, Performer, VenueRow } from './types.js';
+import type { AuthorRow, BookRow, EventRow, Performer, VenueRow } from './types.js';
 
 const MAX_BINDS = 90; // D1 allows 100 bound params per statement; leave headroom.
 const MAX_LIMIT = 500;
 
-type RawEvent = Omit<EventRow, 'event_type' | 'performers' | 'series_count' | 'series_image'> & {
+type RawEvent = Omit<
+  EventRow,
+  'event_type' | 'performers' | 'author_ids' | 'book_ids' | 'books' | 'authors' | 'series_count' | 'series_image'
+> & {
   event_type: string | null;
   performers: string | null;
+  author_ids: string | null;
+  book_ids: string | null;
   series_count: number | null;
   series_image: string | null;
 };
+
+type RawBook = Omit<BookRow, 'author_ids'> & { author_ids: string | null };
 type RawVenue = Omit<VenueRow, 'categories' | 'upcoming'> & { categories: string | null; upcoming: number | null };
 
 function parseJsonArray(raw: string | null): string[] {
@@ -61,9 +68,15 @@ function mapEvent(r: RawEvent): EventRow {
     ...r,
     event_type: parseJsonArray(r.event_type),
     performers: parsePerformers(r.performers),
+    author_ids: parseJsonArray(r.author_ids),
+    book_ids: parseJsonArray(r.book_ids),
     series_count: count,
     series_image: count > 1 ? r.series_image || null : null,
   };
+}
+
+function mapBook(r: RawBook): BookRow {
+  return { ...r, author_ids: parseJsonArray(r.author_ids) };
 }
 
 function mapVenue(r: RawVenue): VenueRow {
@@ -97,7 +110,8 @@ function chunk<T>(items: T[], size: number): T[][] {
 
 const EVENT_COLS = `
   e.id, e.venue_id, e.city, e.region, e.source, e.external_id, e.title, e.description,
-  e.event_date, e.start_time, e.end_time, e.category, e.event_type, e.performers, e.price, e.price_amount,
+  e.event_date, e.start_time, e.end_time, e.category, e.event_type, e.performers, e.author_ids, e.book_ids,
+  e.price, e.price_amount,
   e.status, e.detail_page_url, e.ticket_page_url, e.root_url, e.image_url, e.is_deleted,
   e.first_seen_at, e.last_seen_at, e.updated_at,
   v.name AS venue_name, v.address AS venue_address, v.image AS venue_image,
@@ -150,6 +164,31 @@ const VENUE_COLS = `
   v.id, v.name, v.city, v.region, v.url, v.address, v.description, v.image, v.type,
   v.venue_size, v.categories, v.latitude, v.longitude, v.is_active`;
 
+const BOOK_COLS = `id, title, subtitle, isbn13, isbn10, cover_url, description, publisher, pub_year, author_ids`;
+const AUTHOR_COLS = `id, canonical_name, photo_url, openlibrary_id`;
+
+/** A books.id that is itself an ISBN-13 (Bookmanager rows store the ISBN as the id, isbn13 NULL). */
+const ISBN_ID_SQL = `(length(b.id) = 13 AND b.id NOT GLOB '*[^0-9]*')`;
+const BUYABLE_SQL = `(b.isbn13 IS NOT NULL OR ${ISBN_ID_SQL})`;
+
+/** Events with at least one gazetteer author on the bill (string compare: never throws on odd JSON). */
+const AUTHORS_SQL = `(e.author_ids <> '[]' AND e.author_ids <> '')`;
+
+/** Categories that also match on the *venue's* categories: a bookstore's storytime
+ * is classified `family` by its source tokens but belongs in a literary widget. */
+const VENUE_SCOPED_CATEGORIES = new Set(['literary']);
+
+/** `e.category IN (...)`, widened to the venue's categories for VENUE_SCOPED_CATEGORIES. */
+function categorySql(cats: string[]): Where {
+  const clauses = [`e.category IN (${cats.map(() => '?').join(',')})`];
+  const binds: unknown[] = [...cats];
+  for (const c of cats.filter((x) => VENUE_SCOPED_CATEGORIES.has(x))) {
+    clauses.push(`EXISTS (SELECT 1 FROM json_each(v.categories) vc WHERE vc.value = ?)`);
+    binds.push(c);
+  }
+  return { sql: clauses.length > 1 ? `(${clauses.join(' OR ')})` : clauses[0]!, binds };
+}
+
 const ORDER = `ORDER BY e.event_date, e.start_time IS NULL, e.start_time, e.id`;
 
 const TOD_SQL: Record<string, string> = {
@@ -184,10 +223,11 @@ function buildWhere(f: EventFilters, skip?: keyof EventFilters): Where {
     binds.push(f.region);
   }
   if (f.categories?.length && skip !== 'categories') {
-    const cats = f.categories.slice(0, MAX_BINDS);
-    where.push(`e.category IN (${cats.map(() => '?').join(',')})`);
-    binds.push(...cats);
+    const c = categorySql(f.categories.slice(0, MAX_BINDS));
+    where.push(c.sql);
+    binds.push(...c.binds);
   }
+  if (f.authorsOnly) where.push(AUTHORS_SQL);
   if (f.free && f.paid) where.push(`(${FREE_SQL} OR ${PAID_SQL})`);
   else if (f.free) where.push(FREE_SQL);
   else if (f.paid) where.push(PAID_SQL);
@@ -254,7 +294,111 @@ export async function getEvent(db: D1Database, id: string): Promise<EventRow | n
     )
     .bind(today, today, id.trim().toLowerCase())
     .first<RawEvent>();
-  return row ? mapEvent(row) : null;
+  if (!row) return null;
+  const event = mapEvent(row);
+  await attachBooks(db, [event]); // no-op for non-literary events (empty book_ids)
+  return event;
+}
+
+// ---------------------------------------------------------------- literary books
+
+/** Books from the gazetteer by id (books.id = ISBN-13 or a work slug). Chunked to
+ * stay under D1's bind cap; ids are matched exactly (not lowercased). */
+export async function booksByIds(db: D1Database, ids: string[]): Promise<BookRow[]> {
+  const unique = [...new Set(ids.map((id) => id.trim()).filter(Boolean))];
+  if (!unique.length) return [];
+  const out: BookRow[] = [];
+  for (const part of chunk(unique, MAX_BINDS)) {
+    const sql = `SELECT ${BOOK_COLS} FROM books WHERE id IN (${part.map(() => '?').join(',')})`;
+    const { results } = await db.prepare(sql).bind(...part).all<RawBook>();
+    out.push(...results.map(mapBook));
+  }
+  return out;
+}
+
+/** Books written by any of the given authors (books.author_ids overlaps), for
+ * author-only events with no linked book. Ordered so a real buy link comes first:
+ * ISBN-bearing books (isbn13 column or an ISBN-13 id), then newest by pub_year.
+ * Chunked over the author ids. */
+export async function booksByAuthorIds(db: D1Database, authorIds: string[], limit = 6): Promise<BookRow[]> {
+  const unique = [...new Set(authorIds.map((id) => id.trim()).filter(Boolean))];
+  if (!unique.length) return [];
+  const seen = new Set<string>();
+  const out: BookRow[] = [];
+  for (const part of chunk(unique, MAX_BINDS)) {
+    const sql = `SELECT ${BOOK_COLS} FROM books b
+      WHERE EXISTS (SELECT 1 FROM json_each(b.author_ids) a WHERE a.value IN (${part.map(() => '?').join(',')}))
+      ORDER BY (NOT ${BUYABLE_SQL}), (b.pub_year IS NULL), b.pub_year DESC, b.title`;
+    const { results } = await db.prepare(sql).bind(...part).all<RawBook>();
+    for (const r of results) {
+      if (seen.has(r.id)) continue;
+      seen.add(r.id);
+      out.push(mapBook(r));
+    }
+  }
+  return out.slice(0, Math.max(limit, 1));
+}
+
+/** The most recently published *buyable* (ISBN-13) book per author, for linking an
+ * author's name to a credited Bookshop deep link. Covers win ties. Authors with no
+ * buyable book are absent from the map. */
+export async function latestBooksByAuthors(db: D1Database, authorIds: string[]): Promise<Map<string, BookRow>> {
+  const unique = [...new Set(authorIds.map((id) => id.trim()).filter(Boolean))];
+  const out = new Map<string, BookRow>();
+  if (!unique.length) return out;
+  for (const part of chunk(unique, MAX_BINDS)) {
+    const sql = `SELECT ${BOOK_COLS} FROM books b
+      WHERE ${BUYABLE_SQL}
+        AND EXISTS (SELECT 1 FROM json_each(b.author_ids) a WHERE a.value IN (${part.map(() => '?').join(',')}))
+      ORDER BY (b.pub_year IS NULL), b.pub_year DESC, (b.cover_url IS NULL), b.title`;
+    const { results } = await db.prepare(sql).bind(...part).all<RawBook>();
+    const wanted = new Set(part);
+    for (const r of results) {
+      const book = mapBook(r);
+      for (const a of book.author_ids) if (wanted.has(a) && !out.has(a)) out.set(a, book);
+    }
+  }
+  return out;
+}
+
+/** Authors from the gazetteer by id, chunked under the bind cap; ids matched exactly. */
+export async function authorsByIds(db: D1Database, ids: string[]): Promise<AuthorRow[]> {
+  const unique = [...new Set(ids.map((id) => id.trim()).filter(Boolean))];
+  if (!unique.length) return [];
+  const out: AuthorRow[] = [];
+  for (const part of chunk(unique, MAX_BINDS)) {
+    const sql = `SELECT ${AUTHOR_COLS} FROM authors WHERE id IN (${part.map(() => '?').join(',')})`;
+    const { results } = await db.prepare(sql).bind(...part).all<AuthorRow>();
+    out.push(...results);
+  }
+  return out;
+}
+
+/** Resolve every event's author_ids in one batched query and hang `authors` off
+ * each event (author_ids order; missing ids dropped). Mutates in place. */
+export async function attachAuthors(db: D1Database, events: EventRow[]): Promise<EventRow[]> {
+  const ids = [...new Set(events.flatMap((e) => e.author_ids ?? []))];
+  if (!ids.length) return events;
+  const byId = new Map((await authorsByIds(db, ids)).map((a) => [a.id, a]));
+  for (const e of events) {
+    const list = (e.author_ids ?? []).map((id) => byId.get(id)).filter((a): a is AuthorRow => !!a);
+    if (list.length) e.authors = list;
+  }
+  return events;
+}
+
+/** Resolve every event's book_ids in one batched query and hang `books` off each
+ * event (preserving book_ids order; missing ids are dropped). Mutates in place and
+ * returns the same array. Cheap no-op when no event has book_ids. */
+export async function attachBooks(db: D1Database, events: EventRow[]): Promise<EventRow[]> {
+  const ids = [...new Set(events.flatMap((e) => e.book_ids ?? []))];
+  if (!ids.length) return events;
+  const byId = new Map((await booksByIds(db, ids)).map((b) => [b.id, b]));
+  for (const e of events) {
+    const list = (e.book_ids ?? []).map((id) => byId.get(id)).filter((b): b is BookRow => !!b);
+    if (list.length) e.books = list;
+  }
+  return events;
 }
 
 /** Events by id (any date, deleted included), chunked to stay under D1's bind cap; date order. */
@@ -348,6 +492,8 @@ export interface MultiCityOptions {
   limit?: number;
   /** Zone for the default `from`; region groups pass their own. */
   tz?: string;
+  /** Only events with a gazetteer author on the bill (author_ids non-empty). */
+  authorsOnly?: boolean;
 }
 
 const MAX_CITIES = 60;
@@ -365,9 +511,11 @@ function buildMultiCityWhere(o: MultiCityOptions): Where | null {
   }
   const cats = [...new Set(o.categories ?? [])].slice(0, MAX_CATEGORIES);
   if (cats.length) {
-    where.push(`e.category IN (${cats.map(() => '?').join(',')})`);
-    binds.push(...cats);
+    const c = categorySql(cats);
+    where.push(c.sql);
+    binds.push(...c.binds);
   }
+  if (o.authorsOnly) where.push(AUTHORS_SQL);
   return { sql: where.join(' AND '), binds };
 }
 

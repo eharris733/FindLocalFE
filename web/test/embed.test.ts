@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { getCity } from '@findlocal/shared';
 import {
-  buildEmbedSrc, embedCityFilters, embedGroupRange, eventUrl, parseEmbedParams, siteUrl, venueUrl,
+  buildEmbedSrc, embedCityFilters, embedGroupRange, eventUrl, parseEmbedParams, siteUrl, toggleAuthorsHref, venueUrl,
 } from '../src/lib/embed.js';
 
 const O = 'https://findlocal.community';
@@ -12,6 +12,12 @@ describe('buildEmbedSrc', () => {
     expect(buildEmbedSrc(O, { widget: 'literary-new-england' })).toBe(`${O}/embed/events?cat=literary&region=new-england`);
     expect(buildEmbedSrc(O, { widget: 'New-England' })).toBe(`${O}/embed/events?region=new-england`);
     expect(buildEmbedSrc(`${O}/`, {})).toBe(`${O}/embed/events`);
+    expect(buildEmbedSrc(O, { widget: 'literary-new-england-authors' })).toBe(`${O}/embed/events?authors=1&cat=literary&region=new-england`);
+  });
+  it('authors is only ever "1"', () => {
+    expect(buildEmbedSrc(O, { city: 'boston', authors: '1' })).toBe(`${O}/embed/events?authors=1&city=boston`);
+    expect(buildEmbedSrc(O, { city: 'boston', authors: '0' })).toBe(`${O}/embed/events?city=boston`);
+    expect(buildEmbedSrc(O, { widget: 'literary-new-england-authors', authors: 'no' })).toBe(`${O}/embed/events?cat=literary&region=new-england`);
   });
   it('explicit attributes win over the preset; region beats city', () => {
     expect(buildEmbedSrc(O, { widget: 'literary-new-england', cat: 'music' })).toBe(`${O}/embed/events?cat=music&region=new-england`);
@@ -50,6 +56,23 @@ describe('parseEmbedParams', () => {
     expect(boston.campaign).toBe('boston');
     expect(parseEmbedParams(q('city=Portland%20ME')).city?.slug).toBe('portland-me');
     expect(parseEmbedParams(q('city=portland-me')).city?.name).toBe('Portland ME');
+  });
+  it('categories are validated: a typo is an error, not "all categories"; authors=1 flags author-only', () => {
+    const ok = parseEmbedParams(q('region=new-england&cat=literary,Bogus&authors=1'));
+    expect(ok.categories).toEqual(['literary']);
+    expect(ok.authorsOnly).toBe(true);
+    expect(ok.campaign).toBe('new-england-literary-authors');
+    expect(ok.filterParams.get('authors')).toBe('1'); // parseFilters sees it on the city path
+    expect(parseEmbedParams(q('region=new-england&cat=literry')).error).toBe('unknown-category');
+    expect(parseEmbedParams(q('region=new-england&cat=')).error).toBeUndefined();
+    expect(parseEmbedParams(q('city=boston&authors=0')).authorsOnly).toBe(false);
+    expect(parseEmbedParams(q('city=boston')).categories).toEqual([]);
+  });
+  it('toggleAuthorsHref flips authors=1 and keeps the rest sorted', () => {
+    const u = new URL(`${O}/embed/events?region=new-england&cat=literary&theme=dark`);
+    expect(toggleAuthorsHref(u, true)).toBe('/embed/events?authors=1&cat=literary&region=new-england&theme=dark');
+    expect(toggleAuthorsHref(new URL(`${O}/embed/events?authors=1&cat=literary`), false)).toBe('/embed/events?cat=literary');
+    expect(toggleAuthorsHref(new URL(`${O}/embed/events?authors=1`), false)).toBe('/embed/events');
   });
   it('defaults and clamps view/theme/limit, sanitises partner, accepts from/to', () => {
     const p = parseEmbedParams(q('city=boston&view=grid&theme=neon&limit=9999&partner=<b>ac me</b>&from=2026-10-01&to=2026-10-31'));

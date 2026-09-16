@@ -87,6 +87,7 @@ curl '${BASE}/api/venues?city=chicago'`}</code></pre></div>
           <tr><td><code>tod</code></td><td>Comma list of <code>morning</code>, <code>afternoon</code>, <code>evening</code></td><td>Time of day of the start time</td></tr>
           <tr><td><code>region</code></td><td>Neighborhood label, e.g. <code>Brooklyn</code>, <code>Cambridge</code></td><td>Exact match. Use <code>/api/venues</code> to see the labels a city uses.</td></tr>
           <tr><td><code>q</code></td><td>Free text, ≤ 100 chars</td><td>Matches event title and venue name</td></tr>
+          <tr><td><code>authors</code></td><td><code>1</code></td><td>Only events with a known author on the bill (literary events whose author is in our author index)</td></tr>
           <tr><td><code>page</code></td><td>1-based</td><td>100 events per page by default</td></tr>
           <tr><td><code>limit</code></td><td>1–500</td><td>Overrides the page size</td></tr>
           <tr><td><code>venue</code></td><td>Venue uuid</td><td>Upcoming events at one venue. The city is taken from the venue (<code>city=</code> is ignored), the default <code>limit</code> is 500, and an unknown venue returns <code>404</code>. Other filters still apply.</td></tr>

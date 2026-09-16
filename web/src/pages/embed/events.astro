@@ -1,18 +1,26 @@
 ---
 // /embed/events — the page public/widget.js frames on partner sites.
 // Query contract (web/src/lib/embed.ts): region=<group> | city=<slug|name>,
-// cat, when | from,to, view=list|calendar|map, limit<=300, theme, partner.
+// cat, when | from,to, view=list|calendar|map, limit<=300, theme, partner,
+// authors=1 (only events with a known author on the bill).
 // Region groups query several cities at once (listUpcomingEventsForCities);
 // single cities use the site's own filter contract. Never reads locals.city.
+// Literary rows carry a cover/author thumbnail, an author line whose names link
+// to a credited Bookshop.org book, and a "Buy the book" pill (exact ISBN only).
 import EmbedLayout from '../../layouts/EmbedLayout.astro';
 import LeafletMap, { type MapMarker } from '../../components/LeafletMap.astro';
-import { getDb, listUpcomingEvents, listUpcomingEventsForCities, type EventRow } from '../../lib/db.js';
-import { embedCityFilters, embedGroupRange, eventUrl, parseEmbedParams, siteUrl, venueUrl } from '../../lib/embed.js';
+import {
+  attachAuthors, attachBooks, getDb, latestBooksByAuthors, listUpcomingEvents, listUpcomingEventsForCities, type EventRow,
+} from '../../lib/db.js';
+import { embedCityFilters, embedGroupRange, eventUrl, parseEmbedParams, siteUrl, toggleAuthorsHref, venueUrl } from '../../lib/embed.js';
+import { cardAuthors, cardThumb, eventBuyUrl, type EventCard } from '../../lib/embedCard.js';
+import { BOOKSHOP_LINK_REL, BOOKSHOP_STOREFRONT_URL } from '../../lib/bookshop.js';
 import { categoryLabel, dayHeader } from '../../lib/format.js';
-import { CATEGORY_SLUGS, formatTime, regionGroupCities } from '@findlocal/shared';
+import { formatTime, regionGroupCities, regionGroupCityNames } from '@findlocal/shared';
 
 const p = parseEmbedParams(Astro.url.searchParams);
-const cats = (p.filterParams.get('cat') ?? '').split(',').map((s) => s.trim().toLowerCase()).filter((s) => CATEGORY_SLUGS.includes(s));
+const cats = p.categories;
+const literaryScope = cats.includes('literary');
 const catLabel = cats.length ? cats.map(categoryLabel).join(' & ') : 'Upcoming';
 const scopeName = p.group?.name ?? p.city?.name ?? '';
 const tz = p.group?.tz ?? p.city?.tz ?? 'America/New_York';
@@ -24,23 +32,46 @@ if (p.error) {
 } else if (p.group) {
   const range = embedGroupRange(p, p.group);
   from = range.from;
-  events = await listUpcomingEventsForCities(getDb(), { cities: regionGroupCities(p.group).map((c) => c.name), categories: cats, from: range.from, to: range.to, limit: p.limit + 1, tz: p.group.tz });
+  events = await listUpcomingEventsForCities(getDb(), {
+    cities: regionGroupCityNames(p.group), categories: cats, from: range.from, to: range.to,
+    limit: p.limit + 1, tz: p.group.tz, authorsOnly: p.authorsOnly,
+  });
 } else if (p.city) {
-  const f = embedCityFilters(p, p.city);
+  const f = embedCityFilters(p, p.city); // parseFilters reads authors=1 itself
   from = f.from ?? '';
   events = await listUpcomingEvents(getDb(), f);
 }
 const truncated = events.length > p.limit;
 if (truncated) events = events.slice(0, p.limit);
 
+// Literary enrichment: linked books, gazetteer authors and each author's latest
+// buyable book (for the author-name link + cover fallback). Cheap no-ops otherwise.
+await attachBooks(getDb(), events);
+await attachAuthors(getDb(), events);
+const latest = await latestBooksByAuthors(getDb(), events.flatMap((e) => e.author_ids));
+
 const campaign = p.campaign;
+/** Where a row happened, for cross-city lists: town or city partition. */
+const place = (e: EventRow) => (p.group ? e.venue_region || e.region || e.city : e.venue_region || e.region || '');
+const cards: EventCard[] = events.map((e) => ({
+  id: e.id, title: e.title, date: e.event_date, time: formatTime(e.start_time), venue: e.venue_name, place: place(e),
+  url: eventUrl(e.id, campaign, p.partner), buyUrl: eventBuyUrl(e), thumb: cardThumb(e, latest), authors: cardAuthors(e, latest),
+}));
+// Bookshop.org support footer: literary widgets, or any set that resolved a buyable book — never under an empty list.
+const showBookshop = cards.length > 0 && (literaryScope || cards.some((c) => c.buyUrl));
+const showAuthorsToggle = literaryScope || p.authorsOnly;
+const authorsOnHref = toggleAuthorsHref(Astro.url, true);
+const authorsOffHref = toggleAuthorsHref(Astro.url, false);
+
 const seeAllHref = siteUrl(p.group ? '/' : `/city/${p.city?.slug ?? 'boston'}`, campaign, p.partner);
 const homeHref = siteUrl('/', campaign, p.partner);
-const title = `${catLabel} events in ${scopeName} · FindLocal widget`;
+const heading = p.authorsOnly ? `Author events in ${scopeName}` : `${catLabel} events in ${scopeName}`;
+const title = `${heading} · FindLocal widget`;
+const errorParam = p.error === 'unknown-region' ? 'region' : p.error === 'unknown-city' ? 'city' : 'cat';
 
 // Date-grouped agenda.
-const byDay = new Map<string, EventRow[]>();
-for (const e of events) byDay.set(e.event_date, [...(byDay.get(e.event_date) ?? []), e]);
+const byDay = new Map<string, EventCard[]>();
+for (const c of cards) byDay.set(c.date, [...(byDay.get(c.date) ?? []), c]);
 
 // One marker per venue (as EventMap.astro), links carrying UTM params.
 const byVenue = new Map<string, MapMarker>();
@@ -60,12 +91,7 @@ const center = p.city
   ? { lat: p.city.lat, lng: p.city.lng, zoom: p.city.zoom }
   : { lat: groupCities[0]?.lat ?? 42.36, lng: groupCities[0]?.lng ?? -71.06, zoom: 7 };
 
-/** Where a row happened, for cross-city lists: town or city partition. */
-const place = (e: EventRow) => (p.group ? e.venue_region || e.region || e.city : e.venue_region || e.region || '');
-const data = {
-  tz, from, truncated, seeAll: seeAllHref,
-  events: events.map((e) => ({ id: e.id, title: e.title, date: e.event_date, time: formatTime(e.start_time), venue: e.venue_name, place: place(e), url: eventUrl(e.id, campaign, p.partner) })),
-};
+const data = { tz, from, truncated, seeAll: seeAllHref, buyRel: BOOKSHOP_LINK_REL, authorsOnly: p.authorsOnly, events: cards };
 const json = JSON.stringify(data).replace(/</g, '\\u003c');
 const views: { id: 'list' | 'calendar' | 'map'; label: string }[] = [
   { id: 'list', label: 'List' },
@@ -77,33 +103,58 @@ const views: { id: 'list' | 'calendar' | 'map'; label: string }[] = [
   {p.error ? (
     <div class="fl-empty">
       <h2>This widget is misconfigured</h2>
-      <p>Unknown {p.error === 'unknown-region' ? 'region' : 'city'} <code>{Astro.url.searchParams.get(p.error === 'unknown-region' ? 'region' : 'city')}</code>. See the <a href="https://findlocal.community/developers/widgets">widget documentation</a> for the supported values.</p>
+      <p>Unknown {p.error === 'unknown-category' ? 'category' : errorParam} <code>{Astro.url.searchParams.get(errorParam)}</code>. See the <a href="https://findlocal.community/developers/widgets">widget documentation</a> for the supported values.</p>
     </div>
   ) : (
     <>
       <header class="fl-head">
-        <h1>{catLabel} events in {scopeName}</h1>
-        <div class="fl-tabs" role="tablist" aria-label="View">
-          {views.map((v) => (
-            <button type="button" role="tab" id={`tab-${v.id}`} aria-controls={`fl-${v.id}`} aria-selected={p.view === v.id ? 'true' : 'false'} data-view={v.id}>{v.label}</button>
-          ))}
+        <h1>{heading}</h1>
+        <div class="fl-controls">
+          {showAuthorsToggle && (
+            <a class="fl-chip" href={p.authorsOnly ? authorsOffHref : authorsOnHref} target="_self" aria-pressed={p.authorsOnly ? 'true' : 'false'} title={p.authorsOnly ? 'Show every event' : 'Only events with an author on the bill'}>
+              <svg width="12" height="12" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm0 2c-3.3 0-8 1.7-8 5v1h16v-1c0-3.3-4.7-5-8-5Z"/></svg>
+              Author events
+            </a>
+          )}
+          <div class="fl-tabs" role="tablist" aria-label="View">
+            {views.map((v) => (
+              <button type="button" role="tab" id={`tab-${v.id}`} aria-controls={`fl-${v.id}`} aria-selected={p.view === v.id ? 'true' : 'false'} data-view={v.id}>{v.label}</button>
+            ))}
+          </div>
         </div>
       </header>
 
       <section id="fl-list" role="tabpanel" aria-labelledby="tab-list" hidden={p.view !== 'list'}>
-        {events.length === 0 ? (
-          <p class="fl-empty">Nothing listed yet — listings update daily. <a href={seeAllHref} rel="noopener">Browse FindLocal</a>.</p>
+        {cards.length === 0 ? (
+          p.authorsOnly ? (
+            <p class="fl-empty">No author events listed yet — <a href={authorsOffHref} target="_self">see all {literaryScope ? 'literary' : ''} events</a> or <a href={seeAllHref} rel="noopener">browse FindLocal</a>.</p>
+          ) : (
+            <p class="fl-empty">Nothing listed yet — listings update daily. <a href={seeAllHref} rel="noopener">Browse FindLocal</a>.</p>
+          )
         ) : (
           [...byDay.entries()].map(([day, list]) => (
             <div class="fl-day">
               <h2 class="fl-day-h">{dayHeader(day, tz)}</h2>
               <ul class="fl-rows">
-                {list.map((e) => (
+                {list.map((c) => (
                   <li class="fl-row">
-                    <span class="fl-time">{formatTime(e.start_time) || '—'}</span>
+                    <span class="fl-time">{c.time || '—'}</span>
+                    <span class="fl-thumb">
+                      {c.thumb ? (
+                        <img class={c.thumb.kind} src={c.thumb.src} alt={c.thumb.alt} width="48" height="64" loading="lazy" decoding="async" />
+                      ) : (
+                        <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M6 2h11a3 3 0 0 1 3 3v14a3 3 0 0 1-3 3H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Zm0 16v2h11a1 1 0 0 0 1-1v-1H6Zm2-12v2h8V6H8Z"/></svg>
+                      )}
+                    </span>
                     <span class="fl-main">
-                      <a class="fl-title" href={eventUrl(e.id, campaign, p.partner)} rel="noopener">{e.title}</a>
-                      <span class="fl-where">{e.venue_name}{place(e) ? ` · ${place(e)}` : ''}</span>
+                      <a class="fl-title" href={c.url} rel="noopener">{c.title}</a>
+                      {c.authors.length > 0 && (
+                        <span class="fl-with">with {c.authors.map((a, i) => (
+                          <>{i > 0 && ', '}{a.href ? <a href={a.href} rel={BOOKSHOP_LINK_REL}>{a.name}</a> : <span>{a.name}</span>}</>
+                        ))}</span>
+                      )}
+                      <span class="fl-where">{c.venue}{c.place ? ` · ${c.place}` : ''}</span>
+                      {c.buyUrl && <a class="fl-buy" href={c.buyUrl} rel={BOOKSHOP_LINK_REL}>Buy the book</a>}
                     </span>
                   </li>
                 ))}
@@ -132,18 +183,39 @@ const views: { id: 'list' | 'calendar' | 'map'; label: string }[] = [
         )}
       </section>
 
+      {showBookshop && (
+        <footer class="fl-support">
+          <a href={BOOKSHOP_STOREFRONT_URL} rel={BOOKSHOP_LINK_REL}>Buy featured books on Bookshop.org</a> — supports independent bookstores &amp; Find Local.
+        </footer>
+      )}
+
       <script is:inline type="application/json" id="fl-data" set:html={json} />
     </>
   )}
 </EmbedLayout>
 
 <script>
-  type Ev = { id: string; title: string; date: string; time: string; venue: string; place: string; url: string };
-  type Data = { tz: string; from: string; truncated: boolean; seeAll: string; events: Ev[] };
+  type Author = { name: string; href: string | null };
+  type Thumb = { src: string; kind: 'cover' | 'photo' | 'image'; alt: string };
+  type Ev = { id: string; title: string; date: string; time: string; venue: string; place: string; url: string; buyUrl: string | null; thumb: Thumb | null; authors: Author[] };
+  type Data = { tz: string; from: string; truncated: boolean; seeAll: string; buyRel: string; authorsOnly: boolean; events: Ev[] };
   const raw = document.getElementById('fl-data')?.textContent;
-  const data: Data = raw ? JSON.parse(raw) : { tz: 'America/New_York', from: '', truncated: false, seeAll: '', events: [] };
+  const data: Data = raw ? JSON.parse(raw) : { tz: 'America/New_York', from: '', truncated: false, seeAll: '', buyRel: 'sponsored nofollow noopener', authorsOnly: false, events: [] };
   const resize = () => document.dispatchEvent(new Event('fl:resize'));
   const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] as string);
+  const PLACEHOLDER = '<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M6 2h11a3 3 0 0 1 3 3v14a3 3 0 0 1-3 3H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Zm0 16v2h11a1 1 0 0 0 1-1v-1H6Zm2-12v2h8V6H8Z"/></svg>';
+
+  // Same row markup as the server-rendered list (keep in sync with the template above).
+  function rowHtml(e: Ev): string {
+    const thumb = e.thumb
+      ? `<img class="${e.thumb.kind}" src="${esc(e.thumb.src)}" alt="${esc(e.thumb.alt)}" width="48" height="64" loading="lazy" decoding="async">`
+      : PLACEHOLDER;
+    const authors = e.authors.length
+      ? `<span class="fl-with">with ${e.authors.map((a) => (a.href ? `<a href="${esc(a.href)}" rel="${esc(data.buyRel)}">${esc(a.name)}</a>` : `<span>${esc(a.name)}</span>`)).join(', ')}</span>`
+      : '';
+    const buy = e.buyUrl ? `<a class="fl-buy" href="${esc(e.buyUrl)}" rel="${esc(data.buyRel)}">Buy the book</a>` : '';
+    return `<li class="fl-row"><span class="fl-time">${esc(e.time || '—')}</span><span class="fl-thumb">${thumb}</span><span class="fl-main"><a class="fl-title" href="${esc(e.url)}" rel="noopener">${esc(e.title)}</a>${authors}<span class="fl-where">${esc(e.venue)}${e.place ? ' · ' + esc(e.place) : ''}</span>${buy}</span></li>`;
+  }
 
   // ---- view switcher
   const panels: Record<string, HTMLElement | null> = {
@@ -196,7 +268,7 @@ const views: { id: 'list' | 'calendar' | 'map'; label: string }[] = [
     const [y, m, d] = ymd.split('-').map(Number) as [number, number, number];
     const label = new Date(Date.UTC(y, m - 1, d)).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'UTC' });
     box.innerHTML = `<h3 class="fl-day-h">${esc(label)}</h3>` + (list.length
-      ? `<ul class="fl-rows">${list.map((e) => `<li class="fl-row"><span class="fl-time">${esc(e.time || '—')}</span><span class="fl-main"><a class="fl-title" href="${esc(e.url)}" rel="noopener">${esc(e.title)}</a><span class="fl-where">${esc(e.venue)}${e.place ? ' · ' + esc(e.place) : ''}</span></span></li>`).join('')}</ul>`
+      ? `<ul class="fl-rows">${list.map(rowHtml).join('')}</ul>`
       : '<p class="fl-empty">Nothing listed this day.</p>');
     resize();
   }
@@ -255,21 +327,39 @@ const views: { id: 'list' | 'calendar' | 'map'; label: string }[] = [
 <style>
   .fl-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem 1rem; margin: 0 0 0.6rem; }
   h1 { font-size: 1.05rem; }
+  .fl-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
   .fl-tabs { display: inline-flex; border: 1px solid rgb(var(--border)); border-radius: 999px; padding: 2px; background: rgb(var(--surface-accent)); }
   .fl-tabs button { border: 0; background: transparent; color: rgb(var(--text-2)); font-weight: 600; font-size: 0.82rem; padding: 0.3rem 0.75rem; border-radius: 999px; cursor: pointer; }
   .fl-tabs button[aria-selected='true'] { background: rgb(var(--teal)); color: rgb(var(--text-inverse)); }
+  .fl-chip { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.32rem 0.75rem; border: 1px solid rgb(var(--border)); border-radius: 999px; background: rgb(var(--surface)); color: rgb(var(--text-2)); font-weight: 600; font-size: 0.82rem; line-height: 1; white-space: nowrap; }
+  .fl-chip:hover { text-decoration: none; border-color: rgb(var(--teal)); color: rgb(var(--teal)); }
+  .fl-chip[aria-pressed='true'] { background: rgb(var(--teal)); border-color: rgb(var(--teal)); color: rgb(var(--text-inverse)); }
+  .fl-chip[aria-pressed='true']:hover { color: rgb(var(--text-inverse)); }
   .fl-day { margin: 0.6rem 0 0; }
   .fl-day-h, :global(.fl-day-h) { font-family: var(--font-head); font-size: 0.85rem; font-weight: 700; color: rgb(var(--teal)); margin: 0 0 0.3rem; padding-bottom: 0.25rem; border-bottom: 1px solid rgb(var(--border)); }
   .fl-rows, :global(.fl-rows) { list-style: none; margin: 0; padding: 0; }
-  .fl-row, :global(.fl-row) { display: grid; grid-template-columns: 4.6rem 1fr; gap: 0.5rem; padding: 0.4rem 0; border-bottom: 1px solid rgb(var(--border) / 0.6); }
+  .fl-row, :global(.fl-row) { display: grid; grid-template-columns: 4.6rem 48px minmax(0, 1fr); gap: 0.5rem 0.65rem; align-items: start; padding: 0.5rem 0; border-bottom: 1px solid rgb(var(--border) / 0.6); }
   .fl-row:last-child, :global(.fl-row:last-child) { border-bottom: 0; }
   .fl-time, :global(.fl-time) { color: rgb(var(--orange)); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; padding-top: 0.15rem; }
-  .fl-main, :global(.fl-main) { min-width: 0; display: flex; flex-direction: column; }
+  .fl-thumb, :global(.fl-thumb) { display: flex; align-items: center; justify-content: center; width: 48px; height: 64px; border-radius: 6px; overflow: hidden; background: rgb(var(--surface-sunken)); color: rgb(var(--text-3)); box-shadow: inset 0 0 0 1px rgb(var(--border) / 0.6); }
+  .fl-thumb img, :global(.fl-thumb img) { display: block; width: 100%; height: 100%; object-fit: cover; }
+  .fl-thumb img.cover, :global(.fl-thumb img.cover) { object-fit: contain; }
+  .fl-main, :global(.fl-main) { min-width: 0; display: flex; flex-direction: column; gap: 0.1rem; }
   .fl-title, :global(.fl-title) { font-family: var(--font-head); font-weight: 600; color: rgb(var(--text)); line-height: 1.25; }
+  .fl-with, :global(.fl-with) { color: rgb(var(--text-2)); font-size: 0.82rem; line-height: 1.3; }
+  .fl-with a, :global(.fl-with a) { color: rgb(var(--teal)); font-weight: 600; }
   .fl-where, :global(.fl-where) { color: rgb(var(--text-2)); font-size: 0.82rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .fl-empty, :global(.fl-empty) { color: rgb(var(--text-2)); padding: 1rem 0; margin: 0; }
   .fl-more, :global(.fl-more) { color: rgb(var(--text-2)); font-size: 0.85rem; margin: 0.8rem 0 0; }
+  .fl-buy, :global(.fl-buy) { align-self: flex-start; display: inline-flex; align-items: center; margin-top: 0.3rem; padding: 0.18rem 0.6rem; border: 1px solid rgb(var(--orange)); border-radius: 999px; font-size: 0.74rem; font-weight: 700; line-height: 1.2; color: rgb(var(--orange)); }
+  .fl-buy:hover, :global(.fl-buy:hover) { text-decoration: none; background: rgb(var(--orange)); color: rgb(var(--text-inverse)); }
+  .fl-support { margin: 1rem 0 0; padding-top: 0.8rem; border-top: 1px solid rgb(var(--border)); font-size: 0.82rem; color: rgb(var(--text-2)); }
+  .fl-support a { color: rgb(var(--orange)); font-weight: 700; }
   code { background: rgb(var(--surface-sunken)); padding: 0 0.3rem; border-radius: 4px; }
+  @media (max-width: 420px) {
+    .fl-row, :global(.fl-row) { grid-template-columns: 3.6rem 40px minmax(0, 1fr); }
+    .fl-thumb, :global(.fl-thumb) { width: 40px; height: 54px; }
+  }
 
   .fl-cal-nav { display: flex; align-items: center; justify-content: space-between; margin: 0 0 0.5rem; }
   .fl-cal-title { font-size: 0.95rem; }

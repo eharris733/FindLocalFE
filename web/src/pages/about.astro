@@ -1,6 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import Breadcrumbs from '../components/Breadcrumbs.astro';
+import { BOOKSHOP_LINK_REL, BOOKSHOP_STOREFRONT_URL } from '../lib/bookshop.js';
 import { CITIES } from '@findlocal/shared';
 export const prerender = true;
 ---
@@ -46,6 +47,14 @@ export const prerender = true;
       We mostly don't. We're volunteers with a passion for promoting local artists and businesses, and we believe some things
       are worth doing even if you don't get paid. Some outbound links may be affiliate links; that never changes the price
       you pay or which events we show.
+    </p>
+    <h3 id="support">Does buying books support Find Local?</h3>
+    <p>
+      Yes — and it's the easiest way to help. Our literary listings link the featured book to
+      <a href={BOOKSHOP_STOREFRONT_URL} rel={BOOKSHOP_LINK_REL} target="_blank">our Bookshop.org storefront</a>, which funds
+      independent bookstores instead of Amazon. When you buy a book through one of those links, Find Local earns a small
+      affiliate commission at no extra cost to you. Buy your next read there and you support local bookshops and this project
+      at once.
     </p>
     <h3>Would you be open to making money?</h3>
     <p>

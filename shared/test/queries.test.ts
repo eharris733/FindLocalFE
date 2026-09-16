@@ -307,16 +307,20 @@ describe('aggregates', () => {
 
 describe('listUpcomingEventsForCities (region groups)', () => {
   const NE = ['Boston', 'Providence', 'Portland ME'];
-  const literaryNE = EVENTS.filter((e) => NE.includes(e.city) && e.category === 'literary' && !e.deleted && e.date >= TODAY);
+  // `literary` is venue-scoped: the event's own category OR a literary venue (bookstore/library).
+  const literaryVenues = new Set([V.athenaeum, V.longfellow]);
+  const literaryNE = EVENTS.filter((e) => NE.includes(e.city) && (e.category === 'literary' || literaryVenues.has(e.venue)) && !e.deleted && e.date >= TODAY);
 
-  it('scopes to the listed cities and category, ordered by date/time/id, no recurrence info', async () => {
+  it('scopes to the listed cities and category (venue-widened for literary), ordered by date/time/id, no recurrence info', async () => {
     const rows = await listUpcomingEventsForCities(db, { cities: NE, categories: ['literary'] });
     expect(rows.length).toBe(literaryNE.length);
     expect(titles(rows)).toContain('Poetry Reading');
     expect(titles(rows)).toContain('Longfellow Lecture');
+    expect(titles(rows)).toContain('Bookstore Storytime'); // category family, literary venue
+    expect(titles(rows)).toContain('Athenaeum Concert'); // category music, literary venue
     expect(titles(rows)).not.toContain('NYC Poetry Slam');
     expect(titles(rows)).not.toContain('Cancelled Signing');
-    expect(titles(rows)).not.toContain('Athenaeum Concert');
+    expect(titles(rows)).not.toContain('Morning Yoga'); // music venue, not literary
     for (let i = 1; i < rows.length; i++) {
       const a = rows[i - 1]!, b = rows[i]!;
       expect(a.event_date <= b.event_date).toBe(true);
@@ -345,6 +349,20 @@ describe('listUpcomingEventsForCities (region groups)', () => {
   it('count matches the list and dedupes cities', async () => {
     const n = await countUpcomingEventsForCities(db, { cities: [...NE, 'Boston', ' Providence '], categories: ['literary'] });
     expect(n).toBe(literaryNE.length);
+  });
+  it('authorsOnly keeps only events with a gazetteer author on the bill (multi-city and single-city)', async () => {
+    const rows = await listUpcomingEventsForCities(db, { cities: NE, categories: ['literary'], authorsOnly: true });
+    const expected = literaryNE.filter((e) => e.author_ids.length > 0);
+    expect(rows.length).toBe(expected.length);
+    expect(rows.every((r) => r.author_ids.length > 0)).toBe(true);
+    expect(titles(rows)).toContain('Rex Prolific Signs His New One');
+    expect(titles(rows)).not.toContain('Fiction Book Club: The Newer One'); // book linked, nobody on the bill
+    expect(await countUpcomingEventsForCities(db, { cities: NE, categories: ['literary'], authorsOnly: true })).toBe(expected.length);
+    const single = await listUpcomingEvents(db, parseFilters(new URLSearchParams('authors=1'), getCity('Portland ME')!));
+    expect(titles(single).sort()).toEqual(['An Evening with Ada Debut', 'Local Author Nell Nobook']);
+    // Single-city category filter is venue-widened the same way.
+    const lit = await listUpcomingEvents(db, parseFilters(new URLSearchParams('cat=literary'), getCity('Portland ME')!));
+    expect(titles(lit)).toContain('Bookstore Storytime');
   });
   it('stays under the D1 bind cap with many cities and categories', async () => {
     const cities = Array.from({ length: 100 }, (_, i) => `City ${i}`).concat(NE);

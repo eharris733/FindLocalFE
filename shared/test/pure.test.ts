@@ -133,6 +133,11 @@ describe('filters', () => {
     expect(canonicalQuery(new URLSearchParams('page=2&max=20.5&region=Back+Bay'))).toBe('max=20.5&page=2&region=Back+Bay');
     expect(canonicalQuery(new URLSearchParams('when=2026-10-31'))).toBe('when=2026-10-31');
     expect(canonicalQuery(new URLSearchParams('performer=Ann+Patchett&when=anytime'))).toBe('performer=Ann+Patchett');
+    expect(canonicalQuery(new URLSearchParams('authors=1&cat=literary'))).toBe('authors=1&cat=literary');
+    expect(canonicalQuery(new URLSearchParams('authors=0'))).toBe('');
+    expect(parseFilters(new URLSearchParams('authors=1'), NY, NOW).authorsOnly).toBe(true);
+    expect(parseFilters(new URLSearchParams('authors=yes'), NY, NOW).authorsOnly).toBeUndefined();
+    expect(filtersToQuery({ authorsOnly: true })).toBe('authors=1');
   });
   it('filtersToQuery round-trips through parseFilters', () => {
     const q = filtersToQuery({ when: 'today', categories: ['music'], free: true, page: 2, text: 'x' });

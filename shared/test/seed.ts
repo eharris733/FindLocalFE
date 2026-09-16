@@ -33,10 +33,34 @@ interface Ev {
   deleted?: boolean;
   source?: string;
   performers?: { name: string; role: string; url?: string }[] | string[];
+  book_ids?: string[];
+  author_ids?: string[];
 }
 
 let n = 0;
 export const eid = (i: number) => `aaaaaaaa-0000-4000-8000-${String(i).padStart(12, '0')}`;
+
+// Literary gazetteer fixture: one book with an ISBN-13 (buy link deep-links it) and
+// one work-slug book with no ISBN yet (buy link falls back to the storefront).
+export const BK_ISBN = '9780306406157';
+export const BK_SLUG = 'collected-poems-work';
+export const AUTHOR_ID = 'ada-debut';
+export const BOOK_EVENT_ISBN = 'aaaaaaaa-0000-4000-8000-00000000b001';
+export const BOOK_EVENT_SLUG = 'aaaaaaaa-0000-4000-8000-00000000b002';
+export const AUTHOR_ONLY_EVENT = 'aaaaaaaa-0000-4000-8000-00000000b003';
+// Widget fixtures: an author with two ISBN books (only the newer has a cover) plus a
+// Bookmanager-style book whose id IS the ISBN (isbn13 NULL); an author with no book;
+// a book club discussing a book with nobody on the bill.
+export const AUTHOR_TWO = 'rex-prolific';
+export const AUTHOR_NOBOOK = 'nell-nobook';
+export const BK_OLD = '9780000000010';
+export const BK_NEW = '9780000000027';
+export const BK_BOOKMANAGER = '9780000000034';
+export const TWO_BOOK_AUTHOR_EVENT = 'aaaaaaaa-0000-4000-8000-00000000b004';
+export const NOBOOK_AUTHOR_EVENT = 'aaaaaaaa-0000-4000-8000-00000000b005';
+export const BOOK_CLUB_EVENT = 'aaaaaaaa-0000-4000-8000-00000000b006';
+export const STORYTIME_EVENT = 'aaaaaaaa-0000-4000-8000-00000000b007';
+export const AUTHOR_PHOTO = 'https://covers.openlibrary.org/a/id/123-M.jpg';
 
 export const EVENTS: Required<Ev>[] = [];
 function ev(e: Ev) {
@@ -57,6 +81,8 @@ function ev(e: Ev) {
     deleted: e.deleted ?? false,
     source: e.source ?? 'scraper_cloudflare',
     performers: e.performers ?? [],
+    book_ids: e.book_ids ?? [],
+    author_ids: e.author_ids ?? [],
   });
 }
 
@@ -100,11 +126,18 @@ for (let i = 0; i < 12; i++) {
 
 // New England literary fixture (region-group / multi-city queries).
 ev({ venue: V.sinclair, city: 'Boston', region: 'Cambridge', title: 'Poetry Reading', date: D(3), time: '19:00', category: 'literary', event_type: ['poetry'], price: 'Free', price_amount: 0 });
-ev({ venue: V.athenaeum, city: 'Providence', region: 'Providence', title: 'Author Talk: Debut Novel', date: D(2), time: '18:00', category: 'literary', event_type: ['author talk'], price: 'Free', price_amount: 0, performers: ['Legacy Stringname'] });
+ev({ id: BOOK_EVENT_ISBN, venue: V.athenaeum, city: 'Providence', region: 'Providence', title: 'Author Talk: Debut Novel', date: D(2), time: '18:00', category: 'literary', event_type: ['author talk'], price: 'Free', price_amount: 0, performers: ['Legacy Stringname'], book_ids: [BK_ISBN] });
 ev({ venue: V.athenaeum, city: 'Providence', region: 'Providence', title: 'Book Club', date: D(5), time: '18:30', category: 'literary', event_type: ['book club'] });
 ev({ venue: V.athenaeum, city: 'Providence', region: 'Providence', title: 'Cancelled Signing', date: D(9), time: '18:00', category: 'literary', deleted: true });
 ev({ venue: V.athenaeum, city: 'Providence', region: 'Providence', title: 'Athenaeum Concert', date: D(4), time: '20:00', category: 'music' });
-ev({ venue: V.longfellow, city: 'Portland ME', region: 'Portland', title: 'Longfellow Lecture', date: D(2), time: '19:00', category: 'literary', event_type: ['author event'] });
+ev({ id: BOOK_EVENT_SLUG, venue: V.longfellow, city: 'Portland ME', region: 'Portland', title: 'Longfellow Lecture', date: D(2), time: '19:00', category: 'literary', event_type: ['author event'], performers: [{ name: 'Walt Slug', role: 'author' }], book_ids: [BK_SLUG] });
+// Author-only literary event (no linked book): the page resolves the author's other books.
+ev({ id: AUTHOR_ONLY_EVENT, venue: V.longfellow, city: 'Portland ME', region: 'Portland', title: 'An Evening with Ada Debut', date: D(3), time: '19:00', category: 'literary', event_type: ['author talk'], performers: [{ name: 'Ada Debut', role: 'author' }], author_ids: [AUTHOR_ID] });
+ev({ id: TWO_BOOK_AUTHOR_EVENT, venue: V.athenaeum, city: 'Providence', region: 'Providence', title: 'Rex Prolific Signs His New One', date: D(6), time: '19:00', category: 'literary', event_type: ['book signing'], performers: [{ name: 'Rex Prolific', role: 'author' }, { name: 'Rex. Prolific', role: 'author' }], author_ids: [AUTHOR_TWO] });
+ev({ id: NOBOOK_AUTHOR_EVENT, venue: V.longfellow, city: 'Portland ME', region: 'Portland', title: 'Local Author Nell Nobook', date: D(7), time: '18:00', category: 'literary', event_type: ['author event'], image: 'https://img/nell.jpg', performers: [{ name: 'Nell Nobook', role: 'author' }], author_ids: [AUTHOR_NOBOOK] });
+ev({ id: BOOK_CLUB_EVENT, venue: V.athenaeum, city: 'Providence', region: 'Providence', title: 'Fiction Book Club: The Newer One', date: D(8), time: '18:30', category: 'literary', event_type: ['book club'], book_ids: [BK_NEW] });
+// Classified `family` by its source tokens, but at a literary venue: in the literary widget.
+ev({ id: STORYTIME_EVENT, venue: V.longfellow, city: 'Portland ME', region: 'Portland', title: 'Bookstore Storytime', date: D(6), time: '10:00', category: 'family', event_type: ['storytime'], price: 'Free', price_amount: 0 });
 ev({ venue: V.longfellow, city: 'Portland ME', region: 'Portland', title: 'Story Hour', date: D(5), time: '10:00', category: 'literary', event_type: ['storytelling'], price: 'Free', price_amount: 0 });
 ev({ venue: V.longfellow, city: 'Portland ME', region: 'Portland', title: 'Writers Workshop', date: D(9), time: '18:00', category: 'literary', event_type: ['writing'] });
 ev({ venue: V.mercury, city: 'New York', region: 'Manhattan', title: 'NYC Poetry Slam', date: D(2), time: '20:00', category: 'literary', event_type: ['poetry'] });
@@ -125,14 +158,33 @@ export async function seed(db: D1Database): Promise<void> {
   );
   const es = db.prepare(
     `INSERT INTO events (id, venue_id, city, region, source, external_id, title, event_date, start_time, category,
-       event_type, performers, price, price_amount, image_url, is_deleted, updated_at)
-     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+       event_type, performers, book_ids, author_ids, price, price_amount, image_url, is_deleted, updated_at)
+     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
   );
+  // books: ISBN-13-keyed (rich metadata, linked to an author) + a work-slug (no ISBN during backfill).
+  const books = [
+    [BK_ISBN, 'The Debut Novel', 'the debut novel', BK_ISBN, 'A Story in Parts', 'https://covers.test/debut.jpg', 'Indie Press', 2026, JSON.stringify([AUTHOR_ID])],
+    [BK_SLUG, 'Collected Poems', 'collected poems', null, null, null, null, null, '[]'],
+    [BK_OLD, 'The Older One', 'the older one', BK_OLD, null, null, 'Indie Press', 2015, JSON.stringify([AUTHOR_TWO])],
+    [BK_NEW, 'The Newer One', 'the newer one', BK_NEW, null, 'https://covers.openlibrary.org/b/id/456-L.jpg', 'Indie Press', 2024, JSON.stringify([AUTHOR_TWO])],
+    [BK_BOOKMANAGER, 'The Bookmanager One', 'the bookmanager one', null, null, null, null, 2026, JSON.stringify([AUTHOR_TWO])],
+  ];
+  const bs = db.prepare(
+    `INSERT INTO books (id, title, title_key, isbn13, subtitle, cover_url, publisher, pub_year, author_ids) VALUES (?,?,?,?,?,?,?,?,?)`,
+  );
+  const authors = [
+    [AUTHOR_ID, 'Ada Debut', 'ada debut', AUTHOR_PHOTO, 'OL1A'],
+    [AUTHOR_TWO, 'Rex Prolific', 'rex prolific', null, 'OL2A'],
+    [AUTHOR_NOBOOK, 'Nell Nobook', 'nell nobook', null, null],
+  ];
+  const as = db.prepare(`INSERT INTO authors (id, canonical_name, name_key, photo_url, openlibrary_id) VALUES (?,?,?,?,?)`);
   await db.batch([
     ...venues.map((v) => vs.bind(...v)),
+    ...books.map((b) => bs.bind(...b)),
+    ...authors.map((a) => as.bind(...a)),
     ...EVENTS.map((e, i) =>
       es.bind(e.id, e.venue, e.city, e.region, e.source, `ext-${i}`, e.title, e.date, e.time, e.category,
-        JSON.stringify(e.event_type), JSON.stringify(e.performers), e.price, e.price_amount, e.image, e.deleted ? 1 : 0, `2026-01-01T00:00:${String(i % 60).padStart(2, '0')}.000Z`),
+        JSON.stringify(e.event_type), JSON.stringify(e.performers), JSON.stringify(e.book_ids), JSON.stringify(e.author_ids), e.price, e.price_amount, e.image, e.deleted ? 1 : 0, `2026-01-01T00:00:${String(i % 60).padStart(2, '0')}.000Z`),
     ),
   ]);
 }
