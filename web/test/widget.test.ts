@@ -44,9 +44,26 @@ describe('widget.js loader', () => {
       { city: 'boston', view: 'list', theme: 'auto', when: 'anytime', limit: '100' },
       { city: 'boston', view: 'calendar', when: 'week', limit: '9999', partner: 'acme' },
       { city: 'boston', view: 'grid', theme: 'neon', limit: 'abc' },
+      // B5: the filter toolbar, a preset proximity search and free-only.
+      { city: 'boston', filters: 'off' },
+      { city: 'boston', filters: 'on' },
+      { city: 'boston', filters: 'nonsense' },
+      { widget: 'literary-new-england', filters: '0' },
+      { city: 'boston', near: '42.3601,-71.0589', radius: '10' },
+      { city: 'boston', near: '42.36012345,-71.05891234' },
+      { city: 'boston', near: '42.36,-71.06', radius: '25' },
+      { city: 'boston', near: '42.36,-71.06', radius: '9999' },
+      { city: 'boston', near: 'nowhere', radius: '10' },
+      { city: 'boston', radius: '50' },
+      { city: 'boston', free: '1' },
+      { city: 'boston', free: 'yes' },
       {},
     ];
     for (const c of cases) expect(run(c).iframe.src, JSON.stringify(c)).toBe(buildEmbedSrc(ORIGIN, c));
+  });
+  it('delegates geolocation only while the filter toolbar is on', () => {
+    expect(run({ city: 'boston' }).iframe.attrs.allow).toBe('geolocation');
+    expect(run({ city: 'boston', filters: 'off' }).iframe.attrs.allow).toBe("geolocation 'none'");
   });
   it('sets iframe attributes and the initial height', () => {
     const { iframe } = run({ widget: 'new-england', height: '480' });

@@ -69,7 +69,7 @@ describe('other builders', () => {
     expect(il.itemListElement[0].url).toBe('https://findlocal.community/event/abc');
     const ws = webSiteJsonLd(boston) as any;
     expect(ws.potentialAction.target.urlTemplate).toBe('https://findlocal.community/city/boston?q={search_term_string}');
-    const venue: VenueRow = { id: 'v1', name: 'The Comedy Studio', city: 'Boston', region: 'Cambridge', url: 'https://thecomedystudio.com', address: '1 Bow St', description: null, image: null, type: null, venue_size: null, categories: [], latitude: 42.37, longitude: -71.12, is_active: 1, upcoming: 4 };
+    const venue: VenueRow = { id: 'v1', name: 'The Comedy Studio', city: 'Boston', region: 'Cambridge', url: 'https://thecomedystudio.com', address: '1 Bow St', description: null, image: null, type: null, venue_size: null, categories: [], latitude: 42.37, longitude: -71.12, is_active: 1, wikidata_id: null, wikipedia_url: null, image_attribution: null, image_source: null, description_source: null, upcoming: 4 };
     const pl = venueJsonLd(venue, '') as any;
     expect(pl['@type']).toBe('Place');
     expect(pl.sameAs).toBe('https://thecomedystudio.com');

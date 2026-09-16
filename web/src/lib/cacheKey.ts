@@ -4,10 +4,15 @@
 // content depends on the cookie (/ and /venues). Pure so it can be unit-tested.
 import { canonicalQuery } from '@findlocal/shared';
 
-export const CITY_COOKIE = 'fl_city';
+// One definition of the cookie's name, shared with the islands that write it.
+export { CITY_COOKIE } from './cityCookie.js';
 export const DEFAULT_CITY_NAME = 'Boston';
 
-/** Routes whose HTML depends on the fl_city cookie. */
+/**
+ * Routes whose HTML depends on the fl_city cookie. `/` still does even though it
+ * is no longer a feed: the landing page's "Explore events in <city>" CTA, its
+ * live widget example and its highlighted metro all come from the cookie city.
+ */
 export function isCityCookieRoute(pathname: string): boolean {
   return pathname === '/' || pathname === '/venues';
 }
@@ -20,9 +25,15 @@ export function isFullQueryRoute(pathname: string): boolean {
 /** Extra (non-contract) query keys a route's HTML depends on. */
 const EXTRA_KEYS: Record<string, string[]> = { '/venues': ['sort', 'type'] };
 
-/** Routes that offer `?view=map` (the map variant must not collide with the list). */
+/**
+ * Routes that offer `?view=map` (the map variant must not collide with the
+ * list) — the feed only. `/` is the platform landing page and ignores
+ * `view=map`; the middleware 301s `/?view=map` (and `/map`) to
+ * `/city/<cookie city>?view=map`, so keying `/` on it would only ever store a
+ * redirect under a second key.
+ */
 export function hasMapView(pathname: string): boolean {
-  return pathname === '/' || pathname.startsWith('/city/');
+  return pathname.startsWith('/city/');
 }
 
 /** Read one cookie value (URL-decoded) from a Cookie header; null when absent. */

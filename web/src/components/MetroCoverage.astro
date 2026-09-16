@@ -34,8 +34,11 @@ const empty = rows.filter((r) => r.n === 0).length;
 )}
 
 <style>
-  .metros { list-style: none; margin: 1.2rem 0 0; padding: 0; display: grid; gap: 0.35rem; grid-template-columns: 1fr; }
-  @media (min-width: 520px) { .metros { grid-template-columns: 1fr 1fr; column-gap: 1.2rem; } }
+  /* Two columns even on a phone: 83 rows in one column added ~2,900px of scroll
+     to the landing page, and a row is only "<city> <state> … <count>" whose name
+     ellipsises rather than wraps. Three columns from 860px. */
+  .metros { list-style: none; margin: 1.2rem 0 0; padding: 0; display: grid; gap: 0.35rem; grid-template-columns: 1fr 1fr; column-gap: 0.9rem; }
+  @media (min-width: 520px) { .metros { column-gap: 1.2rem; } }
   @media (min-width: 860px) { .metros { grid-template-columns: repeat(3, 1fr); } }
   .metros a { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; padding: 0.3rem 0.1rem; border-bottom: 1px solid rgb(var(--border)); color: rgb(var(--text)); font-size: 0.9rem; }
   .metros a:hover { text-decoration: none; color: rgb(var(--teal)); border-bottom-color: rgb(var(--teal)); }

@@ -15,7 +15,8 @@ import {
   type QueryableFilters,
   type TimeOfDay,
 } from '@findlocal/shared';
-import { categoryCounts, countUpcomingEvents, listRegions, listUpcomingEvents } from './db.js';
+import { attachAuthors, attachBooks, categoryCounts, countUpcomingEvents, listRegions, listUpcomingEvents } from './db.js';
+import { hasLiteraryLinks } from './format.js';
 
 export type WhenChip = 'anytime' | 'today' | 'tomorrow' | 'weekend' | 'week';
 export const WHEN_CHIPS: { value: WhenChip; label: string }[] = [
@@ -70,6 +71,29 @@ export function withoutPage(canonical: string): string {
   return p.toString();
 }
 
+/**
+ * Hang the gazetteer rows an event card's image chain needs (`books`, `authors`)
+ * off the events on **this page only**, so a literary card in the feed shows the
+ * book cover / author portrait `bestEventImage` already knows how to prefer.
+ * `listUpcomingEvents` attaches neither (that would join the gazetteer into every
+ * feed query, for the handful of rows that have links), and `/api/events` must
+ * keep its shape, so the feed does it as a separate, opt-in step.
+ *
+ * Cost: **zero queries** when no event on the page has links, otherwise two
+ * (books, authors) — each batched over the distinct ids and chunked under D1's
+ * 100-bind cap inside `attachBooks` / `attachAuthors`. Mutates and returns
+ * `events`.
+ */
+export async function attachLiteraryThumbs(db: D1Database, events: EventRow[]): Promise<EventRow[]> {
+  const linked = events.filter(hasLiteraryLinks);
+  if (!linked.length) return events;
+  await Promise.all([
+    linked.some((e) => e.book_ids.length > 0) ? attachBooks(db, linked) : undefined,
+    linked.some((e) => e.author_ids.length > 0) ? attachAuthors(db, linked) : undefined,
+  ]);
+  return events;
+}
+
 export async function loadFeed(db: D1Database, city: City, url: URL, now: Date = new Date()): Promise<FeedState> {
   const params = url.searchParams;
   const filters = parseFilters(params, city, now);
@@ -86,6 +110,9 @@ export async function loadFeed(db: D1Database, city: City, url: URL, now: Date =
     categoryCounts(db, city.name, filters),
     listRegions(db, city.name),
   ]);
+  // Cards prefer a book cover / author photo for literary events; the rows that
+  // chain needs are fetched for this page only (no-op when nothing is linked).
+  await attachLiteraryThumbs(db, events);
   const countBySlug = new Map(cats.map((c) => [c.category, c.count]));
   const active = new Set(filters.categories ?? []);
   const categoryOptions = CATEGORIES.map((c) => ({

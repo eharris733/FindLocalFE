@@ -30,13 +30,19 @@ describe('cacheQueryFor', () => {
     expect(cacheQueryFor(u('/city/boston'), 'Denver')).toBe('');
     expect(cacheQueryFor(u('/event/abc'), 'Denver')).toBe('');
   });
-  it('keeps view=map distinct from the list view where a map exists', () => {
-    expect(cacheQueryFor(u('/?view=map'), null)).toBe('view=map&_city=Boston');
+  it('keeps view=map distinct from the list view on the feed only', () => {
     expect(cacheQueryFor(u('/city/boston?view=map&when=today'), null)).toBe('when=today&view=map');
-    expect(cacheQueryFor(u('/venues?view=map'), null)).toBe('_city=Boston');
     expect(hasMapView('/city/austin')).toBe(true);
     expect(hasMapView('/venues')).toBe(false);
+    // `/` is the platform landing page: no map, and the middleware 301s
+    // /?view=map to /city/<cookie city>?view=map — so `view` is not in its key.
+    expect(hasMapView('/')).toBe(false);
+    expect(cacheQueryFor(u('/?view=map'), null)).toBe('_city=Boston');
+    expect(cacheQueryFor(u('/venues?view=map'), null)).toBe('_city=Boston');
+    // …but the landing page does still vary by cookie (Explore CTA, widget city, metro).
+    expect(isCityCookieRoute('/')).toBe(true);
     expect(isCityCookieRoute('/venues')).toBe(true);
+    expect(isCityCookieRoute('/city/boston')).toBe(false);
   });
   it('keys embed routes on the whole sorted query and never on the cookie', () => {
     expect(cacheQueryFor(u('/embed/events?theme=dark&region=new-england&view=map&cat=literary'), 'Denver')).toBe('cat=literary&region=new-england&theme=dark&view=map');

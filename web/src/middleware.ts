@@ -15,6 +15,13 @@ function resolveCity(cookieHeader: string | null): { city: City; raw: string | n
   return { city, raw: getCity(raw) ? city.name : null };
 }
 
+/** The query string minus one key, in its original order ('' when nothing is left). */
+function dropParam(params: URLSearchParams, key: string): string {
+  const rest = new URLSearchParams(params);
+  rest.delete(key);
+  return rest.toString();
+}
+
 // Static assets (public/, prerendered pages, /_astro) are served by Workers
 // assets before this runs, so only SSR routes pass through here.
 export const onRequest = defineMiddleware(async (context, next) => {
@@ -28,9 +35,16 @@ export const onRequest = defineMiddleware(async (context, next) => {
   if (url.hostname === 'www.findlocal.community') {
     return Response.redirect(`https://findlocal.community${url.pathname}${url.search}`, 301);
   }
-  const target = redirectTargetFor(lowered) ?? (lowered !== url.pathname ? lowered : null);
+  const { city, raw: cookieCity } = resolveCity(request.headers.get('cookie'));
+  // `/map` and the legacy `/?view=map` both mean "the map of my city's feed".
+  // The landing page has no map, so they land on /city/<cookie city>?view=map.
+  const mapOnRoot = url.pathname === '/' && url.searchParams.get('view') === 'map';
+  const target = mapOnRoot
+    ? `/city/${city.slug}?view=map`
+    : (redirectTargetFor(lowered, city.slug) ?? (lowered !== url.pathname ? lowered : null));
   if (target) {
-    const dest = target.includes('?') ? target + (url.search ? `&${url.search.slice(1)}` : '') : target + url.search;
+    const search = mapOnRoot ? dropParam(url.searchParams, 'view') : url.search.slice(1);
+    const dest = target.includes('?') ? target + (search ? `&${search}` : '') : target + (search ? `?${search}` : '');
     return Response.redirect(new URL(dest, url.origin).toString(), 301);
   }
 
@@ -48,7 +62,6 @@ export const onRequest = defineMiddleware(async (context, next) => {
   // touch D1 or the cache. The list lives in lib/crawlerLimit.ts.
   if (isBlockedCrawler(request.headers.get('user-agent'))) return blockedCrawlerResponse();
 
-  const { city, raw: cookieCity } = resolveCity(request.headers.get('cookie'));
   context.locals.city = city;
 
   const policy = cachePolicyFor(url.pathname);

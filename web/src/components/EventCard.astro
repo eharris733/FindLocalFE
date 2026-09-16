@@ -1,5 +1,5 @@
 ---
-import { imageUrl, type EventRow } from '@findlocal/shared';
+import { imageUrl, srcsetUrl, type EventRow } from '@findlocal/shared';
 import { bestEventImage, cardDateLabel, leadPerformerLine, priceLabel, shortPriceLabel } from '../lib/format.js';
 import Icon from './Icon.astro';
 interface Props {
@@ -13,7 +13,9 @@ const { event, tz, eager = false } = Astro.props;
 // category poster art (never the old gradient + category text).
 const pick = bestEventImage(event, { coverSize: 'M' });
 const imgSrc = pick.isArt ? pick.src : imageUrl(pick.src, { width: 640, height: 360, fit: pick.contain ? 'contain' : 'cover' })!;
-const imgSrcSet = pick.isArt || pick.contain ? undefined : `${imageUrl(pick.src, { width: 1280, height: 720 })} 2x`;
+// srcset (unlike src) breaks on a space or comma in the URL, and scraped image
+// URLs have both — encode them or the candidate is silently dropped.
+const imgSrcSet = pick.isArt || pick.contain ? undefined : `${srcsetUrl(imageUrl(pick.src, { width: 1280, height: 720 }))} 2x`;
 const price = priceLabel(event);
 const pillPrice = shortPriceLabel(event);
 const where = [event.venue_name, event.region ?? event.venue_region].filter(Boolean).join(' · ');

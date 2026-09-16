@@ -40,10 +40,14 @@ web/                  @findlocal/web — Astro 7 SSR Worker (findlocal.community
   src/middleware.ts   301/410 tables, crawler block (meta-externalagent -> 403, list in lib/crawlerLimit.ts), fl_city cookie -> locals.city, Cache API edge cache, X-Robots-Tag
   src/lib/            db.ts (ONLY importer of cloudflare:workers), feed.ts, cacheKey.ts, cacheHeaders.ts,
                       jsonld.ts, ics.ts, format.ts, icons.ts, crawlerLimit.ts, mapQuery.ts (/api/events/map
-                      request parsing), mapPins.ts (photo-pin grouping/colours) — pure helpers unit-tested in web/test/
+                      request parsing), mapPins.ts (photo-pin grouping/colours), embed.ts + embedCard.ts
+                      (widget query contract + card model), embedData.ts (the one loader behind
+                      /embed/events and /api/embed/events), geocode.ts (Photon/Nominatim place lookup)
+                      — pure helpers unit-tested in web/test/
   src/pages/          one file per route in the route table below; about/privacy/terms/blog/developers are prerendered
                       index.astro = the platform landing page (SSR: live stats); /city/[slug] = the feed
-                      embed/events.astro = the widget iframe page (EmbedLayout, no site chrome); lib/embed.ts = its query contract
+                      embed/events.astro = the widget iframe page (EmbedLayout, no site chrome, in-widget
+                      filter toolbar); lib/embed.ts = its query contract; api/embed/events.ts = its JSON twin
   src/content/blog/   markdown posts (Astro content collection)
   public/             fonts, logo, favicon, og-default, robots/llms, widget.js (embed loader), _headers
 ```
@@ -102,6 +106,27 @@ npm run deploy:web               # astro build + wrangler deploy (needs a real S
   viewport is the scope. Boxes over 4° a side are refused with 400. `LeafletMap`
   with `live` refetches it on `moveend` (debounced, previous request aborted), so
   the map is no longer limited to the current list page.
+- **The widget is two layers of query keys.** `/embed/events` (iframe page) and
+  `GET /api/embed/events` (its JSON twin) read one contract in
+  `web/src/lib/embed.ts`: the **partner's** keys — `region|city`, `cat`, `when`,
+  `from,to`, `view`, `theme`, `limit`, `partner`, `authors`, `filters`, `near`,
+  `radius_km` (written by `public/widget.js` from `data-*`, mirrored by
+  `buildEmbedSrc` — keep both in sync) — and the **visitor's** in-widget toolbar
+  keys (`EMBED_UI_KEYS`: `q`, `when` incl. `month`, `from,to`, `free|paid`
+  (`price=` is the no-JS form alias), `tod`, `ucat`, `authors`, `near`,
+  `radius_km`, `place`). `cat` is a *pin*: it hides the category chips and `ucat`
+  is ignored under it; the visitor's chips never change `utm_campaign`.
+  `near` **replaces** the region/city scope — `embedScope` resolves the point to
+  `nearestCity` and the query orders by distance. `filters=0|off` hides the
+  toolbar (the pre-B5 widget) and drops the iframe's `allow="geolocation"`.
+  Both front doors load through `web/src/lib/embedData.ts` (one scope → rows →
+  enrichment → `EventCard` + markers), so SSR and the JSON cannot drift; the
+  toolbar re-renders in place from the JSON and `history.replaceState`s the
+  iframe URL — it never navigates the host page. Region-group widgets cannot
+  express price/time/text in SQL (`listUpcomingEventsForCities`), so those are
+  applied in JS by `matchesEmbedFilters` over an oversampled window. Place lookup
+  is `web/src/lib/geocode.ts` (Photon → Nominatim, US only, twin of the mobile
+  app's). Contract and rationale: `docs/PRODUCT_POLISH_2026-09.md` → B5.
 - **City is never derived from geo headers.** Rendered pages pick the city from
   the `fl_city` cookie only (cache + SEO). `GET /api/geo` (uncached, `edge: 0` in
   `cachePolicyFor`, `private, no-store`) exists purely so `GeoHint.astro` can
@@ -126,8 +151,9 @@ npm run deploy:web               # astro build + wrangler deploy (needs a real S
 
 - **Domain / canonical**: `https://findlocal.community` (`SITE` in seo.ts).
   Canonical URLs are absolute, never derived from the request host; query
-  params other than the canonical filter keys are stripped; `/?view=map`
-  folds into `/`. Trailing slashes are stripped.
+  params other than the canonical filter keys are stripped; `view=map` is not a
+  canonical param (it never appears in a canonical URL). Trailing slashes are
+  stripped.
 - **`/` is the platform landing page** (Sept 2026), not a feed: hero + live
   catalogue stats (`shared/src/stats.ts` → `platformStats`, one batched aggregate
   pass), four product tiles (widgets — with a live `/embed/events` iframe — JSON
@@ -139,12 +165,17 @@ npm run deploy:web               # astro build + wrangler deploy (needs a real S
   `/about`, `/privacy`, `/terms`, `/blog/*`, `/developers{,/api,/mcp,/widgets}`,
   `/embed/events` (widget iframe; `noindex`, `frame-ancestors *`, keyed on its full query),
   `/widget.js` (static loader), `/sitemap.xml`.
-  JSON: `/api/events`, `/api/events/<uuid>`, `/api/events/map`, `/api/venues`, `/api/geo`
+  JSON: `/api/events`, `/api/events/<uuid>`, `/api/events/map`, `/api/embed/events`, `/api/venues`, `/api/geo`
   (all `noindex` + robots-disallowed; contracts in `/developers/api` and
   `docs/PRODUCT_POLISH_2026-09.md`).
   Uuids are lowercase; case variants **301** to lowercase (`redirectTargetFor`).
 - **301 table** (`redirectTargetFor`): trailing slash → none; uppercase uuid →
-  lowercase; `/<city-slug>` → `/city/<slug>`; `/map` → `/?view=map`;
+  lowercase; `/<city-slug>` → `/city/<slug>`; `/map` **and** `/?view=map` →
+  `/city/<fl_city cookie, else boston>?view=map` — the map is a view of the
+  *feed*, and `/` is the landing page, so both have to land on a real city.
+  `redirectTargetFor(pathname, citySlug)` takes the slug (`DEFAULT_CITY_SLUG`
+  when omitted) and the middleware passes `locals.city.slug`; the `/?view=map`
+  case depends on the query, not the path, so the middleware owns that one.
   `/filters` → `/`; `/platform` → `/` (the root **is** the platform page now);
   `/sitemap`, `/sitemaps`, `/sitemap-blog.xml` → `/sitemap.xml`.
   A 301 only works for a path with no file behind it: prerendered pages are served
@@ -180,9 +211,14 @@ npm run deploy:web               # astro build + wrangler deploy (needs a real S
 - **`fl_city` cookie contract**: the site writes
   `fl_city=<City.name, URL-encoded>; Path=/; Max-Age=31536000; SameSite=Lax`
   when the user picks a city; server-rendered pages read it
-  (`decodeURIComponent`, fall back to **Boston**) to pick the city for `/`.
-  Anything cached per city must key on it (old Pages Functions: 5-min
-  `caches.default` per city, `private, no-cache` to browsers).
+  (`decodeURIComponent`, fall back to **Boston**) to pick the city for `/`,
+  `/venues` and the `/map` redirect. Anything cached per city must key on it
+  (old Pages Functions: 5-min `caches.default` per city, `private, no-cache` to
+  browsers). **Write it only through `web/src/lib/cityCookie.ts::setCityCookie`** —
+  two islands do (`CityPicker`'s select / locate button and `GeoHint`'s accept),
+  and the value is part of the edge-cache key, so a hand-rolled `document.cookie`
+  that differs by a `Path` or an encoding splits the cache. `cacheKey.ts`
+  re-exports `CITY_COOKIE` from that module so the name has one definition.
 - **No analytics** (GA4/Clarity removed 2026-09-02; Cloudflare's cookieless
   Web Analytics only). No user accounts, auth, RSVPs or event creation exist
   — treat requests for them as net-new features.

@@ -46,6 +46,10 @@ const venueFields: [string, string][] = [
   ['categories', 'string[] of category slugs'],
   ['latitude, longitude', 'number | null'],
   ['is_active', '0 | 1'],
+  ['wikidata_id, wikipedia_url', 'string | null — the matched Wikidata entity and its Wikipedia article'],
+  ['image_attribution', 'string | null — credit line the image licence requires; show it wherever you show image'],
+  ['image_source', "'scrape' | 'wikimedia' | 'places' | 'manual' | null"],
+  ['description_source', "'wikipedia' | 'llm' | 'manual' | null (scraped or unknown)"],
   ['upcoming', 'Count of upcoming non-deleted events'],
 ];
 ---
