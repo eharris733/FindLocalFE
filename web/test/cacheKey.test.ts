@@ -60,7 +60,8 @@ describe('cacheQueryFor', () => {
 
 describe('cache policy', () => {
   it('uses the TTLs from the plan and never caches /saved', () => {
-    expect(cachePolicyFor('/').edge).toBe(600);
+    expect(cachePolicyFor('/').edge).toBe(3600); // platform landing: catalogue aggregates
+    expect(cachePolicyFor('/venues').edge).toBe(600);
     expect(cachePolicyFor('/city/boston').edge).toBe(600);
     expect(cachePolicyFor('/event/x').edge).toBe(3600);
     expect(cachePolicyFor('/venue/x').edge).toBe(3600);
@@ -73,7 +74,7 @@ describe('cache policy', () => {
     const p = cachePolicyFor('/');
     expect(p.perCity).toBe(true);
     expect(browserCacheControl(p)).toBe('private, no-cache');
-    expect(edgeCacheControl(p)).toBe('public, s-maxage=600, stale-while-revalidate=86400');
+    expect(edgeCacheControl(p)).toBe('public, s-maxage=3600, stale-while-revalidate=86400');
     expect(browserCacheControl(cachePolicyFor('/event/x'))).toContain('max-age=300');
     expect(browserCacheControl(cachePolicyFor('/saved'))).toBe('private, no-store');
   });

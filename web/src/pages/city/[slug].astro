@@ -7,17 +7,23 @@ import Layout from '../../layouts/Layout.astro';
 import Feed from '../../components/Feed.astro';
 import JsonLd from '../../components/JsonLd.astro';
 import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import CityBlurb from '../../components/CityBlurb.astro';
 import { getDb } from '../../lib/db.js';
 import { loadFeed } from '../../lib/feed.js';
+import { approxCount } from '../../lib/format.js';
 import { breadcrumbJsonLd, itemListJsonLd } from '../../lib/jsonld.js';
-import { SITE, cityBySlug } from '@findlocal/shared';
+import { SITE, cityBySlug, countUpcomingEventsWithin } from '@findlocal/shared';
 
 const slug = Astro.params.slug ?? '';
 const city = cityBySlug(slug);
 if (!city) return Astro.rewrite('/404');
 if (city.slug !== slug) return Astro.redirect(`/city/${city.slug}${Astro.url.search}`, 301);
 
-const state = await loadFeed(getDb(), city, Astro.url);
+const db = getDb();
+// The subhead counts the next 30 days ("this month"), not every future date, so
+// the one line above the fold is literally true. The long descriptive sentence
+// moved to the footer blurb.
+const [state, monthCount] = await Promise.all([loadFeed(db, city, Astro.url), countUpcomingEventsWithin(db, city.name, 30, city.tz)]);
 const filtered = state.filterCanonical !== '';
 const paged = !filtered && state.page > 1;
 const thin = state.total < 3;
@@ -42,7 +48,8 @@ const jsonAlternate = `${SITE}/api/events?city=${encodeURIComponent(city.name)}$
   <Breadcrumbs crumbs={crumbs} />
   <Feed
     state={state}
-    heading={`Things to do in ${cityLabel}`}
-    intro={filtered ? undefined : `${state.total.toLocaleString('en-US')} upcoming events in ${city.name} — concerts, comedy, theater, and community happenings, collected straight from local venue calendars and updated daily.`}
+    heading={`Things to do in ${city.name}`}
+    intro={filtered ? undefined : `${approxCount(monthCount)} things to do in ${city.name} this month`}
   />
+  <CityBlurb city={city} />
 </Layout>

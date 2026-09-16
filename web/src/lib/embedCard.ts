@@ -4,6 +4,7 @@
 // and the client-side calendar day view, so both read the same shape.
 import { openLibraryCover, type BookRow, type EventRow } from '@findlocal/shared';
 import { buyLink } from './bookshop.js';
+import { categoryArtUrl } from './categoryArt.js';
 
 export interface CardAuthor {
   name: string;
@@ -13,7 +14,8 @@ export interface CardAuthor {
 
 export interface CardThumb {
   src: string;
-  kind: 'cover' | 'photo' | 'image';
+  /** 'art' = the category poster art (web/public/art), the last-resort fallback. */
+  kind: 'cover' | 'photo' | 'image' | 'art';
   alt: string;
 }
 
@@ -86,8 +88,10 @@ export function cardAuthors(e: EventRow, latest: Map<string, BookRow>): CardAuth
 }
 
 /** Thumbnail: linked book cover → latest-book cover (it is what the link sells) →
- * author photo → event/venue image → none. OpenLibrary images are sized down. */
-export function cardThumb(e: EventRow, latest: Map<string, BookRow>): CardThumb | null {
+ * author photo → event/venue image → category poster art. OpenLibrary images are
+ * sized down. Never null any more (the art file always exists), so rows never fall
+ * back to a bare glyph. */
+export function cardThumb(e: EventRow, latest: Map<string, BookRow>): CardThumb {
   const own = (e.books ?? []).find((b) => b.cover_url);
   if (own?.cover_url) return { src: openLibraryCover(own.cover_url, 'M')!, kind: 'cover', alt: `Cover of ${own.title}` };
   for (const id of e.author_ids) {
@@ -97,5 +101,6 @@ export function cardThumb(e: EventRow, latest: Map<string, BookRow>): CardThumb 
   const author = (e.authors ?? []).find((a) => a.photo_url);
   if (author?.photo_url) return { src: openLibraryCover(author.photo_url, 'M')!, kind: 'photo', alt: author.canonical_name };
   const img = e.image_url || e.series_image || e.venue_image;
-  return img ? { src: img, kind: 'image', alt: '' } : null;
+  if (img) return { src: img, kind: 'image', alt: '' };
+  return { src: categoryArtUrl(e.category), kind: 'art', alt: '' };
 }

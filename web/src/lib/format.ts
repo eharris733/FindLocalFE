@@ -1,7 +1,9 @@
 // Presentation helpers (pure). Date/time formatting comes from
 // @findlocal/shared/dates so the site never builds a local Date from a
 // calendar day.
-import { type Performer, addDays, leadPerformer, roleLabel, categoryBySlug, formatEventDate, formatTime, todayIn, type EventRow } from '@findlocal/shared';
+import { type AuthorRow, type BookRow, type Performer, addDays, leadPerformer, openLibraryCover, roleLabel, categoryBySlug, formatEventDate, formatTime, todayIn, type EventRow } from '@findlocal/shared';
+import { categoryArtUrl } from './categoryArt.js';
+import { imageAttribution, photoAttribution } from './enrichment.js';
 
 /** 'Free' | the source's price text | '$12' | ''. Mirrors the old EventCard. */
 export function priceLabel(e: Pick<EventRow, 'price' | 'price_amount'>): string {
@@ -91,6 +93,100 @@ export function eventImage(e: Pick<EventRow, 'image_url' | 'series_image' | 'ven
   return e.image_url || e.series_image || e.venue_image || null;
 }
 
+// ------------------------------------------------------------------ image chain
+//
+// Nothing renders the old "teal gradient + category label" placeholder any more:
+// when an event has no photo we show the hand-drawn category poster art
+// (web/public/art/<slug>.svg, see lib/categoryArt.ts) with no text on top.
+// `isArt` lets a caller treat it differently (no attribution, no "photo" framing),
+// and `src` is never null so every call site is a plain <img>.
+
+export type ImageKind = 'event' | 'series' | 'venue' | 'book' | 'author' | 'art';
+
+export interface ImagePick {
+  /** Always a real URL or site path — never null. */
+  src: string;
+  /** true when `src` is the category poster art (no real image exists). */
+  isArt: boolean;
+  kind: ImageKind;
+  /** Alt text. '' for decorative photos/art; descriptive for covers and portraits. */
+  alt: string;
+  /** Credit line to print under the image (Wikimedia licensing), or null. */
+  attribution: string | null;
+  /** Covers and portraits should not be cropped (`object-fit: contain`). */
+  contain: boolean;
+}
+
+export interface ImageChainOpts {
+  /** OpenLibrary size for book covers / author photos ('M' for cards, 'L' for heroes). */
+  coverSize?: 'S' | 'M' | 'L';
+  /** The venue row (or anything carrying `image_attribution`) behind `venue_image`. */
+  venue?: unknown;
+}
+
+function art(category: string | null | undefined): ImagePick {
+  return { src: categoryArtUrl(category), isArt: true, kind: 'art', alt: '', attribution: null, contain: false };
+}
+
+type ImageEvent = Pick<EventRow, 'image_url' | 'series_image' | 'venue_image' | 'category'>;
+
+/**
+ * Event image with a guaranteed result: own image → series sibling → venue image
+ * → category art. Replaces `eventImage(e) ?? <placeholder>` at every call site.
+ */
+export function eventImageOrArt(e: ImageEvent, opts: ImageChainOpts = {}): ImagePick {
+  if (e.image_url) return { src: e.image_url, isArt: false, kind: 'event', alt: '', attribution: null, contain: false };
+  if (e.series_image) return { src: e.series_image, isArt: false, kind: 'series', alt: '', attribution: null, contain: false };
+  if (e.venue_image) {
+    return { src: e.venue_image, isArt: false, kind: 'venue', alt: '', attribution: imageAttribution(opts.venue), contain: false };
+  }
+  return art(e.category);
+}
+
+/**
+ * Literary chain (owner feedback): book cover → author photo → event image →
+ * venue image → category art. Used for events that have `author_ids`/`book_ids`,
+ * where the book being discussed is the most recognisable image we have.
+ *
+ * `books`/`authors` default to the rows the query layer attached to the event.
+ */
+export function literaryImage(
+  e: ImageEvent & { books?: BookRow[]; authors?: AuthorRow[] },
+  books: BookRow[] | undefined = e.books,
+  authors: AuthorRow[] | undefined = e.authors,
+  opts: ImageChainOpts = {},
+): ImagePick {
+  const size = opts.coverSize ?? 'L';
+  const cover = (books ?? []).find((b) => b.cover_url);
+  if (cover?.cover_url) {
+    return {
+      src: openLibraryCover(cover.cover_url, size) ?? cover.cover_url,
+      isArt: false, kind: 'book', alt: `Cover of ${cover.title}`, attribution: null, contain: true,
+    };
+  }
+  const portrait = (authors ?? []).find((a) => a.photo_url);
+  if (portrait?.photo_url) {
+    return {
+      src: openLibraryCover(portrait.photo_url, size) ?? portrait.photo_url,
+      isArt: false, kind: 'author', alt: portrait.canonical_name, attribution: photoAttribution(portrait), contain: true,
+    };
+  }
+  return eventImageOrArt(e, opts);
+}
+
+/** true when an event is worth running through `literaryImage` (it has gazetteer links). */
+export function hasLiteraryLinks(e: Pick<EventRow, 'author_ids' | 'book_ids'>): boolean {
+  return (e.author_ids?.length ?? 0) > 0 || (e.book_ids?.length ?? 0) > 0;
+}
+
+/** The chain an event card / hero should use: literary when linked, plain otherwise. */
+export function bestEventImage(
+  e: ImageEvent & Pick<EventRow, 'author_ids' | 'book_ids'> & { books?: BookRow[]; authors?: AuthorRow[] },
+  opts: ImageChainOpts = {},
+): ImagePick {
+  return hasLiteraryLinks(e) ? literaryImage(e, e.books, e.authors, opts) : eventImageOrArt(e, opts);
+}
+
 /** Outbound link for tickets / details. */
 export function eventLink(e: Pick<EventRow, 'ticket_page_url' | 'detail_page_url' | 'root_url' | 'venue_url'>): { href: string; label: string } | null {
   if (e.ticket_page_url) return { href: e.ticket_page_url, label: 'Buy tickets' };
@@ -113,6 +209,15 @@ export function performersLabel(performers: Performer[]): string {
 
 export function pluralize(n: number, one: string, many = `${one}s`): string {
   return `${n} ${n === 1 ? one : many}`;
+}
+
+/** Headline count, always rounded DOWN so the claim stays true: 2,423 -> '2.4k+',
+ * 2,000 -> '2k+', 640 -> '640+'. Negatives and fractions clamp to '0+'. */
+export function approxCount(n: number): string {
+  const v = Number.isFinite(n) ? Math.max(0, Math.floor(n)) : 0;
+  if (v < 1000) return `${v}+`;
+  const k = Math.floor(v / 100) / 10;
+  return `${Number.isInteger(k) ? k : k.toFixed(1)}k+`;
 }
 
 /** One card line: "Esperanza Spalding" for the bill, "Author: Ann Patchett" for non-performance roles. '' when unknown. */

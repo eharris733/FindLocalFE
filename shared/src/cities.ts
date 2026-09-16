@@ -10,6 +10,9 @@ export interface City {
   lng: number;
   zoom: number;
   tz: string;
+  /** One specific sentence about what this metro's event scene is known for
+   * (the per-city footer blurb on /city/<slug>). Owned by cities.json. */
+  blurb: string;
 }
 
 export const CITIES: City[] = (raw as { cities: City[] }).cities;

@@ -3,7 +3,7 @@
 // (web/src/pages/api/*). Category and city lists come from the shared data.
 import Layout from '../../layouts/Layout.astro';
 import DocsNav from '../../components/DocsNav.astro';
-import { CATEGORIES, CITIES } from '@findlocal/shared';
+import { CATEGORIES, CITIES, MAP_DEFAULT_LIMIT, MAP_MAX_LIMIT, MAP_MAX_SPAN_DEG } from '@findlocal/shared';
 export const prerender = true;
 const BASE = 'https://findlocal.community';
 const eventFields: [string, string, string][] = [
@@ -29,6 +29,15 @@ const eventFields: [string, string, string][] = [
   ['series_count', 'number', '> 1 when the same title has that many upcoming dates at this venue (recurring)'],
   ['series_image', 'url | null', 'First image in the series, when series_count > 1'],
 ];
+const mapFields: [string, string][] = [
+  ['id, title, event_date, start_time, category', 'As on Event; the page is /event/<id>'],
+  ['image', 'url | null — resolved server-side: the event\'s own artwork, else the venue\'s image'],
+  ['venue_id, venue_name', 'The pin\'s venue; group rows by venue_id for one marker per place'],
+  ['lat, lng', 'number — the venue\'s coordinates (events with no geocoded venue are absent)'],
+  ['price_min', 'number | null — the parsed USD amount, when we have one'],
+  ['free', 'boolean — $0 or labelled free'],
+  ['path', 'string — site path for the event, e.g. /event/<uuid>'],
+];
 const venueFields: [string, string][] = [
   ['id', 'uuid; public page at /venue/<id>'],
   ['name, city, region, address', ''],
@@ -51,8 +60,10 @@ const venueFields: [string, string][] = [
       <table>
         <thead><tr><th>Endpoint</th><th>Returns</th></tr></thead>
         <tbody>
-          <tr><td><code>GET /api/events</code></td><td>Upcoming events in one city, filtered and paginated. <code>{'{ data: Event[], meta: { city, count, total, page, page_size } }'}</code></td></tr>
+          <tr><td><code>GET /api/events</code></td><td>Upcoming events in one city, filtered and paginated. <code>{'{ data: Event[], meta: { city, count, total, page, page_size, sort } }'}</code></td></tr>
           <tr><td><code>GET /api/events/&lt;uuid&gt;</code></td><td>One event, including past and delisted ones. <code>{'{ data: Event }'}</code> or <code>404 {'{ error: "not found" }'}</code></td></tr>
+          <tr><td><code>GET /api/events/map</code></td><td>Compact pins for a map viewport, any metro. <code>{'{ data: MapEvent[], meta: { count, limit, truncated, bbox, from, to, sort } }'}</code> — see <a href="#map">below</a></td></tr>
+          <tr><td><code>GET /api/geo</code></td><td>The supported metro nearest this request (Cloudflare edge geolocation). <code>{'{ city, point, source }'}</code>, never cached</td></tr>
           <tr><td><code>GET /api/venues</code></td><td>Active venues in one city with upcoming counts. <code>{'{ data: Venue[], meta: { city, count } }'}</code></td></tr>
           <tr><td><code>GET /event/&lt;uuid&gt;/calendar.ics</code></td><td>iCalendar file for one event (<code>text/calendar</code>)</td></tr>
         </tbody>
@@ -88,6 +99,9 @@ curl '${BASE}/api/venues?city=chicago'`}</code></pre></div>
           <tr><td><code>region</code></td><td>Neighborhood label, e.g. <code>Brooklyn</code>, <code>Cambridge</code></td><td>Exact match. Use <code>/api/venues</code> to see the labels a city uses.</td></tr>
           <tr><td><code>q</code></td><td>Free text, ≤ 100 chars</td><td>Matches event title and venue name</td></tr>
           <tr><td><code>authors</code></td><td><code>1</code></td><td>Only events with a known author on the bill (literary events whose author is in our author index)</td></tr>
+          <tr><td><code>sort</code></td><td><code>date</code> (default) | <code>featured</code></td><td><code>date</code> = soonest first. <code>featured</code> = the site's own ranking (own artwork, a real description, a named bill, starting soon), reshuffled once a day and stable for paging within that day; events with neither an image nor a description always come last. The website defaults to <code>featured</code>; the API and MCP keep <code>date</code>.</td></tr>
+          <tr><td><code>near</code></td><td><code>&lt;lat&gt;,&lt;lng&gt;</code></td><td>Only venues within <code>radius_km</code>, ordered nearest first (overrides <code>sort</code>). Coordinates are rounded to 3 decimals (~100 m).</td></tr>
+          <tr><td><code>radius_km</code></td><td>Number, default <code>25</code>, max <code>200</code></td><td>Only meaningful with <code>near</code></td></tr>
           <tr><td><code>page</code></td><td>1-based</td><td>100 events per page by default</td></tr>
           <tr><td><code>limit</code></td><td>1–500</td><td>Overrides the page size</td></tr>
           <tr><td><code>venue</code></td><td>Venue uuid</td><td>Upcoming events at one venue. The city is taken from the venue (<code>city=</code> is ignored), the default <code>limit</code> is 500, and an unknown venue returns <code>404</code>. Other filters still apply.</td></tr>
@@ -129,6 +143,35 @@ curl '${BASE}/api/venues?city=chicago'`}</code></pre></div>
     <div class="code"><pre><code>{`# Boston bookstores, busiest first
 curl '${BASE}/api/venues?city=boston&type=bookstore&sort=upcoming'`}</code></pre></div>
 
+    <h2 id="map">Map viewports — <code>/api/events/map</code></h2>
+    <p>Built for panning a map: the bounding box <em>is</em> the scope, so there is no <code>city</code> parameter and a box straddling two metros returns both. Rows are compact (no descriptions, no performer lists) because a viewport can hold hundreds.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Parameter</th><th>Values</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td><code>bbox</code></td><td><code>minLng,minLat,maxLng,maxLat</code></td><td><strong>Required.</strong> Leaflet's <code>bounds.toBBoxString()</code> order. At most {MAP_MAX_SPAN_DEG} degrees on each side, otherwise <code>400</code>.</td></tr>
+          <tr><td><code>when</code></td><td>Same values as <code>/api/events</code></td><td>Resolved in the time zone of the metro nearest the box centre. <code>anytime</code> (the default) has no upper bound.</td></tr>
+          <tr><td><code>cat</code>, <code>free</code>, <code>paid</code>, <code>q</code>, <code>authors</code></td><td>Same as <code>/api/events</code></td><td><code>q</code> matches event title and venue name</td></tr>
+          <tr><td><code>sort</code></td><td><code>featured</code> (default here) | <code>date</code></td><td>A clipped viewport should keep the events worth showing, so this endpoint ranks by default</td></tr>
+          <tr><td><code>limit</code></td><td>1–{MAP_MAX_LIMIT}, default {MAP_DEFAULT_LIMIT}</td><td><code>meta.truncated</code> is <code>true</code> when the limit was reached</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>MapEvent field</th><th>Notes</th></tr></thead>
+        <tbody>{mapFields.map(([f, n]) => <tr><td><code>{f}</code></td><td>{n}</td></tr>)}</tbody>
+      </table>
+    </div>
+    <div class="copy-wrap"><button type="button" class="copy-btn" data-copy-target="#ex-map">Copy</button><pre id="ex-map"><code>{`# Everything on the map around downtown Boston, any date
+curl '${BASE}/api/events/map?bbox=-71.12,42.33,-71.02,42.39'
+
+# Free family events in that viewport this weekend
+curl '${BASE}/api/events/map?bbox=-71.12,42.33,-71.02,42.39&cat=family&free=1&when=weekend'
+
+# Near me, 10 km, soonest first
+curl '${BASE}/api/events?near=42.3601,-71.0589&radius_km=10&limit=20'`}</code></pre></div>
+
     <h2 id="categories">Categories</h2>
     <div class="table-wrap">
       <table>
@@ -165,7 +208,7 @@ curl '${BASE}/api/events?city=austin&page=2'   # until data comes back empty`}</
 
     <h2 id="caching">Caching, status codes, fair use</h2>
     <ul>
-      <li><code>Cache-Control: public, max-age=60, s-maxage=300</code> — cached 5 minutes at the edge, 1 minute in the browser.</li>
+      <li><code>Cache-Control: public, max-age=60, s-maxage=300</code> — cached 5 minutes at the edge, 1 minute in the browser. <code>/api/events/map</code> is shorter (<code>max-age=60, s-maxage=120</code>) and <code>/api/geo</code> is <code>private, no-store</code>.</li>
       <li><code>200</code> with <code>{'{ data }'}</code>; <code>404 {'{ error }'}</code> for an unknown event id; <code>OPTIONS</code> answers <code>204</code> for preflight.</li>
       <li>Responses carry <code>X-Robots-Tag: noindex</code>; the HTML pages are what should rank.</li>
       <li>Free and unauthenticated. Cache on your side, keep rates reasonable, link back to the event's FindLocal page or the venue. Volume or guarantees: <a href="mailto:findlocalinternal@gmail.com">findlocalinternal@gmail.com</a>.</li>

@@ -2,28 +2,52 @@
 // "Who" section on the event page: performers grouped by role, with an
 // avatar when the source gave us one, an outbound link, and a nofollow link
 // to every other upcoming event featuring the same name.
-import { imageUrl, performersByRole, type Performer } from '@findlocal/shared';
+//
+// When the event has gazetteer authors attached (`authors`, via attachAuthors),
+// a matching performer is enriched with the author's photo, bio and Wikipedia
+// link — plus the photo credit Wikimedia licensing requires.
+import { imageUrl, openLibraryCover, performersByRole, type AuthorRow, type Performer } from '@findlocal/shared';
+import { nameKey } from '../lib/embedCard.js';
+import { authorBio, photoAttribution, wikipediaUrl } from '../lib/enrichment.js';
+import { truncate } from '../lib/format.js';
 import Icon from './Icon.astro';
 interface Props {
   performers: Performer[];
   citySlug?: string;
+  /** Gazetteer authors for this event (matched to performers by name). */
+  authors?: AuthorRow[];
 }
-const { performers, citySlug } = Astro.props;
+const { performers, citySlug, authors = [] } = Astro.props;
 const groups = performersByRole(performers);
+const byName = new Map(authors.map((a) => [nameKey(a.canonical_name), a]));
+function enrich(name: string) {
+  const a = byName.get(nameKey(name));
+  if (!a) return null;
+  return {
+    photo: openLibraryCover(a.photo_url, 'M'),
+    bio: authorBio(a),
+    credit: photoAttribution(a),
+    wiki: wikipediaUrl(a),
+  };
+}
 ---
 <ul class="people">
   {groups.map((g) => g.people.map((p) => {
-    const avatar = p.image ? imageUrl(p.image, { width: 80, height: 80 }) : null;
+    const extra = enrich(p.name);
+    const avatar = imageUrl(p.image || extra?.photo || null, { width: 96, height: 96 });
     const more = citySlug ? `/city/${citySlug}?performer=${encodeURIComponent(p.name)}` : null;
     return (
       <li>
-        {avatar ? <img src={avatar} alt="" width="40" height="40" loading="lazy" decoding="async" /> : <span class="avatar" aria-hidden="true"><Icon name="person" size={20} /></span>}
+        {avatar ? <img src={avatar} alt="" width="48" height="48" loading="lazy" decoding="async" /> : <span class="avatar" aria-hidden="true"><Icon name="person" size={20} /></span>}
         <div class="who">
           <span class="name">{p.name}</span>
           <span class="role">{g.label.replace(/s$/, (m) => (g.people.length > 1 ? '' : m))}</span>
+          {extra?.bio && <span class="bio">{truncate(extra.bio, 220)}</span>}
+          {extra?.credit && <span class="credit faint">Photo: {extra.credit}</span>}
         </div>
         <div class="links">
           {more && <a rel="nofollow" href={more}>More events</a>}
+          {extra?.wiki && <a href={extra.wiki} rel="noopener nofollow" target="_blank">Wikipedia</a>}
           {p.url && <a href={p.url} rel="noopener nofollow" target="_blank">Website</a>}
         </div>
       </li>
@@ -32,12 +56,18 @@ const groups = performersByRole(performers);
 </ul>
 
 <style>
-  .people { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.6rem; }
-  .people li { display: flex; align-items: center; gap: 0.7rem; }
-  .people img, .avatar { width: 40px; height: 40px; border-radius: 999px; object-fit: cover; flex-shrink: 0; }
+  .people { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.75rem; }
+  .people li { display: flex; align-items: flex-start; gap: 0.7rem; }
+  .people img, .avatar { width: 48px; height: 48px; border-radius: 999px; object-fit: cover; flex-shrink: 0; background: rgb(var(--surface)); }
   .avatar { display: inline-flex; align-items: center; justify-content: center; background: rgb(var(--teal) / 0.12); color: rgb(var(--teal)); }
   .who { display: flex; flex-direction: column; min-width: 0; flex: 1; }
   .name { font-weight: 700; }
   .role { font-size: 0.8rem; color: rgb(var(--text-3)); }
-  .links { display: flex; gap: 0.8rem; font-size: 0.85rem; white-space: nowrap; }
+  .bio { font-size: 0.88rem; color: rgb(var(--text-2)); line-height: 1.5; margin-top: 0.2rem; }
+  .credit { font-size: 0.72rem; margin-top: 0.15rem; }
+  .links { display: flex; gap: 0.8rem; font-size: 0.85rem; white-space: nowrap; padding-top: 0.15rem; }
+  @media (max-width: 560px) {
+    .people li { flex-wrap: wrap; }
+    .links { width: 100%; padding-left: calc(48px + 0.7rem); }
+  }
 </style>

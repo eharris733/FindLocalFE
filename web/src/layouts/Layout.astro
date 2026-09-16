@@ -43,12 +43,19 @@ const fullTitle = brandInTitle && !title.includes('Find Local') ? `${title} | Fi
 const ogImageAbs = ogImage ? new URL(ogImage, SITE).toString() : `${SITE}/og-default.png`;
 const city = Astro.locals.city ?? CITIES.find((c) => c.slug === 'boston');
 const path = Astro.url.pathname;
+// `/` is the platform landing page; the feed lives on /city/<slug>, so "Explore"
+// points at the cookie city. Products get their own top-level links because the
+// widgets/API/MCP doors were the thing nobody could find.
 const nav = [
-  { href: '/', label: 'Discover', active: path === '/' || path.startsWith('/city/') || path.startsWith('/event/') },
-  { href: '/venues', label: 'Venues', active: path === '/venues' || path.startsWith('/venue/') },
-  { href: '/blog', label: 'Blog', active: path.startsWith('/blog') },
-  { href: '/developers', label: 'Developers', active: path.startsWith('/developers') || path === '/platform' },
-  { href: '/about', label: 'About', active: path === '/about' },
+  {
+    href: city ? `/city/${city.slug}` : '/',
+    label: 'Explore',
+    active: path.startsWith('/city/') || path.startsWith('/event/') || path === '/venues' || path.startsWith('/venue/'),
+  },
+  { href: '/developers/widgets', label: 'Widgets', active: path === '/developers/widgets' },
+  { href: '/developers/api', label: 'API', active: path === '/developers/api' },
+  { href: '/developers/mcp', label: 'MCP', active: path === '/developers/mcp' },
+  { href: '/developers', label: 'Developers', active: path === '/developers' },
 ];
 const searchAction = city ? `/city/${city.slug}` : '/';
 ---
@@ -122,15 +129,22 @@ const searchAction = city ? `/city/${city.slug}` : '/';
     <footer class="site-footer">
       <div class="inner">
         <CityLinks current={path.startsWith('/city/') ? path.slice(6) : undefined} />
+        <nav class="legal" aria-label="Build with Find Local">
+          <a href="/developers">Developers</a>
+          <a href="/developers/widgets">Widgets</a>
+          <a href="/developers/api">JSON API</a>
+          <a href="/developers/mcp">MCP server</a>
+          <a href="/llms.txt">llms.txt</a>
+        </nav>
         <nav class="legal" aria-label="Site">
+          <a href="/venues">Venues</a>
           <a href="/blog">Blog</a>
           <a href="/about">About</a>
           <a href="/about#support">Support</a>
           <a href="/privacy">Privacy</a>
           <a href="/terms">Terms</a>
-          <a href="/platform">Platform</a>
-          <a href="/developers">Developers</a>
           <a href="/saved">Saved</a>
+          <span class="soon">iOS app — coming soon</span>
         </nav>
         <p class="disclaimer">
           © 2026 FindLocal. FindLocal is a registered trademark and operating name of EH Solutions LLC.
@@ -380,7 +394,9 @@ const searchAction = city ? `/city/${city.slug}` : '/';
   .site-footer { border-top: 1px solid rgb(var(--border)); background: rgb(var(--bg-2)); color: rgb(var(--text-2)); font-size: 0.88rem; }
   .site-footer .inner { max-width: var(--maxw); margin: 0 auto; padding: 1.5rem 1rem 2.5rem; }
   .site-footer .legal { display: flex; flex-wrap: wrap; gap: 0.5rem 1.2rem; margin: 1.5rem 0 0.8rem; }
+  .site-footer .legal + .legal { margin-top: 0; }
   .site-footer .legal a { color: rgb(var(--text-2)); font-weight: 600; }
+  .site-footer .legal .soon { color: rgb(var(--text-3)); }
   .site-footer .disclaimer { color: rgb(var(--text-3)); font-size: 0.78rem; margin: 0; max-width: 60rem; }
 
   /* Pagination */

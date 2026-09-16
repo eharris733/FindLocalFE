@@ -9,7 +9,8 @@ import { CITIES, SITE } from '@findlocal/shared';
 import { countUpcomingEventsByCity, getDb, listSitemapEvents, listSitemapVenues } from '../../lib/db.js';
 import { MIN_CITY_EVENTS, eventChunk, parseSitemapName, toLastmod, urlsetXml, xmlResponse, type SitemapUrl } from '../../lib/sitemap.js';
 
-const STATIC_PATHS = ['/', '/venues', '/about', '/platform', '/developers', '/developers/api', '/developers/mcp', '/developers/widgets', '/privacy', '/terms', '/blog'];
+// '/platform' is gone (folded into '/', which 301s from it), so it must not be submitted.
+const STATIC_PATHS = ['/', '/venues', '/about', '/developers', '/developers/api', '/developers/mcp', '/developers/widgets', '/privacy', '/terms', '/blog'];
 
 async function staticUrls(): Promise<SitemapUrl[]> {
   const [posts, byCity] = await Promise.all([getCollection('blog', (p) => !p.data.draft), countUpcomingEventsByCity(getDb())]);

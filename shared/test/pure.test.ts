@@ -168,6 +168,8 @@ describe('seo', () => {
     expect(redirectTargetFor('/venues')).toBeNull();
     expect(redirectTargetFor('/map')).toBe('/?view=map');
     expect(redirectTargetFor('/filters')).toBe('/');
+    expect(redirectTargetFor('/platform')).toBe('/');
+    expect(redirectTargetFor('/platform/')).toBe('/');
     expect(redirectTargetFor('/sitemap')).toBe('/sitemap.xml');
     expect(redirectTargetFor('/sitemap-blog.xml')).toBe('/sitemap.xml');
     expect(redirectTargetFor('/sitemaps')).toBe('/sitemap.xml');

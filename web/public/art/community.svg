@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" width="1200" height="800" role="img" aria-label="Community">
+  <defs>
+    <pattern id="communityG" width="18" height="18" patternUnits="userSpaceOnUse">
+      <circle cx="3" cy="3" r="1.7" fill="#ffffff" fill-opacity=".15"/>
+      <circle cx="12" cy="11" r="1.1" fill="#000000" fill-opacity=".08"/>
+    </pattern>
+    <radialGradient id="communityV" cx="50%" cy="34%" r="78%">
+      <stop offset=".55" stop-color="#ffffff" stop-opacity=".12"/>
+      <stop offset="1" stop-color="#000000" stop-opacity=".24"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1200" height="800" fill="#7fc8f0"/>
+
+  <!-- sun + hills -->
+  <circle cx="960" cy="150" r="110" fill="#ffe08a"/>
+  <path d="M0 420C260 330 420 470 700 400s360-120 500-60V800H0Z" fill="#2e7d4f"/>
+  <path d="M0 560C300 480 520 620 1200 520V800H0Z" fill="#256a42"/>
+
+  <!-- houses on the hill -->
+  <g>
+    <polygon points="286,286 190,376 382,376" fill="#c4402c"/>
+    <rect x="216" y="376" width="140" height="118" fill="#f6e8ce"/>
+    <rect x="264" y="422" width="44" height="72" fill="#2e7d4f"/>
+    <polygon points="600,236 486,342 714,342" fill="#e2a33a"/>
+    <rect x="518" y="342" width="164" height="150" fill="#fdf4e2"/>
+    <rect x="572" y="400" width="56" height="92" fill="#256a42"/>
+    <polygon points="898,296 802,380 994,380" fill="#3a6ea8"/>
+    <rect x="828" y="380" width="140" height="118" fill="#f6e8ce"/>
+    <rect x="874" y="426" width="48" height="72" fill="#2e7d4f"/>
+  </g>
+
+  <!-- cupped hands -->
+  <path d="M600 800C468 800 388 730 370 650c-8-34 30-56 54-24l34 46c-12-56-2-106 12-132 16-28 52-16 46 18-8 44-4 82 8 108l76 24Z" fill="#f2c39a"/>
+  <g transform="translate(1200,0) scale(-1,1)">
+    <path d="M600 800C468 800 388 730 370 650c-8-34 30-56 54-24l34 46c-12-56-2-106 12-132 16-28 52-16 46 18-8 44-4 82 8 108l76 24Z" fill="#dda87c"/>
+  </g>
+
+  <!-- heart held between the hands -->
+  <path d="M600 700c-42-32-74-56-74-90 0-26 20-42 42-42 17 0 28 9 32 17 4-8 15-17 32-17 22 0 42 16 42 42 0 34-32 58-74 90Z" fill="#e8455f"/>
+
+  <rect width="1200" height="800" fill="url(#communityG)"/>
+  <rect width="1200" height="800" fill="url(#communityV)"/>
+</svg>

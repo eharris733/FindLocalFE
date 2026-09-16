@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" width="1200" height="800" role="img" aria-label="Event">
+  <defs>
+    <pattern id="eventG" width="18" height="18" patternUnits="userSpaceOnUse">
+      <circle cx="3" cy="3" r="1.7" fill="#ffffff" fill-opacity=".14"/>
+      <circle cx="12" cy="11" r="1.1" fill="#000000" fill-opacity=".09"/>
+    </pattern>
+    <radialGradient id="eventV" cx="50%" cy="36%" r="76%">
+      <stop offset=".55" stop-color="#ffffff" stop-opacity=".12"/>
+      <stop offset="1" stop-color="#000000" stop-opacity=".28"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1200" height="800" fill="#0b4f4f"/>
+
+  <!-- starburst rays -->
+  <g fill="#4da399" fill-opacity=".45">
+    <polygon points="600,400 30,120 0,320"/>
+    <polygon points="600,400 1170,120 1200,320"/>
+    <polygon points="600,400 240,-40 460,-60"/>
+    <polygon points="600,400 960,-40 740,-60"/>
+    <polygon points="600,400 120,760 380,800"/>
+    <polygon points="600,400 1080,760 820,800"/>
+  </g>
+  <circle cx="600" cy="400" r="266" fill="#4da399" fill-opacity=".35"/>
+
+  <!-- ticket -->
+  <g transform="rotate(-6 600 400)">
+    <rect x="300" y="250" width="600" height="300" rx="34" fill="#9fe6d8"/>
+    <rect x="336" y="286" width="528" height="228" rx="18" fill="#80d8ca"/>
+    <circle cx="300" cy="400" r="44" fill="#0b4f4f"/>
+    <circle cx="900" cy="400" r="44" fill="#0b4f4f"/>
+    <rect x="596" y="286" width="12" height="228" fill="#0b4f4f" fill-opacity=".35"/>
+    <g fill="#0b4f4f" fill-opacity=".38">
+      <rect x="386" y="342" width="170" height="20" rx="10"/>
+      <rect x="386" y="392" width="140" height="20" rx="10"/>
+      <rect x="386" y="442" width="160" height="20" rx="10"/>
+    </g>
+    <polygon points="740,320 766,382 832,382 778,422 798,486 740,448 682,486 702,422 648,382 714,382" fill="#ffd166"/>
+  </g>
+
+  <rect width="1200" height="800" fill="url(#eventG)"/>
+  <rect width="1200" height="800" fill="url(#eventV)"/>
+</svg>
