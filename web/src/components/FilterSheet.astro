@@ -4,7 +4,7 @@
 // button. Repeated params (cat=a&cat=b, when=&when=weekend) are normalised by
 // parseFilters/canonicalQuery, so the resulting URL is the same one the desktop
 // chips produce. Opened by FilterFab via the native <dialog> API.
-import { TOD_CHIPS, WHEN_CHIPS, chipHref, type FeedState } from '../lib/feed.js';
+import { SORT_CHIPS, TOD_CHIPS, WHEN_CHIPS, chipHref, type FeedState } from '../lib/feed.js';
 import Icon from './Icon.astro';
 interface Props {
   state: FeedState;
@@ -18,6 +18,8 @@ type RegionOption = FeedState['regions'][number];
   <form method="get" action={state.basePath} class="sheet-form">
     {f.text && <input type="hidden" name="q" value={f.text} />}
     {f.performer && <input type="hidden" name="performer" value={f.performer} />}
+    {f.near && <input type="hidden" name="near" value={`${f.near.lat},${f.near.lng}`} />}
+    {f.near && <input type="hidden" name="radius_km" value={String(f.near.radiusKm)} />}
     {state.view === 'map' && <input type="hidden" name="view" value="map" />}
 
     <header class="sheet-head">
@@ -70,6 +72,19 @@ type RegionOption = FeedState['regions'][number];
         <div class="chips">
           <label class="chip"><input class="visually-hidden" type="checkbox" name="free" value="1" checked={!!f.free} />Free</label>
           <label class="chip"><input class="visually-hidden" type="checkbox" name="paid" value="1" checked={!!f.paid} />Ticketed</label>
+        </div>
+      </section>
+
+      <section>
+        <h3>Sort</h3>
+        <div class="chips">
+          {SORT_CHIPS.map((s) => (
+            <label class="chip" title={s.title}>
+              {/* `featured` is the default, so it submits an empty value and drops out of the URL. */}
+              <input class="visually-hidden" type="radio" name="sort" value={s.value === 'featured' ? '' : s.value} checked={state.sort === s.value} />
+              {s.label}
+            </label>
+          ))}
         </div>
       </section>
 

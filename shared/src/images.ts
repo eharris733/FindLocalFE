@@ -38,3 +38,17 @@ export function openLibraryCover(src: string | null | undefined, size: 'S' | 'M'
 export function imageUrl(src: string | null | undefined, o: ImageOpts): string | null {
   return buildImageUrl(src, o, IMAGE_CDN_ENABLED);
 }
+
+/**
+ * A URL safe to drop into a `srcset` candidate. There a space ends the URL (what
+ * follows is the descriptor) and a comma starts the next candidate — and we
+ * hot-link scraped image URLs containing both, e.g.
+ * `https://www.burren.com/images/mike verge.jpg`, which the browser reports as
+ * "Dropped srcset candidate …/mike" and then renders at 1x only. The `src`
+ * attribute tolerates them, so only the srcset copy needs this. Idempotent on an
+ * already-encoded URL (`%20`/`%2C` contain neither character).
+ */
+export function srcsetUrl(src: string | null | undefined): string | null {
+  if (!src) return null;
+  return src.replace(/ /g, '%20').replace(/,/g, '%2C');
+}

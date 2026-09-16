@@ -189,4 +189,4 @@ curl 'https://findlocal.community/api/events?city=austin&page=2'
 
 - [Connect FindLocal to Claude, Cursor, and other AI assistants (MCP)](/blog/findlocal-mcp-server) — the same data as tools an assistant can call.
 - [How Find Local finds events the big platforms miss](/blog/how-find-local-finds-events) — where the data comes from.
-- [The FindLocal platform page](/platform) — the overview for teams building on the data.
+- [The FindLocal platform page](/) — the overview for teams building on the data.

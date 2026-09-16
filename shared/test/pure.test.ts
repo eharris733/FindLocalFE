@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  CITIES, canonicalQuery, canonicalUrl, categoryBySlug, cityBySlug, citySlug, dateRangeFor,
+  CITIES, DEFAULT_CITY_SLUG, canonicalQuery, canonicalUrl, categoryBySlug, cityBySlug, citySlug, dateRangeFor,
   filtersToQuery, formatEventDate, formatTime, getCity, GONE_PATHS, isGonePath, isUuid, nearestCity,
   parseFilters, redirectTargetFor, REGION_GROUPS, regionGroupBySlug, regionGroupCities, regionGroupCityNames, slugForToken, slugsForTokens, timeOfDayBucket, todayIn, addDays,
 } from '../src/index.js';
@@ -166,8 +166,16 @@ describe('seo', () => {
     expect(redirectTargetFor('/boston/')).toBe('/city/boston');
     expect(redirectTargetFor('/city/boston')).toBeNull();
     expect(redirectTargetFor('/venues')).toBeNull();
-    expect(redirectTargetFor('/map')).toBe('/?view=map');
+    // /map is the map of *the feed*, and the feed is per-city: no cookie = Boston,
+    // a cookie city = that city's feed. `/` (the landing page) has no map view.
+    expect(redirectTargetFor('/map')).toBe('/city/boston?view=map');
+    expect(redirectTargetFor('/map/')).toBe('/city/boston?view=map');
+    expect(redirectTargetFor('/map', DEFAULT_CITY_SLUG)).toBe('/city/boston?view=map');
+    expect(redirectTargetFor('/map', 'new-york')).toBe('/city/new-york?view=map');
+    expect(redirectTargetFor('/about', 'new-york')).toBeNull();
     expect(redirectTargetFor('/filters')).toBe('/');
+    expect(redirectTargetFor('/platform')).toBe('/');
+    expect(redirectTargetFor('/platform/')).toBe('/');
     expect(redirectTargetFor('/sitemap')).toBe('/sitemap.xml');
     expect(redirectTargetFor('/sitemap-blog.xml')).toBe('/sitemap.xml');
     expect(redirectTargetFor('/sitemaps')).toBe('/sitemap.xml');

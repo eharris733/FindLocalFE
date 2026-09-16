@@ -2,10 +2,12 @@
 // responses in the Cloudflare Cache API under a key built by cacheKey.ts and
 // honours `s-maxage` from the header it stores; browsers only see `max-age`.
 //
-//   feed / city pages   600 s edge, SWR 1 day   (listings change with each scrape)
+//   / (platform landing) 3600 s edge            (catalogue aggregates, per city)
+//   city pages / venues 600 s edge, SWR 1 day   (listings change with each scrape)
 //   event / venue       3600 s edge
 //   sitemap(s)          86400 s edge
 //   /api/*              300 s edge
+//   /api/geo            never (per-request edge geolocation — must not be shared)
 //   /embed/*            600 s edge (widgets; keyed on the full query)
 //   /saved, non-GET, non-2xx: never cached
 
@@ -22,7 +24,14 @@ const SWR = 86400;
 
 export function cachePolicyFor(pathname: string): CachePolicy {
   if (pathname === '/saved') return { edge: 0, browser: 0, perCity: false };
-  if (pathname === '/' || pathname === '/venues') return { edge: 600, browser: 0, perCity: true };
+  // Geolocated per request: one shared edge copy would hand every visitor the
+  // first colo's answer.
+  if (pathname === '/api/geo') return { edge: 0, browser: 0, perCity: false };
+  // `/` is the platform landing page: catalogue-wide aggregates that move once a
+  // day, so it takes an hour at the edge (still per-city — its CTA, example
+  // widget and coverage highlight follow the fl_city cookie).
+  if (pathname === '/') return { edge: 3600, browser: 0, perCity: true };
+  if (pathname === '/venues') return { edge: 600, browser: 0, perCity: true };
   if (pathname.startsWith('/city/')) return { edge: 600, browser: 300, perCity: false };
   if (pathname.startsWith('/event/') || pathname.startsWith('/venue/')) return { edge: 3600, browser: 300, perCity: false };
   if (pathname === '/sitemap.xml' || pathname.startsWith('/sitemaps/')) return { edge: 86400, browser: 3600, perCity: false };

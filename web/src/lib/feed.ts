@@ -4,16 +4,19 @@ import type { D1Database } from '@cloudflare/workers-types';
 import {
   CATEGORIES,
   PAGE_SIZE,
+  SITE_DEFAULT_SORT,
   canonicalQuery,
   filtersToQuery,
   parseFilters,
   type City,
   type EventFilters,
   type EventRow,
+  type EventSort,
   type QueryableFilters,
   type TimeOfDay,
 } from '@findlocal/shared';
-import { categoryCounts, countUpcomingEvents, listRegions, listUpcomingEvents } from './db.js';
+import { attachAuthors, attachBooks, categoryCounts, countUpcomingEvents, listRegions, listUpcomingEvents } from './db.js';
+import { hasLiteraryLinks } from './format.js';
 
 export type WhenChip = 'anytime' | 'today' | 'tomorrow' | 'weekend' | 'week';
 export const WHEN_CHIPS: { value: WhenChip; label: string }[] = [
@@ -27,6 +30,11 @@ export const TOD_CHIPS: { value: TimeOfDay; label: string }[] = [
   { value: 'morning', label: 'Morning' },
   { value: 'afternoon', label: 'Afternoon' },
   { value: 'evening', label: 'Evening' },
+];
+/** Sort toggle. The site feed defaults to `featured`; `date` is the chronological view. */
+export const SORT_CHIPS: { value: EventSort; label: string; title: string }[] = [
+  { value: 'featured', label: 'Featured', title: 'Best-looking events first, reshuffled daily' },
+  { value: 'date', label: 'Date', title: 'Soonest first, grouped by day' },
 ];
 
 export interface FeedState {
@@ -45,6 +53,9 @@ export interface FeedState {
   /** category slug -> upcoming count under every other filter. */
   categoryOptions: { slug: string; label: string; count: number; active: boolean }[];
   regions: { region: string; count: number }[];
+  /** Effective ordering ('featured' unless ?sort=date). Day headers are only
+   * meaningful for 'date' — featured results render as one flat grid. */
+  sort: EventSort;
   view: 'list' | 'map';
   /** canonicalQuery of the request ('' = unfiltered, unpaged). */
   canonical: string;
@@ -60,9 +71,35 @@ export function withoutPage(canonical: string): string {
   return p.toString();
 }
 
+/**
+ * Hang the gazetteer rows an event card's image chain needs (`books`, `authors`)
+ * off the events on **this page only**, so a literary card in the feed shows the
+ * book cover / author portrait `bestEventImage` already knows how to prefer.
+ * `listUpcomingEvents` attaches neither (that would join the gazetteer into every
+ * feed query, for the handful of rows that have links), and `/api/events` must
+ * keep its shape, so the feed does it as a separate, opt-in step.
+ *
+ * Cost: **zero queries** when no event on the page has links, otherwise two
+ * (books, authors) — each batched over the distinct ids and chunked under D1's
+ * 100-bind cap inside `attachBooks` / `attachAuthors`. Mutates and returns
+ * `events`.
+ */
+export async function attachLiteraryThumbs(db: D1Database, events: EventRow[]): Promise<EventRow[]> {
+  const linked = events.filter(hasLiteraryLinks);
+  if (!linked.length) return events;
+  await Promise.all([
+    linked.some((e) => e.book_ids.length > 0) ? attachBooks(db, linked) : undefined,
+    linked.some((e) => e.author_ids.length > 0) ? attachAuthors(db, linked) : undefined,
+  ]);
+  return events;
+}
+
 export async function loadFeed(db: D1Database, city: City, url: URL, now: Date = new Date()): Promise<FeedState> {
   const params = url.searchParams;
   const filters = parseFilters(params, city, now);
+  // parseFilters leaves `sort` unset when the URL doesn't say, so machine
+  // consumers keep chronological order; the human feed leads with `featured`.
+  filters.sort ??= SITE_DEFAULT_SORT;
   const canonical = canonicalQuery(params);
   const when = new URLSearchParams(canonical).get('when') ?? 'anytime';
   const whenDate = /^\d{4}-\d{2}-\d{2}$/.test(when) ? when : null;
@@ -73,6 +110,9 @@ export async function loadFeed(db: D1Database, city: City, url: URL, now: Date =
     categoryCounts(db, city.name, filters),
     listRegions(db, city.name),
   ]);
+  // Cards prefer a book cover / author photo for literary events; the rows that
+  // chain needs are fetched for this page only (no-op when nothing is linked).
+  await attachLiteraryThumbs(db, events);
   const countBySlug = new Map(cats.map((c) => [c.category, c.count]));
   const active = new Set(filters.categories ?? []);
   const categoryOptions = CATEGORIES.map((c) => ({
@@ -93,6 +133,7 @@ export async function loadFeed(db: D1Database, city: City, url: URL, now: Date =
     events,
     categoryOptions,
     regions,
+    sort: filters.sort ?? SITE_DEFAULT_SORT,
     view: params.get('view') === 'map' ? 'map' : 'list',
     canonical,
     filterCanonical: withoutPage(canonical),
@@ -112,7 +153,26 @@ export function toQueryable(s: FeedState): QueryableFilters {
   if (f.region) q.region = f.region;
   if (f.text) q.text = f.text;
   if (f.performer) q.performer = f.performer;
+  if (f.sort) q.sort = f.sort;
+  if (f.near) q.near = f.near;
   return q;
+}
+
+/**
+ * The filter params `/api/events/map` understands, as a query string (no bbox —
+ * the map appends its own viewport). `when` is passed through verbatim so
+ * `anytime` stays open-ended; `sort` is omitted (the map always ranks featured).
+ */
+export function mapFilterQuery(s: FeedState): string {
+  const p = new URLSearchParams();
+  if (s.when !== 'anytime') p.set('when', s.when);
+  if (s.filters.categories?.length) p.set('cat', s.filters.categories.join(','));
+  if (s.filters.free) p.set('free', '1');
+  if (s.filters.paid) p.set('paid', '1');
+  if (s.filters.text) p.set('q', s.filters.text);
+  if (s.filters.authorsOnly) p.set('authors', '1');
+  p.sort();
+  return p.toString();
 }
 
 /** Link for a filter change: the base path plus filtersToQuery (page reset). */

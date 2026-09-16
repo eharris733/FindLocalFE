@@ -5,7 +5,7 @@
 import type { D1Database } from '@cloudflare/workers-types';
 import { getCity } from './cities.js';
 import { addDays, todayIn } from './dates.js';
-import type { EventFilters } from './filters.js';
+import { API_DEFAULT_SORT, type EventFilters, type EventSort, type NearFilter } from './filters.js';
 import type { AuthorRow, BookRow, EventRow, Performer, VenueRow } from './types.js';
 
 const MAX_BINDS = 90; // D1 allows 100 bound params per statement; leave headroom.
@@ -160,12 +160,17 @@ const SERIES_CTE_VENUE = `
 const SERIES_JOIN = `LEFT JOIN series sr ON sr.venue_id = e.venue_id
   AND sr.norm_title = lower(trim(e.title)) AND sr.event_date = e.event_date`;
 
+// The trailing five venue columns and the last three author columns are
+// provenance (migration 0013 / 0010): where an image or description came from and
+// the credit line its license requires. All nullable and sparse — the UI reads
+// them through web/src/lib/enrichment.ts, which renders nothing when absent.
 const VENUE_COLS = `
   v.id, v.name, v.city, v.region, v.url, v.address, v.description, v.image, v.type,
-  v.venue_size, v.categories, v.latitude, v.longitude, v.is_active`;
+  v.venue_size, v.categories, v.latitude, v.longitude, v.is_active,
+  v.wikidata_id, v.wikipedia_url, v.image_attribution, v.image_source, v.description_source`;
 
 const BOOK_COLS = `id, title, subtitle, isbn13, isbn10, cover_url, description, publisher, pub_year, author_ids`;
-const AUTHOR_COLS = `id, canonical_name, photo_url, openlibrary_id`;
+const AUTHOR_COLS = `id, canonical_name, photo_url, openlibrary_id, bio, wikipedia_url, photo_attribution`;
 
 /** A books.id that is itself an ISBN-13 (Bookmanager rows store the ISBN as the id, isbn13 NULL). */
 const ISBN_ID_SQL = `(length(b.id) = 13 AND b.id NOT GLOB '*[^0-9]*')`;
@@ -189,7 +194,118 @@ function categorySql(cats: string[]): Where {
   return { sql: clauses.length > 1 ? `(${clauses.join(' OR ')})` : clauses[0]!, binds };
 }
 
-const ORDER = `ORDER BY e.event_date, e.start_time IS NULL, e.start_time, e.id`;
+/** Chronological tie-break, reused by every ordering below. */
+const CHRONO = `e.event_date, e.start_time IS NULL, e.start_time, e.id`;
+const ORDER = `ORDER BY ${CHRONO}`;
+
+// ------------------------------------------------------- featured ordering (sort=featured)
+//
+// A cheap relevance score computed entirely in SQLite so paging still happens in
+// D1. Every term is a CASE over columns the row already carries; nothing is
+// correlated, so the cost over the chronological order is a handful of CASEs per
+// candidate row. See docs/PRODUCT_POLISH_2026-09.md for the contract.
+
+/** `events` has no created_at (see shared/data/schema/0001_init.sql): first_seen_at
+ * is when the pipeline first saw the event, which is what "new" means here. */
+const FRESH_DAYS = 7;
+const SOON_DAYS = 7;
+const SOONISH_DAYS = 14;
+
+/** +3 for the event's own artwork, +1 when the only image is the venue's (or the
+ * event just repeats the venue image). */
+const IMAGE_SCORE_SQL = `CASE
+    WHEN e.image_url IS NOT NULL AND e.image_url <> '' AND (v.image IS NULL OR e.image_url <> v.image) THEN 3
+    WHEN e.image_url IS NOT NULL AND e.image_url <> '' THEN 1
+    WHEN v.image IS NOT NULL AND v.image <> '' THEN 1
+    ELSE 0 END`;
+/** length(NULL) is NULL, so a missing description falls through to ELSE 0. */
+const DESCRIPTION_SCORE_SQL = `CASE WHEN length(e.description) >= 200 THEN 2 WHEN length(e.description) >= 60 THEN 1 ELSE 0 END`;
+const START_TIME_SCORE_SQL = `CASE WHEN e.start_time IS NOT NULL AND e.start_time <> '' THEN 1 ELSE 0 END`;
+const PRICE_SCORE_SQL = `CASE WHEN e.price_amount IS NOT NULL OR (e.price IS NOT NULL AND e.price <> '') THEN 0.5 ELSE 0 END`;
+/** Someone is on the bill: a performer/author list, or a gazetteer author link. */
+const BILL_SCORE_SQL = `CASE WHEN (e.performers IS NOT NULL AND e.performers NOT IN ('', '[]'))
+    OR (e.author_ids IS NOT NULL AND e.author_ids NOT IN ('', '[]')) THEN 1 ELSE 0 END`;
+/** The hard rule: a row with no image anywhere AND no description sorts after
+ * everything else whatever its score — it has nothing to render. */
+const HAS_CONTENT_SQL = `CASE WHEN (e.image_url IS NOT NULL AND e.image_url <> '')
+    OR (v.image IS NOT NULL AND v.image <> '')
+    OR (e.description IS NOT NULL AND trim(e.description) <> '') THEN 1 ELSE 0 END`;
+/** Deterministic tie-breaker in [0, 1.5): four id characters mixed with a
+ * per-day seed. SQLite has no md5(); unicode()+substr() is one pass over 4 bytes.
+ * The `|| '____'` pad keeps unicode() non-NULL for freakishly short ids. */
+const JITTER_SQL = `((unicode(substr(e.id || '____', 1, 1)) * 31
+    + unicode(substr(e.id || '____', 2, 1)) * 17
+    + unicode(substr(e.id || '____', 3, 1)) * 7
+    + unicode(substr(e.id || '____', 4, 1)) * 3 + ?) % 150) / 100.0`;
+
+/** A stable small integer per calendar day — reshuffles ties once a day. */
+export function jitterSeed(today: string): number {
+  const [y = 0, m = 0, d = 0] = today.split('-').map(Number);
+  return ((y * 10000 + m * 100 + d) % 997) * 11;
+}
+
+export interface FeaturedOrderOptions {
+  /** Reference day ('YYYY-MM-DD'), normally today in the city's zone. */
+  today: string;
+  /** True when the query is already pinned to a single date: the "starts soon"
+   * bonus would then be constant, so it is dropped. */
+  singleDay?: boolean;
+}
+
+/**
+ * `ORDER BY` for sort=featured, with its binds (they follow the WHERE binds).
+ * Exported so the map/bounds query and tests use the identical expression.
+ */
+export function featuredOrder(o: FeaturedOrderOptions): Where {
+  const terms = [IMAGE_SCORE_SQL, DESCRIPTION_SCORE_SQL, START_TIME_SCORE_SQL, PRICE_SCORE_SQL, BILL_SCORE_SQL];
+  const binds: unknown[] = [];
+  if (!o.singleDay) {
+    terms.push(`CASE WHEN e.event_date <= ? THEN 2 WHEN e.event_date <= ? THEN 1 ELSE 0 END`);
+    binds.push(addDays(o.today, SOON_DAYS), addDays(o.today, SOONISH_DAYS));
+  }
+  terms.push(`CASE WHEN e.first_seen_at >= ? THEN 1 ELSE 0 END`);
+  binds.push(addDays(o.today, -FRESH_DAYS));
+  terms.push(JITTER_SQL);
+  binds.push(jitterSeed(o.today));
+  return { sql: `ORDER BY ${HAS_CONTENT_SQL} DESC, (${terms.join(`\n    + `)}) DESC, ${CHRONO}`, binds };
+}
+
+/** Degrees of latitude per km (equirectangular approximation, good to ~0.5%). */
+const KM_PER_DEG = 111.045;
+
+function lngScale(lat: number): number {
+  return Math.max(Math.cos((lat * Math.PI) / 180), 0.01);
+}
+
+/** Bounding box around a `near` filter — the cheap prefilter before distance order. */
+function nearWhere(n: NearFilter): Where {
+  const dLat = n.radiusKm / KM_PER_DEG;
+  const dLng = n.radiusKm / (KM_PER_DEG * lngScale(n.lat));
+  return {
+    sql: `(v.latitude IS NOT NULL AND v.longitude IS NOT NULL
+      AND v.latitude BETWEEN ? AND ? AND v.longitude BETWEEN ? AND ?)`,
+    binds: [n.lat - dLat, n.lat + dLat, n.lng - dLng, n.lng + dLng],
+  };
+}
+
+/** Nearest venue first. Squared, scaled degrees — monotonic in real distance, and
+ * no cos()/sqrt() in SQL (D1 does not guarantee the SQLite math extension). */
+function nearOrder(n: NearFilter): Where {
+  const s = lngScale(n.lat);
+  return {
+    sql: `ORDER BY ((v.latitude - ?) * (v.latitude - ?)) + (((v.longitude - ?) * ?) * ((v.longitude - ?) * ?)), ${CHRONO}`,
+    binds: [n.lat, n.lat, n.lng, s, n.lng, s],
+  };
+}
+
+/** The ORDER BY for a filter set: `near` (distance) wins, then sort=featured, else chronological. */
+function orderFor(f: EventFilters, today: string): Where {
+  if (f.near) return nearOrder(f.near);
+  if ((f.sort ?? API_DEFAULT_SORT) === 'featured') {
+    return featuredOrder({ today, singleDay: !!f.to && f.to === (f.from ?? today) });
+  }
+  return { sql: ORDER, binds: [] };
+}
 
 const TOD_SQL: Record<string, string> = {
   morning: `(CAST(substr(e.start_time,1,2) AS INTEGER) BETWEEN 5 AND 11)`,
@@ -246,6 +362,11 @@ function buildWhere(f: EventFilters, skip?: keyof EventFilters): Where {
     where.push(PERFORMER_NAME_SQL);
     binds.push(`%${escapeLike(f.performer.trim())}%`);
   }
+  if (f.near) {
+    const n = nearWhere(f.near);
+    where.push(n.sql);
+    binds.push(...n.binds);
+  }
   if (f.venueId) {
     where.push(`e.venue_id = ?`);
     binds.push(f.venueId.toLowerCase());
@@ -260,18 +381,24 @@ function buildWhere(f: EventFilters, skip?: keyof EventFilters): Where {
 
 // ---------------------------------------------------------------- events
 
-/** Upcoming events for a city under the filter contract, with recurrence info. */
+/**
+ * Upcoming events for a city under the filter contract, with recurrence info.
+ * Ordering: `f.near` (distance) > `f.sort = 'featured'` > chronological (the
+ * default, so the JSON API and MCP are unchanged unless they ask for featured).
+ */
 export async function listUpcomingEvents(db: D1Database, f: EventFilters): Promise<EventRow[]> {
   const w = buildWhere(f);
+  const today = cityToday(f.city);
+  const order = orderFor(f, today);
   const limit = Math.min(Math.max(f.limit ?? 100, 1), MAX_LIMIT);
   const offset = Math.max(f.offset ?? 0, 0);
   const sql = `${SERIES_CTE}
     SELECT ${EVENT_COLS}, sr.series_count, sr.series_image
     FROM events e JOIN venues v ON v.id = e.venue_id ${SERIES_JOIN}
-    WHERE ${w.sql} ${ORDER} LIMIT ? OFFSET ?`;
+    WHERE ${w.sql} ${order.sql} LIMIT ? OFFSET ?`;
   const { results } = await db
     .prepare(sql)
-    .bind(f.city, cityToday(f.city), ...w.binds, limit, offset)
+    .bind(f.city, today, ...w.binds, ...order.binds, limit, offset)
     .all<RawEvent>();
   return results.map(mapEvent);
 }
@@ -296,7 +423,9 @@ export async function getEvent(db: D1Database, id: string): Promise<EventRow | n
     .first<RawEvent>();
   if (!row) return null;
   const event = mapEvent(row);
-  await attachBooks(db, [event]); // no-op for non-literary events (empty book_ids)
+  // Both are no-ops for non-literary events (empty book_ids / author_ids). The mobile
+  // app's image chain (book cover → author photo → …) reads these off /api/events/<id>.
+  await Promise.all([attachBooks(db, [event]), attachAuthors(db, [event])]);
   return event;
 }
 
@@ -539,6 +668,124 @@ export async function countUpcomingEventsForCities(db: D1Database, o: MultiCityO
     .bind(...w.binds)
     .first<{ n: number }>();
   return row?.n ?? 0;
+}
+
+// ---------------------------------------------------------------- map (bounding box)
+
+/** Hard cap on rows a single map viewport may return. */
+export const MAP_MAX_LIMIT = 400;
+export const MAP_DEFAULT_LIMIT = 200;
+/** Biggest viewport we will answer: 4° is already ~450 km across. */
+export const MAP_MAX_SPAN_DEG = 4;
+
+export interface BoundsBox {
+  minLat: number;
+  minLng: number;
+  maxLat: number;
+  maxLng: number;
+}
+
+export interface MapEventOptions extends BoundsBox {
+  /** Inclusive 'YYYY-MM-DD' lower bound; defaults to today in `tz`. */
+  from?: string;
+  /** Inclusive upper bound; null/undefined = open-ended ("anytime"). */
+  to?: string | null;
+  categories?: string[];
+  free?: boolean;
+  paid?: boolean;
+  text?: string;
+  authorsOnly?: boolean;
+  /** Clamped to 1..MAP_MAX_LIMIT (default MAP_DEFAULT_LIMIT). */
+  limit?: number;
+  /** 'featured' (default here — the map shows the best of a viewport) or 'date'. */
+  sort?: EventSort;
+  /** Zone for the default `from`; callers pass the nearest city's. */
+  tz?: string;
+}
+
+/** Compact row for map pins — never the full EventRow (a viewport holds hundreds). */
+export interface MapEventRow {
+  id: string;
+  title: string;
+  event_date: string;
+  start_time: string | null;
+  category: string | null;
+  /** Image chain resolved server-side: the event's artwork, else the venue's. */
+  image: string | null;
+  venue_id: string;
+  venue_name: string;
+  lat: number;
+  lng: number;
+  /** Parsed USD amount when the source gave one. */
+  price_min: number | null;
+  free: boolean;
+  /** Path on findlocal.community for this event. */
+  path: string;
+}
+
+type RawMapEvent = Omit<MapEventRow, 'free' | 'path'> & { is_free: number };
+
+/** True when the box is finite, correctly ordered, in range, and not absurdly large. */
+export function isValidBounds(b: BoundsBox, maxSpan = MAP_MAX_SPAN_DEG): boolean {
+  const nums = [b.minLat, b.minLng, b.maxLat, b.maxLng];
+  if (!nums.every((n) => Number.isFinite(n))) return false;
+  if (b.minLat >= b.maxLat || b.minLng >= b.maxLng) return false;
+  if (b.minLat < -90 || b.maxLat > 90 || b.minLng < -180 || b.maxLng > 180) return false;
+  return b.maxLat - b.minLat <= maxSpan && b.maxLng - b.minLng <= maxSpan;
+}
+
+/**
+ * Events whose venue falls inside a lat/lng box — the map's own query. NOT city
+ * scoped: the viewport is the scope, so a box straddling two metros returns both.
+ * `series_image` is deliberately not consulted (there is no city to build the
+ * series CTE over); the image chain is event artwork → venue image.
+ */
+export async function listEventsInBounds(db: D1Database, o: MapEventOptions): Promise<MapEventRow[]> {
+  if (!isValidBounds(o)) return [];
+  const today = o.from ?? todayIn(o.tz ?? DEFAULT_TZ);
+  const where = [
+    `e.is_deleted = 0`,
+    `e.event_date >= ?`,
+    `v.latitude IS NOT NULL AND v.longitude IS NOT NULL`,
+    `v.latitude BETWEEN ? AND ?`,
+    `v.longitude BETWEEN ? AND ?`,
+  ];
+  const binds: unknown[] = [today, o.minLat, o.maxLat, o.minLng, o.maxLng];
+  if (o.to) {
+    where.push(`e.event_date <= ?`);
+    binds.push(o.to);
+  }
+  const cats = [...new Set(o.categories ?? [])].slice(0, MAX_CATEGORIES);
+  if (cats.length) {
+    const c = categorySql(cats);
+    where.push(c.sql);
+    binds.push(...c.binds);
+  }
+  if (o.authorsOnly) where.push(AUTHORS_SQL);
+  if (o.free && o.paid) where.push(`(${FREE_SQL} OR ${PAID_SQL})`);
+  else if (o.free) where.push(FREE_SQL);
+  else if (o.paid) where.push(PAID_SQL);
+  const text = o.text?.trim();
+  if (text) {
+    where.push(`(e.title LIKE ? ESCAPE '\\' OR v.name LIKE ? ESCAPE '\\')`);
+    const like = `%${escapeLike(text)}%`;
+    binds.push(like, like);
+  }
+  const order =
+    (o.sort ?? 'featured') === 'featured'
+      ? featuredOrder({ today, singleDay: !!o.to && o.to === today })
+      : { sql: ORDER, binds: [] as unknown[] };
+  const sql = `SELECT e.id, e.title, e.event_date, e.start_time, e.category,
+      COALESCE(NULLIF(e.image_url, ''), NULLIF(v.image, '')) AS image,
+      e.venue_id, v.name AS venue_name, v.latitude AS lat, v.longitude AS lng,
+      e.price_amount AS price_min, CASE WHEN ${FREE_SQL} THEN 1 ELSE 0 END AS is_free
+    FROM events e JOIN venues v ON v.id = e.venue_id
+    WHERE ${where.join(' AND ')} ${order.sql} LIMIT ?`;
+  const { results } = await db
+    .prepare(sql)
+    .bind(...binds, ...order.binds, Math.min(Math.max(o.limit ?? MAP_DEFAULT_LIMIT, 1), MAP_MAX_LIMIT))
+    .all<RawMapEvent>();
+  return results.map(({ is_free, ...r }) => ({ ...r, free: is_free === 1, path: `/event/${r.id}` }));
 }
 
 // ---------------------------------------------------------------- venues

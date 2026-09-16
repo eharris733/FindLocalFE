@@ -130,4 +130,4 @@ Fields that are empty for an event are simply omitted. `date` is the venue's loc
 
 - [How to use the FindLocal Events API](/blog/findlocal-events-api) — the same data as plain JSON.
 - [How Find Local finds events the big platforms miss](/blog/how-find-local-finds-events) — where the data comes from.
-- [The FindLocal platform page](/platform) — the overview for teams building on the data.
+- [The FindLocal platform page](/) — the overview for teams building on the data.

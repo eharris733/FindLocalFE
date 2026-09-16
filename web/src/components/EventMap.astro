@@ -1,30 +1,44 @@
 ---
-// One marker per venue with the number of listed events; popup links to the
-// venue page and the first few events.
+// The feed's event map. The server renders one pin per venue from the current
+// list page so the map is useful without JS; with `state` it then goes live and
+// refetches from /api/events/map for whatever viewport the user pans to, which is
+// what makes `when=anytime` show more than the first page of a busy city.
 import type { City, EventRow } from '@findlocal/shared';
 import { imageUrl } from '@findlocal/shared';
+import { mapFilterQuery, type FeedState } from '../lib/feed.js';
+import { pinDateLabel } from '../lib/mapPins.js';
 import { eventImage } from '../lib/format';
 import LeafletMap, { type MapMarker } from './LeafletMap.astro';
 interface Props {
   events: EventRow[];
   city: City;
+  /** Feed state; when given the map follows the page's filters and pans live. */
+  state?: FeedState;
 }
-const { events, city } = Astro.props;
-const byVenue = new Map<string, MapMarker & { n: number }>();
+const { events, city, state } = Astro.props;
+const byVenue = new Map<string, MapMarker>();
 for (const e of events) {
   if (e.venue_lat == null || e.venue_lng == null) continue;
   let m = byVenue.get(e.venue_id);
   if (!m) {
-    m = { lat: e.venue_lat, lng: e.venue_lng, count: 0, n: 0, title: e.venue_name, href: `/venue/${e.venue_id}`, subtitle: e.venue_address ?? undefined, items: [] };
+    m = { lat: e.venue_lat, lng: e.venue_lng, count: 0, title: e.venue_name, href: `/venue/${e.venue_id}`, subtitle: e.venue_address ?? undefined, items: [] };
     byVenue.set(e.venue_id, m);
   }
   m.count += 1;
-  if (m.items!.length < 4) m.items!.push({ label: e.title, href: `/event/${e.id}` });
+  if (m.items!.length < 4) m.items!.push({ label: e.title, href: `/event/${e.id}`, meta: pinDateLabel(e.event_date, e.start_time) });
+  if (!m.category && e.category) m.category = e.category;
   if (!m.image) {
     const img = imageUrl(eventImage(e), { width: 96, height: 96 });
     if (img) m.image = img;
   }
 }
-const markers = [...byVenue.values()].map(({ n: _n, ...m }) => m);
+const markers = [...byVenue.values()];
 ---
-<LeafletMap markers={markers} center={{ lat: city.lat, lng: city.lng, zoom: city.zoom }} tall label={`Map of events in ${city.name}`} />
+<LeafletMap
+  markers={markers}
+  center={{ lat: city.lat, lng: city.lng, zoom: city.zoom }}
+  tall
+  live={!!state}
+  filters={state ? mapFilterQuery(state) : ''}
+  label={`Map of events in ${city.name}`}
+/>

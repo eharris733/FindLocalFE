@@ -22,7 +22,7 @@ Events are one-offs; venues are repeat characters. If you liked one show at a ro
 
 ## 3. Use the map when you're already out
 
-Half of going out is logistics. If you're meeting a friend in one neighborhood at 7, the question isn't "what's good tonight" — it's "what's good *within ten minutes of here* at 9." A [map view](/?view=map) of tonight's events answers that in a glance.
+Half of going out is logistics. If you're meeting a friend in one neighborhood at 7, the question isn't "what's good tonight" — it's "what's good *within ten minutes of here* at 9." A [map view](/map) of tonight's events answers that in a glance.
 
 ## 4. Let the small stuff win sometimes
 

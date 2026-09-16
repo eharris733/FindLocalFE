@@ -1,6 +1,6 @@
 # FindLocalFE — front doors for FindLocal
 
-**Last updated:** 2026-09-06 (developers hub, /platform ported to Astro, embeddable widgets + region groups)
+**Last updated:** 2026-09-16 (`/` is now the platform landing page — /platform 301s to it; per-city footer blurbs)
 
 FindLocalFE is the **front-doors** workspace for findlocal.community: the public
 website (`web/`, Astro on Cloudflare Workers), its JSON
@@ -21,13 +21,16 @@ scripts/sync-data.mjs vendors canonical data from ../FindLocalData (see below)
 shared/               @findlocal/shared — raw TS, no build step (main = src/index.ts)
   data/               VENDORED: cities.json, categories.json, schema/0001_init.sql
   src/
-    cities.ts         CITIES, getCity(name), cityBySlug, citySlug, nearestCity
+    cities.ts         CITIES, getCity(name), cityBySlug, citySlug, nearestCity (City.blurb = the per-city footer sentence)
     categories.ts     CATEGORIES, categoryBySlug, slugForToken (parity with FindLocalData/src/categories.py)
     dates.ts          todayIn(tz), addDays, dateRangeFor(when, tz), formatEventDate, formatTime, timeOfDayBucket
     filters.ts        EventFilters + parseFilters(URLSearchParams, city) / canonicalQuery / filtersToQuery
+                      EventSort ('featured'|'date', SITE_DEFAULT_SORT vs API_DEFAULT_SORT) + NearFilter
     regions.ts        REGION_GROUPS (e.g. new-england = 18 metro slugs) for multi-city widgets
     queries.ts        THE ONLY CODE THAT TOUCHES D1 — SELECT helpers, all SQL lives here
+                      listUpcomingEvents / listEventsInBounds (map bbox) / featuredOrder (sort=featured)
     seo.ts            SITE, canonicalUrl, isUuid, redirectTargetFor, GONE_PATHS, IMPACT_SITE_VERIFICATION
+    stats.ts          platformStats (landing-page catalogue aggregates), countUpcomingEventsWithin — SELECT only, same rule as queries.ts
     types.ts          EventRow / VenueRow
   test/               vitest suites + seed fixture (setup.ts applies the vendored schema)
 workers/mcp/          @findlocal/mcp — findlocal-mcp Worker (mcp.findlocal.community); see its README
@@ -36,9 +39,15 @@ web/                  @findlocal/web — Astro 7 SSR Worker (findlocal.community
   wrangler.toml       findlocal-web: D1 `DB` findlocal, `SESSION` KV placeholder, custom_domain route
   src/middleware.ts   301/410 tables, crawler block (meta-externalagent -> 403, list in lib/crawlerLimit.ts), fl_city cookie -> locals.city, Cache API edge cache, X-Robots-Tag
   src/lib/            db.ts (ONLY importer of cloudflare:workers), feed.ts, cacheKey.ts, cacheHeaders.ts,
-                      jsonld.ts, ics.ts, format.ts, icons.ts, crawlerLimit.ts — pure helpers unit-tested in web/test/
-  src/pages/          one file per route in the route table below; about/privacy/terms/blog/platform/developers are prerendered
-                      embed/events.astro = the widget iframe page (EmbedLayout, no site chrome); lib/embed.ts = its query contract
+                      jsonld.ts, ics.ts, format.ts, icons.ts, crawlerLimit.ts, mapQuery.ts (/api/events/map
+                      request parsing), mapPins.ts (photo-pin grouping/colours), embed.ts + embedCard.ts
+                      (widget query contract + card model), embedData.ts (the one loader behind
+                      /embed/events and /api/embed/events), geocode.ts (Photon/Nominatim place lookup)
+                      — pure helpers unit-tested in web/test/
+  src/pages/          one file per route in the route table below; about/privacy/terms/blog/developers are prerendered
+                      index.astro = the platform landing page (SSR: live stats); /city/[slug] = the feed
+                      embed/events.astro = the widget iframe page (EmbedLayout, no site chrome, in-widget
+                      filter toolbar); lib/embed.ts = its query contract; api/embed/events.ts = its JSON twin
   src/content/blog/   markdown posts (Astro content collection)
   public/             fonts, logo, favicon, og-default, robots/llms, widget.js (embed loader), _headers
 ```
@@ -60,7 +69,8 @@ npm run deploy:web               # astro build + wrangler deploy (needs a real S
 ## Rules
 
 - **Read-only by discipline.** D1 has no read-only binding. Only
-  `shared/src/queries.ts` may issue SQL, and only `SELECT`. Site pages, API
+  `shared/src/queries.ts` (per-request reads) and `shared/src/stats.ts`
+  (landing-page aggregates) may issue SQL, and only `SELECT`. Site pages, API
   routes and MCP tools call those helpers; they never build SQL themselves.
 - **One filter contract.** `EventFilters` (filters.ts) is shared by the site's
   URL parsing (`parseFilters`), the JSON API and the MCP `search_events` tool,
@@ -68,10 +78,59 @@ npm run deploy:web               # astro build + wrangler deploy (needs a real S
   URL keys: `when` (anytime|today|tomorrow|weekend|week|YYYY-MM-DD), `cat`
   (comma slugs), `free=1`, `paid=1`, `max`, `tod` (comma morning|afternoon|evening),
   `region`, `q`, `performer`, `authors=1` (only events with a gazetteer author on the
-  bill), `page` (100/page). `canonicalQuery()` = sorted, defaults dropped
+  bill), `sort` (featured|date), `near=<lat>,<lng>` + `radius_km`,
+  `page` (100/page). `canonicalQuery()` = sorted, defaults dropped
   — use it as the edge-cache key and in the canonical URL. `cat=literary` is
   venue-scoped: it also matches every event at a venue categorised literary
   (bookstore/library), since their storytimes are classified `family` by tokens.
+- **Sort defaults differ per front door, on purpose.** The human feed defaults to
+  `featured` (`SITE_DEFAULT_SORT`); `/api/events` and the MCP `search_events`
+  tool keep `date` (`API_DEFAULT_SORT`) so machine consumers see the chronological
+  order they always had, and must pass `sort=featured` to opt in. `parseFilters`
+  leaves `sort` unset when the URL doesn't say; `loadFeed` fills in `featured`.
+  The ranking SQL lives in `queries.ts::featuredOrder` and is spelled out in
+  `docs/PRODUCT_POLISH_2026-09.md` — quality/recency/freshness terms plus a
+  deterministic per-day jitter, rows with neither image nor description last.
+  `canonicalQuery` drops `sort=featured` and keeps `sort=date`, so `sort=date`
+  behaves like a filter (noindex, canonical to the bare page, robots-disallowed).
+  With `featured` the list renders as a flat grid — day headers only make sense
+  under `sort=date` (`EventList`'s `flat` prop).
+- **`near` beats `sort`.** `near=<lat>,<lng>&radius_km=` (default 25, max 200)
+  bounding-boxes on the venue coordinates and orders by distance; coordinates are
+  rounded to 3 decimals in *both* `parseFilters` and `canonicalQuery` so the edge
+  cache key can't explode. Distance is a squared, latitude-scaled degree
+  expression — never `cos()`/`sqrt()` in SQL (D1 doesn't guarantee SQLite's math
+  extension).
+- **The map has its own query.** `GET /api/events/map?bbox=minLng,minLat,maxLng,maxLat`
+  (`listEventsInBounds`) returns compact pin rows and is **not city-scoped** — the
+  viewport is the scope. Boxes over 4° a side are refused with 400. `LeafletMap`
+  with `live` refetches it on `moveend` (debounced, previous request aborted), so
+  the map is no longer limited to the current list page.
+- **The widget is two layers of query keys.** `/embed/events` (iframe page) and
+  `GET /api/embed/events` (its JSON twin) read one contract in
+  `web/src/lib/embed.ts`: the **partner's** keys — `region|city`, `cat`, `when`,
+  `from,to`, `view`, `theme`, `limit`, `partner`, `authors`, `filters`, `near`,
+  `radius_km` (written by `public/widget.js` from `data-*`, mirrored by
+  `buildEmbedSrc` — keep both in sync) — and the **visitor's** in-widget toolbar
+  keys (`EMBED_UI_KEYS`: `q`, `when` incl. `month`, `from,to`, `free|paid`
+  (`price=` is the no-JS form alias), `tod`, `ucat`, `authors`, `near`,
+  `radius_km`, `place`). `cat` is a *pin*: it hides the category chips and `ucat`
+  is ignored under it; the visitor's chips never change `utm_campaign`.
+  `near` **replaces** the region/city scope — `embedScope` resolves the point to
+  `nearestCity` and the query orders by distance. `filters=0|off` hides the
+  toolbar (the pre-B5 widget) and drops the iframe's `allow="geolocation"`.
+  Both front doors load through `web/src/lib/embedData.ts` (one scope → rows →
+  enrichment → `EventCard` + markers), so SSR and the JSON cannot drift; the
+  toolbar re-renders in place from the JSON and `history.replaceState`s the
+  iframe URL — it never navigates the host page. Region-group widgets cannot
+  express price/time/text in SQL (`listUpcomingEventsForCities`), so those are
+  applied in JS by `matchesEmbedFilters` over an oversampled window. Place lookup
+  is `web/src/lib/geocode.ts` (Photon → Nominatim, US only, twin of the mobile
+  app's). Contract and rationale: `docs/PRODUCT_POLISH_2026-09.md` → B5.
+- **City is never derived from geo headers.** Rendered pages pick the city from
+  the `fl_city` cookie only (cache + SEO). `GET /api/geo` (uncached, `edge: 0` in
+  `cachePolicyFor`, `private, no-store`) exists purely so `GeoHint.astro` can
+  *suggest* a switch client-side after paint.
 - **Vendored data, never hand-edited.** `shared/data/*` is copied from
   FindLocalData by `npm run sync-data`; CI runs `sync-data:check`. Change the
   source files in FindLocalData, then re-sync here.
@@ -92,16 +151,36 @@ npm run deploy:web               # astro build + wrangler deploy (needs a real S
 
 - **Domain / canonical**: `https://findlocal.community` (`SITE` in seo.ts).
   Canonical URLs are absolute, never derived from the request host; query
-  params other than the canonical filter keys are stripped; `/?view=map`
-  folds into `/`. Trailing slashes are stripped.
+  params other than the canonical filter keys are stripped; `view=map` is not a
+  canonical param (it never appears in a canonical URL). Trailing slashes are
+  stripped.
+- **`/` is the platform landing page** (Sept 2026), not a feed: hero + live
+  catalogue stats (`shared/src/stats.ts` → `platformStats`, one batched aggregate
+  pass), four product tiles (widgets — with a live `/embed/events` iframe — JSON
+  API, MCP, catalogue), a "how it's different" strip, and per-metro coverage
+  (`MetroCoverage.astro`). SSR, per-city (fl_city cookie), **3600 s** at the edge
+  (`cachePolicyFor`). Discovery lives on `/city/<slug>`; the old `/platform` page
+  was deleted and **301s to `/`**.
 - **URL shapes**: `/event/<uuid>`, `/venue/<uuid>`, `/city/<slug>`, `/venues`,
-  `/about`, `/privacy`, `/terms`, `/blog/*`, `/platform`, `/developers{,/api,/mcp,/widgets}`,
+  `/about`, `/privacy`, `/terms`, `/blog/*`, `/developers{,/api,/mcp,/widgets}`,
   `/embed/events` (widget iframe; `noindex`, `frame-ancestors *`, keyed on its full query),
   `/widget.js` (static loader), `/sitemap.xml`.
+  JSON: `/api/events`, `/api/events/<uuid>`, `/api/events/map`, `/api/embed/events`, `/api/venues`, `/api/geo`
+  (all `noindex` + robots-disallowed; contracts in `/developers/api` and
+  `docs/PRODUCT_POLISH_2026-09.md`).
   Uuids are lowercase; case variants **301** to lowercase (`redirectTargetFor`).
 - **301 table** (`redirectTargetFor`): trailing slash → none; uppercase uuid →
-  lowercase; `/<city-slug>` → `/city/<slug>`; `/map` → `/?view=map`;
-  `/filters` → `/`; `/sitemap`, `/sitemaps`, `/sitemap-blog.xml` → `/sitemap.xml`.
+  lowercase; `/<city-slug>` → `/city/<slug>`; `/map` **and** `/?view=map` →
+  `/city/<fl_city cookie, else boston>?view=map` — the map is a view of the
+  *feed*, and `/` is the landing page, so both have to land on a real city.
+  `redirectTargetFor(pathname, citySlug)` takes the slug (`DEFAULT_CITY_SLUG`
+  when omitted) and the middleware passes `locals.city.slug`; the `/?view=map`
+  case depends on the query, not the path, so the middleware owns that one.
+  `/filters` → `/`; `/platform` → `/` (the root **is** the platform page now);
+  `/sitemap`, `/sitemaps`, `/sitemap-blog.xml` → `/sitemap.xml`.
+  A 301 only works for a path with no file behind it: prerendered pages are served
+  by Workers assets *before* the middleware, which is why `platform.astro` had to
+  be deleted, not left in place.
 - **410 table** (`GONE_PATHS`): `/friends /create /home /profile /support
   /discover-creators /followed-venues /following-activity /followers /user/*
   /auth/* /invite/*` — answer **410 + noindex**. Do NOT block them in
@@ -132,9 +211,14 @@ npm run deploy:web               # astro build + wrangler deploy (needs a real S
 - **`fl_city` cookie contract**: the site writes
   `fl_city=<City.name, URL-encoded>; Path=/; Max-Age=31536000; SameSite=Lax`
   when the user picks a city; server-rendered pages read it
-  (`decodeURIComponent`, fall back to **Boston**) to pick the city for `/`.
-  Anything cached per city must key on it (old Pages Functions: 5-min
-  `caches.default` per city, `private, no-cache` to browsers).
+  (`decodeURIComponent`, fall back to **Boston**) to pick the city for `/`,
+  `/venues` and the `/map` redirect. Anything cached per city must key on it
+  (old Pages Functions: 5-min `caches.default` per city, `private, no-cache` to
+  browsers). **Write it only through `web/src/lib/cityCookie.ts::setCityCookie`** —
+  two islands do (`CityPicker`'s select / locate button and `GeoHint`'s accept),
+  and the value is part of the edge-cache key, so a hand-rolled `document.cookie`
+  that differs by a `Path` or an encoding splits the cache. `cacheKey.ts`
+  re-exports `CITY_COOKIE` from that module so the name has one definition.
 - **No analytics** (GA4/Clarity removed 2026-09-02; Cloudflare's cookieless
   Web Analytics only). No user accounts, auth, RSVPs or event creation exist
   — treat requests for them as net-new features.

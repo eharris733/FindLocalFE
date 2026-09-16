@@ -1,7 +1,8 @@
 ---
-// Island: city <select> + "Use my location". The ONLY code that ever writes the
-// fl_city cookie (server pages just read it). Nearest-city math is inlined from
-// the city list rendered into data-cities so the island imports nothing.
+// Island: city <select> + "Use my location". Writes the fl_city cookie through
+// `lib/cityCookie.ts::setCityCookie`, the single writer this island and GeoHint
+// both go through (server pages only ever read it). Nearest-city math is inlined
+// from the city list rendered into data-cities, so that helper is the one import.
 // The native <select> is stretched invisibly over the whole pill so a click
 // anywhere on it (icon, name, chevron, padding) opens the dropdown.
 import { CITIES, type City } from '@findlocal/shared';
@@ -32,6 +33,8 @@ const cities = CITIES.map((c) => ({ slug: c.slug, name: c.name, lat: c.lat, lng:
 </div>
 
 <script>
+  import { setCityCookie } from '../lib/cityCookie.js';
+
   const root = document.querySelector<HTMLElement>('.city-picker');
   const cities = JSON.parse(root?.dataset.cities ?? '[]') as { slug: string; name: string; lat: number; lng: number }[];
 
@@ -40,7 +43,7 @@ const cities = CITIES.map((c) => ({ slug: c.slug, name: c.name, lat: c.lat, lng:
     if (!city) return;
     const label = root?.querySelector<HTMLElement>('[data-city-label]');
     if (label) label.textContent = city.name;
-    document.cookie = `fl_city=${encodeURIComponent(city.name)}; Path=/; Max-Age=31536000; SameSite=Lax`;
+    setCityCookie(city.name);
     location.assign(`/city/${city.slug}`);
   }
 

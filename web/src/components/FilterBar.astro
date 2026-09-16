@@ -3,7 +3,7 @@
 // and time of day toggles the value); the date picker and search are GET forms
 // that keep the other params as hidden inputs. Categories with 0 matches under
 // the other filters are hidden unless selected.
-import { TOD_CHIPS, WHEN_CHIPS, chipHref, filterSummary, toggled, toQueryable, type FeedState } from '../lib/feed.js';
+import { SORT_CHIPS, TOD_CHIPS, WHEN_CHIPS, chipHref, filterSummary, toggled, toQueryable, type FeedState } from '../lib/feed.js';
 import { filtersToQuery } from '@findlocal/shared';
 import Icon from './Icon.astro';
 interface Props {
@@ -79,6 +79,12 @@ const mapHref = `${listHref}${listHref.includes('?') ? '&' : '?'}view=map`;
     <div class="chips">
       {TOD_CHIPS.map((t) => (
         <a rel="nofollow" class="chip" href={chipHref(state, { timeOfDay: toggled(f.timeOfDay, t.value) })} aria-current={f.timeOfDay?.includes(t.value) ? 'true' : undefined}>{t.label}</a>
+      ))}
+    </div>
+    <span class="label">Sort</span>
+    <div class="chips" role="group" aria-label="Sort order">
+      {SORT_CHIPS.map((s) => (
+        <a rel="nofollow" class="chip" title={s.title} href={chipHref(state, { sort: s.value })} aria-current={state.sort === s.value ? 'true' : undefined}>{s.label}</a>
       ))}
     </div>
   </div>

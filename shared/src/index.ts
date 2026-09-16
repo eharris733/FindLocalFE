@@ -8,3 +8,4 @@ export * from './performers.js';
 export * from './regions.js';
 export * from './queries.js';
 export * from './seo.js';
+export * from './stats.js';

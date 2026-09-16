@@ -12,17 +12,16 @@ function body(): string {
   const categorySlugs = CATEGORIES.map((c) => c.slug).join(', ');
   return `# Find Local
 
-> Find Local (findlocal.community) is a local event discovery site covering ${CITIES.length} US cities. It aggregates concerts, comedy shows, theater, live music, and community events directly from venue calendars — updated daily — with list and map browsing, category/date/price filters, and per-venue pages.
+> Find Local (findlocal.community) is a local event data platform covering ${CITIES.length} US metros. It collects concerts, comedy shows, theater, author readings, live music and community events directly from venue calendars — updated daily — and serves them through a browsable site, embeddable widgets, a free JSON API and an MCP server. Literary events are indexed by author AND by book.
 
-Find Local's data is scraped from the venues themselves rather than ticketing aggregators, so it includes small community events that never appear on Ticketmaster-style platforms. Event and venue pages serve schema.org Event/Place JSON-LD in the initial HTML.
+Find Local's data is collected from the venues themselves rather than ticketing aggregators, so it includes small community events that never appear on Ticketmaster-style platforms; each event records whether it came from the venue's own calendar or a partner API. Event and venue pages serve schema.org Event/Place JSON-LD in the initial HTML.
 
 ## Key pages
 
-- [Event feed](https://findlocal.community/): all upcoming events, filterable by city, date, category, and price
+- [Platform landing](https://findlocal.community/): what is in the catalogue, live totals, and the four ways to use it (widgets, JSON API, MCP, browsing). /platform 301s here.
+- [City pages](https://findlocal.community/city/boston): the event feed, per metro, at /city/<slug> (e.g. /city/new-york, /city/chicago, /city/los-angeles) — filterable by date, category and price
 - [Venues](https://findlocal.community/venues): browsable directory of active venues
-- [City pages](https://findlocal.community/city/boston): per-city event listings at /city/<slug> (e.g. /city/new-york, /city/chicago, /city/los-angeles)
 - [Blog](https://findlocal.community/blog): guides and writing about local event discovery
-- [Platform](https://findlocal.community/platform): the FindLocal data platform for teams building on the data
 - [Developers](https://findlocal.community/developers): reference docs for the JSON API (/developers/api), the MCP server (/developers/mcp) and embeddable widgets (/developers/widgets)
 - [About](https://findlocal.community/about)
 

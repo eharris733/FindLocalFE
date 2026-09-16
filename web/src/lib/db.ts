@@ -23,6 +23,7 @@ export {
   getEvent,
   getEventsByIds,
   getVenue,
+  listEventsInBounds,
   listRegions,
   listSeriesDates,
   listSitemapEvents,
@@ -37,5 +38,7 @@ export {
   type BookRow,
   type EventFilters,
   type EventRow,
+  type MapEventOptions,
+  type MapEventRow,
   type VenueRow,
 } from '@findlocal/shared';

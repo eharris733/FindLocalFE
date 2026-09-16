@@ -12,13 +12,14 @@ import Breadcrumbs from '../components/Breadcrumbs.astro';
   <div id="saved" aria-live="polite"><p class="muted">Loading your saved events…</p></div>
   <template id="saved-card">
     <a class="card" href="">
-      <div class="thumb"><div class="placeholder" aria-hidden="true">Event</div></div>
+      <div class="thumb"><img alt="" loading="lazy" decoding="async" width="640" height="360" /></div>
       <div class="body"><div class="when"></div><h3 class="title"></h3><div class="where"></div></div>
     </a>
   </template>
 </Layout>
 
 <script>
+  import { categoryArtUrl } from '../lib/categoryArt.js';
   const KEY = 'findlocal.favorites';
   const root = document.getElementById('saved')!;
   const tpl = document.getElementById('saved-card') as HTMLTemplateElement;
@@ -53,8 +54,11 @@ import Breadcrumbs from '../components/Breadcrumbs.astro';
     for (const e of data) {
       const node = tpl.content.firstElementChild!.cloneNode(true) as HTMLAnchorElement;
       node.href = `/event/${e.id}`;
+      // Image chain, mirroring eventImageOrArt(): event → series → venue → category art.
       const img = e.image_url || e.series_image || e.venue_image;
-      if (img) node.querySelector('.thumb')!.innerHTML = `<img src="${img}" alt="" loading="lazy" width="640" height="360">`;
+      const thumb = node.querySelector('img')!;
+      thumb.src = img || categoryArtUrl(e.category);
+      if (!img) thumb.classList.add('art');
       const time = fmtTime(e.start_time);
       node.querySelector('.when')!.textContent = `${fmtDate(e.event_date)}${time ? ` · ${time}` : ''}${e.event_date < today ? ' · past' : ''}`;
       node.querySelector('.title')!.textContent = e.title;

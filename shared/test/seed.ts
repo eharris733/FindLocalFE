@@ -178,10 +178,25 @@ export async function seed(db: D1Database): Promise<void> {
     [AUTHOR_NOBOOK, 'Nell Nobook', 'nell nobook', null, null],
   ];
   const as = db.prepare(`INSERT INTO authors (id, canonical_name, name_key, photo_url, openlibrary_id) VALUES (?,?,?,?,?)`);
+  // Wikidata/Commons provenance (migration 0013) on exactly one venue and one
+  // author, so tests cover both the enriched and the (much commoner) bare row.
+  const venueProvenance = db
+    .prepare(
+      `UPDATE venues SET wikidata_id = ?, wikipedia_url = ?, image_attribution = ?, image_source = ?,
+         description_source = ?, description = ? WHERE id = ?`,
+    )
+    .bind('Q1140027', 'https://en.wikipedia.org/wiki/The_Sinclair', 'Photo by A. Shooter, CC BY-SA 4.0',
+      'wikimedia', 'wikipedia', 'A 525-capacity music venue in Harvard Square.', V.sinclair);
+  const authorProvenance = db
+    .prepare(`UPDATE authors SET bio = ?, wikipedia_url = ?, photo_attribution = ? WHERE id = ?`)
+    .bind('Ada Debut is a novelist from Portland.', 'https://en.wikipedia.org/wiki/Ada_Debut',
+      'Portrait by B. Snapper, CC BY 3.0', AUTHOR_ID);
   await db.batch([
     ...venues.map((v) => vs.bind(...v)),
     ...books.map((b) => bs.bind(...b)),
     ...authors.map((a) => as.bind(...a)),
+    venueProvenance,
+    authorProvenance,
     ...EVENTS.map((e, i) =>
       es.bind(e.id, e.venue, e.city, e.region, e.source, `ext-${i}`, e.title, e.date, e.time, e.category,
         JSON.stringify(e.event_type), JSON.stringify(e.performers), JSON.stringify(e.book_ids), JSON.stringify(e.author_ids), e.price, e.price_amount, e.image, e.deleted ? 1 : 0, `2026-01-01T00:00:${String(i % 60).padStart(2, '0')}.000Z`),

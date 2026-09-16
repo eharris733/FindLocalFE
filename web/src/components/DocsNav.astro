@@ -21,7 +21,7 @@ const crumbs = current === '/developers'
 <Breadcrumbs crumbs={crumbs} />
 <nav class="docs-nav" aria-label="Developer docs">
   {items.map((i) => <a href={i.href} aria-current={i.href === current ? 'page' : undefined}>{i.label}</a>)}
-  <a href="/platform" class="platform">Platform overview →</a>
+  <a href="/" class="platform">Platform overview →</a>
 </nav>
 
 <style is:global>

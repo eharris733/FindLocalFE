@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" width="1200" height="800" role="img" aria-label="Festivals">
+  <defs>
+    <pattern id="festivalG" width="18" height="18" patternUnits="userSpaceOnUse">
+      <circle cx="3" cy="3" r="1.7" fill="#ffffff" fill-opacity=".15"/>
+      <circle cx="12" cy="11" r="1.1" fill="#000000" fill-opacity=".09"/>
+    </pattern>
+    <radialGradient id="festivalV" cx="50%" cy="34%" r="78%">
+      <stop offset=".55" stop-color="#ffffff" stop-opacity=".12"/>
+      <stop offset="1" stop-color="#000000" stop-opacity=".26"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1200" height="800" fill="#ff6b4a"/>
+
+  <!-- sunset layers -->
+  <circle cx="600" cy="420" r="230" fill="#ffd166"/>
+  <path d="M0 470C280 420 470 520 1200 452V800H0Z" fill="#e0452f"/>
+  <path d="M0 600C300 540 520 680 1200 580V800H0Z" fill="#5b1a4a"/>
+
+  <!-- bunting -->
+  <g>
+    <path d="M-20 90C220 210 420 210 600 140s400-90 620 10" fill="none" stroke="#5b1a4a" stroke-width="8"/>
+    <polygon points="60,128 130,146 88,206" fill="#ffd166"/>
+    <polygon points="160,160 232,172 186,236" fill="#f6e8ce"/>
+    <polygon points="264,180 336,184 288,248" fill="#5b1a4a"/>
+    <polygon points="370,188 442,184 396,250" fill="#ffd166"/>
+    <polygon points="476,180 548,168 504,236" fill="#f6e8ce"/>
+    <polygon points="584,160 656,144 616,214" fill="#5b1a4a"/>
+    <polygon points="700,136 772,132 728,200" fill="#ffd166"/>
+    <polygon points="820,132 892,142 848,208" fill="#f6e8ce"/>
+    <polygon points="940,152 1010,172 964,234" fill="#5b1a4a"/>
+    <polygon points="1054,182 1122,208 1072,266" fill="#ffd166"/>
+  </g>
+
+  <!-- tents -->
+  <g>
+    <polygon points="330,330 170,650 490,650" fill="#f6e8ce"/>
+    <polygon points="330,330 250,650 330,650" fill="#e0452f"/>
+    <polygon points="330,330 410,650 330,650" fill="#e0452f" fill-opacity=".7"/>
+    <rect x="316" y="296" width="12" height="46" fill="#5b1a4a"/>
+    <polygon points="328,296 396,312 328,328" fill="#ffd166"/>
+
+    <polygon points="830,380 700,650 960,650" fill="#f6e8ce"/>
+    <polygon points="830,380 766,650 830,650" fill="#5b1a4a"/>
+    <polygon points="830,380 894,650 830,650" fill="#5b1a4a" fill-opacity=".7"/>
+    <rect x="818" y="348" width="12" height="42" fill="#5b1a4a"/>
+    <polygon points="830,348 890,362 830,376" fill="#ffd166"/>
+  </g>
+
+  <!-- foreground crowd silhouettes -->
+  <g fill="#3b0f32">
+    <circle cx="180" cy="700" r="40"/><rect x="140" y="740" width="80" height="60" rx="26"/>
+    <circle cx="320" cy="716" r="34"/><rect x="286" y="750" width="68" height="50" rx="22"/>
+    <circle cx="600" cy="706" r="42"/><rect x="558" y="748" width="84" height="52" rx="26"/>
+    <circle cx="880" cy="720" r="32"/><rect x="848" y="752" width="64" height="48" rx="20"/>
+    <circle cx="1030" cy="700" r="38"/><rect x="992" y="738" width="76" height="62" rx="24"/>
+  </g>
+
+  <rect width="1200" height="800" fill="url(#festivalG)"/>
+  <rect width="1200" height="800" fill="url(#festivalV)"/>
+</svg>
