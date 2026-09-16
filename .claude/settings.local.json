@@ -15,13 +15,15 @@
       "Read(//usr/local/bin/**)",
       "Bash(swift --version)",
       "Bash(mkdir -p hf)",
-      "Bash(swift extract2.swift rec.mov hf 2.6 3.6 10)"
+      "Bash(swift extract2.swift rec.mov hf 2.6 3.6 10)",
+      "Bash(npm run *)",
+      "Bash(npx vitest *)"
     ]
   },
+  "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
     "playwright",
     "supabase",
     "findlocal"
-  ],
-  "enableAllProjectMcpServers": true
+  ]
 }

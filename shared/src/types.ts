@@ -11,6 +11,25 @@ export interface Performer {
   image?: string;
 }
 
+/** One row of the `books` gazetteer (migrations 0009/0010), fetched via book_ids
+ * and attached to an event by attachBooks(). Almost every field is nullable while
+ * the OpenLibrary/ISBN backfill is in flight — `isbn13` in particular is often
+ * NULL, so buy-link builders must fall back gracefully. `id` is the ISBN-13 when
+ * known, else an internal work slug. */
+export interface BookRow {
+  id: string;
+  title: string;
+  subtitle: string | null;
+  isbn13: string | null;
+  isbn10: string | null;
+  cover_url: string | null;
+  description: string | null;
+  publisher: string | null;
+  pub_year: number | null;
+  /** JSON array of authors.id (parsed). */
+  author_ids: string[];
+}
+
 export interface EventRow {
   id: string;
   venue_id: string;
@@ -28,6 +47,11 @@ export interface EventRow {
   event_type: string[];
   /** People the event is by or about (authors, the bill, instructors). Empty when unknown. */
   performers: Performer[];
+  /** Links into the literary gazetteer (migration 0009); '[]' for non-literary events. */
+  author_ids: string[];
+  book_ids: string[];
+  /** Books resolved from book_ids — present only after attachBooks() runs (undefined otherwise). */
+  books?: BookRow[];
   price: string | null;
   price_amount: number | null;
   status: string | null;

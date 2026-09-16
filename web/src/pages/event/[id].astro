@@ -4,6 +4,7 @@
 // otherwise 200 with Event + BreadcrumbList JSON-LD. Uppercase uuids 301 in the middleware.
 import Layout from '../../layouts/Layout.astro';
 import BackLink from '../../components/BackLink.astro';
+import BookList from '../../components/BookList.astro';
 import Breadcrumbs from '../../components/Breadcrumbs.astro';
 import EventCard from '../../components/EventCard.astro';
 import Icon from '../../components/Icon.astro';
@@ -12,10 +13,11 @@ import PerformerList from '../../components/PerformerList.astro';
 import ReportButton from '../../components/ReportButton.astro';
 import SaveButton from '../../components/SaveButton.astro';
 import ShareButton from '../../components/ShareButton.astro';
-import { getDb, getEvent, listSeriesDates, listUpcomingEventsForVenue } from '../../lib/db.js';
+import { booksByAuthorIds, getDb, getEvent, listSeriesDates, listUpcomingEventsForVenue } from '../../lib/db.js';
 import { categoryLabel, cleanText, eventImage, eventLink, longDate, performersLabel, priceLabel, shortDate, truncate } from '../../lib/format.js';
 import { googleCalendarUrl } from '../../lib/ics.js';
 import { breadcrumbJsonLd, eventJsonLd } from '../../lib/jsonld.js';
+import { BOOKSHOP_LINK_REL, BOOKSHOP_STOREFRONT_URL, buyLink } from '../../lib/bookshop.js';
 import { DEFAULT_TZ, SITE, formatEventDate, formatTime, getCity, imageUrl, isUuid, todayIn } from '@findlocal/shared';
 
 const id = Astro.params.id ?? '';
@@ -55,6 +57,20 @@ const crumbs = event
     ]
   : [];
 const live = !!event && !isPast && !isDelisted;
+const books = event?.books ?? [];
+const authorNames = event ? event.performers.filter((p) => p.role === 'author').map((p) => p.name) : [];
+// Literary events (a linked book, an author on the bill, or the literary category)
+// get a Bookshop.org affordance.
+const isLiterary = !!event && (books.length > 0 || event.category === 'literary' || authorNames.length > 0);
+// Author-only events (no linked book): surface this author's other known books from
+// the gazetteer, keeping only those with a real per-book buy link (an ISBN). This
+// gives a credited, book-specific link instead of a bare storefront dump.
+const authorBooks = live && isLiterary && books.length === 0 && event!.author_ids.length > 0
+  ? (await booksByAuthorIds(getDb(), event!.author_ids)).filter((b) => buyLink(b).exact).slice(0, 3)
+  : [];
+const authorLabel = authorNames.length === 1 ? authorNames[0] : null;
+// Storefront fallback only when we have neither a linked book nor any buyable author book.
+const showBookshopFallback = live && isLiterary && books.length === 0 && authorBooks.length === 0;
 const jsonLd = event && live && city ? [eventJsonLd(event, city, description, image), breadcrumbJsonLd(crumbs)] : null;
 const canonicalPath = event ? `/event/${event.id}` : Astro.url.pathname;
 const pageTitle = event ? `${event.title} - ${shortDate(event.event_date, tz)} at ${event.venue_name} | Find Local Events` : 'Event not available';
@@ -123,6 +139,7 @@ const mapsHref = event?.venue_address ? `https://www.google.com/maps/search/?api
         {!isPast && <ReportButton eventId={event.id} />}
       </div>
       {live && link && <a class="btn orange cta" href={link.href} rel="noopener nofollow" target="_blank">{link.label}</a>}
+      {showBookshopFallback && <a class="btn ghost book-cta" href={BOOKSHOP_STOREFRONT_URL} rel={BOOKSHOP_LINK_REL} target="_blank"><Icon name="bookmark" size={18} /> Shop books on Bookshop.org</a>}
 
       {description && (
         <section class="panel">
@@ -134,6 +151,18 @@ const mapsHref = event?.venue_address ? `https://www.google.com/maps/search/?api
         <section class="panel">
           <h2>Who</h2>
           <PerformerList performers={event.performers} citySlug={city?.slug} />
+        </section>
+      )}
+      {books.length > 0 && (
+        <section class="panel">
+          <h2>{books.length > 1 ? 'Books' : 'The book'}</h2>
+          <BookList books={books} />
+        </section>
+      )}
+      {authorBooks.length > 0 && (
+        <section class="panel">
+          <h2>{authorLabel ? `Books by ${authorLabel}` : 'Books by these authors'}</h2>
+          <BookList books={authorBooks} />
         </section>
       )}
       <section class="panel">
@@ -177,6 +206,7 @@ const mapsHref = event?.venue_address ? `https://www.google.com/maps/search/?api
   .calendar .menu a { padding: 0.55rem 0.9rem; color: rgb(var(--text)); font-weight: 600; font-size: 0.9rem; }
   .calendar .menu a:hover { background: rgb(var(--teal) / 0.08); text-decoration: none; }
   .cta { margin: 0 0 1.25rem; min-width: 200px; }
+  .book-cta { margin: 0 0 1.25rem; }
   .panel { background: rgb(var(--surface-sunken)); border-radius: var(--radius); padding: 1rem 1.1rem; margin: 0 0 1rem; }
   .panel h2 { font-size: 1.05rem; margin: 0 0 0.5rem; }
   .panel p:last-child { margin-bottom: 0; }

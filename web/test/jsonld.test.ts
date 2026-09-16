@@ -6,7 +6,7 @@ const boston = getCity('Boston')!;
 const event: EventRow = {
   id: 'abc', venue_id: 'v1', city: 'Boston', region: 'Cambridge', source: 'scraper_cloudflare', external_id: null,
   title: 'Open Mic', description: null, event_date: '2026-09-11', start_time: '19:30', end_time: null,
-  category: 'comedy', event_type: ['comedy'], performers: [], price: null, price_amount: 12, status: null,
+  category: 'comedy', event_type: ['comedy'], performers: [], author_ids: [], book_ids: [], price: null, price_amount: 12, status: null,
   detail_page_url: null, ticket_page_url: 'https://tix.example/1', root_url: null, image_url: 'https://img.example/a.jpg',
   is_deleted: 0, first_seen_at: '', last_seen_at: '', updated_at: '',
   venue_name: 'The Comedy Studio', venue_address: '1 Bow St, Cambridge, MA', venue_image: null, venue_lat: 42.37, venue_lng: -71.12,
