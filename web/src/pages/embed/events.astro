@@ -6,8 +6,9 @@
 // single cities use the site's own filter contract. Never reads locals.city.
 import EmbedLayout from '../../layouts/EmbedLayout.astro';
 import LeafletMap, { type MapMarker } from '../../components/LeafletMap.astro';
-import { getDb, listUpcomingEvents, listUpcomingEventsForCities, type EventRow } from '../../lib/db.js';
+import { attachBooks, getDb, listUpcomingEvents, listUpcomingEventsForCities, type EventRow } from '../../lib/db.js';
 import { embedCityFilters, embedGroupRange, eventUrl, parseEmbedParams, siteUrl, venueUrl } from '../../lib/embed.js';
+import { BOOKSHOP_LINK_REL, BOOKSHOP_STOREFRONT_URL, buyLink } from '../../lib/bookshop.js';
 import { categoryLabel, dayHeader } from '../../lib/format.js';
 import { CATEGORY_SLUGS, formatTime, regionGroupCities } from '@findlocal/shared';
 
@@ -32,6 +33,20 @@ if (p.error) {
 }
 const truncated = events.length > p.limit;
 if (truncated) events = events.slice(0, p.limit);
+// Attach book metadata so literary widgets can show per-event Bookshop.org buy links.
+await attachBooks(getDb(), events);
+
+/** First per-book affiliate deep link for an event (exact ISBN links only in the
+ * compact widget; the storefront catch-all lives in the footer). */
+const eventBuyUrl = (e: EventRow): string | null => {
+  for (const b of e.books ?? []) {
+    const l = buyLink(b);
+    if (l.exact) return l.href;
+  }
+  return null;
+};
+// Show the Bookshop.org support footer for literary widgets or any set that resolved books.
+const showBookshop = cats.includes('literary') || events.some((e) => (e.books?.length ?? 0) > 0);
 
 const campaign = p.campaign;
 const seeAllHref = siteUrl(p.group ? '/' : `/city/${p.city?.slug ?? 'boston'}`, campaign, p.partner);
@@ -64,7 +79,7 @@ const center = p.city
 const place = (e: EventRow) => (p.group ? e.venue_region || e.region || e.city : e.venue_region || e.region || '');
 const data = {
   tz, from, truncated, seeAll: seeAllHref,
-  events: events.map((e) => ({ id: e.id, title: e.title, date: e.event_date, time: formatTime(e.start_time), venue: e.venue_name, place: place(e), url: eventUrl(e.id, campaign, p.partner) })),
+  events: events.map((e) => ({ id: e.id, title: e.title, date: e.event_date, time: formatTime(e.start_time), venue: e.venue_name, place: place(e), url: eventUrl(e.id, campaign, p.partner), buyUrl: eventBuyUrl(e) })),
 };
 const json = JSON.stringify(data).replace(/</g, '\\u003c');
 const views: { id: 'list' | 'calendar' | 'map'; label: string }[] = [
@@ -98,15 +113,19 @@ const views: { id: 'list' | 'calendar' | 'map'; label: string }[] = [
             <div class="fl-day">
               <h2 class="fl-day-h">{dayHeader(day, tz)}</h2>
               <ul class="fl-rows">
-                {list.map((e) => (
-                  <li class="fl-row">
-                    <span class="fl-time">{formatTime(e.start_time) || '—'}</span>
-                    <span class="fl-main">
-                      <a class="fl-title" href={eventUrl(e.id, campaign, p.partner)} rel="noopener">{e.title}</a>
-                      <span class="fl-where">{e.venue_name}{place(e) ? ` · ${place(e)}` : ''}</span>
-                    </span>
-                  </li>
-                ))}
+                {list.map((e) => {
+                  const buyUrl = eventBuyUrl(e);
+                  return (
+                    <li class="fl-row">
+                      <span class="fl-time">{formatTime(e.start_time) || '—'}</span>
+                      <span class="fl-main">
+                        <a class="fl-title" href={eventUrl(e.id, campaign, p.partner)} rel="noopener">{e.title}</a>
+                        <span class="fl-where">{e.venue_name}{place(e) ? ` · ${place(e)}` : ''}</span>
+                        {buyUrl && <a class="fl-buy" href={buyUrl} rel={BOOKSHOP_LINK_REL} target="_blank">Buy the book</a>}
+                      </span>
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           ))
@@ -132,14 +151,21 @@ const views: { id: 'list' | 'calendar' | 'map'; label: string }[] = [
         )}
       </section>
 
+      {showBookshop && (
+        <footer class="fl-support">
+          <a href={BOOKSHOP_STOREFRONT_URL} rel={BOOKSHOP_LINK_REL} target="_blank">Buy featured books on Bookshop.org</a> — supports independent bookstores &amp; Find Local.
+        </footer>
+      )}
+
       <script is:inline type="application/json" id="fl-data" set:html={json} />
     </>
   )}
 </EmbedLayout>
 
 <script>
-  type Ev = { id: string; title: string; date: string; time: string; venue: string; place: string; url: string };
+  type Ev = { id: string; title: string; date: string; time: string; venue: string; place: string; url: string; buyUrl?: string | null };
   type Data = { tz: string; from: string; truncated: boolean; seeAll: string; events: Ev[] };
+  const BUY_REL = 'sponsored nofollow noopener';
   const raw = document.getElementById('fl-data')?.textContent;
   const data: Data = raw ? JSON.parse(raw) : { tz: 'America/New_York', from: '', truncated: false, seeAll: '', events: [] };
   const resize = () => document.dispatchEvent(new Event('fl:resize'));
@@ -196,7 +222,7 @@ const views: { id: 'list' | 'calendar' | 'map'; label: string }[] = [
     const [y, m, d] = ymd.split('-').map(Number) as [number, number, number];
     const label = new Date(Date.UTC(y, m - 1, d)).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'UTC' });
     box.innerHTML = `<h3 class="fl-day-h">${esc(label)}</h3>` + (list.length
-      ? `<ul class="fl-rows">${list.map((e) => `<li class="fl-row"><span class="fl-time">${esc(e.time || '—')}</span><span class="fl-main"><a class="fl-title" href="${esc(e.url)}" rel="noopener">${esc(e.title)}</a><span class="fl-where">${esc(e.venue)}${e.place ? ' · ' + esc(e.place) : ''}</span></span></li>`).join('')}</ul>`
+      ? `<ul class="fl-rows">${list.map((e) => `<li class="fl-row"><span class="fl-time">${esc(e.time || '—')}</span><span class="fl-main"><a class="fl-title" href="${esc(e.url)}" rel="noopener">${esc(e.title)}</a><span class="fl-where">${esc(e.venue)}${e.place ? ' · ' + esc(e.place) : ''}</span>${e.buyUrl ? `<a class="fl-buy" href="${esc(e.buyUrl)}" rel="${BUY_REL}" target="_blank">Buy the book</a>` : ''}</span></li>`).join('')}</ul>`
       : '<p class="fl-empty">Nothing listed this day.</p>');
     resize();
   }
@@ -269,6 +295,10 @@ const views: { id: 'list' | 'calendar' | 'map'; label: string }[] = [
   .fl-where, :global(.fl-where) { color: rgb(var(--text-2)); font-size: 0.82rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .fl-empty, :global(.fl-empty) { color: rgb(var(--text-2)); padding: 1rem 0; margin: 0; }
   .fl-more, :global(.fl-more) { color: rgb(var(--text-2)); font-size: 0.85rem; margin: 0.8rem 0 0; }
+  .fl-buy, :global(.fl-buy) { align-self: flex-start; margin-top: 0.25rem; font-size: 0.75rem; font-weight: 700; color: rgb(var(--orange)); }
+  .fl-buy:hover, :global(.fl-buy:hover) { text-decoration: underline; }
+  .fl-support { margin: 1rem 0 0; padding-top: 0.8rem; border-top: 1px solid rgb(var(--border)); font-size: 0.82rem; color: rgb(var(--text-2)); }
+  .fl-support a { color: rgb(var(--orange)); font-weight: 700; }
   code { background: rgb(var(--surface-sunken)); padding: 0 0.3rem; border-radius: 4px; }
 
   .fl-cal-nav { display: flex; align-items: center; justify-content: space-between; margin: 0 0 0.5rem; }

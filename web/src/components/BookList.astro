@@ -1,0 +1,52 @@
+---
+// "Books" section on a literary event page: the book(s) tied to the event via the
+// gazetteer (event.book_ids → books), each with a Bookshop.org affiliate buy
+// button. Deep-links the exact book when we have an ISBN-13, else falls back to
+// the (still-credited) storefront — see lib/bookshop.ts. Degrades gracefully when
+// cover/subtitle are missing (common during the OpenLibrary/ISBN backfill).
+import { imageUrl, type BookRow } from '@findlocal/shared';
+import { buyLink, BOOKSHOP_LINK_REL } from '../lib/bookshop.js';
+import Icon from './Icon.astro';
+interface Props {
+  books: BookRow[];
+}
+const { books } = Astro.props;
+---
+<ul class="books">
+  {books.map((b) => {
+    const cover = b.cover_url ? imageUrl(b.cover_url, { width: 120, height: 180, fit: 'contain' }) : null;
+    const buy = buyLink(b);
+    return (
+      <li class="book">
+        <div class="cover">
+          {cover ? (
+            <img src={cover} alt={`Cover of ${b.title}`} width="64" height="96" loading="lazy" decoding="async" />
+          ) : (
+            <span class="ph" aria-hidden="true"><Icon name="bookmark" size={22} /></span>
+          )}
+        </div>
+        <div class="info">
+          <span class="title">{b.title}</span>
+          {b.subtitle && <span class="subtitle">{b.subtitle}</span>}
+          <a class="btn orange buy" href={buy.href} rel={BOOKSHOP_LINK_REL} target="_blank">
+            <Icon name="bookmark" size={16} /> {buy.exact ? 'Buy on Bookshop.org' : 'Shop on Bookshop.org'}
+          </a>
+        </div>
+      </li>
+    );
+  })}
+</ul>
+<p class="disclosure faint">Bookshop.org funds independent bookstores. Buying through these links can earn Find Local a small commission at no extra cost to you.</p>
+
+<style>
+  .books { list-style: none; margin: 0 0 0.75rem; padding: 0; display: flex; flex-direction: column; gap: 0.9rem; }
+  .book { display: flex; gap: 0.9rem; align-items: flex-start; }
+  .cover { flex-shrink: 0; width: 64px; height: 96px; border-radius: var(--radius-sm); overflow: hidden; background: rgb(var(--surface)); box-shadow: var(--shadow-sm); }
+  .cover img { width: 100%; height: 100%; object-fit: contain; display: block; }
+  .cover .ph { display: flex; width: 100%; height: 100%; align-items: center; justify-content: center; color: rgb(var(--teal)); background: rgb(var(--teal) / 0.1); }
+  .info { display: flex; flex-direction: column; gap: 0.3rem; min-width: 0; }
+  .title { font-weight: 700; line-height: 1.3; }
+  .subtitle { font-size: 0.85rem; color: rgb(var(--text-3)); }
+  .buy { align-self: flex-start; margin-top: 0.2rem; }
+  .disclosure { font-size: 0.78rem; margin: 0; }
+</style>
