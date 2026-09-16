@@ -29,14 +29,25 @@ export function canonicalUrl(path: string, query?: string): string {
 
 const CITY_SLUGS = new Set(CITIES.map((c) => c.slug));
 
+/** The city a visitor with no `fl_city` cookie gets (CLAUDE.md cookie contract). */
+export const DEFAULT_CITY_SLUG = 'boston';
+
 /**
  * 301 target for a request pathname, or null when the path is already canonical:
  * trailing slash stripped; uppercase uuid segments lowercased; /<city-slug> ->
- * /city/<slug>; /map -> /?view=map; /filters -> /; /platform -> / (the root IS the
- * platform landing page since Sept 2026); /sitemap, /sitemap-blog.xml (old
- * sitemap-index children) -> /sitemap.xml. /sitemaps/<name>.xml is a real route.
+ * /city/<slug>; /map -> /city/<citySlug>?view=map; /filters -> /; /platform -> /
+ * (the root IS the platform landing page since Sept 2026); /sitemap,
+ * /sitemap-blog.xml (old sitemap-index children) -> /sitemap.xml.
+ * /sitemaps/<name>.xml is a real route.
+ *
+ * `citySlug` is the visitor's `fl_city` city (Boston without a cookie). The map
+ * is a view of the **feed**, and since Sept 2026 the feed lives on
+ * `/city/<slug>` — `/` is the platform landing page and ignores `view=map`. So
+ * `/map` has to resolve to a concrete city; the caller reads the cookie and this
+ * stays pure. An unknown slug is not validated here: the middleware only ever
+ * passes a real `City.slug`.
  */
-export function redirectTargetFor(pathname: string): string | null {
+export function redirectTargetFor(pathname: string, citySlug: string = DEFAULT_CITY_SLUG): string | null {
   let p = pathname;
   if (p.length > 1 && p.endsWith('/')) p = p.replace(/\/+$/, '') || '/';
   p = p
@@ -45,7 +56,7 @@ export function redirectTargetFor(pathname: string): string | null {
     .join('/');
   const bare = /^\/([a-z0-9-]+)$/.exec(p);
   if (bare && CITY_SLUGS.has(bare[1] as string)) p = `/city/${bare[1]}`;
-  if (p === '/map') p = '/?view=map';
+  if (p === '/map') p = `/city/${citySlug}?view=map`;
   else if (p === '/filters' || p === '/platform') p = '/';
   else if (p === '/sitemap' || p === '/sitemap-blog.xml' || p === '/sitemaps') p = '/sitemap.xml';
   return p === pathname ? null : p;

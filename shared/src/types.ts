@@ -30,13 +30,22 @@ export interface BookRow {
   author_ids: string[];
 }
 
-/** One row of the `authors` gazetteer (migrations 0009/0010), fetched via
- * author_ids and attached by attachAuthors(). photo_url is OpenLibrary's. */
+/** One row of the `authors` gazetteer (migrations 0009/0010/0013), fetched via
+ * author_ids and attached by attachAuthors(). photo_url is OpenLibrary's or
+ * Wikimedia Commons' — when it is Commons', `photo_attribution` carries the
+ * credit line the license requires. All provenance fields are sparse; read them
+ * through web/src/lib/enrichment.ts. */
 export interface AuthorRow {
   id: string;
   canonical_name: string;
   photo_url: string | null;
   openlibrary_id: string | null;
+  /** Short biography (OpenLibrary or a Wikipedia extract), migration 0010. */
+  bio: string | null;
+  /** Wikipedia article for the author, migration 0013. */
+  wikipedia_url: string | null;
+  /** Credit line required for `photo_url`, migration 0013. */
+  photo_attribution: string | null;
 }
 
 export interface EventRow {
@@ -106,6 +115,16 @@ export interface VenueRow {
   latitude: number | null;
   longitude: number | null;
   is_active: number;
+  /** Matched Wikidata entity ('Q123456'), migration 0013; null = unmatched. */
+  wikidata_id: string | null;
+  /** Wikipedia article for the venue, migration 0013. */
+  wikipedia_url: string | null;
+  /** Credit line required for `image` (CC-BY etc.), migration 0013. */
+  image_attribution: string | null;
+  /** 'scrape' | 'wikimedia' | 'places' | 'manual', migration 0013. */
+  image_source: string | null;
+  /** 'wikipedia' | 'llm' | 'manual' | null (scraped/unknown), migration 0013. */
+  description_source: string | null;
   /** Upcoming non-deleted event count (0 unless requested via withUpcoming). */
   upcoming: number;
 }

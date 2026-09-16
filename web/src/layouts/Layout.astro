@@ -362,7 +362,6 @@ const searchAction = city ? `/city/${city.slug}` : '/';
   .card .thumb { position: relative; aspect-ratio: 16 / 9; border-radius: var(--radius); overflow: hidden; background: rgb(var(--surface-sunken)); }
   .card .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .card:hover .thumb img { filter: brightness(1.05); }
-  .thumb .placeholder { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #006565 0%, #4DA399 60%, #80D8CA 100%); color: #fff; font-family: var(--font-head); font-weight: 700; font-size: 1.1rem; letter-spacing: 0.02em; text-transform: uppercase; }
   .pill { position: absolute; top: 8px; padding: 0.2rem 0.7rem; border-radius: 999px; background: rgb(var(--bg) / 0.9); color: rgb(var(--text)); font-size: 0.75rem; font-weight: 700; }
   .pill.price { right: 8px; }
   .pill.recurring { left: 8px; }
@@ -387,7 +386,6 @@ const searchAction = city ? `/city/${city.slug}` : '/';
   .fl-popup img { width: 96px; height: 96px; object-fit: cover; border-radius: var(--radius-sm); flex-shrink: 0; }
   .fl-popup-body { min-width: 0; }
   .fl-popup .popup-list li { max-width: 150px; }
-  .fl-marker { background: #006565; color: #fff; border: 2px solid #fff; border-radius: 999px; box-shadow: 0 1px 3px rgb(0 0 0 / 0.4); display: flex; align-items: center; justify-content: center; font: 700 12px/1 var(--font-body); }
   @media (prefers-color-scheme: dark) { .fl-map .leaflet-tile { filter: brightness(0.85) contrast(1.05); } }
 
   /* Footer */

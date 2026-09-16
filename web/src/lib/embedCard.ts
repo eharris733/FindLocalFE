@@ -26,7 +26,13 @@ export interface EventCard {
   time: string;
   venue: string;
   place: string;
+  /** Absolute findlocal.community URL with the widget's UTM params. */
   url: string;
+  /** Site-relative path for the same event (`/event/<id>`), for consumers that
+   * would rather build their own link than parse the UTM one. */
+  path: string;
+  /** 'Free' | '$12' | the source's price text | '' — the row's price pill. */
+  price: string;
   /** Exact-ISBN affiliate link for "Buy the book"; null when no book is buyable. */
   buyUrl: string | null;
   thumb: CardThumb | null;

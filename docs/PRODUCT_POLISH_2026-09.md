@@ -296,3 +296,292 @@ refreshed with `npm run sync-data` (never hand-edited).
   (`/platform` links), `shared/test/pure.test.ts`, `web/test/cacheKey.test.ts`,
   `web/test/format.test.ts`.
 * FindLocalData: `src/data/cities.json` (83 blurbs), `src/cities.py`.
+
+## B5 Widget filters
+
+**The widget was a fixed pane of glass.** `/embed/events` rendered whatever the
+partner's `data-*` attributes said and the only thing a visitor could change was
+the view tabs (plus "Author events" on literary widgets). Owner feedback: *"you
+can't filter within the widget except by author talk or not. You should be able
+to search nearby, filter by free, paid, time, all of that."*
+
+### 1. The in-widget toolbar
+
+A compact toolbar sits under the tabs on every preset (`data-filters="off"`
+brings back the old pane):
+
+| Control | URL key | Notes |
+|---|---|---|
+| Search | `q` | title / venue / performer, debounced 350 ms |
+| When | `when` | anytime · today · this weekend · this week · **this month** |
+| Dates | `from`,`to` | explicit range, wins over `when` |
+| Time of day | `tod` | morning · afternoon · evening |
+| Price | `free=1` / `paid=1` | segmented Any / Free / Paid (`price=free\|paid` is the no-JS form spelling of the same thing) |
+| Category chips | `ucat` | only when the partner did **not** pin `cat` |
+| Authors only | `authors=1` | literary presets (replaces the old link chip) |
+| Near + radius | `near=<lat>,<lng>`, `radius_km`, `place` | zip / city / address box, 5·10·25·50 km, plus "Use my location" |
+
+`cat` is the partner's **pin**: with it set the chips disappear and the visitor
+stays inside the category. `ucat` is the visitor's own choice and is ignored
+while a pin is in force — that separation is what lets the toolbar write its
+state back into the URL without the widget looking "pinned" on the next load.
+The visitor's chips never change `utm_campaign` (attribution stays the
+partner's).
+
+`near` **replaces** the region/city scope: `events` is city-partitioned, so a
+proximity search resolves the point to the nearest supported metro
+(`embedScope` → `nearestCity`) and lets the bounding box + distance order do the
+narrowing. `meta.sort` reports `distance`.
+
+`when=month` is the widget's own bucket (`embedWhenRange`, the next 30 days) —
+the site contract keeps today/tomorrow/weekend/week.
+
+### 2. `GET /api/embed/events`
+
+```
+GET /api/embed/events?<exactly the /embed/events query contract>
+->  { data: EventCard[], markers: MapMarker[], meta: {...} }
+```
+
+`EventCard` is what `embedCard.ts` builds — `{ id, title, date, time, venue,
+place, url (UTM'd), path, price, buyUrl, thumb {src,kind,alt}, authors
+[{name,href}] }` — i.e. the enrichment (book cover → author photo → event →
+venue → category art; credited Bookshop links; exact-ISBN "Buy the book") is
+computed **once, on the server**, and the client JS only paints it. `meta`
+carries `scope`, `heading`, `tz`, `from`, `to`, `count`, `limit`, `truncated`,
+`sort`, `authors_only`, `categories`, `near`, `center`, `buy_rel`, `see_all`.
+404 for an unknown region/city/category, like the page. Cached like every other
+`/api/*` route: 300 s at the edge, keyed on the full sorted query.
+
+### 3. No parent-page reloads
+
+The embed page still server-renders its initial state (SEO, no-JS, and the
+edge-cached first paint are unchanged). With JS the toolbar fetches the JSON
+endpoint, repaints the list, re-indexes the calendar, rebuilds the map panel and
+`history.replaceState`s the new query into the **iframe's** URL — the host page
+never navigates or scrolls. Partners can copy a filtered frame's query straight
+into `data-*` attributes to ship it as the starting state. The existing
+`postMessage({type:'findlocal:resize'})` beacon (EmbedLayout's ResizeObserver)
+keeps the host iframe sized as the list grows and shrinks.
+
+Map redraw needs no `LeafletMap` API: the panel gets a **fresh** `.fl-map`
+element with new `data-markers`, and the component's global `fl:map-show`
+listener initialises it. Embed markers now carry the row's thumbnail and
+category, so the widget map gets the same photo pins the site has.
+
+Region-group widgets (`region=new-england`) query `listUpcomingEventsForCities`,
+which takes cities/categories/dates/authors only; the toolbar's price, time-of-day
+and text filters are applied in JS over an oversampled window
+(`matchesEmbedFilters`, mirroring `queries.ts::buildWhere`; 5× the limit, capped
+at 500 rows). Single-city and `near` widgets go through `parseFilters` +
+`listUpcomingEvents` and filter entirely in SQL.
+
+### 4. Geocoding
+
+`web/src/lib/geocode.ts` — Photon (`https://photon.komoot.io/api/`) first,
+Nominatim as the fallback, US results only, one request per second app-wide,
+never throws (a dead geocoder yields `[]` and the widget keeps its list). It is
+the web twin of `FindLocalMobile/src/lib/geocode.ts`: same providers, same shape
+(`geocode(q)` here == `searchPlaces(q)` there), so a fix ports in one line.
+The identifying `User-Agent` Nominatim's policy wants is sent only off-browser
+(browsers refuse to set it and send their own). "Use my location" uses
+`navigator.geolocation`, rounds to 3 decimals (~100 m) and never sends anything
+anywhere else; `widget.js` therefore delegates `allow="geolocation"` — and keeps
+`allow="geolocation 'none'"` when the toolbar is off.
+
+### 5. New `data-*` attributes
+
+`data-filters="on|off"`, `data-near="<lat>,<lng>"`, `data-radius="<km>"`,
+`data-free="1"` — mirrored in `public/widget.js` and `buildEmbedSrc`, documented
+and wired into the snippet builder on `/developers/widgets`.
+
+### Files
+
+* `web/src/lib/embed.ts` — `EmbedUiState`, `readUiState`, `uiQuery`,
+  `uiStateIsEmpty`, `EMBED_UI_KEYS`, `EMBED_WHENS`/`embedWhenRange`,
+  `EMBED_RADII_KM`, `embedScope`, `matchesEmbedFilters`, `parseNear`/`nearPoint`,
+  `filtersOff`, and `filtersOn`/`pinnedCategories`/`near`/`ui` on `EmbedParams`.
+* `web/src/lib/embedData.ts` (new) — the one loader both front doors use
+  (scope → rows → enrichment → cards + markers + heading + centre).
+* `web/src/lib/geocode.ts` (new) — Photon/Nominatim forward geocoding.
+* `web/src/pages/api/embed/events.ts` (new) — the JSON endpoint above.
+* `web/src/pages/embed/events.astro` — toolbar markup + in-place re-render.
+* `web/src/lib/embedCard.ts` — `path` and `price` on `EventCard`.
+* `web/public/widget.js`, `web/src/pages/developers/widgets.astro`.
+* Tests: `web/test/geocode.test.ts` (new), plus the B5 blocks in
+  `web/test/embed.test.ts` and `web/test/widget.test.ts`.
+
+### Known edge
+
+`/` embeds the example widget in a fixed-height (`420px`) iframe with no resize
+listener, so the toolbar eats into the six rows it shows. Raising that height or
+listening for `findlocal:resize` in `index.astro` is a one-line follow-up in that
+file (owned elsewhere this pass).
+
+## B6 Integration + QA
+
+The clean-up pass over wave one: wiring the migration-0013 columns through the
+query layer, making `/map` land somewhere that actually has a map, giving the
+`fl_city` cookie a single writer, and showing book covers on feed cards. Plus a
+browser pass at 390 px and 1440 px that found three real bugs.
+
+### 1. Provenance columns reach the UI (`shared/src/queries.ts`, `types.ts`)
+
+`web/src/lib/enrichment.ts` was written defensively against columns the query
+layer did not select yet. It selects them now:
+
+```
+VENUE_COLS  += v.wikidata_id, v.wikipedia_url, v.image_attribution,
+               v.image_source, v.description_source        (migration 0013)
+AUTHOR_COLS += bio (0010), wikipedia_url, photo_attribution (0013)
+```
+
+`VenueRow` and `AuthorRow` declare them (all `string | null`), so every venue
+read (`getVenue`, `listVenues`, `searchVenuesByName`) and every author read
+(`authorsByIds`, `attachAuthors`) carries them. Verified in the browser: a
+Commons-sourced venue image now prints its credit line and a "Read more on
+Wikipedia" link on `/venue/<id>`, and an author's bio + photo credit render on
+`/event/<id>`.
+
+**Contract note:** `/api/venues` serialises `VenueRow` whole, so it gained five
+nullable fields — additive, documented in `/developers/api`'s venue field table.
+The MCP `shapeVenue` is an explicit allowlist and was **not** touched, so the MCP
+contract is unchanged. Tests: two cases in `shared/test/queries.test.ts` (one
+enriched venue/author, one bare, asserting `null` rather than `undefined`);
+`shared/test/seed.ts` stamps the provenance onto The Sinclair and Ada Debut.
+
+### 2. `/map` and `/?view=map` land on the feed
+
+`/` is the platform landing page and ignores `view=map`, so both entry points
+were dead ends. Now:
+
+```
+/map           -> /city/<fl_city cookie, else boston>?view=map   (301)
+/?view=map     -> /city/<fl_city cookie, else boston>?view=map   (301)
+```
+
+* `redirectTargetFor(pathname, citySlug = DEFAULT_CITY_SLUG)` (`shared/src/seo.ts`)
+  takes the slug and stays pure; the middleware passes `locals.city.slug`, so the
+  redirect follows the cookie (`/map` with `fl_city=New York` → `/city/new-york?view=map`).
+* `/?view=map` depends on the query, not the path, so the **middleware** owns that
+  case; it drops `view` from the forwarded query and keeps every other param
+  (`/map?when=today&cat=music` → `/city/boston?view=map&when=today&cat=music`).
+* `resolveCity` moved above the redirect block (one cookie parse, used by both).
+* `hasMapView('/')` is now **false** — keying `/` on `view=map` would only ever
+  store a redirect under a second key. `isCityCookieRoute('/')` stays **true**:
+  the landing page really does vary by cookie (Explore CTA, example widget city,
+  highlighted metro). Both pinned in `web/test/cacheKey.test.ts`.
+* Internal links that pointed at `/?view=map` (`about.astro`, the weekend blog
+  post) now point at `/map`, the one cookie-aware shortcut.
+
+### 3. One writer for the `fl_city` cookie (`web/src/lib/cityCookie.ts`, new)
+
+`CityPicker` claimed to be the only writer; `GeoHint`'s accept handler was a
+second, hand-rolled copy of the same string. Both now call
+`setCityCookie(city.name)`; `cityCookieHeader()` is pure and pinned in
+`web/test/cityCookie.test.ts`, and `cacheKey.ts` re-exports `CITY_COOKIE` from
+the new module so the name has one definition. This matters because the cookie's
+*value* is part of the edge-cache key — a stray `Path` or a double-encoded name
+would split the cache silently. CLAUDE.md's cookie rule was rewritten to say
+"write it only through `setCityCookie`" instead of naming one component.
+
+### 4. Literary covers on feed cards (`web/src/lib/feed.ts`)
+
+`listUpcomingEvents` attaches neither `books` nor `authors`, so `bestEventImage`'s
+literary chain (book cover → author photo) only fired on the event page and in
+the embed. `attachLiteraryThumbs(db, events)` fills them in for the **current page
+only**:
+
+* zero queries when no event on the page has `author_ids`/`book_ids`;
+* otherwise two, run in parallel over just the linked subset, each batched over
+  the distinct ids and chunked under D1's 100-bind cap inside `attachBooks` /
+  `attachAuthors`.
+
+Called from `loadFeed`, which only `/city/<slug>` uses — **`/api/events` is
+untouched**, so its response shape is unchanged. Verified in the browser: the
+card for a book-linked event renders
+`<img class="shot book contain" src="…covers.openlibrary.org/b/id/8231856-M.jpg"
+alt="Cover of The Overstory">`. Test: `web/test/feedLiterary.test.ts` (the first
+`web/test` suite to use the miniflare D1; `web/test/env.d.ts` declares
+`cloudflare:test` for `astro check`).
+
+### 5. Dead code removed
+
+* `Layout.astro`: `.thumb .placeholder` (the old teal-gradient placeholder — the
+  category art replaced it and nothing emits `class="placeholder"`) and
+  `.fl-marker` (superseded by `.fl-pin`; `divIcon` is created with
+  `className: ''`). `EmbedLayout.astro` still carries its own `.fl-marker` copy —
+  left alone, it belongs to the concurrent embed work.
+* A class-by-class sweep of every `<style>` block in `web/src` found nothing else
+  dead: `DocsNav`'s globals, `venue/[id]`'s `.fl-map`, `event/[id]`'s
+  `:global(.report)` and the Leaflet overrides are all live.
+* `web/public/art/_sheet.html` → `web/art-sheet.html`. Everything under `public/`
+  is served by Workers assets, so the contact sheet was a live URL; its `./x.svg`
+  references became `./public/art/x.svg`. `categoryArt.test.ts` gained a case
+  asserting `public/art/` holds nothing but the SVGs and `README.md`.
+
+### 6. Browser QA — three bugs found and fixed
+
+`astro dev` + Playwright at **390 × 844** and **1440 × 900** over `/`,
+`/city/boston`, `/city/boston?view=map`, `/venue/<id>` and `/event/<id>`. No page
+scrolls horizontally at either width (`scrollWidth === clientWidth` on all ten)
+and no console errors. Three real findings:
+
+1. **The report popover ran off the right edge of a phone.** The flag moved to the
+   *right* end of the `h1` row in wave one, but `ReportButton`'s
+   `@media (max-width: 480px) { .menu { right: auto; left: 0 } }` still anchored
+   the panel's **left** edge to it: a 340 px panel starting at x≈259 on a 390 px
+   screen, 209 px off-screen. On phones it is now a bottom sheet
+   (`position: fixed; left/right: 1rem; bottom: 1rem + safe-area`, `max-height:
+   75vh`, `z-index: 1200` — above the filter FAB at 1100 and the geo toast at
+   1050). Measured after: `left: 16, right: 374` inside a 390 px viewport.
+2. **Every scraped image URL with a space or comma lost its 2× candidate.**
+   `EventCard`'s `srcset` is built from the raw URL, and in `srcset` a space ends
+   the URL while a comma starts the next candidate — Chrome logged "Dropped
+   srcset candidate https://www.burren.com/images/friday" for
+   `…/friday session.jpg`. 14 of 500 local rows have a space, 6 a comma. New
+   `srcsetUrl()` in `shared/src/images.ts` percent-encodes exactly those two
+   characters (idempotent; `src` needs no such treatment). Warnings gone, and no
+   `img[srcset]` on the feed still holds a raw space.
+3. **The landing page's metro list was one 83-row column on phones.**
+   `MetroCoverage` only went two-up at 520 px, adding ~2,900 px of scroll. Two
+   columns from 0 px (a row is `<city> <state> … <count>`, and the name
+   ellipsises rather than wraps): the phone landing page went 9,681 px → 8,131 px
+   with no row ellipsised at 390 px.
+
+**Live map exercised for the first time** (B1 never ran it in a browser) — it
+works as specified, no fixes needed: first render fires
+`/api/events/map?bbox=-71.4201,42.2458,-70.6881,42.5288` and draws 67 pins
+("146 events in view"); dragging fires exactly one new bbox request after the
+debounce and the pins re-render (36 pins, "71 events in view"); unchecking
+Auto-update stops the refetch, clears the status and reveals **Search this area**,
+which fires the request on click (66 pins) and hides itself again; the popup shows
+the venue, event title and date. No console errors, and no duplicate/unaborted
+requests (3 requests across 3 deliberate loads).
+
+Screenshots: `web_{landing,city,citymap,venue,event}_{phone,desktop}.png`,
+`web_report_open_{phone,desktop}.png`, `web_map_live_{initial,panned,searcharea,popup}.png`,
+`web_landing_phone_coverage.png` in the session scratchpad.
+
+### 7. Elsewhere
+
+`FindLocalData/CLAUDE.md` said "31 US metros" in its overview; it is 83
+(`cities.json`). That one line was corrected — no other change in that repo.
+
+### Files
+
+* `shared/src/queries.ts` (VENUE_COLS/AUTHOR_COLS), `shared/src/types.ts`,
+  `shared/src/seo.ts` (`DEFAULT_CITY_SLUG`, `redirectTargetFor(path, citySlug)`),
+  `shared/src/images.ts` (`srcsetUrl`).
+* New: `web/src/lib/cityCookie.ts`, `web/test/cityCookie.test.ts`,
+  `web/test/feedLiterary.test.ts`, `web/test/env.d.ts`, `web/art-sheet.html`
+  (moved out of `public/`).
+* `web/src/middleware.ts`, `web/src/lib/cacheKey.ts`, `web/src/lib/feed.ts`,
+  `web/src/components/{CityPicker,GeoHint,EventCard,ReportButton,MetroCoverage}.astro`,
+  `web/src/layouts/Layout.astro`, `web/src/pages/about.astro`,
+  `web/src/pages/developers/api.astro`, `web/public/art/README.md`,
+  `web/src/content/blog/how-to-find-things-to-do-this-weekend.md`.
+* Tests touched: `shared/test/{seed,queries,books,pure,images}.test.ts`,
+  `web/test/{cacheKey,categoryArt,imageChain,embedCard,jsonld}.test.ts`.
+* `CLAUDE.md` (301 table, canonical note, `fl_city` writer rule);
+  `FindLocalData/CLAUDE.md` (metro count).

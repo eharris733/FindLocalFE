@@ -41,8 +41,9 @@ const art = categoryArtUrl(event.category); // '/art/music.svg', '/art/event.svg
 `theatre` → `theater`, `trivia` → `nightlife`, …) and always resolves to a file
 that exists, falling back to `event.svg`.
 
-`_sheet.html` is a contact sheet of the whole set (not linked from the site);
-open it directly from disk to eyeball every tile at once.
+`web/art-sheet.html` is a contact sheet of the whole set. It lives **outside
+`public/`** on purpose, so Workers assets never serve it; open it directly from
+disk (`open web/art-sheet.html`) to eyeball every tile at once.
 
 ## The set
 

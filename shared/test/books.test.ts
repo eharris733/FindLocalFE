@@ -64,7 +64,13 @@ describe('latestBooksByAuthors', () => {
 describe('authorsByIds / attachAuthors', () => {
   it('returns gazetteer authors with photo + openlibrary id, dropping unknowns', async () => {
     const rows = await authorsByIds(db, [AUTHOR_ID, 'nobody', AUTHOR_ID]);
-    expect(rows).toEqual([{ id: AUTHOR_ID, canonical_name: 'Ada Debut', photo_url: AUTHOR_PHOTO, openlibrary_id: 'OL1A' }]);
+    expect(rows).toEqual([{
+      id: AUTHOR_ID, canonical_name: 'Ada Debut', photo_url: AUTHOR_PHOTO, openlibrary_id: 'OL1A',
+      // provenance columns (migrations 0010/0013) — sparse in prod, seeded here
+      bio: 'Ada Debut is a novelist from Portland.',
+      wikipedia_url: 'https://en.wikipedia.org/wiki/Ada_Debut',
+      photo_attribution: 'Portrait by B. Snapper, CC BY 3.0',
+    }]);
     expect(await authorsByIds(db, [])).toEqual([]);
   });
 

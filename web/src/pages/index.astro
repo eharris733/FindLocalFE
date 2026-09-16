@@ -125,9 +125,20 @@ const description = `Live local event data for ${stats.metrosCovered} US metros 
           <pre id="c-widget">{widgetTag}</pre>
         </div>
         <figure class="demo">
-          <iframe src={widgetSrc} title={`Find Local widget example: ${widgetLabel}`} loading="lazy" scrolling="no"></iframe>
+          <iframe id="demo-widget" src={widgetSrc} title={`Find Local widget example: ${widgetLabel}`} loading="lazy" scrolling="no"></iframe>
           <figcaption class="faint">Live example — the real widget, showing {widgetLabel} right now.</figcaption>
         </figure>
+        <script is:inline>
+          // Follow the embed's own resize beacon (EmbedLayout posts findlocal:resize) so the
+          // in-widget filter toolbar never clips the example rows.
+          window.addEventListener('message', (e) => {
+            const f = document.getElementById('demo-widget');
+            const d = e.data;
+            if (!f || !d || d.type !== 'findlocal:resize' || typeof d.height !== 'number') return;
+            if (e.source !== f.contentWindow) return;
+            f.style.height = Math.min(Math.max(d.height, 420), 1400) + 'px';
+          });
+        </script>
         <a class="more" href="/developers/widgets">Widget builder &amp; reference →</a>
       </article>
 

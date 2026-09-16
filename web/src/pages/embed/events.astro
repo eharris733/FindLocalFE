@@ -1,103 +1,96 @@
 ---
 // /embed/events — the page public/widget.js frames on partner sites.
+//
 // Query contract (web/src/lib/embed.ts): region=<group> | city=<slug|name>,
-// cat, when | from,to, view=list|calendar|map, limit<=300, theme, partner,
-// authors=1 (only events with a known author on the bill).
+// cat (the partner's category PIN), when | from,to, view=list|calendar|map,
+// limit<=300, theme, partner, authors=1, filters=0 (hide the toolbar) —
+// plus everything the in-widget filter toolbar owns: q, ucat (the visitor's
+// category chips), when=…|month, free|paid (or price=free|paid from the no-JS
+// form), tod, near=<lat>,<lng> + radius_km + place, authors.
+//
 // Region groups query several cities at once (listUpcomingEventsForCities);
-// single cities use the site's own filter contract. Never reads locals.city.
-// Literary rows carry a cover/author thumbnail, an author line whose names link
-// to a credited Bookshop.org book, and a "Buy the book" pill (exact ISBN only).
+// single cities use the site's own filter contract; `near` replaces either scope
+// with the nearest metro and orders by distance. Never reads locals.city.
+//
+// Rendering happens twice from ONE model (lib/embedData.ts → EventCard): here on
+// the server (SEO/no-JS) and in the client script below, which re-renders in
+// place from GET /api/embed/events when a filter changes — the toolbar never
+// navigates the parent page. Literary rows carry a cover/author thumbnail, an
+// author line whose names link to a credited Bookshop.org book, and a "Buy the
+// book" pill (exact ISBN only).
 import EmbedLayout from '../../layouts/EmbedLayout.astro';
-import LeafletMap, { type MapMarker } from '../../components/LeafletMap.astro';
+import LeafletMap from '../../components/LeafletMap.astro';
+import { getDb } from '../../lib/db.js';
+import { loadEmbedData, type EmbedData } from '../../lib/embedData.js';
 import {
-  attachAuthors, attachBooks, getDb, latestBooksByAuthors, listUpcomingEvents, listUpcomingEventsForCities, type EventRow,
-} from '../../lib/db.js';
-import { embedCityFilters, embedGroupRange, eventUrl, parseEmbedParams, siteUrl, toggleAuthorsHref, venueUrl } from '../../lib/embed.js';
-import { cardAuthors, cardThumb, eventBuyUrl, type EventCard } from '../../lib/embedCard.js';
+  EMBED_RADII_KM, parseEmbedParams, siteUrl, toggleAuthorsHref, uiStateIsEmpty,
+} from '../../lib/embed.js';
+import type { EventCard } from '../../lib/embedCard.js';
 import { BOOKSHOP_LINK_REL, BOOKSHOP_STOREFRONT_URL } from '../../lib/bookshop.js';
 import { categoryLabel, dayHeader } from '../../lib/format.js';
-import { formatTime, regionGroupCities, regionGroupCityNames } from '@findlocal/shared';
+import { CATEGORIES, TIME_OF_DAY } from '@findlocal/shared';
 
 const p = parseEmbedParams(Astro.url.searchParams);
 const cats = p.categories;
 const literaryScope = cats.includes('literary');
 const catLabel = cats.length ? cats.map(categoryLabel).join(' & ') : 'Upcoming';
-const scopeName = p.group?.name ?? p.city?.name ?? '';
-const tz = p.group?.tz ?? p.city?.tz ?? 'America/New_York';
 
-let events: EventRow[] = [];
-let from = '';
-if (p.error) {
-  Astro.response.status = 404;
-} else if (p.group) {
-  const range = embedGroupRange(p, p.group);
-  from = range.from;
-  events = await listUpcomingEventsForCities(getDb(), {
-    cities: regionGroupCityNames(p.group), categories: cats, from: range.from, to: range.to,
-    limit: p.limit + 1, tz: p.group.tz, authorsOnly: p.authorsOnly,
-  });
-} else if (p.city) {
-  const f = embedCityFilters(p, p.city); // parseFilters reads authors=1 itself
-  from = f.from ?? '';
-  events = await listUpcomingEvents(getDb(), f);
-}
-const truncated = events.length > p.limit;
-if (truncated) events = events.slice(0, p.limit);
-
-// Literary enrichment: linked books, gazetteer authors and each author's latest
-// buyable book (for the author-name link + cover fallback). Cheap no-ops otherwise.
-await attachBooks(getDb(), events);
-await attachAuthors(getDb(), events);
-const latest = await latestBooksByAuthors(getDb(), events.flatMap((e) => e.author_ids));
+const EMPTY: EmbedData = {
+  cards: [], markers: [], events: [], heading: '', scopeName: '', tz: 'America/New_York',
+  from: '', to: null, truncated: false, center: { lat: 42.36, lng: -71.06, zoom: 11 },
+};
+if (p.error) Astro.response.status = 404;
+const data = p.error ? EMPTY : await loadEmbedData(getDb(), p);
+const { cards, markers, tz, from, truncated, scopeName } = data;
 
 const campaign = p.campaign;
-/** Where a row happened, for cross-city lists: town or city partition. */
-const place = (e: EventRow) => (p.group ? e.venue_region || e.region || e.city : e.venue_region || e.region || '');
-const cards: EventCard[] = events.map((e) => ({
-  id: e.id, title: e.title, date: e.event_date, time: formatTime(e.start_time), venue: e.venue_name, place: place(e),
-  url: eventUrl(e.id, campaign, p.partner), buyUrl: eventBuyUrl(e), thumb: cardThumb(e, latest), authors: cardAuthors(e, latest),
-}));
-// Bookshop.org support footer: literary widgets, or any set that resolved a buyable book — never under an empty list.
-const showBookshop = cards.length > 0 && (literaryScope || cards.some((c) => c.buyUrl));
-const showAuthorsToggle = literaryScope || p.authorsOnly;
-const authorsOnHref = toggleAuthorsHref(Astro.url, true);
-const authorsOffHref = toggleAuthorsHref(Astro.url, false);
+const ui = p.ui;
+// Embed-level keys ride along as hidden inputs (no-JS submit) and define the
+// "Clear" target — the visitor's own keys are what Clear drops.
+const scopeKeys: [string, string][] = ([['region', Astro.url.searchParams.get('region')],
+  ['city', Astro.url.searchParams.get('city')], ['cat', Astro.url.searchParams.get('cat')],
+  ['view', p.view === 'list' ? '' : p.view], ['theme', p.theme === 'auto' ? '' : p.theme],
+  ['limit', Astro.url.searchParams.get('limit')], ['partner', p.partner ?? ''],
+  ['filters', Astro.url.searchParams.get('filters')]] as [string, string | null][])
+  .filter((kv): kv is [string, string] => !!kv[1]);
+const clearQuery = new URLSearchParams(scopeKeys);
+clearQuery.sort();
+const clearHref = `/embed/events${clearQuery.toString() ? `?${clearQuery}` : ''}`;
 
-const seeAllHref = siteUrl(p.group ? '/' : `/city/${p.city?.slug ?? 'boston'}`, campaign, p.partner);
+const showAuthorsToggle = literaryScope || p.authorsOnly;
+const authorsOffHref = toggleAuthorsHref(Astro.url, false);
+const authorsOnHref = toggleAuthorsHref(Astro.url, true);
+
+const seeAllHref = siteUrl(p.group && !p.near ? '/' : `/city/${p.city?.slug ?? 'boston'}`, campaign, p.partner);
 const homeHref = siteUrl('/', campaign, p.partner);
-const heading = p.authorsOnly ? `Author events in ${scopeName}` : `${catLabel} events in ${scopeName}`;
+const heading = data.heading || `${catLabel} events in ${scopeName}`;
 const title = `${heading} · FindLocal widget`;
 const errorParam = p.error === 'unknown-region' ? 'region' : p.error === 'unknown-city' ? 'city' : 'cat';
 
-// Date-grouped agenda.
+// Date-grouped agenda (keys sorted: sort=featured picks the rows, the agenda
+// still reads chronologically).
 const byDay = new Map<string, EventCard[]>();
 for (const c of cards) byDay.set(c.date, [...(byDay.get(c.date) ?? []), c]);
+const days = [...byDay.keys()].sort();
 
-// One marker per venue (as EventMap.astro), links carrying UTM params.
-const byVenue = new Map<string, MapMarker>();
-for (const e of events) {
-  if (e.venue_lat == null || e.venue_lng == null) continue;
-  let m = byVenue.get(e.venue_id);
-  if (!m) {
-    m = { lat: e.venue_lat, lng: e.venue_lng, count: 0, title: e.venue_name, href: venueUrl(e.venue_id, campaign, p.partner), subtitle: e.venue_address ?? undefined, items: [] };
-    byVenue.set(e.venue_id, m);
-  }
-  m.count += 1;
-  if (m.items!.length < 4) m.items!.push({ label: e.title, href: eventUrl(e.id, campaign, p.partner) });
-}
-const markers = [...byVenue.values()];
-const groupCities = p.group ? regionGroupCities(p.group) : [];
-const center = p.city
-  ? { lat: p.city.lat, lng: p.city.lng, zoom: p.city.zoom }
-  : { lat: groupCities[0]?.lat ?? 42.36, lng: groupCities[0]?.lng ?? -71.06, zoom: 7 };
-
-const data = { tz, from, truncated, seeAll: seeAllHref, buyRel: BOOKSHOP_LINK_REL, authorsOnly: p.authorsOnly, events: cards };
-const json = JSON.stringify(data).replace(/</g, '\\u003c');
+const payload = { tz, from, truncated, seeAll: seeAllHref, buyRel: BOOKSHOP_LINK_REL, authorsOnly: p.authorsOnly, literary: literaryScope, events: cards };
+const json = JSON.stringify(payload).replace(/</g, '\\u003c');
 const views: { id: 'list' | 'calendar' | 'map'; label: string }[] = [
   { id: 'list', label: 'List' },
   { id: 'calendar', label: 'Calendar' },
   { id: 'map', label: 'Map' },
 ];
+const whens: { value: string; label: string }[] = [
+  { value: '', label: 'Anytime' },
+  { value: 'today', label: 'Today' },
+  { value: 'weekend', label: 'This weekend' },
+  { value: 'week', label: 'This week' },
+  { value: 'month', label: 'This month' },
+];
+const tods: Record<string, string> = { morning: 'Morning', afternoon: 'Afternoon', evening: 'Evening' };
+const radius = ui.near?.radiusKm ?? 25;
+// Bookshop.org support footer: literary widgets, or any set that resolved a buyable book.
+const showBookshop = cards.length > 0 && (literaryScope || cards.some((c) => c.buyUrl));
 ---
 <EmbedLayout title={title} theme={p.theme} homeHref={homeHref}>
   {p.error ? (
@@ -108,9 +101,9 @@ const views: { id: 'list' | 'calendar' | 'map'; label: string }[] = [
   ) : (
     <>
       <header class="fl-head">
-        <h1>{heading}</h1>
+        <h1 data-heading>{heading}</h1>
         <div class="fl-controls">
-          {showAuthorsToggle && (
+          {!p.filtersOn && showAuthorsToggle && (
             <a class="fl-chip" href={p.authorsOnly ? authorsOffHref : authorsOnHref} target="_self" aria-pressed={p.authorsOnly ? 'true' : 'false'} title={p.authorsOnly ? 'Show every event' : 'Only events with an author on the bill'}>
               <svg width="12" height="12" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm0 2c-3.3 0-8 1.7-8 5v1h16v-1c0-3.3-4.7-5-8-5Z"/></svg>
               Author events
@@ -124,19 +117,92 @@ const views: { id: 'list' | 'calendar' | 'map'; label: string }[] = [
         </div>
       </header>
 
-      <section id="fl-list" role="tabpanel" aria-labelledby="tab-list" hidden={p.view !== 'list'}>
+      {p.filtersOn && (
+        <form class="fl-filters" method="get" action="/embed/events" target="_self" data-filters>
+          {scopeKeys.map(([k, v]) => <input type="hidden" name={k} value={v} />)}
+          <input type="hidden" name="near" value={ui.near ? `${ui.near.lat},${ui.near.lng}` : ''} data-f="near" />
+          <div class="fl-frow">
+            <label class="fl-field grow">
+              <span class="fl-lbl">Search</span>
+              <input type="search" name="q" value={ui.q} maxlength="100" placeholder="Title, venue or author" data-f="q" />
+            </label>
+            <label class="fl-field">
+              <span class="fl-lbl">When</span>
+              <select name="when" data-f="when">
+                {whens.map((w) => <option value={w.value} selected={(ui.from ? '' : ui.when === 'anytime' ? '' : ui.when) === w.value}>{w.label}</option>)}
+              </select>
+            </label>
+            <label class="fl-field">
+              <span class="fl-lbl">Time of day</span>
+              <select name="tod" data-f="tod">
+                <option value="" selected={ui.tod.length !== 1}>Any time</option>
+                {TIME_OF_DAY.map((t) => <option value={t} selected={ui.tod.length === 1 && ui.tod[0] === t}>{tods[t]}</option>)}
+              </select>
+            </label>
+            <fieldset class="fl-field fl-seg">
+              <legend class="fl-lbl">Price</legend>
+              <div class="fl-seg-row">
+                {([['', 'Any'], ['free', 'Free'], ['paid', 'Paid']] as [string, string][]).map(([v, label]) => (
+                  <label class="fl-seg-opt"><input type="radio" name="price" value={v} checked={(ui.price === 'any' ? '' : ui.price) === v} data-f="price" />{label}</label>
+                ))}
+              </div>
+            </fieldset>
+          </div>
+
+          <div class="fl-frow">
+            <label class="fl-field grow fl-near">
+              <span class="fl-lbl">Near</span>
+              <span class="fl-near-row">
+                <input type="text" name="place" value={ui.place ?? ''} maxlength="60" placeholder="Zip, city or address" autocomplete="off" role="combobox" aria-expanded="false" aria-autocomplete="list" aria-controls="fl-places" data-f="place" />
+                <button type="button" class="fl-icon-btn" data-geo title="Use my location" aria-label="Use my location">
+                  <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a1 1 0 0 1 1 1v1.06A8 8 0 0 1 19.94 11H21a1 1 0 1 1 0 2h-1.06A8 8 0 0 1 13 19.94V21a1 1 0 1 1-2 0v-1.06A8 8 0 0 1 4.06 13H3a1 1 0 1 1 0-2h1.06A8 8 0 0 1 11 4.06V3a1 1 0 0 1 1-1Zm0 4a6 6 0 1 0 0 12 6 6 0 0 0 0-12Zm0 3.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5Z"/></svg>
+                </button>
+              </span>
+              <ul class="fl-places" id="fl-places" role="listbox" hidden></ul>
+            </label>
+            <label class="fl-field">
+              <span class="fl-lbl">Radius</span>
+              <select name="radius_km" data-f="radius">
+                {EMBED_RADII_KM.map((km) => <option value={String(km)} selected={radius === km}>{km} km</option>)}
+              </select>
+            </label>
+            {showAuthorsToggle && (
+              <label class="fl-chip fl-check">
+                <input type="checkbox" name="authors" value="1" checked={p.authorsOnly} data-f="authors" />
+                Authors only
+              </label>
+            )}
+            <button type="submit" class="fl-apply" data-apply>Apply</button>
+            <a class="fl-clear" href={clearHref} target="_self" hidden={uiStateIsEmpty(ui)} data-clear>Clear</a>
+          </div>
+
+          {!p.pinnedCategories && (
+            <div class="fl-cats" role="group" aria-label="Categories">
+              {CATEGORIES.map((c) => (
+                <label class="fl-chip sm">
+                  <input type="checkbox" name="ucat" value={c.slug} checked={ui.cats.includes(c.slug)} data-f="ucat" />
+                  {c.label}
+                </label>
+              ))}
+            </div>
+          )}
+          <p class="fl-status" role="status" aria-live="polite" data-status></p>
+        </form>
+      )}
+
+      <section id="fl-list" role="tabpanel" aria-labelledby="tab-list" hidden={p.view !== 'list'} data-panel="list">
         {cards.length === 0 ? (
           p.authorsOnly ? (
             <p class="fl-empty">No author events listed yet — <a href={authorsOffHref} target="_self">see all {literaryScope ? 'literary' : ''} events</a> or <a href={seeAllHref} rel="noopener">browse FindLocal</a>.</p>
           ) : (
-            <p class="fl-empty">Nothing listed yet — listings update daily. <a href={seeAllHref} rel="noopener">Browse FindLocal</a>.</p>
+            <p class="fl-empty">Nothing matches these filters yet — listings update daily. <a href={seeAllHref} rel="noopener">Browse FindLocal</a>.</p>
           )
         ) : (
-          [...byDay.entries()].map(([day, list]) => (
+          days.map((day) => (
             <div class="fl-day">
               <h2 class="fl-day-h">{dayHeader(day, tz)}</h2>
               <ul class="fl-rows">
-                {list.map((c) => (
+                {(byDay.get(day) ?? []).map((c) => (
                   <li class="fl-row">
                     <span class="fl-time">{c.time || '—'}</span>
                     <span class="fl-thumb">
@@ -154,7 +220,12 @@ const views: { id: 'list' | 'calendar' | 'map'; label: string }[] = [
                         ))}</span>
                       )}
                       <span class="fl-where">{c.venue}{c.place ? ` · ${c.place}` : ''}</span>
-                      {c.buyUrl && <a class="fl-buy" href={c.buyUrl} rel={BOOKSHOP_LINK_REL}>Buy the book</a>}
+                      {(c.price || c.buyUrl) && (
+                        <span class="fl-pills">
+                          {c.price && <span class:list={['fl-price', { free: c.price === 'Free' }]}>{c.price}</span>}
+                          {c.buyUrl && <a class="fl-buy" href={c.buyUrl} rel={BOOKSHOP_LINK_REL}>Buy the book</a>}
+                        </span>
+                      )}
                     </span>
                   </li>
                 ))}
@@ -165,7 +236,7 @@ const views: { id: 'list' | 'calendar' | 'map'; label: string }[] = [
         {truncated && <p class="fl-more">Showing the first {p.limit} events. <a href={seeAllHref} rel="noopener">See everything on FindLocal</a>.</p>}
       </section>
 
-      <section id="fl-calendar" role="tabpanel" aria-labelledby="tab-calendar" hidden={p.view !== 'calendar'}>
+      <section id="fl-calendar" role="tabpanel" aria-labelledby="tab-calendar" hidden={p.view !== 'calendar'} data-panel="calendar">
         <div class="fl-cal-nav">
           <button type="button" class="fl-cal-btn" data-cal="prev" aria-label="Previous month">‹</button>
           <h2 class="fl-cal-title" data-cal-title aria-live="polite"></h2>
@@ -175,19 +246,17 @@ const views: { id: 'list' | 'calendar' | 'map'; label: string }[] = [
         <div class="fl-cal-day" data-cal-day aria-live="polite"></div>
       </section>
 
-      <section id="fl-map" role="tabpanel" aria-labelledby="tab-map" hidden={p.view !== 'map'}>
+      <section id="fl-map" role="tabpanel" aria-labelledby="tab-map" hidden={p.view !== 'map'} data-panel="map">
         {markers.length === 0 ? (
-          <p class="fl-empty">No mappable venues for these events.</p>
+          <p class="fl-empty" data-map-empty>No mappable venues for these events.</p>
         ) : (
-          <LeafletMap markers={markers} center={center} label={`Map of ${catLabel.toLowerCase()} events in ${scopeName}`} />
+          <LeafletMap markers={markers} center={data.center} label={`Map of ${catLabel.toLowerCase()} events in ${scopeName}`} />
         )}
       </section>
 
-      {showBookshop && (
-        <footer class="fl-support">
-          <a href={BOOKSHOP_STOREFRONT_URL} rel={BOOKSHOP_LINK_REL}>Buy featured books on Bookshop.org</a> — supports independent bookstores &amp; Find Local.
-        </footer>
-      )}
+      <footer class="fl-support" hidden={!showBookshop} data-bookshop>
+        <a href={BOOKSHOP_STOREFRONT_URL} rel={BOOKSHOP_LINK_REL}>Buy featured books on Bookshop.org</a> — supports independent bookstores &amp; Find Local.
+      </footer>
 
       <script is:inline type="application/json" id="fl-data" set:html={json} />
     </>
@@ -195,15 +264,24 @@ const views: { id: 'list' | 'calendar' | 'map'; label: string }[] = [
 </EmbedLayout>
 
 <script>
+  import { geocode, placeLabel, type GeoPlace } from '../../lib/geocode.js';
+  import { EMBED_UI_KEYS, readUiState, uiQuery, type EmbedUiState } from '../../lib/embed.js';
+
   type Author = { name: string; href: string | null };
-  type Thumb = { src: string; kind: 'cover' | 'photo' | 'image'; alt: string };
-  type Ev = { id: string; title: string; date: string; time: string; venue: string; place: string; url: string; buyUrl: string | null; thumb: Thumb | null; authors: Author[] };
-  type Data = { tz: string; from: string; truncated: boolean; seeAll: string; buyRel: string; authorsOnly: boolean; events: Ev[] };
+  type Thumb = { src: string; kind: 'cover' | 'photo' | 'image' | 'art'; alt: string };
+  type Ev = { id: string; title: string; date: string; time: string; venue: string; place: string; url: string; price: string; buyUrl: string | null; thumb: Thumb | null; authors: Author[] };
+  type Data = { tz: string; from: string; truncated: boolean; seeAll: string; buyRel: string; authorsOnly: boolean; literary: boolean; events: Ev[] };
+  type Marker = { lat: number; lng: number; count: number; title: string; href: string; subtitle?: string; items?: { label: string; href: string }[] };
   const raw = document.getElementById('fl-data')?.textContent;
-  const data: Data = raw ? JSON.parse(raw) : { tz: 'America/New_York', from: '', truncated: false, seeAll: '', buyRel: 'sponsored nofollow noopener', authorsOnly: false, events: [] };
+  const data: Data = raw ? JSON.parse(raw) : { tz: 'America/New_York', from: '', truncated: false, seeAll: '', buyRel: 'sponsored nofollow noopener', authorsOnly: false, literary: false, events: [] };
   const resize = () => document.dispatchEvent(new Event('fl:resize'));
   const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] as string);
   const PLACEHOLDER = '<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M6 2h11a3 3 0 0 1 3 3v14a3 3 0 0 1-3 3H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Zm0 16v2h11a1 1 0 0 0 1-1v-1H6Zm2-12v2h8V6H8Z"/></svg>';
+
+  let events: Ev[] = data.events;
+  let truncated = data.truncated;
+  let seeAll = data.seeAll;
+  let tz = data.tz;
 
   // Same row markup as the server-rendered list (keep in sync with the template above).
   function rowHtml(e: Ev): string {
@@ -213,8 +291,22 @@ const views: { id: 'list' | 'calendar' | 'map'; label: string }[] = [
     const authors = e.authors.length
       ? `<span class="fl-with">with ${e.authors.map((a) => (a.href ? `<a href="${esc(a.href)}" rel="${esc(data.buyRel)}">${esc(a.name)}</a>` : `<span>${esc(a.name)}</span>`)).join(', ')}</span>`
       : '';
+    const price = e.price ? `<span class="fl-price${e.price === 'Free' ? ' free' : ''}">${esc(e.price)}</span>` : '';
     const buy = e.buyUrl ? `<a class="fl-buy" href="${esc(e.buyUrl)}" rel="${esc(data.buyRel)}">Buy the book</a>` : '';
-    return `<li class="fl-row"><span class="fl-time">${esc(e.time || '—')}</span><span class="fl-thumb">${thumb}</span><span class="fl-main"><a class="fl-title" href="${esc(e.url)}" rel="noopener">${esc(e.title)}</a>${authors}<span class="fl-where">${esc(e.venue)}${e.place ? ' · ' + esc(e.place) : ''}</span>${buy}</span></li>`;
+    const pills = price || buy ? `<span class="fl-pills">${price}${buy}</span>` : '';
+    return `<li class="fl-row"><span class="fl-time">${esc(e.time || '—')}</span><span class="fl-thumb">${thumb}</span><span class="fl-main"><a class="fl-title" href="${esc(e.url)}" rel="noopener">${esc(e.title)}</a>${authors}<span class="fl-where">${esc(e.venue)}${e.place ? ' · ' + esc(e.place) : ''}</span>${pills}</span></li>`;
+  }
+
+  /** Same wording as lib/format.ts::dayHeader ("Today · Friday, September 4").
+   * "today" is the wall-clock day in the widget's zone; en-CA formats as YYYY-MM-DD. */
+  function dayLabel(ymd: string): string {
+    const [y, m, d] = ymd.split('-').map(Number) as [number, number, number];
+    const utc = Date.UTC(y, m - 1, d);
+    const long = new Date(utc).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'UTC' });
+    const today = new Date().toLocaleDateString('en-CA', { timeZone: tz });
+    if (ymd === today) return `Today · ${long}`;
+    if (new Date(utc - 86400000).toLocaleDateString('en-CA', { timeZone: 'UTC' }) === today) return `Tomorrow · ${long}`;
+    return long;
   }
 
   // ---- view switcher
@@ -224,50 +316,85 @@ const views: { id: 'list' | 'calendar' | 'map'; label: string }[] = [
     map: document.getElementById('fl-map'),
   };
   let calendarBuilt = false;
-  function show(view: string) {
-    for (const [k, el] of Object.entries(panels)) if (el) el.hidden = k !== view;
+  let view = document.querySelector<HTMLButtonElement>('[role="tab"][aria-selected="true"]')?.dataset.view ?? 'list';
+  function show(next: string) {
+    view = next;
+    for (const [k, el] of Object.entries(panels)) if (el) el.hidden = k !== next;
     document.querySelectorAll<HTMLButtonElement>('[role="tab"][data-view]').forEach((b) => {
-      b.setAttribute('aria-selected', b.dataset.view === view ? 'true' : 'false');
+      b.setAttribute('aria-selected', b.dataset.view === next ? 'true' : 'false');
     });
-    if (view === 'calendar' && !calendarBuilt) buildCalendar();
-    if (view === 'map') {
-      const el = panels.map?.querySelector<HTMLElement>('.fl-map');
-      if (el) document.dispatchEvent(new CustomEvent('fl:map-show', { detail: el }));
-    }
+    if (next === 'calendar' && !calendarBuilt) buildCalendar();
+    if (next === 'map') showMap();
     resize();
   }
   document.querySelectorAll<HTMLButtonElement>('[role="tab"][data-view]').forEach((b) => {
-    b.addEventListener('click', () => show(b.dataset.view ?? 'list'));
+    b.addEventListener('click', () => { show(b.dataset.view ?? 'list'); syncUrl(); });
   });
   document.addEventListener('fl:map-ready', resize);
 
+  function showMap() {
+    const el = panels.map?.querySelector<HTMLElement>('.fl-map');
+    if (el) document.dispatchEvent(new CustomEvent('fl:map-show', { detail: el }));
+  }
+
+  /** Rebuild the map panel from fresh markers. A brand-new .fl-map element has no
+   * Leaflet instance attached, so LeafletMap's `fl:map-show` handler initialises
+   * it from data-markers — no component API needed. */
+  function renderMap(markers: Marker[], center: { lat: number; lng: number; zoom: number }) {
+    const panel = panels.map;
+    if (!panel) return;
+    panel.replaceChildren();
+    if (!markers.length) {
+      const p = document.createElement('p');
+      p.className = 'fl-empty';
+      p.textContent = 'No mappable venues for these events.';
+      panel.append(p);
+      return;
+    }
+    const el = document.createElement('div');
+    el.className = 'fl-map';
+    el.setAttribute('role', 'region');
+    el.setAttribute('aria-label', 'Map of these events');
+    el.dataset.markers = JSON.stringify(markers);
+    el.dataset.center = JSON.stringify(center);
+    panel.append(el);
+    if (view === 'map') showMap();
+  }
+
   // ---- calendar (all arithmetic in UTC so a calendar day never shifts)
-  const byDate = new Map<string, Ev[]>();
-  for (const e of data.events) byDate.set(e.date, [...(byDate.get(e.date) ?? []), e]);
-  const dates = [...byDate.keys()].sort();
-  const monthOf = (ymd: string) => ymd.slice(0, 7);
-  const first = data.from || dates[0] || new Date().toISOString().slice(0, 10);
-  const minMonth = monthOf(first);
-  const maxMonth = monthOf(dates[dates.length - 1] ?? first);
-  let month = minMonth;
+  let byDate = new Map<string, Ev[]>();
+  let dates: string[] = [];
+  let minMonth = '';
+  let maxMonth = '';
+  let month = '';
   let selected: string | null = null;
   const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
   const DOW = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
   const pad = (n: number) => String(n).padStart(2, '0');
+  const monthOf = (ymd: string) => ymd.slice(0, 7);
   function ymdOf(y: number, m: number, d: number) { return `${y}-${pad(m)}-${pad(d)}`; }
   function shiftMonth(ym: string, n: number) {
     const [y, m] = ym.split('-').map(Number) as [number, number];
     const d = new Date(Date.UTC(y, m - 1 + n, 1));
     return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}`;
   }
+  function indexDates(from: string) {
+    byDate = new Map<string, Ev[]>();
+    for (const e of events) byDate.set(e.date, [...(byDate.get(e.date) ?? []), e]);
+    dates = [...byDate.keys()].sort();
+    const first = from || dates[0] || new Date().toISOString().slice(0, 10);
+    minMonth = monthOf(first);
+    maxMonth = monthOf(dates[dates.length - 1] ?? first);
+    month = minMonth;
+    selected = null;
+  }
+  indexDates(data.from);
 
   function renderDay(ymd: string) {
     const box = document.querySelector<HTMLElement>('[data-cal-day]');
     if (!box) return;
     const list = byDate.get(ymd) ?? [];
-    const [y, m, d] = ymd.split('-').map(Number) as [number, number, number];
-    const label = new Date(Date.UTC(y, m - 1, d)).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'UTC' });
-    box.innerHTML = `<h3 class="fl-day-h">${esc(label)}</h3>` + (list.length
+    box.innerHTML = `<h3 class="fl-day-h">${esc(dayLabel(ymd))}</h3>` + (list.length
       ? `<ul class="fl-rows">${list.map(rowHtml).join('')}</ul>`
       : '<p class="fl-empty">Nothing listed this day.</p>');
     resize();
@@ -302,26 +429,253 @@ const views: { id: 'list' | 'calendar' | 'map'; label: string }[] = [
     resize();
   }
 
+  function renderCalendarBody() {
+    renderMonth();
+    const firstDay = dates.find((d) => monthOf(d) === month);
+    const box = document.querySelector<HTMLElement>('[data-cal-day]');
+    if (firstDay) { selected = firstDay; renderMonth(); renderDay(firstDay); }
+    else if (box) box.innerHTML = `<p class="fl-empty">Nothing matches these filters. <a href="${esc(seeAll)}" rel="noopener">Browse FindLocal</a>.</p>`;
+    if (truncated) {
+      box?.insertAdjacentHTML('beforeend', `<p class="fl-more">Only the first ${events.length} events are loaded. <a href="${esc(seeAll)}" rel="noopener">See everything on FindLocal</a>.</p>`);
+    }
+  }
+
   function buildCalendar() {
     calendarBuilt = true;
     document.querySelector('[data-cal="prev"]')?.addEventListener('click', () => { month = shiftMonth(month, -1); renderMonth(); });
     document.querySelector('[data-cal="next"]')?.addEventListener('click', () => { month = shiftMonth(month, 1); renderMonth(); });
-    renderMonth();
-    const firstDay = dates.find((d) => monthOf(d) === month);
-    if (firstDay) { selected = firstDay; renderMonth(); renderDay(firstDay); }
-    else if (data.events.length === 0) {
-      const box = document.querySelector<HTMLElement>('[data-cal-day]');
-      if (box) box.innerHTML = `<p class="fl-empty">Nothing listed yet. <a href="${esc(data.seeAll)}" rel="noopener">Browse FindLocal</a>.</p>`;
+    renderCalendarBody();
+  }
+
+  function renderList() {
+    const panel = panels.list;
+    if (!panel) return;
+    if (!events.length) {
+      panel.innerHTML = `<p class="fl-empty">Nothing matches these filters yet — listings update daily. <a href="${esc(seeAll)}" rel="noopener">Browse FindLocal</a>.</p>`;
+      return;
     }
-    if (data.truncated) {
-      const box = document.querySelector<HTMLElement>('[data-cal-day]');
-      box?.insertAdjacentHTML('beforeend', `<p class="fl-more">Only the first ${data.events.length} events are loaded. <a href="${esc(data.seeAll)}" rel="noopener">See everything on FindLocal</a>.</p>`);
+    const byDay = new Map<string, Ev[]>();
+    for (const e of events) byDay.set(e.date, [...(byDay.get(e.date) ?? []), e]);
+    const html = [...byDay.keys()].sort().map((day) => (
+      `<div class="fl-day"><h2 class="fl-day-h">${esc(dayLabel(day))}</h2><ul class="fl-rows">${(byDay.get(day) ?? []).map(rowHtml).join('')}</ul></div>`
+    )).join('');
+    const more = truncated ? `<p class="fl-more">Showing the first ${events.length} events. <a href="${esc(seeAll)}" rel="noopener">See everything on FindLocal</a>.</p>` : '';
+    panel.innerHTML = html + more;
+  }
+
+  // ---- filter toolbar
+  const form = document.querySelector<HTMLFormElement>('[data-filters]');
+  const statusEl = form?.querySelector<HTMLElement>('[data-status]');
+  const applyBtn = form?.querySelector<HTMLButtonElement>('[data-apply]');
+  const clearLink = form?.querySelector<HTMLAnchorElement>('[data-clear]');
+  const placeInput = form?.querySelector<HTMLInputElement>('[data-f="place"]');
+  const nearInput = form?.querySelector<HTMLInputElement>('[data-f="near"]');
+  const placeList = form?.querySelector<HTMLUListElement>('#fl-places');
+  const field = <T extends HTMLElement>(name: string) => form?.querySelector<T>(`[data-f="${name}"]`) ?? null;
+  // JS is on: filters apply as you change them.
+  if (applyBtn) applyBtn.hidden = true;
+
+  function readState(): EmbedUiState {
+    const p = new URLSearchParams();
+    const q = field<HTMLInputElement>('q')?.value.trim();
+    if (q) p.set('q', q);
+    const when = field<HTMLSelectElement>('when')?.value;
+    if (when) p.set('when', when);
+    const tod = field<HTMLSelectElement>('tod')?.value;
+    if (tod) p.set('tod', tod);
+    const price = form?.querySelector<HTMLInputElement>('[data-f="price"]:checked')?.value;
+    if (price === 'free') p.set('free', '1');
+    if (price === 'paid') p.set('paid', '1');
+    for (const box of form?.querySelectorAll<HTMLInputElement>('[data-f="ucat"]:checked') ?? []) p.append('ucat', box.value);
+    if (field<HTMLInputElement>('authors')?.checked) p.set('authors', '1');
+    const near = nearInput?.value.trim();
+    if (near) {
+      p.set('near', near);
+      p.set('radius_km', field<HTMLSelectElement>('radius')?.value ?? '25');
+      const place = placeInput?.value.trim();
+      if (place) p.set('place', place);
+    }
+    return readUiState(p);
+  }
+
+  /** Current query = the partner's embed keys (minus the toolbar's) + the toolbar state. */
+  function currentQuery(state: EmbedUiState): string {
+    const base = new URLSearchParams(location.search);
+    for (const k of EMBED_UI_KEYS) base.delete(k);
+    if (view === 'list') base.delete('view');
+    else base.set('view', view);
+    return uiQuery(base, state);
+  }
+
+  function syncUrl(state: EmbedUiState = readState()) {
+    const q = currentQuery(state);
+    history.replaceState(null, '', `${location.pathname}${q ? `?${q}` : ''}`);
+    if (clearLink) {
+      const empty = !q.includes('q=') && !/(^|&)(when|from|to|free|paid|tod|ucat|authors|near)=/.test(q);
+      clearLink.hidden = empty;
     }
   }
 
+  let requestId = 0;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  let controller: AbortController | undefined;
+
+  async function refresh() {
+    const state = readState();
+    syncUrl(state);
+    const q = currentQuery(state);
+    const id = ++requestId;
+    controller?.abort();
+    controller = new AbortController();
+    if (statusEl) statusEl.textContent = 'Loading…';
+    form?.setAttribute('aria-busy', 'true');
+    try {
+      const res = await fetch(`/api/embed/events${q ? `?${q}` : ''}`, { signal: controller.signal, headers: { accept: 'application/json' } });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const body = await res.json() as { data: Ev[]; markers: Marker[]; meta: { tz: string; from: string; truncated: boolean; see_all: string; heading: string; count: number; center: { lat: number; lng: number; zoom: number } } };
+      if (id !== requestId) return;
+      events = body.data ?? [];
+      truncated = !!body.meta?.truncated;
+      seeAll = body.meta?.see_all ?? seeAll;
+      tz = body.meta?.tz ?? tz;
+      const headingEl = document.querySelector<HTMLElement>('[data-heading]');
+      if (headingEl && body.meta?.heading) headingEl.textContent = body.meta.heading;
+      renderList();
+      indexDates(body.meta?.from ?? '');
+      if (calendarBuilt) renderCalendarBody();
+      renderMap(body.markers ?? [], body.meta?.center ?? { lat: 42.36, lng: -71.06, zoom: 11 });
+      // Same rule as the server: literary widgets, or any set with a buyable book.
+      const bookshop = document.querySelector<HTMLElement>('[data-bookshop]');
+      if (bookshop) bookshop.hidden = events.length === 0 || !(data.literary || events.some((e) => e.buyUrl));
+      if (statusEl) statusEl.textContent = events.length === 0 ? 'No events match' : `${events.length}${truncated ? '+' : ''} event${events.length === 1 ? '' : 's'}`;
+    } catch (err) {
+      if ((err as Error)?.name === 'AbortError') return;
+      if (statusEl) statusEl.textContent = 'Could not load events — try again';
+    } finally {
+      form?.removeAttribute('aria-busy');
+      resize();
+    }
+  }
+
+  function schedule(delay = 0) {
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(refresh, delay);
+  }
+
+  form?.addEventListener('submit', (ev) => { ev.preventDefault(); schedule(0); });
+  form?.addEventListener('change', (ev) => {
+    const t = ev.target as HTMLElement;
+    if (t === placeInput) return; // handled by the place picker
+    schedule(0);
+  });
+  form?.addEventListener('input', (ev) => {
+    const t = ev.target as HTMLElement;
+    if (t === field<HTMLInputElement>('q')) schedule(350);
+  });
+  /** Back to the partner's own scope: every toolbar control to its default.
+   * (form.reset() would restore the *server-rendered* values, i.e. the filters.) */
+  clearLink?.addEventListener('click', (ev) => {
+    ev.preventDefault();
+    const q = field<HTMLInputElement>('q');
+    if (q) q.value = '';
+    for (const sel of ['when', 'tod'] as const) {
+      const el = field<HTMLSelectElement>(sel);
+      if (el) el.value = '';
+    }
+    const any = form?.querySelector<HTMLInputElement>('[data-f="price"][value=""]');
+    if (any) any.checked = true;
+    for (const box of form?.querySelectorAll<HTMLInputElement>('[data-f="ucat"], [data-f="authors"]') ?? []) box.checked = false;
+    if (nearInput) nearInput.value = '';
+    if (placeInput) placeInput.value = '';
+    hidePlaces();
+    schedule(0);
+  });
+
+  // ---- "Near": place lookup (Photon → Nominatim) + browser geolocation
+  let places: GeoPlace[] = [];
+  let placeTimer: ReturnType<typeof setTimeout> | undefined;
+
+  function hidePlaces() {
+    if (!placeList) return;
+    placeList.hidden = true;
+    placeList.replaceChildren();
+    placeInput?.setAttribute('aria-expanded', 'false');
+  }
+
+  function showPlaces(list: GeoPlace[]) {
+    if (!placeList) return;
+    places = list;
+    placeList.replaceChildren();
+    if (!list.length) { hidePlaces(); return; }
+    for (const [i, pl] of list.entries()) {
+      const li = document.createElement('li');
+      li.setAttribute('role', 'option');
+      li.tabIndex = -1;
+      li.dataset.i = String(i);
+      li.innerHTML = `<b>${esc(pl.label)}</b>${pl.detail ? ` <span>${esc(pl.detail)}</span>` : ''}`;
+      li.addEventListener('click', () => choose(i));
+      placeList.append(li);
+    }
+    placeList.hidden = false;
+    placeInput?.setAttribute('aria-expanded', 'true');
+    resize();
+  }
+
+  function choose(i: number) {
+    const pl = places[i];
+    if (!pl || !nearInput || !placeInput) return;
+    nearInput.value = `${pl.lat},${pl.lng}`;
+    placeInput.value = placeLabel(pl);
+    hidePlaces();
+    schedule(0);
+  }
+
+  placeInput?.addEventListener('input', () => {
+    const q = placeInput.value.trim();
+    if (placeTimer) clearTimeout(placeTimer);
+    if (!q) {
+      // Clearing the box drops the proximity search and restores the widget's scope.
+      if (nearInput?.value) { nearInput.value = ''; schedule(0); }
+      hidePlaces();
+      return;
+    }
+    placeTimer = setTimeout(async () => {
+      if (statusEl) statusEl.textContent = 'Looking up places…';
+      const found = await geocode(q, { limit: 5, minIntervalMs: 1000 });
+      if (statusEl) statusEl.textContent = found.length ? '' : 'No place found';
+      showPlaces(found);
+    }, 500);
+  });
+  placeInput?.addEventListener('keydown', (ev) => {
+    if (ev.key === 'Enter') { ev.preventDefault(); if (places.length) choose(0); }
+    if (ev.key === 'Escape') hidePlaces();
+  });
+  document.addEventListener('click', (ev) => {
+    if (placeList && !placeList.hidden && !(ev.target as HTMLElement).closest('.fl-near')) hidePlaces();
+  });
+
+  form?.querySelector<HTMLButtonElement>('[data-geo]')?.addEventListener('click', () => {
+    if (!navigator.geolocation) {
+      if (statusEl) statusEl.textContent = 'Location is not available in this browser';
+      return;
+    }
+    if (statusEl) statusEl.textContent = 'Finding your location…';
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const lat = Math.round(pos.coords.latitude * 1000) / 1000;
+        const lng = Math.round(pos.coords.longitude * 1000) / 1000;
+        if (nearInput) nearInput.value = `${lat},${lng}`;
+        if (placeInput) placeInput.value = 'Your location';
+        hidePlaces();
+        schedule(0);
+      },
+      () => { if (statusEl) statusEl.textContent = 'Could not get your location'; },
+      { timeout: 10000, maximumAge: 300000 },
+    );
+  });
+
   // Initial view came from the server; make sure a hidden map/calendar initialises.
-  const initial = document.querySelector<HTMLButtonElement>('[role="tab"][aria-selected="true"]')?.dataset.view ?? 'list';
-  if (initial !== 'list') show(initial);
+  if (view !== 'list') show(view);
 </script>
 
 <style>
@@ -335,6 +689,45 @@ const views: { id: 'list' | 'calendar' | 'map'; label: string }[] = [
   .fl-chip:hover { text-decoration: none; border-color: rgb(var(--teal)); color: rgb(var(--teal)); }
   .fl-chip[aria-pressed='true'] { background: rgb(var(--teal)); border-color: rgb(var(--teal)); color: rgb(var(--text-inverse)); }
   .fl-chip[aria-pressed='true']:hover { color: rgb(var(--text-inverse)); }
+
+  /* ---- filter toolbar */
+  .fl-filters { display: flex; flex-direction: column; gap: 0.4rem; margin: 0 0 0.7rem; padding: 0.55rem 0.6rem; border: 1px solid rgb(var(--border)); border-radius: var(--radius); background: rgb(var(--surface-accent)); }
+  .fl-frow { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 0.4rem 0.5rem; }
+  .fl-field { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; margin: 0; padding: 0; border: 0; }
+  .fl-field.grow { flex: 1 1 11rem; }
+  .fl-lbl { font-size: 0.66rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: rgb(var(--text-3)); padding: 0; }
+  .fl-filters input[type='search'], .fl-filters input[type='text'], .fl-filters select { width: 100%; padding: 0.3rem 0.45rem; border: 1px solid rgb(var(--border-2)); border-radius: var(--radius-sm); background: rgb(var(--bg)); color: rgb(var(--text)); font: inherit; font-size: 0.82rem; }
+  .fl-filters select { padding-right: 1.2rem; }
+  .fl-seg-row { display: inline-flex; align-self: flex-start; border: 1px solid rgb(var(--border-2)); border-radius: 999px; overflow: hidden; background: rgb(var(--bg)); }
+  .fl-seg-opt { display: inline-flex; align-items: center; padding: 0.3rem 0.6rem; font-size: 0.78rem; font-weight: 600; color: rgb(var(--text-2)); cursor: pointer; }
+  .fl-seg-opt input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+  .fl-seg-opt:has(input:checked) { background: rgb(var(--teal)); color: rgb(var(--text-inverse)); }
+  .fl-seg-opt:has(input:focus-visible) { outline: 2px solid rgb(var(--teal)); outline-offset: 1px; }
+  .fl-near { position: relative; }
+  .fl-near-row { display: flex; gap: 0.3rem; align-items: stretch; }
+  .fl-icon-btn { flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; width: 1.9rem; border: 1px solid rgb(var(--border-2)); border-radius: var(--radius-sm); background: rgb(var(--surface)); color: rgb(var(--teal)); cursor: pointer; }
+  .fl-icon-btn:hover { border-color: rgb(var(--teal)); }
+  .fl-places { position: absolute; z-index: 20; top: 100%; left: 0; right: 0; margin: 0.15rem 0 0; padding: 0.2rem; list-style: none; background: rgb(var(--surface)); border: 1px solid rgb(var(--border-2)); border-radius: var(--radius-sm); box-shadow: var(--shadow-md); max-height: 12rem; overflow-y: auto; }
+  .fl-places li { padding: 0.3rem 0.45rem; border-radius: var(--radius-sm); font-size: 0.8rem; cursor: pointer; }
+  .fl-places li:hover, .fl-places li:focus { background: rgb(var(--teal-50)); }
+  .fl-places b { font-weight: 700; }
+  .fl-places span { color: rgb(var(--text-3)); }
+  .fl-check { cursor: pointer; }
+  /* The chip itself is the control: fills when checked, like the category chips. */
+  .fl-check input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+  .fl-chip:has(input:checked) { background: rgb(var(--teal)); border-color: rgb(var(--teal)); color: rgb(var(--text-inverse)); }
+  .fl-chip.sm { padding: 0.24rem 0.55rem; font-size: 0.75rem; font-weight: 600; }
+  /* Narrow frames scroll the chips sideways; from ~560px they wrap onto two rows
+     so none is hidden behind an invisible scroll edge. */
+  .fl-cats { display: flex; gap: 0.3rem; overflow-x: auto; padding-bottom: 0.15rem; scrollbar-width: thin; }
+  .fl-cats .fl-chip { flex: 0 0 auto; }
+  @media (min-width: 560px) { .fl-cats { flex-wrap: wrap; overflow-x: visible; } }
+  .fl-cats input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+  .fl-apply { padding: 0.32rem 0.8rem; border: 1px solid rgb(var(--teal)); border-radius: 999px; background: rgb(var(--teal)); color: rgb(var(--text-inverse)); font-size: 0.8rem; font-weight: 700; cursor: pointer; }
+  .fl-clear { align-self: center; font-size: 0.78rem; font-weight: 700; color: rgb(var(--text-2)); }
+  .fl-status { margin: 0; font-size: 0.72rem; color: rgb(var(--text-3)); min-height: 0.95rem; }
+  .fl-filters[aria-busy='true'] { opacity: 0.75; }
+
   .fl-day { margin: 0.6rem 0 0; }
   .fl-day-h, :global(.fl-day-h) { font-family: var(--font-head); font-size: 0.85rem; font-weight: 700; color: rgb(var(--teal)); margin: 0 0 0.3rem; padding-bottom: 0.25rem; border-bottom: 1px solid rgb(var(--border)); }
   .fl-rows, :global(.fl-rows) { list-style: none; margin: 0; padding: 0; }
@@ -349,16 +742,21 @@ const views: { id: 'list' | 'calendar' | 'map'; label: string }[] = [
   .fl-with, :global(.fl-with) { color: rgb(var(--text-2)); font-size: 0.82rem; line-height: 1.3; }
   .fl-with a, :global(.fl-with a) { color: rgb(var(--teal)); font-weight: 600; }
   .fl-where, :global(.fl-where) { color: rgb(var(--text-2)); font-size: 0.82rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .fl-pills, :global(.fl-pills) { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem; margin-top: 0.3rem; }
+  .fl-price, :global(.fl-price) { display: inline-flex; padding: 0.16rem 0.5rem; border-radius: 999px; background: rgb(var(--surface-sunken)); color: rgb(var(--text-2)); font-size: 0.72rem; font-weight: 700; line-height: 1.2; }
+  .fl-price.free, :global(.fl-price.free) { background: rgb(var(--teal-50)); color: rgb(var(--teal)); }
   .fl-empty, :global(.fl-empty) { color: rgb(var(--text-2)); padding: 1rem 0; margin: 0; }
   .fl-more, :global(.fl-more) { color: rgb(var(--text-2)); font-size: 0.85rem; margin: 0.8rem 0 0; }
-  .fl-buy, :global(.fl-buy) { align-self: flex-start; display: inline-flex; align-items: center; margin-top: 0.3rem; padding: 0.18rem 0.6rem; border: 1px solid rgb(var(--orange)); border-radius: 999px; font-size: 0.74rem; font-weight: 700; line-height: 1.2; color: rgb(var(--orange)); }
+  .fl-buy, :global(.fl-buy) { display: inline-flex; align-items: center; padding: 0.18rem 0.6rem; border: 1px solid rgb(var(--orange)); border-radius: 999px; font-size: 0.74rem; font-weight: 700; line-height: 1.2; color: rgb(var(--orange)); }
   .fl-buy:hover, :global(.fl-buy:hover) { text-decoration: none; background: rgb(var(--orange)); color: rgb(var(--text-inverse)); }
   .fl-support { margin: 1rem 0 0; padding-top: 0.8rem; border-top: 1px solid rgb(var(--border)); font-size: 0.82rem; color: rgb(var(--text-2)); }
   .fl-support a { color: rgb(var(--orange)); font-weight: 700; }
   code { background: rgb(var(--surface-sunken)); padding: 0 0.3rem; border-radius: 4px; }
-  @media (max-width: 420px) {
+  @media (max-width: 460px) {
     .fl-row, :global(.fl-row) { grid-template-columns: 3.6rem 40px minmax(0, 1fr); }
     .fl-thumb, :global(.fl-thumb) { width: 40px; height: 54px; }
+    .fl-field.grow { flex-basis: 100%; }
+    .fl-frow > .fl-field:not(.grow) { flex: 1 1 8rem; }
   }
 
   .fl-cal-nav { display: flex; align-items: center; justify-content: space-between; margin: 0 0 0.5rem; }

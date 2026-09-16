@@ -7,6 +7,10 @@
 // the colo that served it. So this island asks /api/geo (uncached, private)
 // AFTER paint, and only when the visitor has no fl_city cookie yet. It is a
 // fixed-position toast, so showing it shifts nothing on the page.
+//
+// Accepting the suggestion writes the cookie through the shared
+// `lib/cityCookie.ts::setCityCookie` — the same single writer CityPicker uses, so
+// the value can never drift between the two islands.
 import type { City } from '@findlocal/shared';
 import Icon from './Icon.astro';
 interface Props {
@@ -23,6 +27,8 @@ const { city } = Astro.props;
 </aside>
 
 <script>
+  import { hasCityCookie, setCityCookie } from '../lib/cityCookie.js';
+
   const KEY = 'fl_geo_hint_dismissed';
   const el = document.querySelector<HTMLElement>('[data-geo-hint]');
 
@@ -40,8 +46,6 @@ const { city } = Astro.props;
       /* private mode: the hint simply comes back next visit */
     }
   }
-  const hasCityCookie = () => /(?:^|;\s*)fl_city=/.test(document.cookie);
-
   async function suggest(root: HTMLElement) {
     const res = await fetch('/api/geo', { headers: { accept: 'application/json' } });
     if (!res.ok) return;
@@ -52,9 +56,9 @@ const { city } = Astro.props;
     if (name) name.textContent = city.name;
     for (const a of root.querySelectorAll<HTMLAnchorElement>('[data-geo-link], [data-geo-switch]')) {
       a.href = `/city/${city.slug}`;
-      // Mirrors CityPicker's cookie so the choice sticks on "/" too.
+      // Same writer CityPicker uses, so the choice sticks on "/" too.
       a.addEventListener('click', () => {
-        document.cookie = `fl_city=${encodeURIComponent(city.name)}; Path=/; Max-Age=31536000; SameSite=Lax`;
+        setCityCookie(city.name);
         remember();
       });
     }

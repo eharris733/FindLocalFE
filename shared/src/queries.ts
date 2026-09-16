@@ -160,12 +160,17 @@ const SERIES_CTE_VENUE = `
 const SERIES_JOIN = `LEFT JOIN series sr ON sr.venue_id = e.venue_id
   AND sr.norm_title = lower(trim(e.title)) AND sr.event_date = e.event_date`;
 
+// The trailing five venue columns and the last three author columns are
+// provenance (migration 0013 / 0010): where an image or description came from and
+// the credit line its license requires. All nullable and sparse — the UI reads
+// them through web/src/lib/enrichment.ts, which renders nothing when absent.
 const VENUE_COLS = `
   v.id, v.name, v.city, v.region, v.url, v.address, v.description, v.image, v.type,
-  v.venue_size, v.categories, v.latitude, v.longitude, v.is_active`;
+  v.venue_size, v.categories, v.latitude, v.longitude, v.is_active,
+  v.wikidata_id, v.wikipedia_url, v.image_attribution, v.image_source, v.description_source`;
 
 const BOOK_COLS = `id, title, subtitle, isbn13, isbn10, cover_url, description, publisher, pub_year, author_ids`;
-const AUTHOR_COLS = `id, canonical_name, photo_url, openlibrary_id`;
+const AUTHOR_COLS = `id, canonical_name, photo_url, openlibrary_id, bio, wikipedia_url, photo_attribution`;
 
 /** A books.id that is itself an ISBN-13 (Bookmanager rows store the ISBN as the id, isbn13 NULL). */
 const ISBN_ID_SQL = `(length(b.id) = 13 AND b.id NOT GLOB '*[^0-9]*')`;

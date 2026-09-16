@@ -7,7 +7,10 @@ const book = (o: Partial<BookRow>): BookRow => ({
   id: 'x', title: 'T', subtitle: null, isbn13: null, isbn10: null,
   cover_url: null, description: null, publisher: null, pub_year: null, author_ids: [], ...o,
 });
-const author = (o: Partial<AuthorRow>): AuthorRow => ({ id: 'a', canonical_name: 'A', photo_url: null, openlibrary_id: null, ...o });
+const author = (o: Partial<AuthorRow>): AuthorRow => ({
+  id: 'a', canonical_name: 'A', photo_url: null, openlibrary_id: null,
+  bio: null, wikipedia_url: null, photo_attribution: null, ...o,
+});
 const event = (o: Partial<EventRow>): EventRow => ({
   id: 'e', venue_id: 'v', city: 'Boston', region: null, source: 's', external_id: null, title: 'Ev', description: null,
   event_date: '2026-10-01', start_time: null, end_time: null, category: 'literary', event_type: [], performers: [],

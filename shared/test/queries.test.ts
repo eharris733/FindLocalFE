@@ -1,11 +1,11 @@
 import { env } from 'cloudflare:test';
 import { beforeAll, describe, expect, it } from 'vitest';
 import {
-  categoryCounts, countUpcomingEvents, countUpcomingEventsByCity, countUpcomingEventsForCities, countUpcomingEventsForVenue, getCity, getEvent, getEventsByIds, getVenue, listRegions,
+  authorsByIds, categoryCounts, countUpcomingEvents, countUpcomingEventsByCity, countUpcomingEventsForCities, countUpcomingEventsForVenue, getCity, getEvent, getEventsByIds, getVenue, listRegions,
   listSeriesDates, listSitemapEvents, listSitemapVenues, listUpcomingEvents, listUpcomingEventsForCities, listUpcomingEventsForVenue,
   listVenues, listVenueTypes, parseFilters, searchVenuesByName, type EventFilters,
 } from '../src/index.js';
-import { D, EVENTS, eid, seed, TODAY, V } from './seed.js';
+import { AUTHOR_ID, AUTHOR_TWO, D, EVENTS, eid, seed, TODAY, V } from './seed.js';
 
 const BOS = getCity('Boston')!;
 const db = env.DB;
@@ -252,6 +252,32 @@ describe('venues', () => {
     // offset paging + city lookup when the caller doesn't pass it.
     const page2 = await listUpcomingEventsForVenue(db, V.brighton, 2, { offset: 2 });
     expect(page2.map((r) => r.id)).toEqual(brighton.slice(2, 4).map((r) => r.id));
+  });
+  it('VENUE_COLS carries the migration-0013 provenance columns through every venue read', async () => {
+    const enriched = {
+      wikidata_id: 'Q1140027',
+      wikipedia_url: 'https://en.wikipedia.org/wiki/The_Sinclair',
+      image_attribution: 'Photo by A. Shooter, CC BY-SA 4.0',
+      image_source: 'wikimedia',
+      description_source: 'wikipedia',
+    };
+    expect(await getVenue(db, V.sinclair)).toMatchObject(enriched);
+    expect((await listVenues(db, { city: 'Boston' })).find((v) => v.id === V.sinclair)).toMatchObject(enriched);
+    expect((await searchVenuesByName(db, 'sinclair'))[0]).toMatchObject(enriched);
+    // Sparse by design: an unmatched venue returns nulls, not undefined, so the
+    // enrichment accessors see the column and render nothing.
+    expect(await getVenue(db, V.paradise)).toMatchObject({
+      wikidata_id: null, wikipedia_url: null, image_attribution: null, image_source: null, description_source: null,
+    });
+  });
+  it('AUTHOR_COLS carries bio / wikipedia_url / photo_attribution (migrations 0010, 0013)', async () => {
+    const byId = new Map((await authorsByIds(db, [AUTHOR_ID, AUTHOR_TWO])).map((a) => [a.id, a]));
+    expect(byId.get(AUTHOR_ID)).toMatchObject({
+      bio: 'Ada Debut is a novelist from Portland.',
+      wikipedia_url: 'https://en.wikipedia.org/wiki/Ada_Debut',
+      photo_attribution: 'Portrait by B. Snapper, CC BY 3.0',
+    });
+    expect(byId.get(AUTHOR_TWO)).toMatchObject({ bio: null, wikipedia_url: null, photo_attribution: null });
   });
 });
 

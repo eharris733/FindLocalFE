@@ -8,6 +8,10 @@ import { CATEGORY_SLUGS } from '@findlocal/shared';
 import { CATEGORY_ART_SLUGS, FALLBACK_ART_SLUG, categoryArtSlug, categoryArtUrl } from '../src/lib/categoryArt.js';
 
 const raw = import.meta.glob('../public/art/*.svg', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
+/** Every file in the directory — anything here is served at /art/<name>. */
+const dirFiles = Object.keys(import.meta.glob('../public/art/*', { query: '?raw', import: 'default', eager: true }))
+  .map((p) => p.slice(p.lastIndexOf('/') + 1))
+  .sort();
 
 const ART: Map<string, string> = new Map(
   Object.entries(raw).map(([path, src]) => [path.slice(path.lastIndexOf('/') + 1, -'.svg'.length), src]),
@@ -49,6 +53,12 @@ describe('category art files', () => {
     expect(missing).toEqual([]);
     expect(ART.has(FALLBACK_ART_SLUG)).toBe(true);
     expect([...ART.keys()].sort()).toEqual([...CATEGORY_ART_SLUGS].sort());
+  });
+
+  it('ships nothing else servable from /art/ (the contact sheet lives at web/art-sheet.html)', () => {
+    // Everything under public/ is served by Workers assets, so a stray HTML page
+    // here would be a live, indexable URL. README.md is the one allowed extra.
+    expect(dirFiles.filter((f) => !f.endsWith('.svg'))).toEqual(['README.md']);
   });
 
   it.each([...ART.keys()].sort())('%s.svg is a small, self-contained, well-formed SVG', (slug) => {

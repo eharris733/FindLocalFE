@@ -8,7 +8,10 @@ const book = (o: Partial<BookRow>): BookRow => ({
   id: 'x', title: 'T', subtitle: null, isbn13: null, isbn10: null,
   cover_url: null, description: null, publisher: null, pub_year: null, author_ids: [], ...o,
 });
-const author = (o: Partial<AuthorRow>): AuthorRow => ({ id: 'a', canonical_name: 'A', photo_url: null, openlibrary_id: null, ...o });
+const author = (o: Partial<AuthorRow>): AuthorRow => ({
+  id: 'a', canonical_name: 'A', photo_url: null, openlibrary_id: null,
+  bio: null, wikipedia_url: null, photo_attribution: null, ...o,
+});
 const event = (o: Partial<EventRow>): EventRow => ({
   id: 'e', venue_id: 'v', city: 'Boston', region: null, source: 's', external_id: null, title: 'Ev', description: null,
   event_date: '2026-10-01', start_time: null, end_time: null, category: 'music', event_type: [], performers: [],
@@ -80,9 +83,10 @@ describe('literaryImage', () => {
   });
 
   it('shows the author photo credit when the gazetteer row has one', () => {
-    // photo_attribution is a real D1 column (migration 0013) that AuthorRow does not
-    // declare yet — the accessor must read it anyway.
-    const credited: AuthorRow[] = [Object.assign(author({ canonical_name: 'Ann', photo_url: PHOTO }), { photo_attribution: 'Wikimedia Commons / CC BY 2.0' })];
+    // photo_attribution is a real D1 column (migration 0013), now declared on
+    // AuthorRow and selected by AUTHOR_COLS — but sparse, so the accessor must
+    // still cope with a row that has none (second assertion).
+    const credited: AuthorRow[] = [author({ canonical_name: 'Ann', photo_url: PHOTO, photo_attribution: 'Wikimedia Commons / CC BY 2.0' })];
     expect(literaryImage(event({}), [], credited).attribution).toBe('Wikimedia Commons / CC BY 2.0');
     expect(literaryImage(event({}), [], authors).attribution).toBeNull();
   });

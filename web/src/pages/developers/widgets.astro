@@ -15,6 +15,10 @@ const attrs: [string, string, string][] = [
   ['data-cat', 'Comma list of category slugs', 'Leave out for all categories. literary also includes everything at bookstores, libraries and literary organizations.'],
   ['data-authors', '1', 'Only events with a known author on the bill (name matched to our author index) — an author-event calendar. Book clubs and storytimes drop out; visitors can toggle it in the widget.'],
   ['data-when', 'anytime · today · tomorrow · weekend · week · YYYY-MM-DD', 'Date window, resolved in the local time zone. Default anytime (everything upcoming).'],
+  ['data-filters', 'on · off', 'The in-widget filter toolbar (search, dates, price, time of day, categories, "near me"). On by default; off renders the plain list/calendar/map of earlier versions.'],
+  ['data-near', '<lat>,<lng>', 'Open on a proximity search around a point — e.g. your shop. It replaces the region/city scope (we query the nearest metro) and orders events by distance.'],
+  ['data-radius', 'km (5 · 10 · 25 · 50 … max 200)', 'Radius for data-near. Default 25 km. Visitors can change it in the toolbar.'],
+  ['data-free', '1', 'Free events only. Visitors can switch back to Any or Paid unless you also set data-filters="off".'],
   ['data-view', 'list · calendar · map', 'Initial view; visitors can switch. Default list.'],
   ['data-theme', 'auto · light · dark', 'auto follows the visitor\'s OS setting. Default auto.'],
   ['data-limit', `1–${EMBED_MAX_LIMIT}`, `Maximum events loaded. Default ${EMBED_DEFAULT_LIMIT}. Past the limit the widget links to FindLocal for the rest.`],
@@ -48,6 +52,14 @@ const attrs: [string, string, string][] = [
         <select name="when"><option value="">Everything upcoming</option><option value="week">Next 7 days</option><option value="weekend">This weekend</option><option value="today">Today</option></select>
       </label>
       <label class="check"><input type="checkbox" name="authors" value="1" /> Author events only</label>
+      <label class="check"><input type="checkbox" name="free" value="1" /> Free events only</label>
+      <label class="check"><input type="checkbox" name="nofilters" value="1" /> Hide the filter toolbar</label>
+      <label>Near <span class="faint">(optional)</span>
+        <input type="text" name="near" maxlength="40" placeholder="42.3601,-71.0589" />
+      </label>
+      <label>Radius
+        <select name="radius"><option value="">25 km</option><option value="5">5 km</option><option value="10">10 km</option><option value="50">50 km</option></select>
+      </label>
       <label>Initial view
         <select name="view"><option value="">List</option><option value="calendar">Calendar</option><option value="map">Map</option></select>
       </label>
@@ -84,13 +96,22 @@ const attrs: [string, string, string][] = [
     </div>
     <p>Want another group (Bay Area, Texas Triangle, the Carolinas)? <a href="mailto:findlocalinternal@gmail.com">Ask</a> — it's a one-line change on our side.</p>
 
+    <h2 id="filters">Filtering inside the widget</h2>
+    <p>Every widget ships with a compact toolbar under the tabs: free-text search, a date window (today, this weekend, this week, this month, anytime), price (any / free / paid), time of day, category chips, an "Authors only" toggle on literary widgets, and <strong>Near</strong> — a zip code, city or address box plus a radius, with a "Use my location" button. Filtering re-renders inside the frame (it fetches <code>/api/embed/events</code> and repaints the list, calendar and map), so <strong>your page never reloads and never scrolls</strong>, and the frame re-reports its height as the list grows or shrinks.</p>
+    <ul>
+      <li>Whatever the visitor picks is written into the frame's own URL, so you can grab a filtered widget's query (for example <code>?city=boston&amp;when=weekend&amp;free=1</code>) and ship it as the starting state via the matching <code>data-*</code> attributes.</li>
+      <li>Your <code>data-cat</code> is a <em>pin</em>: with a category set the chips disappear and visitors stay inside it. Everything else stays adjustable unless you set <code>data-filters="off"</code>.</li>
+      <li><strong>Near</strong> replaces the region/city scope: we resolve the point to the nearest metro we cover and order the list by distance. Geocoding uses the community Photon/Nominatim services; "Use my location" needs the visitor's permission and never leaves their browser except as a rounded coordinate pair (~100 m).</li>
+      <li>With no JavaScript the toolbar is a plain GET form — it still works, it just reloads the frame.</li>
+    </ul>
+
     <h2 id="how">How it works</h2>
     <ul>
       <li><code>widget.js</code> (about 2 KB, no dependencies) inserts an <code>&lt;iframe&gt;</code> pointing at <code>https://findlocal.community/embed/events?…</code> right after the script tag, so styles never leak in either direction.</li>
       <li>The frame reports its height with <code>postMessage</code> (<code>{'{ type: "findlocal:resize", height }'}</code>); the loader only trusts messages from its own frame and origin. Several widgets on one page work independently.</li>
       <li>The embed page is server-rendered from the same database as the site and cached for 10 minutes at the edge. Listings update as venues are re-scraped, typically daily.</li>
       <li>Links open in a new tab and carry <code>utm_source=widget</code>, <code>utm_medium=embed</code>, <code>utm_campaign=&lt;scope&gt;</code> and, if you set <code>data-partner</code>, <code>utm_content=&lt;partner&gt;</code>. Because links open from inside the frame, the referrer FindLocal sees is its own domain — the UTM parameters are how we tell partners apart.</li>
-      <li>No cookies, no tracking scripts, no visitor data leaves the page. The frame requests <code>geolocation 'none'</code>.</li>
+      <li>No cookies, no tracking scripts, no visitor data leaves the page. The frame is granted <code>geolocation</code> only so the toolbar's "Use my location" button can work (the browser still asks the visitor); with <code>data-filters="off"</code> it requests <code>geolocation 'none'</code> as before.</li>
       <li>Content Security Policy: the embed pages send <code>frame-ancestors *</code>; nothing else on findlocal.community is framable.</li>
     </ul>
 
@@ -121,10 +142,11 @@ const attrs: [string, string, string][] = [
     const a: EmbedAttrs = {};
     if (scope.startsWith('region:')) a.region = scope.slice(7);
     else if (scope.startsWith('city:')) a.city = scope.slice(5);
-    for (const k of ['cat', 'when', 'view', 'theme', 'limit', 'partner', 'authors'] as const) {
+    for (const k of ['cat', 'when', 'view', 'theme', 'limit', 'partner', 'authors', 'free', 'near', 'radius'] as const) {
       const v = String(fd.get(k) ?? '').trim();
       if (v) a[k] = v;
     }
+    if (fd.get('nofilters') === '1') a.filters = 'off';
     // Collapse to the preset when it matches exactly.
     if (a.region === 'new-england' && a.cat === 'literary') {
       delete a.region; delete a.cat;
@@ -135,7 +157,7 @@ const attrs: [string, string, string][] = [
   }
 
   function snippet(a: EmbedAttrs): string {
-    const order: (keyof EmbedAttrs)[] = ['widget', 'region', 'city', 'cat', 'authors', 'when', 'view', 'theme', 'limit', 'partner'];
+    const order: (keyof EmbedAttrs)[] = ['widget', 'region', 'city', 'cat', 'authors', 'when', 'free', 'near', 'radius', 'filters', 'view', 'theme', 'limit', 'partner'];
     const parts = order.filter((k) => a[k]).map((k) => ` data-${k}="${String(a[k]).replace(/"/g, '&quot;')}"`).join('');
     return `<script src="https://findlocal.community/widget.js"${parts}><\/script>`;
   }
@@ -149,6 +171,7 @@ const attrs: [string, string, string][] = [
       iframe = document.createElement('iframe');
       iframe.title = 'FindLocal events widget preview';
       iframe.setAttribute('scrolling', 'no');
+      iframe.setAttribute('allow', 'geolocation');
       iframe.style.cssText = 'width:100%;border:0;display:block;min-height:320px;height:320px;';
       preview.replaceChildren(iframe);
     }
