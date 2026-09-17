@@ -64,6 +64,32 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
   context.locals.city = city;
 
+  // TEMP diagnostics — identify the empty-user-agent client on Cloudflare's
+  // network (ASN 13335) that drives ~40% of requests and nearly all /city 504s.
+  // Logs IP/ASN/org/colo/referer for a sample of UA-less requests. Tail live
+  // with `wrangler tail --format pretty | grep empty-ua`, or query Workers Logs.
+  // Sampled at 10% because UA-less traffic is high-volume. REMOVE once the
+  // source is known (then decide: allow, block, or rate-limit it).
+  const ua = request.headers.get('user-agent');
+  if (!ua && Math.random() < 0.1) {
+    const cf = (request as unknown as {
+      cf?: { asn?: number; asOrganization?: string; colo?: string; country?: string };
+    }).cf;
+    console.log(
+      'empty-ua ' +
+        JSON.stringify({
+          method: request.method,
+          path: url.pathname,
+          ip: request.headers.get('cf-connecting-ip'),
+          asn: cf?.asn,
+          org: cf?.asOrganization,
+          colo: cf?.colo,
+          country: cf?.country ?? request.headers.get('cf-ipcountry'),
+          referer: request.headers.get('referer'),
+        }),
+    );
+  }
+
   const policy = cachePolicyFor(url.pathname);
   // `s-maxage` alone does not populate Cloudflare's cache for Worker responses —
   // the Worker stores and looks the response up itself via the Cache API.
