@@ -3,7 +3,8 @@
 // honours `s-maxage` from the header it stores; browsers only see `max-age`.
 //
 //   / (platform landing) 3600 s edge            (catalogue aggregates, per city)
-//   city pages / venues 600 s edge, SWR 1 day   (listings change with each scrape)
+//   city pages          1800 s edge, SWR 1 day  (listings change once daily per scrape)
+//   venues              600 s edge, SWR 1 day
 //   event / venue       3600 s edge
 //   sitemap(s)          86400 s edge
 //   /api/*              300 s edge
@@ -32,7 +33,10 @@ export function cachePolicyFor(pathname: string): CachePolicy {
   // widget and coverage highlight follow the fl_city cookie).
   if (pathname === '/') return { edge: 3600, browser: 0, perCity: true };
   if (pathname === '/venues') return { edge: 600, browser: 0, perCity: true };
-  if (pathname.startsWith('/city/')) return { edge: 600, browser: 300, perCity: false };
+  // Listings only change once a day (the nightly scrape), so a 30-minute edge
+  // TTL is safe and, with Smart Tiered Cache, sharply cuts the cold-per-colo
+  // MISS → D1 reads that were timing out (504) under fan-out crawler load.
+  if (pathname.startsWith('/city/')) return { edge: 1800, browser: 300, perCity: false };
   if (pathname.startsWith('/event/') || pathname.startsWith('/venue/')) return { edge: 3600, browser: 300, perCity: false };
   if (pathname === '/sitemap.xml' || pathname.startsWith('/sitemaps/')) return { edge: 86400, browser: 3600, perCity: false };
   if (pathname.startsWith('/api/')) return { edge: 300, browser: 60, perCity: false };
