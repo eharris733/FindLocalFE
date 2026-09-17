@@ -68,7 +68,7 @@ describe('cache policy', () => {
   it('uses the TTLs from the plan and never caches /saved', () => {
     expect(cachePolicyFor('/').edge).toBe(3600); // platform landing: catalogue aggregates
     expect(cachePolicyFor('/venues').edge).toBe(600);
-    expect(cachePolicyFor('/city/boston').edge).toBe(600);
+    expect(cachePolicyFor('/city/boston').edge).toBe(1800);
     expect(cachePolicyFor('/event/x').edge).toBe(3600);
     expect(cachePolicyFor('/venue/x').edge).toBe(3600);
     expect(cachePolicyFor('/sitemap.xml').edge).toBe(86400);

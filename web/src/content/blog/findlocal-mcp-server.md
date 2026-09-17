@@ -1,10 +1,12 @@
 ---
 title: How to Connect FindLocal to Claude, Cursor, and Other AI Assistants (MCP)
-description: Add the FindLocal MCP server to Claude.ai, Claude Code, Cursor, or any MCP client and ask plain-English questions about live local events in 47 US cities. Setup steps, the account key, and every tool explained.
+description: Add the FindLocal MCP server to Claude.ai, Claude Code, Cursor, or any MCP client and ask plain-English questions about live local events in 47 US cities. Setup steps, the API key, and every tool explained.
 date: 2026-09-04
 ---
 
 > **Reference:** the up-to-date endpoint, parameter and field tables now live at [/developers/mcp](/developers/mcp). This post is the walkthrough.
+
+> **Update:** there are no shared demo keys anymore. Authorize with your own API key from [/developers/pricing](/developers/pricing) — the same key works for the MCP server and the JSON API, and there's a free tier.
 
 Find Local runs a remote [MCP](https://modelcontextprotocol.io) server. MCP (Model Context Protocol) is the open standard AI assistants use to call outside tools, so once it's connected you can ask Claude or Cursor things like "what's free in Brooklyn this weekend?" or "any jazz near Cambridge tonight?" and it will answer from the same curated venue calendars the website uses, with links back to each event.
 
@@ -57,12 +59,12 @@ npx @modelcontextprotocol/inspector
 # transport: Streamable HTTP, URL: https://mcp.findlocal.community/mcp
 ```
 
-## 2. Authorize with an account key
+## 2. Authorize with your API key
 
-When your client connects, FindLocal shows a one-field consent page asking for an **account key**. Usage is metered per key so we can keep the service healthy.
+When your client connects, FindLocal shows a one-field consent page asking for your **API key**. Usage is metered per key so we can keep the service healthy.
 
-- To try it out, enter **`demo-free`**. It's a shared demo account with **100 tool calls per month**.
-- For your own key with a higher quota, email **findlocalinternal@gmail.com** with a sentence about what you're building. There's no self-serve signup yet.
+- Get a key at [/developers/pricing](/developers/pricing). The **Free** plan covers 1,000 calls a month; **Pro** ($49/mo, 50,000 calls) and **Scale** ($249/mo, 500,000 calls) add more. We email you the key.
+- The same key works for both the MCP server and the [JSON API](/blog/findlocal-events-api).
 
 Once authorized you won't be asked again for that client. You can check where you stand any time by asking the assistant to run `get_usage`, which reports the account's calls used and remaining for the current month. When a quota is exhausted, tool calls return a clear "monthly quota reached" message rather than partial data.
 
@@ -123,8 +125,8 @@ Fields that are empty for an event are simply omitted. `date` is the venue's loc
 
 - **Freshness.** Venue calendars are re-scraped regularly, typically daily, so results reflect what venues currently list. The `when` buckets are resolved in each city's time zone.
 - **Coverage.** 47 US metros, thousands of venues, with an emphasis on the small and mid-size venues that never make it onto ticketing aggregators. A missing venue is a gap in our crawl, not a sign the event doesn't exist — tell us at findlocalinternal@gmail.com.
-- **Privacy.** The server only ever reads event and venue data. It stores the account key you authorize with and a per-month call counter, nothing about your conversations.
-- **Rate limits.** Quotas are monthly per account key. If `demo-free` is exhausted when you try it, that's other people trying it too — request your own key.
+- **Privacy.** The server only ever reads event and venue data. It stores the API key you authorize with and a per-month call counter, nothing about your conversations.
+- **Rate limits.** Quotas are monthly per API key. When you hit your monthly quota, tool calls return a clear "monthly quota reached" message rather than partial data; upgrade at [/developers/pricing](/developers/pricing).
 
 ## What's next
 

@@ -53,11 +53,18 @@ const venueFields: [string, string][] = [
   ['upcoming', 'Count of upcoming non-deleted events'],
 ];
 ---
-<Layout title="JSON API reference" description="Reference for FindLocal's free events JSON API: /api/events, /api/events/<id>, /api/venues. Filters, response shapes, field definitions, caching and examples." canonicalPath="/developers/api">
+<Layout title="JSON API reference" description="Reference for FindLocal's events JSON API: /api/events, /api/events/<id>, /api/venues. API keys, filters, response shapes, field definitions, caching and examples." canonicalPath="/developers/api">
   <div class="docs">
     <DocsNav current="/developers/api" title="JSON API" />
     <h1>JSON API</h1>
-    <p class="lede">Every listing page on FindLocal has a JSON twin. No key, no signup, CORS open, <code>GET</code> only. Base URL <code>{BASE}</code>.</p>
+    <p class="lede">Every listing page on FindLocal has a JSON twin. <code>GET</code> only, CORS open — but the data endpoints now need an API key, sent as <code>Authorization: Bearer &lt;key&gt;</code>. <a href="/developers/pricing">Get a key</a> (there's a free tier). Base URL <code>{BASE}</code>.</p>
+
+    <h2 id="auth">Authentication</h2>
+    <p><code>/api/events</code>, <code>/api/events/&lt;uuid&gt;</code> and <code>/api/venues</code> require an API key. Send it as a bearer token (the <code>x-api-key</code> header works too):</p>
+    <div class="copy-wrap"><button type="button" class="copy-btn" data-copy-target="#ex-auth">Copy</button><pre id="ex-auth"><code>{`curl -H 'Authorization: Bearer <your-key>' \\
+  '${BASE}/api/events?city=boston&cat=music&when=week&limit=5'`}</code></pre></div>
+    <p>Get one at <a href="/developers/pricing">/developers/pricing</a> — <strong>Free</strong> is 1,000 calls/month, <strong>Pro</strong> and <strong>Scale</strong> add more; we email you the key. One key works for both the JSON API and the <a href="/developers/mcp">MCP server</a>. A missing or invalid key returns <code>401</code>; exceeding your rate limit or monthly quota returns <code>429</code> with a <code>Retry-After</code> header.</p>
+    <div class="note"><p><strong>Free and keyless:</strong> the browser-facing, first-party endpoints — the <a href="/developers/widgets">embeddable widgets</a> and their JSON (<code>/api/embed/events</code>), the map endpoint <code>/api/events/map</code>, and <code>/api/geo</code> — need no key.</p></div>
 
     <h2 id="endpoints">Endpoints</h2>
     <div class="table-wrap">
@@ -213,9 +220,9 @@ curl '${BASE}/api/events?city=austin&page=2'   # until data comes back empty`}</
     <h2 id="caching">Caching, status codes, fair use</h2>
     <ul>
       <li><code>Cache-Control: public, max-age=60, s-maxage=300</code> — cached 5 minutes at the edge, 1 minute in the browser. <code>/api/events/map</code> is shorter (<code>max-age=60, s-maxage=120</code>) and <code>/api/geo</code> is <code>private, no-store</code>.</li>
-      <li><code>200</code> with <code>{'{ data }'}</code>; <code>404 {'{ error }'}</code> for an unknown event id; <code>OPTIONS</code> answers <code>204</code> for preflight.</li>
+      <li><code>200</code> with <code>{'{ data }'}</code>; <code>401</code> for a missing or invalid key; <code>429</code> with <code>Retry-After</code> over your rate limit or monthly quota; <code>404 {'{ error }'}</code> for an unknown event id; <code>OPTIONS</code> answers <code>204</code> for preflight.</li>
       <li>Responses carry <code>X-Robots-Tag: noindex</code>; the HTML pages are what should rank.</li>
-      <li>Free and unauthenticated. Cache on your side, keep rates reasonable, link back to the event's FindLocal page or the venue. Volume or guarantees: <a href="mailto:findlocalinternal@gmail.com">findlocalinternal@gmail.com</a>.</li>
+      <li><strong>An API key is required</strong> on <code>/api/events</code>, <code>/api/events/&lt;id&gt;</code> and <code>/api/venues</code>. Plans: <strong>Free</strong> (1,000 calls/mo), <strong>Pro</strong> ($49/mo, 50,000), <strong>Scale</strong> ($249/mo, 500,000) — one key spans the JSON API and MCP; details and signup at <a href="/developers/pricing">/developers/pricing</a>. The widgets, <code>/api/events/map</code>, <code>/api/embed/events</code> and <code>/api/geo</code> stay free and keyless. Cache on your side, keep rates reasonable, and link back to the event's FindLocal page or the venue.</li>
       <li>Every listing page advertises its JSON twin with <code>&lt;link rel="alternate" type="application/json"&gt;</code>.</li>
     </ul>
     <p>Walkthrough with more examples: <a href="/blog/findlocal-events-api">How to use the FindLocal Events API</a>.</p>

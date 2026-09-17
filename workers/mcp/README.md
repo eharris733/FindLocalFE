@@ -32,11 +32,14 @@ npx wrangler secret put COOKIE_ENCRYPTION_KEY --config workers/mcp/wrangler.toml
 Point the local worker at real data with `wrangler dev --remote` (uses the
 production D1 binding) or seed the local D1 via the data-api migrations.
 
-Seed demo customers in `USAGE_KV` (`customer:<key>` records; add `--remote` for prod):
+Authorization + metering run through **Unkey** (the same key system as the REST
+API). Set the root key and create keys in the Unkey dashboard (or API); the
+customer pastes their key at the consent screen. For local dev, put a real key in
+`.dev.vars`:
 
 ```bash
-npx wrangler kv key put --binding USAGE_KV --remote "customer:demo-pro" \
-  '{"plan":"pro","monthly_quota":10000,"active":true}' --config workers/mcp/wrangler.toml
+wrangler secret put UNKEY_ROOT_KEY --config workers/mcp/wrangler.toml   # prod
+# .dev.vars: UNKEY_ROOT_KEY="unkey_..."   (local)
 ```
 
 Test with the MCP Inspector (`npx @modelcontextprotocol/inspector`, Streamable HTTP)
@@ -49,8 +52,9 @@ Claude.ai / Claude Code ──OAuth──▶ workers-oauth-provider ──▶ Fi
                                           │                        │  tools → @findlocal/shared queries
                                           ▼                        ▼
                                     OAUTH_KV (grants)        D1 `findlocal` (read-only by discipline)
-                                                                   │
-                                                             USAGE_KV (per-customer metering)
+                                          │
+                                          ▼
+                                    Unkey (verify + meter every tool call, cost: 1)
 ```
 
 | File | Role |
@@ -58,8 +62,8 @@ Claude.ai / Claude Code ──OAuth──▶ workers-oauth-provider ──▶ Fi
 | `src/index.ts` | Entry — `OAuthProvider` wrapping the MCP agent (`/mcp`, `/sse`). |
 | `src/mcp.ts` | `FindLocalMCP extends McpAgent` — tool registration + the metering gate; maps tool params to `EventFilters`. |
 | `src/shape.ts` | Response shapes (`shapeEvent` / `shapeVenue`), kept compatible with the Supabase-era output (+`category`, −`location`/`cover_image`). |
-| `src/auth.ts` | OAuth consent screen; completes the grant with `{ customerId, plan }` props. |
-| `src/metering.ts` | KV quota check + usage increment. |
+| `src/auth.ts` | OAuth consent screen; verifies the pasted key with Unkey, completes the grant with `{ customerId, plan, key }` props. |
+| `src/metering.ts` | Unkey verify+meter (`cost: 1`) per tool call; `get_usage` reads remaining. |
 | `src/types.ts` | `Env` bindings + customer types. |
 
 ## Gotchas

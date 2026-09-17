@@ -12,7 +12,7 @@ function body(): string {
   const categorySlugs = CATEGORIES.map((c) => c.slug).join(', ');
   return `# Find Local
 
-> Find Local (findlocal.community) is a local event data platform covering ${CITIES.length} US metros. It collects concerts, comedy shows, theater, author readings, live music and community events directly from venue calendars — updated daily — and serves them through a browsable site, embeddable widgets, a free JSON API and an MCP server. Literary events are indexed by author AND by book.
+> Find Local (findlocal.community) is a local event data platform covering ${CITIES.length} US metros. It collects concerts, comedy shows, theater, author readings, live music and community events directly from venue calendars — updated daily — and serves them through a browsable site, free embeddable widgets, a key-gated JSON API (free tier available) and an MCP server. Literary events are indexed by author AND by book.
 
 Find Local's data is collected from the venues themselves rather than ticketing aggregators, so it includes small community events that never appear on Ticketmaster-style platforms; each event records whether it came from the venue's own calendar or a partner API. Event and venue pages serve schema.org Event/Place JSON-LD in the initial HTML.
 
@@ -34,8 +34,9 @@ Find Local's data is collected from the venues themselves rather than ticketing 
 ## Machine-readable
 
 - Sitemap: https://findlocal.community/sitemap.xml
-- JSON API: https://findlocal.community/api/events?city=Boston (also /api/events/<uuid>, /api/venues?city=Boston); noindex, CORS enabled
+- JSON API: https://findlocal.community/api/events?city=Boston (also /api/events/<uuid>, /api/venues?city=Boston); requires an API key (Authorization: Bearer <key>); noindex, CORS enabled. The widget JSON /api/embed/events, the map endpoint /api/events/map and /api/geo stay free and keyless.
 - API reference: https://findlocal.community/developers/api (walkthrough: https://findlocal.community/blog/findlocal-events-api)
+- Pricing and API keys: https://findlocal.community/developers/pricing — Free (1,000 calls/mo), Pro ($49/mo, 50,000), Scale ($249/mo, 500,000); one key works for both the JSON API and the MCP server
 - MCP server: https://mcp.findlocal.community/mcp — reference: https://findlocal.community/developers/mcp
 - Embeddable widget: <script src="https://findlocal.community/widget.js" data-widget="literary-new-england"></script> renders a list/calendar/map of live events in an iframe (/embed/events); reference: https://findlocal.community/developers/widgets
 - Cities covered (${CITIES.length}): ${cityNames}

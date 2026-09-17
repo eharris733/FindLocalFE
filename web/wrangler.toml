@@ -26,6 +26,31 @@ database_id = "70f5c88b-958d-46be-ba63-cfc695f1d496"
 binding = "SESSION"
 id = "8a6974fc5a1e4384afb7f2eb8d03209f"
 
+# --- Unkey gates the developer JSON API (/api/events, /api/events/<id>,
+# /api/venues). Stripe (billing) + Cloudflare Email Service (key delivery) drive
+# self-serve signup via /api/billing/webhook. Non-secret ids live here; the
+# payment links / portal url can be filled once the Stripe resources exist.
+[vars]
+# these are all sandbox stripe links and ids and urls
+UNKEY_API_ID = "api_sKkx5UuCVQQN"
+STRIPE_PRICE_FREE = "price_1UGmzCA9vCgeC5eiOt3w3Xvd"
+STRIPE_PRICE_PRO = "price_1UGlLFA9vCgeC5eiqiZioegu"
+STRIPE_PRICE_SCALE = "price_1UGlNEA9vCgeC5eiqe03A9XO"
+STRIPE_PAYMENT_LINK_FREE = "https://buy.stripe.com/test_fZu5kC2Ba6TodBZ1XL3Ru02"
+STRIPE_PAYMENT_LINK_PRO = "https://buy.stripe.com/test_6oU9ASb7G5Pk55t31P3Ru00"
+STRIPE_PAYMENT_LINK_SCALE = "https://buy.stripe.com/test_aFaaEW0t2dhM69x7i53Ru01"
+STRIPE_PORTAL_URL = "https://billing.stripe.com/p/login/test_6oU9ASb7G5Pk55t31P3Ru00"
+
+# Cloudflare Email Service — delivers the API key after checkout. Onboard the
+# sending domain first: `npx wrangler email sending enable findlocal.community`.
+[[send_email]]
+name = "EMAIL"
+
+# Secrets (set with `wrangler secret put <NAME>`; never commit):
+#   UNKEY_ROOT_KEY          verifies + mints API keys
+#   STRIPE_SECRET_KEY       writes the Unkey key id back to the subscription
+#   STRIPE_WEBHOOK_SECRET   verifies inbound Stripe webhook signatures
+
 [observability]
 [observability.logs]
 enabled = true

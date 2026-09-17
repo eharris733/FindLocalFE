@@ -56,12 +56,8 @@ export class FindLocalMCP extends McpAgent<Env, unknown, CustomerProps> {
     version: "2.0.0",
   });
 
-  private get customerId(): string | undefined {
-    return this.props?.customerId;
-  }
-
   private async gate(): Promise<{ ok: true } | { ok: false; response: ReturnType<typeof errText> }> {
-    const res = await enforceAndMeter(this.env, this.customerId);
+    const res = await enforceAndMeter(this.env, this.props);
     if (res.ok) return { ok: true };
     return { ok: false, response: errText(res.message) };
   }
@@ -224,7 +220,7 @@ export class FindLocalMCP extends McpAgent<Env, unknown, CustomerProps> {
       "get_usage",
       "Report this account's current-month API usage and remaining quota.",
       {},
-      async () => jsonText(await readUsage(this.env, this.customerId)),
+      async () => jsonText(await readUsage(this.env, this.props)),
     );
   }
 }

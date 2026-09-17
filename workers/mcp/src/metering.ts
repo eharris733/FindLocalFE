@@ -1,57 +1,44 @@
-// Per-customer usage metering in USAGE_KV — the "sellable, billable API" layer.
-//
-// customer:<id>            → { plan, monthly_quota, active }
-// usage:<id>:<YYYY-MM>     → integer call count (incremented per tool call)
-//
-// The counter is the demo money-shot: `wrangler kv key get "usage:<id>:<month>"`
-// before/after tool calls shows a metered API you can bill against.
-import type { CustomerRecord, Env } from "./types";
+// Per-customer authorization + metering, backed by Unkey (the same key system the
+// REST API uses). Every metered tool call re-verifies the customer's key with
+// `cost: 1`, so Unkey atomically enforces the plan's rate limit / monthly quota and
+// decrements remaining credits — replacing the old non-atomic USAGE_KV counter.
+import { verifyUnkeyKey } from "@findlocal/shared";
+import type { CustomerProps, Env } from "./types";
 
 export type MeterResult = { ok: true } | { ok: false; message: string };
 
-function currentMonth(): string {
-  return new Date().toISOString().slice(0, 7); // YYYY-MM
+function unkeyBase(env: Env) {
+  return { rootKey: env.UNKEY_ROOT_KEY, apiBase: env.UNKEY_API_BASE };
 }
 
 /**
- * Validate the customer, enforce their monthly quota, and increment usage.
- * When `customerId` is undefined (authless dev mode) metering is skipped.
+ * Verify the customer's key and meter one call. When `props` is absent (authless
+ * dev mode) metering is skipped. Fails closed on an Unkey outage.
  */
-export async function enforceAndMeter(env: Env, customerId: string | undefined): Promise<MeterResult> {
-  if (!customerId) return { ok: true }; // authless / anonymous — no metering
+export async function enforceAndMeter(env: Env, props: CustomerProps | undefined): Promise<MeterResult> {
+  if (!props?.key) return { ok: true }; // authless / anonymous — no metering
 
-  const rec = (await env.USAGE_KV.get(`customer:${customerId}`, "json")) as CustomerRecord | null;
-  if (!rec || !rec.active) {
-    return { ok: false, message: `Account '${customerId}' was not found or is inactive.` };
+  const v = await verifyUnkeyKey({ ...unkeyBase(env), key: props.key, cost: 1 });
+  if (v.valid) return { ok: true };
+
+  if (v.code === "UPSTREAM_ERROR") return { ok: false, message: "Metering is temporarily unavailable — please retry." };
+  if (v.code === "RATE_LIMITED") return { ok: false, message: "Rate limit exceeded — slow down and retry shortly." };
+  if (v.code === "USAGE_EXCEEDED") {
+    return { ok: false, message: `Monthly quota reached on the '${props.plan}' plan. Upgrade at https://findlocal.community/developers/pricing to continue.` };
   }
-
-  const key = `usage:${customerId}:${currentMonth()}`;
-  const used = Number.parseInt((await env.USAGE_KV.get(key)) ?? "0", 10) || 0;
-
-  if (rec.monthly_quota && used >= rec.monthly_quota) {
-    return {
-      ok: false,
-      message: `Monthly quota reached for '${customerId}' (${used}/${rec.monthly_quota} on the '${rec.plan}' plan). Upgrade to continue.`,
-    };
-  }
-
-  // Best-effort increment (KV is eventually consistent; fine for a metering demo).
-  await env.USAGE_KV.put(key, String(used + 1));
-  return { ok: true };
+  return { ok: false, message: "Your API key is invalid, expired, or disabled." };
 }
 
-/** Read the current month's usage for a customer (used by the get_usage tool). */
-export async function readUsage(env: Env, customerId: string | undefined) {
-  if (!customerId) return { metered: false as const };
-  const rec = (await env.USAGE_KV.get(`customer:${customerId}`, "json")) as CustomerRecord | null;
-  const used = Number.parseInt((await env.USAGE_KV.get(`usage:${customerId}:${currentMonth()}`)) ?? "0", 10) || 0;
+/** Read the customer's remaining quota (backs the get_usage tool). Verifies with
+ * no cost so it doesn't consume a credit. */
+export async function readUsage(env: Env, props: CustomerProps | undefined) {
+  if (!props?.key) return { metered: false as const };
+  const v = await verifyUnkeyKey({ ...unkeyBase(env), key: props.key });
   return {
     metered: true as const,
-    customer_id: customerId,
-    plan: rec?.plan ?? "unknown",
-    month: currentMonth(),
-    used,
-    monthly_quota: rec?.monthly_quota ?? null,
-    remaining: rec?.monthly_quota ? Math.max(0, rec.monthly_quota - used) : null,
+    customer_id: props.customerId,
+    plan: props.plan,
+    remaining: v.remaining ?? null,
+    key_valid: v.valid,
   };
 }

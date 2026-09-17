@@ -1,2 +1,4 @@
 # Copy to `.dev.vars` (git-ignored) for local `npm run dev:mcp`.
 COOKIE_ENCRYPTION_KEY="change-me-to-any-long-random-string"
+# Unkey root key — verifies + meters the API key entered at consent.
+UNKEY_ROOT_KEY="unkey_your_root_key"

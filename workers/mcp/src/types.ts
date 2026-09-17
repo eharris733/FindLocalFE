@@ -11,8 +11,15 @@ export interface Env {
   OAUTH_KV: KVNamespace;
   OAUTH_PROVIDER: OAuthHelpers; // injected by @cloudflare/workers-oauth-provider
 
-  // Metering
-  USAGE_KV: KVNamespace;
+  // Metering + authorization (Unkey). The root key verifies the account key the
+  // customer enters at consent and meters every tool call (cost: 1).
+  UNKEY_ROOT_KEY: string;
+  UNKEY_API_ID?: string;
+  UNKEY_API_BASE?: string;
+
+  // Legacy metering store — retired now that Unkey is the source of truth.
+  // Kept as a binding only so an in-flight deploy doesn't break; safe to remove.
+  USAGE_KV?: KVNamespace;
 
   // Durable Object backing McpAgent
   MCP_OBJECT: DurableObjectNamespace;
@@ -26,14 +33,8 @@ export interface Env {
 export interface CustomerProps {
   customerId: string;
   plan: string;
+  /** The Unkey API key the customer authorized with. Stored in the (encrypted)
+   * OAuth grant so each tool call can re-verify + meter it against Unkey. */
+  key: string;
   [key: string]: unknown; // OAuthProvider requires Record<string, unknown>
 }
-
-/** A customer record stored in USAGE_KV under `customer:<id>`. */
-export interface CustomerRecord {
-  plan: string;
-  monthly_quota: number;
-  active: boolean;
-}
-
-//dummy commit

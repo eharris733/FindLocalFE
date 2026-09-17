@@ -3,6 +3,8 @@ import { getCity, isGonePath, redirectTargetFor, type City } from '@findlocal/sh
 import { browserCacheControl, cachePolicyFor, edgeCacheControl } from './lib/cacheHeaders.js';
 import { CITY_COOKIE, DEFAULT_CITY_NAME, cacheKeyFor, readCookie } from './lib/cacheKey.js';
 import { blockedCrawlerResponse, isBlockedCrawler } from './lib/crawlerLimit.js';
+import { apiScope } from './lib/apiScope.js';
+import { requireApiKey } from './lib/apiAuth.js';
 
 const GONE_HTML = `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Gone | Find Local</title>
 <meta name="robots" content="noindex"><meta name="viewport" content="width=device-width, initial-scale=1">
@@ -61,6 +63,16 @@ export const onRequest = defineMiddleware(async (context, next) => {
   // against fan-out. Runs before the edge cache so blocked fetches never
   // touch D1 or the cache. The list lives in lib/crawlerLimit.ts.
   if (isBlockedCrawler(request.headers.get('user-agent'))) return blockedCrawlerResponse();
+
+  // --- Developer API key gate (Unkey). Runs BEFORE the edge cache below so a
+  // cache HIT can never serve the paid data API to an unauthenticated caller,
+  // and so every authorized call is metered (cost: 1) even on a cache hit.
+  // Only the `keyed` routes are gated; first-party browser endpoints (map,
+  // embed, geo) stay open. OPTIONS preflight is left to the route handler.
+  if (request.method !== 'OPTIONS' && apiScope(url.pathname) === 'keyed') {
+    const auth = await requireApiKey(request);
+    if (!auth.ok) return auth.response;
+  }
 
   context.locals.city = city;
 

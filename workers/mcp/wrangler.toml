@@ -32,10 +32,16 @@ new_sqlite_classes = ["FindLocalMCP"]
 binding = "OAUTH_KV"
 id = "660e7821cfab4ebf9c2cb1c50b27571e"
 
-# --- KV: per-customer records + monthly usage counters (metering) ---
+# --- KV: legacy metering store. RETIRED — Unkey is now the metering source of
+# truth (see metering.ts). Kept bound only so an in-flight deploy doesn't break;
+# remove after this ships. ---
 [[kv_namespaces]]
 binding = "USAGE_KV"
 id = "41e6a9fd61934f4b86b6d336cee8a8db"
+
+# --- Unkey: verifies the account/API key at consent and meters every tool call. ---
+[vars]
+UNKEY_API_ID = "api_sKkx5UuCVQQN"
 
 [observability]
 [observability.logs]
@@ -43,3 +49,4 @@ enabled = true
 
 # Secrets (set with `wrangler secret put <NAME> --config workers/mcp/wrangler.toml`; never commit):
 #   COOKIE_ENCRYPTION_KEY     any long random string (used by the OAuth provider)
+#   UNKEY_ROOT_KEY            Unkey workspace root key (verifies + meters API keys)

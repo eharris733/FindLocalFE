@@ -1,12 +1,14 @@
 ---
 title: How to Use the FindLocal Events API
-description: A free, no-key JSON API for every upcoming event and venue FindLocal tracks across 47 US cities. Endpoints, filters, response shapes, and examples in curl, JavaScript, and Python.
+description: A JSON API (free tier plus paid plans, one key) for every upcoming event and venue FindLocal tracks across 47 US cities. Endpoints, filters, response shapes, and examples in curl, JavaScript, and Python.
 date: 2026-09-04
 ---
 
 > **Reference:** the up-to-date endpoint, parameter and field tables now live at [/developers/api](/developers/api). This post is the walkthrough.
 
-Every listing page on Find Local has a JSON twin. The same filters you click on the site — city, date, category, price, time of day, neighborhood, search — work as query parameters against `https://findlocal.community/api/events`, and the response is the same data the page renders. There is no API key, no signup, and CORS is open, so you can call it from a browser, a script, a spreadsheet, or a cron job.
+> **Update:** the JSON API now requires an API key — send it as an `Authorization: Bearer <key>` header. There's a free tier; get a key at [/developers/pricing](/developers/pricing). The embeddable widgets and the map endpoint stay free and keyless.
+
+Every listing page on Find Local has a JSON twin. The same filters you click on the site — city, date, category, price, time of day, neighborhood, search — work as query parameters against `https://findlocal.community/api/events`, and the response is the same data the page renders. It requires an API key (the free tier covers 1,000 calls a month — [sign up at /developers/pricing](/developers/pricing)), sent as an `Authorization: Bearer <key>` header, and CORS is open, so you can call it from a browser, a script, a spreadsheet, or a cron job.
 
 If you'd rather have an AI assistant do the querying, see the companion guide on [connecting FindLocal to Claude, Cursor, and other assistants over MCP](/blog/findlocal-mcp-server).
 
@@ -182,7 +184,7 @@ curl 'https://findlocal.community/api/events?city=austin&page=2'
 - Listings update as venues are re-scraped, typically **daily**. `last_seen_at` tells you the last time we saw an event on its source page.
 - Coverage is 47 US metros. The full list is in [llms.txt](/llms.txt) and on the [city pages](/venues).
 - Every listing page also advertises its JSON twin with `<link rel="alternate" type="application/json">`, so you can discover the API URL for any filtered view from the page itself.
-- The API is free and unauthenticated. Please cache on your side, keep request rates reasonable, and link back to the event's Find Local page or the venue's own site. It's a small project; if you're building something that needs volume or guarantees, email **findlocalinternal@gmail.com** and we'll sort something out.
+- The API needs an API key — send it as `Authorization: Bearer <key>` (the `x-api-key` header works too). A missing or invalid key returns `401`; going over your rate limit or monthly quota returns `429` with a `Retry-After` header. There's a [free tier plus Pro and Scale plans](/developers/pricing), and one key works for both this API and the MCP server. Please cache on your side, keep request rates reasonable, and link back to the event's Find Local page or the venue's own site.
 - Field names are stable but the API is not formally versioned. New fields may appear; existing ones won't be renamed without notice on this blog.
 
 ## What's next

@@ -16,7 +16,7 @@ const tools: [string, string, string][] = [
   ['get_usage', 'This account\'s calls used and remaining this month. Not metered.', '—'],
 ];
 ---
-<Layout title="MCP server reference" description="Connect FindLocal's MCP server to Claude, Cursor, Claude Code or any MCP client: endpoint, OAuth and account keys, quotas, and every tool with its inputs." canonicalPath="/developers/mcp">
+<Layout title="MCP server reference" description="Connect FindLocal's MCP server to Claude, Cursor, Claude Code or any MCP client: endpoint, OAuth, API keys, quotas, and every tool with its inputs." canonicalPath="/developers/mcp">
   <div class="docs">
     <DocsNav current="/developers/mcp" title="MCP server" />
     <h1>MCP server</h1>
@@ -26,7 +26,7 @@ const tools: [string, string, string][] = [
     <div class="copy-wrap"><button type="button" class="copy-btn" data-copy-target="#mcp-url">Copy</button><pre id="mcp-url"><code>{MCP_URL}</code></pre></div>
     <ul>
       <li>Transport: <strong>Streamable HTTP</strong>. A legacy <code>/sse</code> endpoint exists for older clients.</li>
-      <li>Auth: OAuth 2.1 with PKCE and dynamic client registration (<code>/authorize</code>, <code>/token</code>, <code>/register</code>), then a one-field consent page asking for an <a href="#keys">account key</a>.</li>
+      <li>Auth: OAuth 2.1 with PKCE and dynamic client registration (<code>/authorize</code>, <code>/token</code>, <code>/register</code>), then a one-field consent page asking for your <a href="#keys">API key</a>.</li>
       <li>Scope: <code>mcp:read</code>. The server is read-only.</li>
     </ul>
 
@@ -35,7 +35,7 @@ const tools: [string, string, string][] = [
     <ol>
       <li>Open <strong>Settings → Connectors → Add custom connector</strong>.</li>
       <li>Paste <code>{MCP_URL}</code> and save, then <strong>Connect</strong>.</li>
-      <li>Enter an account key on the FindLocal page that opens. In a chat, keep the FindLocal connector toggled on.</li>
+      <li>Enter your API key on the FindLocal page that opens. In a chat, keep the FindLocal connector toggled on.</li>
     </ol>
     <h3>Claude Code</h3>
     <div class="copy-wrap"><button type="button" class="copy-btn" data-copy-target="#mcp-cli">Copy</button><pre id="mcp-cli"><code>{`claude mcp add --transport http findlocal ${MCP_URL}`}</code></pre></div>
@@ -51,19 +51,19 @@ const tools: [string, string, string][] = [
     <pre><code>{`npx @modelcontextprotocol/inspector
 # transport: Streamable HTTP · URL: ${MCP_URL}`}</code></pre>
 
-    <h2 id="keys">Account keys and quotas</h2>
-    <p>Usage is metered per account key so the service stays healthy. On the consent page:</p>
+    <h2 id="keys">API keys and quotas</h2>
+    <p>Usage is metered per API key so the service stays healthy. On the consent page, paste the API key you got from <a href="/developers/pricing">/developers/pricing</a> — the same key works for both the MCP server and the <a href="/developers/api">JSON API</a>. Plans:</p>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>Key</th><th>Quota</th><th>For</th></tr></thead>
+        <thead><tr><th>Plan</th><th>Quota</th><th>Price</th></tr></thead>
         <tbody>
-          <tr><td><code>demo-free</code></td><td>100 tool calls / month (shared)</td><td>Trying it out</td></tr>
-          <tr><td><code>demo-pro</code></td><td>10,000 tool calls / month (shared)</td><td>Evaluations</td></tr>
-          <tr><td>Your own key</td><td>Per plan</td><td>Email <a href="mailto:findlocalinternal@gmail.com">findlocalinternal@gmail.com</a> with a sentence about what you're building. No self-serve signup yet.</td></tr>
+          <tr><td>Free</td><td>1,000 calls / month</td><td>Free</td></tr>
+          <tr><td>Pro</td><td>50,000 calls / month</td><td>$49 / month</td></tr>
+          <tr><td>Scale</td><td>500,000 calls / month</td><td>$249 / month</td></tr>
         </tbody>
       </table>
     </div>
-    <p>Once authorized you won't be asked again for that client. Ask the assistant to run <code>get_usage</code> to see calls used and remaining. When a quota is exhausted, tools return a clear "Monthly quota reached" message instead of partial data. The server stores the account key and a per-month counter — nothing about your conversations.</p>
+    <p>Sign up at <a href="/developers/pricing">/developers/pricing</a> and we email you the key. Once authorized you won't be asked again for that client. Ask the assistant to run <code>get_usage</code> to see calls used and remaining. When a quota is exhausted, tools return a clear "Monthly quota reached" message instead of partial data. The server stores the API key and a per-month counter — nothing about your conversations.</p>
 
     <h2 id="tools">Tools</h2>
     <div class="table-wrap">

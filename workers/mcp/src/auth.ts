@@ -7,9 +7,11 @@
 //
 // This is the "sell to a business customer" flow: they click Connect in Claude.ai,
 // authorize as their account, and every tool call is metered against that account.
-import type { CustomerProps, CustomerRecord, Env } from "./types";
+import { verifyUnkeyKey } from "@findlocal/shared";
+import type { CustomerProps, Env } from "./types";
 
-const DEFAULT_ACCOUNT_KEY = "demo-pro";
+const DEFAULT_ACCOUNT_KEY = "";
+const PRICING_URL = "https://findlocal.community/developers/pricing";
 
 function page(body: string, status = 200): Response {
   const html = `<!doctype html><html lang="en"><head><meta charset="utf-8">
@@ -39,9 +41,9 @@ function consent(actionQuery: string, clientName: string, accountKey: string, er
     <h1>Authorize FindLocal Events</h1>
     <p class="sub"><strong>${escapeHtml(clientName)}</strong> is requesting access to the FindLocal Events data API.</p>
     <form method="POST" action="/authorize${actionQuery}">
-      <label for="account_key">Account key</label>
-      <input id="account_key" name="account_key" value="${escapeHtml(accountKey)}" autocomplete="off" />
-      <p class="hint">Demo accounts: <code>demo-pro</code> (10k/mo), <code>demo-free</code> (100/mo).</p>
+      <label for="account_key">API key</label>
+      <input id="account_key" name="account_key" value="${escapeHtml(accountKey)}" autocomplete="off" placeholder="fl_..." />
+      <p class="hint">Don't have a key? Get one at <a href="${PRICING_URL}">findlocal.community/developers/pricing</a>.</p>
       ${error ? `<p class="err">${escapeHtml(error)}</p>` : ""}
       <button type="submit">Connect &amp; authorize</button>
     </form>`, error ? 401 : 200);
@@ -81,16 +83,28 @@ export const defaultHandler = {
       return consent(url.search, clientName, DEFAULT_ACCOUNT_KEY);
     }
 
-    // POST → validate the account key and complete the grant.
+    // POST → validate the API key with Unkey and complete the grant.
     const form = await request.formData();
     const accountKey = String(form.get("account_key") ?? DEFAULT_ACCOUNT_KEY).trim();
-
-    const rec = (await env.USAGE_KV.get(`customer:${accountKey}`, "json")) as CustomerRecord | null;
-    if (!rec || !rec.active) {
-      return consent(url.search, clientName, accountKey, `Account '${accountKey}' was not found or is inactive.`);
+    if (!accountKey) {
+      return consent(url.search, clientName, accountKey, "Enter your API key to continue.");
     }
 
-    const props: CustomerProps = { customerId: accountKey, plan: rec.plan };
+    // Validate only (no cost) — metering happens per tool call.
+    const v = await verifyUnkeyKey({ rootKey: env.UNKEY_ROOT_KEY, apiBase: env.UNKEY_API_BASE, key: accountKey });
+    if (!v.valid) {
+      const why =
+        v.code === "UPSTREAM_ERROR"
+          ? "Authorization is temporarily unavailable — please retry."
+          : `That API key is invalid, disabled, or expired. Get one at ${PRICING_URL}.`;
+      return consent(url.search, clientName, accountKey, why);
+    }
+
+    const props: CustomerProps = {
+      customerId: v.externalId ?? v.keyId ?? accountKey,
+      plan: String(v.meta?.plan ?? "unknown"),
+      key: accountKey,
+    };
     const { redirectTo } = await env.OAUTH_PROVIDER.completeAuthorization({
       request: authReq,
       userId: accountKey,
