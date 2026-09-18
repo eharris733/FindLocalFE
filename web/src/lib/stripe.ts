@@ -41,13 +41,18 @@ export async function verifyStripeSignature(
   return safeEqual(toHex(mac), v1);
 }
 
-/** GET a Stripe resource (optionally expanding fields). */
+/** GET a Stripe resource: optionally expand fields and/or filter with query params
+ * (e.g. list customers by `email`, or subscriptions by `customer` + `status`). */
 export async function stripeGet(
   secretKey: string,
   path: string,
   expand: string[] = [],
+  query: Record<string, string> = {},
 ): Promise<Record<string, any>> {
-  const qs = expand.map((e, i) => `expand[${i}]=${encodeURIComponent(e)}`).join('&');
+  const params = new URLSearchParams();
+  expand.forEach((e, i) => params.set(`expand[${i}]`, e));
+  for (const [k, v] of Object.entries(query)) params.set(k, v);
+  const qs = params.toString();
   const res = await fetch(`${STRIPE_API}${path}${qs ? `?${qs}` : ''}`, {
     headers: { Authorization: `Bearer ${secretKey}` },
   });

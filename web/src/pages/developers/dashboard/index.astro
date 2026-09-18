@@ -1,0 +1,65 @@
+---
+// /developers/dashboard — account overview. SSR, gated on a Better Auth session,
+// never edge-cached (cacheHeaders → private, no-store).
+import Layout from '../../../layouts/Layout.astro';
+import DashboardNav from '../../../components/DashboardNav.astro';
+import { getEnv, getAuthDb } from '../../../lib/db.js';
+import { getSessionUser } from '../../../lib/auth.js';
+import { activeKeyCount } from '../../../lib/apiKeys.js';
+import { PLAN_BY_ID, type PlanId } from '../../../lib/plans.js';
+export const prerender = false;
+
+const env = getEnv();
+const user = await getSessionUser(env, Astro.request.headers).catch(() => null);
+if (!user) return Astro.redirect('/developers/signin');
+
+const plan = PLAN_BY_ID.get((user.plan as PlanId) ?? 'free') ?? PLAN_BY_ID.get('free')!;
+let keyCount = 0;
+try { keyCount = await activeKeyCount(getAuthDb(), user.id); } catch { /* AUTH_DB missing */ }
+---
+<Layout title="Dashboard" description="Your FindLocal developer account." canonicalPath="/developers/dashboard" noindex={true}>
+  <div class="docs">
+    <DashboardNav current="/developers/dashboard" email={user.email} plan={plan.name} />
+
+    <h1>Welcome{user.name ? `, ${user.name}` : ''}</h1>
+
+    <div class="tiles">
+      <div class="tile">
+        <div class="tile-label">Plan</div>
+        <div class="tile-value">{plan.name}</div>
+        <a href="/developers/dashboard/billing">Manage billing →</a>
+      </div>
+      <div class="tile">
+        <div class="tile-label">Monthly quota</div>
+        <div class="tile-value">{plan.monthlyQuota.toLocaleString()}</div>
+        <span class="tile-fine">calls / month, shared across your keys</span>
+      </div>
+      <div class="tile">
+        <div class="tile-label">Rate limit</div>
+        <div class="tile-value">{plan.perMinuteLimit}/min</div>
+        <span class="tile-fine">burst, shared across your keys</span>
+      </div>
+      <div class="tile">
+        <div class="tile-label">Active keys</div>
+        <div class="tile-value">{keyCount}</div>
+        <a href="/developers/dashboard/keys">Manage keys →</a>
+      </div>
+    </div>
+
+    <h2>Get started</h2>
+    <div class="cards">
+      <a class="card-link" href="/developers/dashboard/keys"><h3>Create an API key</h3><p>Mint a named key and use it as a Bearer token against the JSON API.</p></a>
+      <a class="card-link" href="/developers/api"><h3>Read the API docs</h3><p>Endpoints, filters, and response shapes for <code>/api/*</code>.</p></a>
+      <a class="card-link" href="/developers/mcp"><h3>Connect the MCP server</h3><p>Paste any of your keys to connect an AI agent at mcp.findlocal.community.</p></a>
+    </div>
+  </div>
+</Layout>
+
+<style>
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.9rem; margin: 1.2rem 0 1rem; }
+  .tile { border: 1px solid rgb(var(--border)); border-radius: var(--radius); padding: 1rem 1.1rem; background: rgb(var(--surface)); }
+  .tile-label { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; color: rgb(var(--text-2)); }
+  .tile-value { font-size: 1.7rem; font-weight: 800; margin: 0.15rem 0 0.3rem; }
+  .tile-fine { font-size: 0.8rem; color: rgb(var(--text-2)); }
+  .tile a { font-size: 0.85rem; font-weight: 600; }
+</style>

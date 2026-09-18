@@ -2,7 +2,7 @@
 // Astro.locals.runtime.env. Query helpers live in @findlocal/shared so the MCP
 // worker, the JSON API and this site share identical query semantics — this
 // file re-exports them so pages have one import and ZERO SQL of their own.
-import type { D1Database } from '@cloudflare/workers-types';
+import type { D1Database, KVNamespace } from '@cloudflare/workers-types';
 import { env } from 'cloudflare:workers';
 
 /** The Worker's bindings + vars/secrets. This file is the ONLY importer of
@@ -20,6 +20,21 @@ export interface EmailBinding {
 
 export interface WebEnv {
   DB: D1Database;
+  /** The developer-portal / Better Auth database. WRITABLE and owned by this repo
+   * (accounts, sessions, OAuth links, passkeys, TOTP, our api_key table). The
+   * read-only discipline applies only to `DB`. Absent in some local dev runs
+   * until `wrangler d1 create findlocal-auth` + migrations have been applied. */
+  AUTH_DB?: D1Database;
+  /** Better Auth secondary storage (fast edge session reads). */
+  AUTH_KV?: KVNamespace;
+  /** Better Auth signing secret + base URL (origin). */
+  BETTER_AUTH_SECRET?: string;
+  BETTER_AUTH_URL?: string;
+  /** Social OAuth (Phase B). Client ids are vars; secrets are `wrangler secret`. */
+  GOOGLE_CLIENT_ID?: string;
+  GOOGLE_CLIENT_SECRET?: string;
+  GITHUB_CLIENT_ID?: string;
+  GITHUB_CLIENT_SECRET?: string;
   /** Unkey root key (secret) — verifies developer API keys. Absent in local dev. */
   UNKEY_ROOT_KEY?: string;
   /** Unkey API id (var) — used when minting keys from the billing webhook. */
@@ -47,6 +62,14 @@ export function getEnv(): WebEnv {
 
 export function getDb(): D1Database {
   return getEnv().DB;
+}
+
+/** The writable developer-portal database. Throws if the binding is missing so a
+ * misconfigured deploy fails loudly rather than silently losing account writes. */
+export function getAuthDb(): D1Database {
+  const db = getEnv().AUTH_DB;
+  if (!db) throw new Error('AUTH_DB binding is not configured');
+  return db;
 }
 
 export {

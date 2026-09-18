@@ -19,12 +19,26 @@ binding = "DB"
 database_name = "findlocal"
 database_id = "70f5c88b-958d-46be-ba63-cfc695f1d496"
 
-# Astro sessions store (auto-enabled by the adapter; unused by the app).
-# Replace the id with a real namespace before the first deploy:
-#   wrangler kv namespace create SESSION
+# --- AUTH_DB: the developer-portal / Better Auth database. This one IS writable
+# and is OWNED BY THIS REPO (accounts, sessions, OAuth links, passkeys, TOTP, and
+# our api_key table). The read-only discipline above applies ONLY to `DB`.
+# Migrations live in web/migrations/ (Better Auth CLI output + our api_key SQL).
+# The id below is a PLACEHOLDER — create the database and paste its id, then apply
+# migrations, before the first deploy:
+#   wrangler d1 create findlocal-auth
+#   wrangler d1 migrations apply findlocal-auth            (remote)
+#   wrangler d1 migrations apply findlocal-auth --local    (local dev)
+[[d1_databases]]
+binding = "AUTH_DB"
+database_name = "findlocal-auth"
+database_id = "dda11957-adb7-46cd-8a95-1f3e62e9c4a2"
+migrations_dir = "migrations"
+
+# Better Auth secondary storage (fast session reads at the edge). Create it and
+# paste the id before deploy:  wrangler kv namespace create AUTH_KV
 [[kv_namespaces]]
-binding = "SESSION"
-id = "8a6974fc5a1e4384afb7f2eb8d03209f"
+binding = "AUTH_KV"
+id = "73cd01c7c7c54d4abb96f468a1df0e6d"
 
 # --- Unkey gates the developer JSON API (/api/events, /api/events/<id>,
 # /api/venues). Stripe (billing) + Cloudflare Email Service (key delivery) drive
@@ -33,6 +47,11 @@ id = "8a6974fc5a1e4384afb7f2eb8d03209f"
 [vars]
 # these are all sandbox stripe links and ids and urls
 UNKEY_API_ID = "api_sKkx5UuCVQQN"
+# Better Auth: base URL (origin) + non-secret OAuth client ids. The matching
+# client SECRETS + BETTER_AUTH_SECRET are set with `wrangler secret put` (below).
+BETTER_AUTH_URL = "https://findlocal.community"
+GOOGLE_CLIENT_ID = ""
+GITHUB_CLIENT_ID = ""
 STRIPE_PRICE_FREE = "price_1UGmzCA9vCgeC5eiOt3w3Xvd"
 STRIPE_PRICE_PRO = "price_1UGlLFA9vCgeC5eiqiZioegu"
 STRIPE_PRICE_SCALE = "price_1UGlNEA9vCgeC5eiqe03A9XO"
@@ -50,6 +69,12 @@ name = "EMAIL"
 #   UNKEY_ROOT_KEY          verifies + mints API keys
 #   STRIPE_SECRET_KEY       writes the Unkey key id back to the subscription
 #   STRIPE_WEBHOOK_SECRET   verifies inbound Stripe webhook signatures
+#   BETTER_AUTH_SECRET      Better Auth signing secret (any long random string)
+#   GOOGLE_CLIENT_SECRET    Google OAuth client secret        (Phase B)
+#   GITHUB_CLIENT_SECRET    GitHub OAuth client secret         (Phase B)
+# Mirror all of the above into web/.dev.vars (gitignored) for local dev, and there
+# also set BETTER_AUTH_URL = "http://localhost:4321" so local (http) sign-in
+# cookies aren't marked `secure` (which the browser would drop over http).
 
 [observability]
 [observability.logs]

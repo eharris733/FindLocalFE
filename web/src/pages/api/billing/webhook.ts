@@ -1,33 +1,27 @@
 import type { APIRoute } from 'astro';
-import {
-  createUnkeyKey,
-  updateUnkeyKeyLimits,
-  revokeUnkeyKey,
-  type KeyLimits,
-  type UnkeyAdmin,
-} from '@findlocal/shared';
-import { getEnv } from '../../../lib/db.js';
+import type { D1Database } from '@cloudflare/workers-types';
+import { getEnv, getAuthDb } from '../../../lib/db.js';
+import { setAccountPlan, resolveUserId } from '../../../lib/accountBilling.js';
 import { PLAN_BY_ID, planForStripePrice, type Plan } from '../../../lib/plans.js';
-import { verifyStripeSignature, stripeGet, stripePost } from '../../../lib/stripe.js';
-import { sendApiKeyEmail } from '../../../lib/billingEmail.js';
+import { verifyStripeSignature, stripeGet } from '../../../lib/stripe.js';
 
 export const prerender = false;
 
-// Stripe -> Unkey provisioning. Configure the endpoint in Stripe on the events:
+// Stripe -> account plan. Configure the endpoint in Stripe on the events:
 //   checkout.session.completed, customer.subscription.updated/deleted
 // The webhook is NOT key-gated (apiScope classifies it 'open'); it authenticates
 // itself with the Stripe signature. Bodies are read RAW for signature checking.
+//
+// Accounts-first model: Checkout is started from the authed dashboard with
+// metadata.userId, so every event resolves to a portal account. Applying a plan
+// caches it on the user row, sets the account's Unkey identity ratelimit, and
+// re-limits the account's keys — see accountBilling.setAccountPlan. Keys are minted
+// by the user in the dashboard, not here.
 
-function admin(env: ReturnType<typeof getEnv>): UnkeyAdmin {
-  return { rootKey: env.UNKEY_ROOT_KEY!, apiId: env.UNKEY_API_ID!, apiBase: env.UNKEY_API_BASE };
-}
+const FREE = PLAN_BY_ID.get('free')!;
 
-function limitsFor(plan: Plan): KeyLimits {
-  return { monthlyQuota: plan.monthlyQuota, perMinuteLimit: plan.perMinuteLimit, plan: plan.id };
-}
-
-/** Resolve the plan from the Payment Link metadata, falling back to the
- * subscription's price id (robust to how Stripe propagates link metadata). */
+/** Resolve the plan from the Payment Link/session metadata, else the subscription's
+ * price id. */
 async function planFromSession(session: any, env: ReturnType<typeof getEnv>): Promise<Plan | undefined> {
   const byMeta = PLAN_BY_ID.get(session.metadata?.plan);
   if (byMeta) return byMeta;
@@ -37,45 +31,51 @@ async function planFromSession(session: any, env: ReturnType<typeof getEnv>): Pr
   return planForStripePrice(priceId, env as unknown as Record<string, string | undefined>);
 }
 
-/** First subscription for a customer: mint a key, remember its id, email it. */
-async function provision(session: any, env: ReturnType<typeof getEnv>): Promise<void> {
-  const plan = await planFromSession(session, env);
-  const email = session.customer_details?.email as string | undefined;
-  if (!plan || !session.customer) return;
-
-  const { keyId, key } = await createUnkeyKey(admin(env), {
-    externalId: String(session.customer),
-    name: `${plan.id}:${email ?? session.customer}`,
-    limits: limitsFor(plan),
-  });
-
-  if (session.subscription && env.STRIPE_SECRET_KEY) {
-    await stripePost(env.STRIPE_SECRET_KEY, `/v1/subscriptions/${session.subscription}`, {
-      'metadata[unkey_key_id]': keyId,
-      'metadata[plan]': plan.id,
-    });
-  }
-  if (email) await sendApiKeyEmail(env.EMAIL, { to: email, plan: plan.name, key });
-}
-
-/** Portal upgrade/downgrade: move the existing key to the new plan's limits. */
-async function reprice(sub: any, env: ReturnType<typeof getEnv>): Promise<void> {
-  const keyId = sub.metadata?.unkey_key_id as string | undefined;
-  if (!keyId) return;
+function planFromSubscription(sub: any, env: ReturnType<typeof getEnv>): Plan | undefined {
   const priceId = sub.items?.data?.[0]?.price?.id as string | undefined;
-  const plan = planForStripePrice(priceId, env as unknown as Record<string, string | undefined>)
-    ?? PLAN_BY_ID.get(sub.metadata?.plan);
-  if (plan) await updateUnkeyKeyLimits(admin(env), keyId, limitsFor(plan));
+  return (
+    planForStripePrice(priceId, env as unknown as Record<string, string | undefined>) ??
+    PLAN_BY_ID.get(sub.metadata?.plan)
+  );
 }
 
-async function cancel(sub: any, env: ReturnType<typeof getEnv>): Promise<void> {
-  const keyId = sub.metadata?.unkey_key_id as string | undefined;
-  if (keyId) await revokeUnkeyKey(admin(env), keyId);
+async function provision(session: any, env: ReturnType<typeof getEnv>, authDb: D1Database): Promise<void> {
+  const plan = await planFromSession(session, env);
+  const userId = await resolveUserId(authDb, {
+    metadataUserId: session.metadata?.userId,
+    stripeCustomerId: session.customer ? String(session.customer) : undefined,
+  });
+  if (!plan || !userId) return;
+  await setAccountPlan(env, authDb, {
+    userId,
+    stripeCustomerId: session.customer ? String(session.customer) : undefined,
+    plan,
+  });
+}
+
+async function reprice(sub: any, env: ReturnType<typeof getEnv>, authDb: D1Database): Promise<void> {
+  const userId = await resolveUserId(authDb, {
+    metadataUserId: sub.metadata?.userId,
+    stripeCustomerId: sub.customer ? String(sub.customer) : undefined,
+  });
+  const plan = planFromSubscription(sub, env);
+  if (!userId || !plan) return;
+  await setAccountPlan(env, authDb, { userId, stripeCustomerId: String(sub.customer), plan });
+}
+
+async function cancel(sub: any, env: ReturnType<typeof getEnv>, authDb: D1Database): Promise<void> {
+  const userId = await resolveUserId(authDb, {
+    metadataUserId: sub.metadata?.userId,
+    stripeCustomerId: sub.customer ? String(sub.customer) : undefined,
+  });
+  if (!userId) return;
+  // Downgrade to free — keys keep working at the free tier, not revoked.
+  await setAccountPlan(env, authDb, { userId, stripeCustomerId: String(sub.customer), plan: FREE });
 }
 
 export const POST: APIRoute = async ({ request }) => {
   const env = getEnv();
-  if (!env.STRIPE_WEBHOOK_SECRET || !env.UNKEY_ROOT_KEY || !env.UNKEY_API_ID) {
+  if (!env.STRIPE_WEBHOOK_SECRET || !env.UNKEY_ROOT_KEY || !env.UNKEY_API_ID || !env.AUTH_DB) {
     return new Response('billing not configured', { status: 503 });
   }
 
@@ -84,11 +84,12 @@ export const POST: APIRoute = async ({ request }) => {
   if (!ok) return new Response('invalid signature', { status: 400 });
 
   const event = JSON.parse(raw) as { type: string; data: { object: any } };
+  const authDb = getAuthDb();
   try {
     const obj = event.data.object;
-    if (event.type === 'checkout.session.completed') await provision(obj, env);
-    else if (event.type === 'customer.subscription.updated') await reprice(obj, env);
-    else if (event.type === 'customer.subscription.deleted') await cancel(obj, env);
+    if (event.type === 'checkout.session.completed') await provision(obj, env, authDb);
+    else if (event.type === 'customer.subscription.updated') await reprice(obj, env, authDb);
+    else if (event.type === 'customer.subscription.deleted') await cancel(obj, env, authDb);
   } catch (e) {
     // Log and 500 so Stripe retries transient provisioning failures.
     console.error('billing webhook error', event.type, (e as Error).message);

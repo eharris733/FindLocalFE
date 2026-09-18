@@ -1,0 +1,97 @@
+---
+// /developers/dashboard/billing — current plan, upgrade (Stripe Checkout), and a
+// link to the Stripe customer portal for card/cancel. SSR + gated. Upgrades POST
+// here (same-origin guarded), we create a Checkout Session carrying the user id in
+// metadata, and redirect to Stripe; the webhook applies the plan on completion.
+import Layout from '../../../layouts/Layout.astro';
+import DashboardNav from '../../../components/DashboardNav.astro';
+import { getEnv } from '../../../lib/db.js';
+import { getSessionUser } from '../../../lib/auth.js';
+import { createCheckoutSession } from '../../../lib/accountBilling.js';
+import { PLANS, PLAN_BY_ID, type PlanId } from '../../../lib/plans.js';
+export const prerender = false;
+
+function sameOrigin(request: Request): boolean {
+  const site = request.headers.get('sec-fetch-site');
+  if (site) return site === 'same-origin' || site === 'none';
+  const origin = request.headers.get('origin');
+  if (!origin) return true;
+  try { return new URL(origin).host === new URL(request.url).host; } catch { return false; }
+}
+
+const env = getEnv();
+const user = await getSessionUser(env, Astro.request.headers).catch(() => null);
+if (!user) return Astro.redirect('/developers/signin');
+
+const currentPlan = PLAN_BY_ID.get((user.plan as PlanId) ?? 'free') ?? PLAN_BY_ID.get('free')!;
+let error: string | null = null;
+
+if (Astro.request.method === 'POST') {
+  if (!sameOrigin(Astro.request)) return new Response('forbidden', { status: 403 });
+  const form = await Astro.request.formData();
+  const planId = String(form.get('plan') || '') as PlanId;
+  try {
+    return Astro.redirect(
+      await createCheckoutSession(env, { id: user.id, email: user.email, stripeCustomerId: user.stripeCustomerId }, planId),
+      303,
+    );
+  } catch (e) {
+    error = (e as Error).message;
+  }
+}
+
+const upgraded = Astro.url.searchParams.get('upgraded') === '1';
+const portalUrl = env.STRIPE_PORTAL_URL;
+---
+<Layout title="Billing" description="Manage your FindLocal plan and billing." canonicalPath="/developers/dashboard/billing" noindex={true}>
+  <div class="docs">
+    <DashboardNav current="/developers/dashboard/billing" email={user.email} plan={currentPlan.name} />
+    <h1>Billing</h1>
+
+    {upgraded && <div class="note"><p>Thanks! Your plan is being activated — it updates within a few seconds of payment.</p></div>}
+    {error && <div class="note err"><p>{error}</p></div>}
+
+    <p>You're on the <strong>{currentPlan.name}</strong> plan.
+      {portalUrl && <> Update your card or cancel any time in the <a href={portalUrl}>customer portal</a>.</>}</p>
+
+    <div class="plans">
+      {PLANS.map((p) => (
+        <div class={`plan${p.id === currentPlan.id ? ' current' : ''}`}>
+          <h3>{p.name}</h3>
+          <div class="price">{p.priceUsd === 0 ? 'Free' : `$${p.priceUsd}`}<span>{p.priceUsd === 0 ? '' : '/mo'}</span></div>
+          <ul>
+            <li>{p.monthlyQuota.toLocaleString()} calls / month</li>
+            <li>{p.perMinuteLimit} requests / min</li>
+            <li>Up to 5 keys, shared quota</li>
+          </ul>
+          {p.id === currentPlan.id ? (
+            <button type="button" class="cta ghost" disabled>Current plan</button>
+          ) : p.stripePriceEnv ? (
+            <form method="POST">
+              <input type="hidden" name="plan" value={p.id} />
+              <button type="submit" class="cta">{p.priceUsd > currentPlan.priceUsd ? 'Upgrade' : 'Switch'} to {p.name}</button>
+            </form>
+          ) : (
+            <button type="button" class="cta ghost" disabled>Downgrade in portal</button>
+          )}
+        </div>
+      ))}
+    </div>
+    <p class="fine">Downgrades and cancellations are handled in the customer portal and take effect at the end of the billing period.</p>
+  </div>
+</Layout>
+
+<style>
+  .plans { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.9rem; margin: 1.2rem 0 1rem; }
+  .plan { border: 1px solid rgb(var(--border)); border-radius: var(--radius); padding: 1.1rem 1.2rem; background: rgb(var(--surface)); }
+  .plan.current { border-color: rgb(var(--teal)); }
+  .plan h3 { margin: 0 0 0.3rem; }
+  .price { font-size: 1.8rem; font-weight: 800; }
+  .price span { font-size: 0.9rem; font-weight: 600; color: rgb(var(--text-2)); }
+  .plan ul { list-style: none; padding: 0; margin: 0.7rem 0 1rem; font-size: 0.9rem; color: rgb(var(--text-2)); }
+  .plan li { padding: 0.15rem 0; }
+  .cta { display: inline-block; width: 100%; padding: 0.6rem; border: 0; border-radius: 999px; background: rgb(var(--teal)); color: rgb(var(--text-inverse)); font-weight: 700; cursor: pointer; }
+  .cta.ghost { background: transparent; color: rgb(var(--text-2)); box-shadow: inset 0 0 0 1px rgb(var(--border)); cursor: default; }
+  .note.err { border-left-color: rgb(var(--orange)); background: rgb(var(--orange-50)); }
+  .fine { font-size: 0.85rem; color: rgb(var(--text-2)); }
+</style>

@@ -68,10 +68,32 @@ npm run deploy:web               # astro build + wrangler deploy (needs a real S
 
 ## Rules
 
-- **Read-only by discipline.** D1 has no read-only binding. Only
+- **Read-only by discipline (the `DB` catalogue only).** The `findlocal` D1
+  (`DB`) is owned by FindLocalData and is read-only here: only
   `shared/src/queries.ts` (per-request reads) and `shared/src/stats.ts`
-  (landing-page aggregates) may issue SQL, and only `SELECT`. Site pages, API
-  routes and MCP tools call those helpers; they never build SQL themselves.
+  (landing-page aggregates) may issue SQL against it, and only `SELECT`. Site
+  pages, API routes and MCP tools call those helpers; they never build SQL
+  themselves. **Exception — `AUTH_DB` is writable and owned by this repo.** It is
+  a *separate* D1 (`findlocal-auth`) for the developer portal: Better Auth
+  (accounts/sessions/OAuth/passkeys/TOTP) + our `api_key` table. Migrations live
+  in `web/migrations/` (Better Auth CLI output + hand-written `api_key`), applied
+  with `wrangler d1 migrations apply findlocal-auth`. The read-only rule does NOT
+  apply to `AUTH_DB`.
+- **Developer portal = Better Auth.** `/developers/dashboard/*` (SSR, gated on a
+  Better Auth session, never edge-cached) lets an account create/revoke **multiple
+  named API keys**, see its plan, and upgrade. `web/src/lib/auth.ts` is the
+  per-isolate Better Auth factory (Kysely `D1Dialect` on `AUTH_DB`, `AUTH_KV`
+  secondary storage, email+password/magic link, Google/GitHub when configured;
+  `validateSchema:false` because D1 blocks PRAGMA introspection). `/api/auth/*`
+  (`web/src/pages/api/auth/[...all].ts`) is Better Auth's handler. Sign-in at
+  `/developers/signin`; the old email-only `/developers/manage` now 301s to the
+  dashboard. Keys/quota: all of an account's keys share ONE Unkey **identity**
+  (`externalId = user.id`) carrying a shared per-minute ratelimit; the monthly
+  quota is per-key for now (capped at 5 keys/account) — a single shared monthly
+  pool needs the Unkey identity-credits/long-window spike (see
+  `shared/src/unkey.ts::setIdentityRatelimits`). Checkout is started from the
+  dashboard with `metadata.userId`; the Stripe webhook applies the plan to the
+  account (`web/src/lib/accountBilling.ts::setAccountPlan`).
 - **One filter contract.** `EventFilters` (filters.ts) is shared by the site's
   URL parsing (`parseFilters`), the JSON API and the MCP `search_events` tool,
   so every front door returns identical results for identical inputs.
@@ -162,7 +184,10 @@ npm run deploy:web               # astro build + wrangler deploy (needs a real S
   (`cachePolicyFor`). Discovery lives on `/city/<slug>`; the old `/platform` page
   was deleted and **301s to `/`**.
 - **URL shapes**: `/event/<uuid>`, `/venue/<uuid>`, `/city/<slug>`, `/venues`,
-  `/about`, `/privacy`, `/terms`, `/blog/*`, `/developers{,/api,/mcp,/widgets}`,
+  `/about`, `/privacy`, `/terms`, `/blog/*`,
+  `/developers{,/api,/mcp,/widgets,/pricing,/signin,/dashboard,/dashboard/keys,/dashboard/billing}`
+  (`/developers/manage` 301s to `/developers/dashboard`; dashboard + signin are
+  `noindex`, SSR, `private, no-store`), `/api/auth/*` (Better Auth handler),
   `/embed/events` (widget iframe; `noindex`, `frame-ancestors *`, keyed on its full query),
   `/widget.js` (static loader), `/sitemap.xml`.
   JSON: `/api/events`, `/api/events/<uuid>`, `/api/events/map`, `/api/embed/events`, `/api/venues`, `/api/geo`
@@ -227,6 +252,12 @@ npm run deploy:web               # astro build + wrangler deploy (needs a real S
 ## Cloudflare resources (account fdd795bd6b82faac11b02577a977ccc9)
 
 - D1 `findlocal` (70f5c88b-958d-46be-ba63-cfc695f1d496) — owned by FindLocalData
+- D1 `findlocal-auth` (`AUTH_DB`, id TBD) + KV `AUTH_KV` (id TBD) — writable,
+  owned by this repo, for the Better Auth developer portal. Create with
+  `wrangler d1 create findlocal-auth` / `wrangler kv namespace create AUTH_KV`,
+  paste the ids into `web/wrangler.toml`, then `wrangler d1 migrations apply
+  findlocal-auth`. Secrets: `BETTER_AUTH_SECRET` (+ `GOOGLE_CLIENT_SECRET` /
+  `GITHUB_CLIENT_SECRET` for social login).
 - Worker `findlocal-mcp` → mcp.findlocal.community (DO `FindLocalMCP`,
   KV `OAUTH_KV` 660e7821…, `USAGE_KV` 41e6a9fd…; secret `COOKIE_ENCRYPTION_KEY`)
 - Worker `findlocal-web` → findlocal.community (web/; custom_domain route — remove the hostname from the old Pages project first)

@@ -1,0 +1,44 @@
+---
+// Sub-navigation + shared styles for the authed /developers/dashboard area.
+interface Props {
+  current: string;
+  email: string;
+  plan: string;
+}
+const { current, email, plan } = Astro.props;
+const items = [
+  { href: '/developers/dashboard', label: 'Overview' },
+  { href: '/developers/dashboard/keys', label: 'API keys' },
+  { href: '/developers/dashboard/billing', label: 'Billing' },
+];
+---
+<div class="dash-head">
+  <nav class="docs-nav" aria-label="Developer dashboard">
+    {items.map((i) => <a href={i.href} aria-current={i.href === current ? 'page' : undefined}>{i.label}</a>)}
+  </nav>
+  <div class="who">
+    <span class="email">{email}</span>
+    <span class="plan">{plan}</span>
+    <button type="button" id="signout" class="signout">Sign out</button>
+  </div>
+</div>
+
+<script>
+  document.getElementById('signout')?.addEventListener('click', async () => {
+    await fetch('/api/auth/sign-out', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }).catch(() => {});
+    location.assign('/developers/signin');
+  });
+</script>
+
+<style is:global>
+  .dash-head { display: flex; flex-wrap: wrap; gap: 0.8rem; align-items: center; justify-content: space-between; margin: 0 0 1.4rem; padding-bottom: 0.8rem; border-bottom: 1px solid rgb(var(--border)); }
+  .dash-head .docs-nav { margin: 0; padding: 0; border: 0; }
+  .dash-head .docs-nav a { padding: 0.35rem 0.8rem; border-radius: 999px; font-weight: 600; font-size: 0.88rem; color: rgb(var(--text-2)); border: 1px solid rgb(var(--border)); }
+  .dash-head .docs-nav a:hover { text-decoration: none; border-color: rgb(var(--teal)); color: rgb(var(--teal)); }
+  .dash-head .docs-nav a[aria-current='page'] { background: rgb(var(--teal)); border-color: rgb(var(--teal)); color: rgb(var(--text-inverse)); }
+  .dash-head .who { display: flex; align-items: center; gap: 0.6rem; font-size: 0.85rem; }
+  .dash-head .email { color: rgb(var(--text-2)); }
+  .dash-head .plan { text-transform: capitalize; font-weight: 700; padding: 0.15rem 0.6rem; border-radius: 999px; background: rgb(var(--surface-sunken)); }
+  .dash-head .signout { background: none; border: 1px solid rgb(var(--border)); border-radius: 999px; padding: 0.3rem 0.75rem; font-weight: 600; font-size: 0.82rem; color: rgb(var(--text-2)); cursor: pointer; }
+  .dash-head .signout:hover { border-color: rgb(var(--teal)); color: rgb(var(--teal)); }
+</style>

@@ -17,7 +17,6 @@ const env = getEnv();
 const portalUrl = env.STRIPE_PORTAL_URL;
 const sessionId = Astro.url.searchParams.get('session_id');
 
-let email: string | undefined;
 let planName: string | undefined;
 let paid = false;
 
@@ -25,7 +24,6 @@ if (sessionId && env.STRIPE_SECRET_KEY) {
   try {
     const s = await stripeGet(env.STRIPE_SECRET_KEY, `/v1/checkout/sessions/${sessionId}`, ['line_items']);
     paid = s.payment_status === 'paid' || s.status === 'complete';
-    email = s.customer_details?.email ?? undefined;
     const byMeta = PLAN_BY_ID.get(s.metadata?.plan);
     const priceId = s.line_items?.data?.[0]?.price?.id as string | undefined;
     planName = (byMeta ?? planForStripePrice(priceId, env as unknown as Record<string, string | undefined>))?.name;
@@ -46,28 +44,26 @@ if (sessionId && env.STRIPE_SECRET_KEY) {
       <h1>{paid ? <>You're in{planName ? <> — welcome to {planName}</> : null}!</> : 'Payment received'}</h1>
 
       <p class="lede">
-        {email
-          ? <>Your API key is on its way to <strong>{email}</strong>.</>
-          : <>Your API key is on its way to the email you used at checkout.</>}
-        It usually arrives within a minute — if you don't see it, check your spam folder.
+        {planName ? <>Your <strong>{planName}</strong> plan is active.</> : <>Your subscription is active.</>}
+        {' '}Head to your dashboard to create and manage your API keys.
       </p>
 
       <div class="next">
-        <a class="cta" href="/developers/api">Read the API docs</a>
-        <a class="cta ghost" href="/developers/mcp">Connect the MCP server</a>
+        <a class="cta" href="/developers/dashboard/keys">Create your API key</a>
+        <a class="cta ghost" href="/developers/api">Read the API docs</a>
       </div>
 
       <div class="note">
-        <p><strong>Didn't get the email?</strong> Give it a couple of minutes and check spam first.
+        <p>Manage keys, usage and billing any time from your
+          <a href="/developers/dashboard">developer dashboard</a>.
           {portalUrl
-            ? <> To manage or cancel your plan, use the <a href={portalUrl}>customer portal</a>.</>
+            ? <> Card changes and cancellations happen in the <a href={portalUrl}>customer portal</a>.</>
             : null}
-          Still stuck? Email <a href="mailto:findlocalinternal@gmail.com">findlocalinternal@gmail.com</a>
-          and we'll get you sorted.</p>
+          Questions? Email <a href="mailto:findlocalinternal@gmail.com">findlocalinternal@gmail.com</a>.</p>
       </div>
 
-      <p class="fine">Your key works across both the JSON API and the MCP server. Send it as
-        <code>Authorization: Bearer &lt;key&gt;</code>. Quotas reset monthly.</p>
+      <p class="fine">Your keys work across both the JSON API and the MCP server. Send a key as
+        <code>Authorization: Bearer &lt;key&gt;</code>. Quotas reset monthly and are shared across your keys.</p>
     </div>
   </div>
 </Layout>

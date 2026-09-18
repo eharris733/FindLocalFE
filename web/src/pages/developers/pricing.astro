@@ -9,11 +9,10 @@ import { getEnv } from '../../lib/db.js';
 export const prerender = false;
 
 const env = getEnv();
-const links: Record<string, string | undefined> = {
-  free: env.STRIPE_PAYMENT_LINK_FREE,
-  pro: env.STRIPE_PAYMENT_LINK_PRO,
-  scale: env.STRIPE_PAYMENT_LINK_SCALE,
-};
+// Accounts-first: you create a free account to get a key, then upgrade from the
+// dashboard (which starts a Stripe Checkout tied to your account). Paid plans need
+// their Stripe price configured to be checkout-able.
+const paidConfigured = !!(env.STRIPE_PRICE_PRO || env.STRIPE_PRICE_SCALE);
 const portalUrl = env.STRIPE_PORTAL_URL;
 const fmt = (n: number) => n.toLocaleString('en-US');
 ---
@@ -21,7 +20,7 @@ const fmt = (n: number) => n.toLocaleString('en-US');
   <div class="docs">
     <DocsNav current="/developers/pricing" title="Pricing" />
     <h1>API &amp; MCP pricing</h1>
-    <p class="lede">One API key works across both the <a href="/developers/api">JSON API</a> and the <a href="/developers/mcp">MCP server</a>. Pick a plan, and we'll email your key. Quotas reset monthly.</p>
+    <p class="lede">One account, many keys — all working across both the <a href="/developers/api">JSON API</a> and the <a href="/developers/mcp">MCP server</a>. Create a free account to get your first key, then upgrade any time. Quotas reset monthly.</p>
 
     <div class="plans">
       {PLANS.map((p) => (
@@ -36,22 +35,23 @@ const fmt = (n: number) => n.toLocaleString('en-US');
             <li>JSON API + MCP server</li>
             <li>All {`cities & filters`}</li>
           </ul>
-          {links[p.id]
-            ? <a class="cta" href={links[p.id]}>{p.priceUsd === 0 ? 'Get a free key' : `Choose ${p.name}`}</a>
-            : <span class="cta disabled" aria-disabled="true">Coming soon</span>}
+          {p.priceUsd === 0
+            ? <a class="cta" href="/developers/signin">Start free</a>
+            : paidConfigured
+              ? <a class="cta" href="/developers/signin">Get started with {p.name}</a>
+              : <span class="cta disabled" aria-disabled="true">Coming soon</span>}
         </div>
       ))}
     </div>
 
-    {!links.pro && (
-      <div class="note"><p><strong>Setup pending:</strong> Stripe Payment Links aren't configured yet. Set <code>STRIPE_PAYMENT_LINK_FREE/PRO/SCALE</code> (and the webhook + Unkey secrets) to go live.</p></div>
+    {!paidConfigured && (
+      <div class="note"><p><strong>Setup pending:</strong> paid plans aren't configured yet. Set <code>STRIPE_PRICE_PRO/SCALE</code> (and the webhook + Unkey secrets) to go live.</p></div>
     )}
 
-    <h2 id="manage">Manage your subscription</h2>
-    <p>{portalUrl
-      ? <>Update your card, change plan, or cancel in the <a href={portalUrl}>customer portal</a>.</>
-      : <>Once subscribed, you'll get a link to the Stripe customer portal to change plan or cancel.</>}
-      Lost or leaked your key? Email <a href="mailto:findlocalinternal@gmail.com">findlocalinternal@gmail.com</a> and we'll issue you a new one (the portal manages billing, not keys).</p>
+    <h2 id="manage">Manage your account</h2>
+    <p>Create and revoke keys, track usage, and upgrade or downgrade any time from your
+      <a href="/developers/dashboard">developer dashboard</a>.
+      {portalUrl && <> Card changes and cancellations happen in the <a href={portalUrl}>Stripe customer portal</a>, linked from your dashboard.</>}</p>
 
     <h2 id="how">How it works</h2>
     <ul>

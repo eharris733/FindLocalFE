@@ -5,5 +5,9 @@
 // pool's own types. No top-level import: this file must stay a *global* script so
 // the declaration is ambient, not an augmentation of a module that doesn't exist.
 declare module 'cloudflare:test' {
-  export const env: { DB: import('@cloudflare/workers-types').D1Database };
+  export const env: {
+    DB: import('@cloudflare/workers-types').D1Database;
+    AUTH_DB: import('@cloudflare/workers-types').D1Database;
+    AUTH_KV: import('@cloudflare/workers-types').KVNamespace;
+  };
 }

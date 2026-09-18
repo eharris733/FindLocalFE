@@ -25,6 +25,17 @@ const SWR = 86400;
 
 export function cachePolicyFor(pathname: string): CachePolicy {
   if (pathname === '/saved') return { edge: 0, browser: 0, perCity: false };
+  // The authed developer portal is per-user (Better Auth session cookie) and the
+  // edge cache key does NOT include that cookie — a shared edge copy would leak one
+  // developer's keys/plan/usage to everyone. Never cache these; `private, no-store`.
+  // Covers the dashboard, the sign-in page, and every Better Auth endpoint.
+  if (
+    pathname === '/developers/signin' ||
+    pathname.startsWith('/developers/dashboard') ||
+    pathname.startsWith('/api/auth/')
+  ) {
+    return { edge: 0, browser: 0, perCity: false };
+  }
   // Geolocated per request: one shared edge copy would hand every visitor the
   // first colo's answer.
   if (pathname === '/api/geo') return { edge: 0, browser: 0, perCity: false };

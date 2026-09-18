@@ -1,0 +1,7 @@
+---
+// The old email-only key portal has been replaced by the account-based developer
+// portal at /developers/dashboard (real sign-in, multiple named keys). Keep this
+// URL working with a permanent redirect.
+export const prerender = false;
+return Astro.redirect('/developers/dashboard', 301);
+---

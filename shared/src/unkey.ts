@@ -90,14 +90,29 @@ export interface KeyLimits {
   plan: string;
 }
 
-function limitBody(limits: KeyLimits) {
-  return {
+/**
+ * The per-key body: monthly credits (the quota) + optionally a per-key burst
+ * ratelimit and the plan in meta.
+ *
+ * Multi-key accounts (the developer portal) keep the burst ratelimit on the
+ * Unkey *identity* (externalId = account id) so it is SHARED across all of an
+ * account's keys — see {@link setIdentityRatelimits}. Those keys are minted with
+ * `perKeyRatelimit = false`. The monthly quota stays per-key for now; a single
+ * shared monthly POOL across keys needs Unkey identity-level credits / a
+ * long-window ratelimit, which is a deferred spike — flip that here + in
+ * setIdentityRatelimits when verified.
+ */
+function keyLimitBody(limits: KeyLimits, perKeyRatelimit = true) {
+  const body: Record<string, unknown> = {
     // Unkey requires `refillDay` (1–31) when the refill interval is monthly; the
     // quota tops back up on the 1st of each month.
     credits: { remaining: limits.monthlyQuota, refill: { interval: 'monthly' as const, amount: limits.monthlyQuota, refillDay: 1 } },
-    ratelimits: [{ name: 'requests', limit: limits.perMinuteLimit, duration: 60_000, autoApply: true }],
     meta: { plan: limits.plan },
   };
+  if (perKeyRatelimit) {
+    body.ratelimits = [{ name: 'requests', limit: limits.perMinuteLimit, duration: 60_000, autoApply: true }];
+  }
+  return body;
 }
 
 async function adminPost(a: UnkeyAdmin, path: string, payload: Record<string, unknown>): Promise<Record<string, any>> {
@@ -112,23 +127,94 @@ async function adminPost(a: UnkeyAdmin, path: string, payload: Record<string, un
   return body.data ?? {};
 }
 
-/** Mint a new key for a customer. `externalId` ties it to the Stripe customer. */
+/**
+ * Mint a new key. `externalId` ties it to the account's Unkey identity (so the
+ * identity's shared ratelimit applies). Portal keys pass `perKeyRatelimit=false`
+ * because the burst cap lives on the identity, shared across the account's keys.
+ */
 export async function createUnkeyKey(
   a: UnkeyAdmin,
-  opts: { externalId: string; name?: string; limits: KeyLimits },
+  opts: { externalId: string; name?: string; limits: KeyLimits; perKeyRatelimit?: boolean },
 ): Promise<{ keyId: string; key: string }> {
   const d = await adminPost(a, '/v2/keys.createKey', {
     apiId: a.apiId,
     externalId: opts.externalId,
     name: opts.name,
-    ...limitBody(opts.limits),
+    ...keyLimitBody(opts.limits, opts.perKeyRatelimit ?? false),
   });
   return { keyId: String(d.keyId), key: String(d.key) };
 }
 
-/** Move an existing key to a new plan's limits (subscription upgrade/downgrade). */
-export function updateUnkeyKeyLimits(a: UnkeyAdmin, keyId: string, limits: KeyLimits): Promise<Record<string, any>> {
-  return adminPost(a, '/v2/keys.updateKey', { keyId, ...limitBody(limits) });
+/** Move an existing key to a new plan's credits (subscription upgrade/downgrade).
+ * Rate lives on the identity for portal keys, so no per-key ratelimit by default. */
+export function updateUnkeyKeyLimits(
+  a: UnkeyAdmin,
+  keyId: string,
+  limits: KeyLimits,
+  perKeyRatelimit = false,
+): Promise<Record<string, any>> {
+  return adminPost(a, '/v2/keys.updateKey', { keyId, ...keyLimitBody(limits, perKeyRatelimit) });
+}
+
+// --- Identities: one per account (externalId = user id). The identity carries a
+// SHARED ratelimit applied to every key linked to it, so an account's many keys
+// share one burst cap. Enforced atomically by Unkey on verify (autoApply). -----
+
+/** Shared per-minute burst cap for all of an account's keys. */
+export function identityRatelimits(perMinuteLimit: number) {
+  return [{ name: 'requests', limit: perMinuteLimit, duration: 60_000, autoApply: true }];
+}
+
+/** Upsert an account's Unkey identity and set its shared ratelimit + plan meta.
+ * Safe to call before any key exists (accounts-first): creates the identity, or
+ * updates it if it already exists. */
+export async function setIdentityRatelimits(
+  a: UnkeyAdmin,
+  opts: { externalId: string; perMinuteLimit: number; plan: string },
+): Promise<void> {
+  const ratelimits = identityRatelimits(opts.perMinuteLimit);
+  const meta = { plan: opts.plan };
+  try {
+    // createIdentity keys the identity by `externalId`.
+    await adminPost(a, '/v2/identities.createIdentity', { externalId: opts.externalId, ratelimits, meta });
+  } catch {
+    // Already exists (or a create race) → update in place. updateIdentity keys the
+    // identity by `identity` (which accepts the externalId), NOT `externalId`, and
+    // replaces the full ratelimits + meta with what we send.
+    await adminPost(a, '/v2/identities.updateIdentity', { identity: opts.externalId, ratelimits, meta });
+  }
+}
+
+/** Read an account's identity (its configured ratelimits + meta), or null. */
+export async function getIdentity(a: UnkeyAdmin, externalId: string): Promise<Record<string, any> | null> {
+  try {
+    return await adminPost(a, '/v2/identities.getIdentity', { externalId });
+  } catch {
+    return null;
+  }
+}
+
+export interface UnkeyKeyInfo {
+  /** Remaining monthly credits, or null for an unmetered key. */
+  remaining: number | null;
+  /** Plan id from the key's meta (set at mint time), when present. */
+  plan?: string;
+  /** False once the key is revoked. */
+  enabled: boolean;
+}
+
+/**
+ * Read a key's current state by id (v2 `POST /v2/keys.getKey`). Read-only: unlike
+ * `verifyUnkeyKey` it needs no plaintext and deducts NO credit, so it's safe for a
+ * dashboard that shows remaining quota. Server-side only (root key).
+ */
+export async function getUnkeyKey(a: UnkeyAdmin, keyId: string): Promise<UnkeyKeyInfo> {
+  const d = await adminPost(a, '/v2/keys.getKey', { keyId });
+  return {
+    remaining: d.credits?.remaining ?? null,
+    plan: typeof d.meta?.plan === 'string' ? d.meta.plan : undefined,
+    enabled: d.enabled !== false,
+  };
 }
 
 /** Disable a key (subscription cancelled). */

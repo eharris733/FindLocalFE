@@ -1,0 +1,149 @@
+---
+// /developers/signin — the portal's front door. Talks to Better Auth's endpoints
+// (/api/auth/*) from the browser via fetch: email+password sign-in/up, passwordless
+// magic link, and (Phase B) Google/GitHub. SSR + noindex, never edge-cached
+// (cacheHeaders forces private, no-store). If already signed in, bounce to the
+// dashboard.
+import Layout from '../../layouts/Layout.astro';
+import { getEnv } from '../../lib/db.js';
+import { getSessionUser } from '../../lib/auth.js';
+export const prerender = false;
+
+const env = getEnv();
+const user = await getSessionUser(env, Astro.request.headers).catch(() => null);
+if (user) return Astro.redirect('/developers/dashboard');
+
+const google = !!env.GOOGLE_CLIENT_ID;
+const github = !!env.GITHUB_CLIENT_ID;
+const anySocial = google || github;
+---
+<Layout title="Sign in" description="Sign in to the FindLocal developer portal." canonicalPath="/developers/signin" noindex={true}>
+  <div class="auth">
+    <h1>Developer portal</h1>
+    <p class="sub">Manage your API keys, usage, and billing.</p>
+
+    <div id="err" class="err" role="alert" hidden></div>
+    <div id="ok" class="ok" role="status" hidden></div>
+
+    {anySocial && (
+      <div class="social">
+        {google && <button type="button" class="oauth" data-provider="google">Continue with Google</button>}
+        {github && <button type="button" class="oauth" data-provider="github">Continue with GitHub</button>}
+        <div class="divider"><span>or</span></div>
+      </div>
+    )}
+
+    <form id="pw-form" class="stack">
+      <label>Email<input type="email" name="email" autocomplete="email" required /></label>
+      <label>Password<input type="password" name="password" autocomplete="current-password" minlength="8" required /></label>
+      <label id="name-row" hidden>Name<input type="text" name="name" autocomplete="name" /></label>
+      <button type="submit" id="pw-submit" data-mode="signin">Sign in</button>
+    </form>
+
+    <div class="row">
+      <button type="button" class="link" id="toggle-mode">Create an account</button>
+      <button type="button" class="link" id="magic">Email me a sign-in link</button>
+    </div>
+    <button type="button" class="link forgot" id="forgot">Forgot password?</button>
+  </div>
+</Layout>
+
+<script>
+  const $ = (id: string) => document.getElementById(id) as HTMLElement;
+  const errEl = $('err');
+  const okEl = $('ok');
+  const form = $('pw-form') as HTMLFormElement;
+  const nameRow = $('name-row');
+  const submit = $('pw-submit') as HTMLButtonElement;
+  const DEST = '/developers/dashboard';
+
+  function showErr(msg: string) { errEl.textContent = msg; errEl.hidden = false; okEl.hidden = true; }
+  function showOk(msg: string) { okEl.textContent = msg; okEl.hidden = false; errEl.hidden = true; }
+
+  async function post(path: string, body: Record<string, unknown>): Promise<any> {
+    const res = await fetch(path, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data?.message || data?.error?.message || 'Something went wrong. Please try again.');
+    return data;
+  }
+
+  $('toggle-mode').addEventListener('click', () => {
+    const signup = submit.dataset.mode === 'signin';
+    submit.dataset.mode = signup ? 'signup' : 'signin';
+    submit.textContent = signup ? 'Create account' : 'Sign in';
+    nameRow.hidden = !signup;
+    ($('toggle-mode') as HTMLButtonElement).textContent = signup ? 'I already have an account' : 'Create an account';
+    errEl.hidden = true; okEl.hidden = true;
+  });
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    submit.disabled = true;
+    const fd = new FormData(form);
+    const email = String(fd.get('email') || '');
+    const password = String(fd.get('password') || '');
+    try {
+      if (submit.dataset.mode === 'signup') {
+        await post('/api/auth/sign-up/email', { email, password, name: String(fd.get('name') || '') || email.split('@')[0] });
+      } else {
+        await post('/api/auth/sign-in/email', { email, password });
+      }
+      location.assign(DEST);
+    } catch (err) {
+      showErr((err as Error).message);
+      submit.disabled = false;
+    }
+  });
+
+  $('magic').addEventListener('click', async () => {
+    const email = String((new FormData(form)).get('email') || '');
+    if (!email) return showErr('Enter your email first.');
+    try {
+      await post('/api/auth/sign-in/magic-link', { email, callbackURL: DEST });
+      showOk('Check your email for a sign-in link.');
+    } catch (err) { showErr((err as Error).message); }
+  });
+
+  $('forgot').addEventListener('click', async () => {
+    const email = String((new FormData(form)).get('email') || '');
+    if (!email) return showErr('Enter your email first, then tap “Forgot password”.');
+    try {
+      await post('/api/auth/forget-password', { email, redirectTo: '/developers/reset-password' });
+      showOk('If that email has an account, a reset link is on its way.');
+    } catch (err) { showErr((err as Error).message); }
+  });
+
+  document.querySelectorAll<HTMLButtonElement>('.oauth').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      try {
+        const data = await post('/api/auth/sign-in/social', { provider: btn.dataset.provider, callbackURL: DEST });
+        if (data?.url) location.assign(data.url);
+      } catch (err) { showErr((err as Error).message); }
+    });
+  });
+</script>
+
+<style>
+  .auth { max-width: 26rem; margin: 2rem auto; padding: 1.8rem; border: 1px solid rgb(var(--border)); border-radius: var(--radius); background: rgb(var(--surface)); }
+  .auth h1 { margin: 0 0 0.2rem; font-size: 1.5rem; }
+  .sub { margin: 0 0 1.2rem; color: rgb(var(--text-2)); }
+  .stack { display: flex; flex-direction: column; gap: 0.7rem; }
+  .stack label { display: flex; flex-direction: column; gap: 0.25rem; font-weight: 600; font-size: 0.9rem; }
+  .stack input { padding: 0.55rem 0.7rem; border: 1px solid rgb(var(--border)); border-radius: var(--radius-sm); background: rgb(var(--surface)); color: rgb(var(--text)); font-size: 1rem; }
+  .stack button[type=submit] { margin-top: 0.4rem; padding: 0.65rem; border-radius: 999px; border: 0; background: rgb(var(--teal)); color: rgb(var(--text-inverse)); font-weight: 700; cursor: pointer; }
+  .social { margin-bottom: 1rem; display: flex; flex-direction: column; gap: 0.5rem; }
+  .oauth { padding: 0.6rem; border-radius: 999px; border: 1px solid rgb(var(--border)); background: rgb(var(--surface)); color: rgb(var(--text)); font-weight: 600; cursor: pointer; }
+  .oauth:hover { border-color: rgb(var(--teal)); }
+  .divider { text-align: center; position: relative; color: rgb(var(--text-2)); font-size: 0.8rem; margin: 0.3rem 0; }
+  .divider span { background: rgb(var(--surface)); padding: 0 0.6rem; position: relative; z-index: 1; }
+  .divider::before { content: ''; position: absolute; left: 0; right: 0; top: 50%; border-top: 1px solid rgb(var(--border)); }
+  .row { display: flex; justify-content: space-between; gap: 0.6rem; margin-top: 1rem; flex-wrap: wrap; }
+  .link { background: none; border: 0; color: rgb(var(--teal)); font-weight: 600; font-size: 0.88rem; cursor: pointer; padding: 0; }
+  .forgot { margin-top: 0.6rem; }
+  .err { background: rgb(var(--orange-50)); border-left: 3px solid rgb(var(--orange)); padding: 0.6rem 0.8rem; border-radius: 0 var(--radius-sm) var(--radius-sm) 0; margin-bottom: 1rem; font-size: 0.9rem; }
+  .ok { background: rgb(var(--surface-sunken)); border-left: 3px solid rgb(var(--teal)); padding: 0.6rem 0.8rem; border-radius: 0 var(--radius-sm) var(--radius-sm) 0; margin-bottom: 1rem; font-size: 0.9rem; }
+</style>

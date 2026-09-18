@@ -15,6 +15,9 @@
     "@astrojs/cloudflare": "^14.3.0",
     "@findlocal/shared": "*",
     "astro": "^7.3.1",
+    "better-auth": "^1.3.0",
+    "kysely": "^0.28.0",
+    "kysely-d1": "^0.4.0",
     "leaflet": "^1.9.4"
   },
   "devDependencies": {

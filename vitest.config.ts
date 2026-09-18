@@ -7,6 +7,7 @@ import { defineConfig } from 'vitest/config';
 
 export default defineConfig(async () => {
   const migrations = await readD1Migrations('shared/data/schema');
+  const authMigrations = await readD1Migrations('web/migrations');
   return {
     plugins: [
       cloudflareTest({
@@ -14,8 +15,9 @@ export default defineConfig(async () => {
         miniflare: {
           compatibilityDate: '2026-08-01',
           compatibilityFlags: ['nodejs_compat'],
-          d1Databases: ['DB'],
-          bindings: { TEST_MIGRATIONS: migrations },
+          d1Databases: ['DB', 'AUTH_DB'],
+          kvNamespaces: ['AUTH_KV'],
+          bindings: { TEST_MIGRATIONS: migrations, TEST_AUTH_MIGRATIONS: authMigrations },
         },
       }),
     ],

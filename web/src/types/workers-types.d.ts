@@ -25,3 +25,9 @@ export interface D1Database {
   prepare(query: string): D1PreparedStatement;
   batch<T = Record<string, unknown>>(statements: D1PreparedStatement[]): Promise<D1Result<T>[]>;
 }
+// Minimal KV surface used by AUTH_KV (Better Auth secondary storage, lib/auth.ts).
+export interface KVNamespace {
+  get(key: string, options?: unknown): Promise<string | null>;
+  put(key: string, value: string, options?: { expirationTtl?: number; expiration?: number }): Promise<void>;
+  delete(key: string): Promise<void>;
+}

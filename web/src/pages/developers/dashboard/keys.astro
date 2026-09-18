@@ -1,0 +1,132 @@
+---
+// /developers/dashboard/keys — create, reveal-once, and revoke named API keys.
+// SSR + gated. Mutations are POST branches on this same page (no separate /api/*
+// surface to leave ungated), guarded by a same-origin check; SameSite=Lax cookies
+// are the primary CSRF defence. A freshly-minted key's plaintext is shown ONCE on
+// the create response and never stored (Unkey reveals it only at creation).
+import Layout from '../../../layouts/Layout.astro';
+import DashboardNav from '../../../components/DashboardNav.astro';
+import { getEnv, getAuthDb } from '../../../lib/db.js';
+import { getSessionUser } from '../../../lib/auth.js';
+import { listKeys, createKey, revokeKey, MAX_KEYS_PER_ACCOUNT } from '../../../lib/apiKeys.js';
+import { PLAN_BY_ID, type PlanId } from '../../../lib/plans.js';
+export const prerender = false;
+
+function sameOrigin(request: Request): boolean {
+  const site = request.headers.get('sec-fetch-site');
+  if (site) return site === 'same-origin' || site === 'none';
+  const origin = request.headers.get('origin');
+  if (!origin) return true; // no Origin (older clients) — SameSite cookie still guards
+  try { return new URL(origin).host === new URL(request.url).host; } catch { return false; }
+}
+
+const env = getEnv();
+const user = await getSessionUser(env, Astro.request.headers).catch(() => null);
+if (!user) return Astro.redirect('/developers/signin');
+
+const plan = PLAN_BY_ID.get((user.plan as PlanId) ?? 'free') ?? PLAN_BY_ID.get('free')!;
+const db = getAuthDb();
+
+let flashKey: string | null = null;
+let error: string | null = null;
+
+if (Astro.request.method === 'POST') {
+  if (!sameOrigin(Astro.request)) return new Response('forbidden', { status: 403 });
+  const form = await Astro.request.formData();
+  const action = form.get('action');
+  try {
+    if (action === 'create') {
+      const minted = await createKey(env, db, { id: user.id, plan: user.plan }, String(form.get('name') || ''));
+      flashKey = minted.key;
+    } else if (action === 'revoke') {
+      await revokeKey(env, db, { id: user.id }, String(form.get('id') || ''));
+      return Astro.redirect('/developers/dashboard/keys', 303);
+    }
+  } catch (e) {
+    error = (e as Error).message;
+  }
+}
+
+const keys = await listKeys(db, user.id).catch(() => []);
+const active = keys.filter((k) => !k.revokedAt);
+const atLimit = active.length >= MAX_KEYS_PER_ACCOUNT;
+const fmt = (ms: number) => new Date(ms).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+---
+<Layout title="API keys" description="Manage your FindLocal API keys." canonicalPath="/developers/dashboard/keys" noindex={true}>
+  <div class="docs">
+    <DashboardNav current="/developers/dashboard/keys" email={user.email} plan={plan.name} />
+    <h1>API keys</h1>
+    <p>All your keys share the <strong>{plan.name}</strong> plan quota ({plan.monthlyQuota.toLocaleString()} calls/month,
+      {plan.perMinuteLimit}/min). Up to {MAX_KEYS_PER_ACCOUNT} active keys.</p>
+
+    {error && <div class="note err"><p>{error}</p></div>}
+
+    {flashKey && (
+      <div class="reveal">
+        <p><strong>Your new API key</strong> — copy it now. For your security we can't show it again.</p>
+        <div class="copy-wrap">
+          <pre id="newkey">{flashKey}</pre>
+          <button type="button" class="copy-btn" id="copy">Copy</button>
+        </div>
+        <p class="fine">Use it as <code>Authorization: Bearer &lt;key&gt;</code> against
+          <code>https://findlocal.community/api/*</code>, or paste it to connect the MCP server.</p>
+      </div>
+    )}
+
+    <form method="POST" class="create">
+      <input type="hidden" name="action" value="create" />
+      <input type="text" name="name" placeholder="Key name (e.g. production)" maxlength="60" required disabled={atLimit} />
+      <button type="submit" disabled={atLimit}>Create key</button>
+    </form>
+    {atLimit && <p class="fine">You've reached the {MAX_KEYS_PER_ACCOUNT}-key limit. Revoke one to create another.</p>}
+
+    {active.length === 0 ? (
+      <p class="empty">No active keys yet. Create one above to start calling the API.</p>
+    ) : (
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Name</th><th>Key</th><th>Created</th><th></th></tr></thead>
+          <tbody>
+            {active.map((k) => (
+              <tr>
+                <td>{k.name}</td>
+                <td><code>{k.prefix ?? 'fl_'}…{k.lastFour ?? ''}</code></td>
+                <td>{fmt(k.createdAt)}</td>
+                <td>
+                  <form method="POST" class="revoke" onsubmit="return confirm('Revoke this key? Any app using it will stop working immediately.')">
+                    <input type="hidden" name="action" value="revoke" />
+                    <input type="hidden" name="id" value={k.id} />
+                    <button type="submit" class="danger">Revoke</button>
+                  </form>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    )}
+  </div>
+</Layout>
+
+<script>
+  document.getElementById('copy')?.addEventListener('click', async () => {
+    const el = document.getElementById('newkey');
+    if (!el?.textContent) return;
+    try { await navigator.clipboard.writeText(el.textContent); (document.getElementById('copy') as HTMLButtonElement).textContent = 'Copied'; } catch {}
+  });
+</script>
+
+<style>
+  .create { display: flex; gap: 0.6rem; margin: 1.2rem 0 0.4rem; flex-wrap: wrap; }
+  .create input { flex: 1 1 16rem; padding: 0.55rem 0.7rem; border: 1px solid rgb(var(--border)); border-radius: var(--radius-sm); background: rgb(var(--surface)); color: rgb(var(--text)); font-size: 1rem; }
+  .create button { padding: 0.55rem 1.1rem; border: 0; border-radius: 999px; background: rgb(var(--teal)); color: rgb(var(--text-inverse)); font-weight: 700; cursor: pointer; }
+  .create button:disabled { opacity: 0.5; cursor: not-allowed; }
+  .reveal { border: 1px solid rgb(var(--teal)); border-radius: var(--radius); padding: 1rem 1.1rem; margin: 1rem 0; background: rgb(var(--surface)); }
+  .reveal p { margin: 0 0 0.5rem; }
+  .empty { color: rgb(var(--text-2)); margin: 1.2rem 0; }
+  .revoke { margin: 0; }
+  .danger { background: none; border: 1px solid rgb(var(--border)); color: rgb(var(--orange)); border-radius: 999px; padding: 0.25rem 0.7rem; font-weight: 600; font-size: 0.82rem; cursor: pointer; }
+  .danger:hover { border-color: rgb(var(--orange)); }
+  .note.err { border-left-color: rgb(var(--orange)); background: rgb(var(--orange-50)); }
+  .fine { font-size: 0.85rem; color: rgb(var(--text-2)); }
+</style>
